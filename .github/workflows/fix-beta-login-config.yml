@@ -1,0 +1,61 @@
+name: Fix Beta login farm config
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-beta-login-config.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-login:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Make platform farm config paths Beta-safe
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('js/app/login.js')
+          s = p.read_text()
+
+          old = '''  const configPath =
+    String(
+      farm?.configPath ||
+      `/FarmVista-Beta/farms/${farmKey}.json`
+    ).trim();
+'''
+
+          new = '''  // The platform lookup was built for the production site and may
+  // return a root-relative configPath such as /farms/dowson.json.
+  // On GitHub Pages that would incorrectly request dkillam05.github.io/farms/...
+  // instead of this Beta repository. Always resolve farm configs inside the
+  // Beta app so authentication uses the same farm Firebase config as production.
+  const configPath =
+    new URL(
+      `farms/${encodeURIComponent(farmKey)}.json`,
+      document.baseURI || location.href
+    ).pathname;
+'''
+
+          if old not in s:
+              raise SystemExit('Expected selectFarm configPath block was not found; no changes committed.')
+
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+      - name: Commit Beta login fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/app/login.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix Beta login farm configuration path"
+          git push origin main
