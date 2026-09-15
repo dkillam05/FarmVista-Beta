@@ -1,0 +1,370 @@
+<!-- =====================================================================
+/pages/crop-production/planning/index.html  (FULL FILE)
+Rev: 2025-12-31e
+
+DESKTOP: ✅ unchanged (looks perfect)
+
+PHONE:
+✅ NO scaling / NO inner wrapper (uses full screen width)
+✅ Tiles stay visible
+✅ Still mounts module inline
+✅ viewOnly only on actual phone width (<= 620px)
+===================================================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Planning Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Standard includes (ABSOLUTE paths) -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <!-- Ensure fv-shell -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max:1200px;
+      --page-bottom-gap:96px;
+      --accent:#2F6C3C;
+      --hero-icon-col:36px;
+      --hero-icon-size:24px;
+    }
+
+    body{ background:var(--app-bg,var(--surface)); }
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:visible;
+    }
+
+    .hero-head{
+      display:grid;
+      grid-template-columns:var(--hero-icon-col) 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      background:linear-gradient(90deg,rgba(47,108,60,.12),transparent);
+      border-bottom:1px solid var(--border);
+    }
+
+    .hero-head .icon{
+      width:var(--hero-icon-size);
+      height:var(--hero-icon-size);
+      color:var(--accent);
+      display:grid;
+      place-items:center;
+    }
+
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+
+    .muted{ color:var(--muted,#67706B); }
+
+    .body{
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+
+    /* Tiles */
+    .tiles{
+      display:grid;
+      gap:10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    @media (max-width:980px){
+      .tiles{ grid-template-columns:1fr; }
+    }
+
+    .tile{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--card-surface,var(--surface));
+      padding:12px;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      transition: transform .06s ease, border-color .12s ease, background .12s ease;
+    }
+    .tile:active{ transform: translateY(1px); }
+    .tile:hover{ background: color-mix(in srgb, var(--surface) 92%, rgba(47,108,60,.05)); }
+
+    .tile .left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width:0;
+    }
+
+    .tileIcon{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: var(--surface);
+      display:grid;
+      place-items:center;
+      color: var(--accent);
+      flex:0 0 auto;
+      font-weight:900;
+    }
+
+    .tileText{ min-width:0; }
+    .tileTitle{
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .tileSub{
+      margin-top:3px;
+      font-size:12px;
+      color: var(--muted,#67706B);
+      font-weight:800;
+      letter-spacing:.2px;
+      text-transform:uppercase;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .tile.active{
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+      background: color-mix(in srgb, var(--surface) 88%, rgba(47,108,60,.10));
+      box-shadow: 0 10px 20px rgba(0,0,0,.10);
+    }
+
+    /* Host */
+    .hostWrap{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      overflow:hidden;
+    }
+    .hostTop{
+      padding:12px 12px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .hostTop .title{ font-weight:900; }
+    .hostTop .hint{
+      color: var(--muted,#67706B);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+
+    #plannerHost{ padding:0; }
+    .hostEmpty{
+      padding:16px;
+      color:var(--muted,#67706B);
+      font-weight:900;
+    }
+
+    /* PHONE: use more width (less gutter), keep tiles visible */
+    @media (max-width: 620px){
+      .wrap{ max-width:100%; padding:10px; }
+      .body{ padding:12px; }
+      .hero-head{ padding:12px 14px; }
+      .hero-head h1{ font-size:20px; }
+      .muted{ font-size:13px; }
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M4 19V5"></path>
+              <path d="M20 19V5"></path>
+              <path d="M4 12h16"></path>
+            </svg>
+          </div>
+          <div>
+            <h1>Planning Dashboard</h1>
+            <p class="muted" id="subHint">Pick a planner tool below. It opens inline (no popup, no iframe).</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="tiles" id="tiles">
+            <div class="tile active"
+                 data-title="Crop Planner"
+                 data-module="/js/crop-planning/crop-planner.module.js">
+              <div class="left">
+                <div class="tileIcon">🌽</div>
+                <div class="tileText">
+                  <div class="tileTitle">Crop Planner</div>
+                  <div class="tileSub">Assign corn/beans</div>
+                </div>
+              </div>
+              <div class="muted" style="font-weight:900;">Open</div>
+            </div>
+
+            <div class="tile"
+                 data-title="Anhydrous"
+                 data-module="">
+              <div class="left">
+                <div class="tileIcon">🧯</div>
+                <div class="tileText">
+                  <div class="tileTitle">Anhydrous</div>
+                  <div class="tileSub">vendors + complete</div>
+                </div>
+              </div>
+              <div class="muted" style="font-weight:900;">Soon</div>
+            </div>
+
+            <div class="tile"
+                 data-title="More planners"
+                 data-module="">
+              <div class="left">
+                <div class="tileIcon">🛠️</div>
+                <div class="tileText">
+                  <div class="tileTitle">More planners</div>
+                  <div class="tileSub">dry • liquid • spray</div>
+                </div>
+              </div>
+              <div class="muted" style="font-weight:900;">Soon</div>
+            </div>
+          </div>
+
+          <div class="hostWrap">
+            <div class="hostTop">
+              <div>
+                <div class="title" id="hostTitle">Crop Planner</div>
+                <div class="hint" id="hostHint">Loaded inline</div>
+              </div>
+              <div class="hint" id="hostModuleHint">crop-planner.module.js</div>
+            </div>
+
+            <div id="plannerHost">
+              <div class="hostEmpty">Loading…</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <script type="module">
+    const tiles = document.getElementById('tiles');
+    const host = document.getElementById('plannerHost');
+    const hostTitle = document.getElementById('hostTitle');
+    const hostModuleHint = document.getElementById('hostModuleHint');
+    const subHint = document.getElementById('subHint');
+
+    let current = null;
+
+    const mqPhone = window.matchMedia('(max-width: 620px)');
+    function updateSubHint(){
+      subHint.textContent = mqPhone.matches
+        ? 'Phone mode: view-only (scroll to read).'
+        : 'Pick a planner tool below. It opens inline (no popup, no iframe).';
+    }
+
+    // Prevent drag starts on phone (keeps it from feeling DnD-ish)
+    function wireViewOnlyGuards(){
+      document.addEventListener('dragstart', (e)=>{ if(mqPhone.matches) e.preventDefault(); }, { capture:true });
+      document.addEventListener('drop', (e)=>{ if(mqPhone.matches) e.preventDefault(); }, { capture:true });
+    }
+
+    async function mountTile(tile){
+      [...tiles.querySelectorAll('.tile')].forEach(t=>t.classList.remove('active'));
+      tile.classList.add('active');
+
+      const title = tile.getAttribute('data-title') || 'Planner';
+      const modPath = tile.getAttribute('data-module') || '';
+
+      hostTitle.textContent = title;
+      hostModuleHint.textContent = modPath ? modPath.split('/').pop() : '(not set)';
+
+      try { if(current && typeof current.unmount === 'function') current.unmount(); } catch(e){ console.warn(e); }
+      current = null;
+
+      host.innerHTML = modPath
+        ? '<div class="hostEmpty">Loading…</div>'
+        : '<div class="hostEmpty">Not wired yet.</div>';
+
+      if(!modPath) return;
+
+      const mod = await import(modPath);
+      if(!mod || typeof mod.mount !== 'function'){
+        host.innerHTML = '<div class="hostEmpty">Module missing mount(host, opts).</div>';
+        return;
+      }
+
+      // ✅ Phone only => viewOnly true
+      current = await mod.mount(host, {
+        viewOnly: mqPhone.matches
+      });
+    }
+
+    tiles.addEventListener('click', (e)=>{
+      const tile = e.target.closest('.tile');
+      if(!tile) return;
+      mountTile(tile);
+    });
+
+    mqPhone.addEventListener?.('change', ()=>{
+      updateSubHint();
+      // re-mount active module so it switches viewOnly mode immediately
+      const active = tiles.querySelector('.tile.active');
+      if(active) mountTile(active);
+    });
+
+    // Init
+    updateSubHint();
+    wireViewOnlyGuards();
+
+    // Mount default
+    mountTile(tiles.querySelector('.tile.active'));
+  </script>
+</body>
+</html>

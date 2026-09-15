@@ -1,0 +1,1381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Equipment Lookup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <script defer src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure fv-shell -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js'; s.defer=true; document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <!-- Firebase CONFIG FIRST -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <!-- QR lib (match Add page) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" onload="window.__qrReady=true;"></script>
+
+  <style>
+    :root{ --card-max:1100px; }
+    :root{
+      --ql-tape-mm: 62mm;
+      --ql-qr-mm: 48mm;
+      --ql-pad-mm: 2.2mm;
+      --ql-gap-mm: 2mm;
+
+      --ql-font: 18pt;
+      --ql-font-small: 16pt;
+      --ql-font-lab: 12pt;
+
+      --sf-cut-mm: 62mm;
+      --sf-qr-mm: 46mm;
+      --sf-serial-font: 16pt;
+      --sf-serial-font-sm: 13pt;
+      --sf-lab-font: 10pt;
+
+      /* ✅ Tile font behavior (per Dane):
+         - Default stays 16px
+         - NEVER wraps to another row
+         - If it doesn’t fit, shrink that ONE row until it fits
+         - If it STILL doesn’t fit, apply a light horizontal squeeze (scaleX) */
+      --tile-title-font: 16px;
+      --tile-title-font-min: 5px;
+    }
+
+    html,body{ max-width:100vw; overflow-x:hidden; }
+    body{ background:var(--app-bg, var(--bg)); color:var(--text); }
+
+    .page{
+      max-width:var(--card-max); margin:0 auto; padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
+    }
+    .title{ margin:0 0 4px; font-size:clamp(22px,3.6vw,32px); line-height:1.1; }
+    .sub{ margin:0 10px 12px 0; color:var(--muted,#6f7772); }
+
+    .bar{ display:flex; gap:10px; align-items:center; }
+    .search{
+      display:flex; align-items:center; gap:10px; border:1px solid var(--border);
+      border-radius:12px; background:var(--surface); padding:10px 12px; flex:1 1 auto;
+    }
+    .search input{ flex:1; background:transparent; border:0; outline:none; font:inherit; color:var(--text); }
+
+    .icon-btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:42px; height:42px;
+      border:1px solid var(--border); border-radius:12px;
+      background:var(--surface); color:var(--text);
+      cursor:pointer;
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.06));
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icon-btn:active{ transform:translateY(1px); }
+
+    .popover{
+      position:absolute; z-index:5; min-width:220px;
+      border:1px solid var(--border); border-radius:14px;
+      background:var(--card-surface, var(--surface)); color:var(--text);
+      box-shadow:0 18px 40px rgba(0,0,0,.28);
+      padding:10px;
+    }
+    .popover header{ font-weight:800; margin:4px 2px 8px; color:var(--muted); }
+    .opt{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; cursor:pointer; -webkit-tap-highlight-color: transparent; }
+    .opt:hover{ background:var(--surface-2, rgba(127,127,127,.08)); }
+    .opt input{ accent-color:var(--brand-green,#3B7E46); }
+
+    .count{ margin:6px 0 10px; color:var(--muted,#6f7772); font-weight:700; }
+
+    .group{ margin:14px 0; }
+    .group h3{ margin:0 0 8px; color:var(--muted); font-weight:800; letter-spacing:.02em; }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:var(--surface);
+      color:var(--text);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(0,0,0,.12); }
+
+    /* ✅ Container clips; NO ellipsis (so iOS never forces "...") */
+    .card-title{
+      font-weight:800;
+      font-size:var(--tile-title-font);
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      /* text-overflow:ellipsis;  <-- REMOVED on purpose */
+      min-width:0;
+      width:100%;
+      display:block;
+    }
+
+    /* ✅ Scale/shrink happens on the inner span (transform affects visual) */
+    .card-title-text{
+      display:inline-block;
+      transform-origin:left center;
+      will-change:transform;
+    }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px;
+      border:1px solid var(--border); background:var(--surface);
+      color:var(--muted);
+      flex:0 0 auto;
+    }
+    .badge.arch{ border-color:rgba(200,80,80,.35); color:rgba(200,80,80,.9); }
+
+    dialog.sheet{
+      width:min(740px, 92vw);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:0;
+      background:var(--card-surface, var(--surface));
+      color:var(--text);
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+    }
+    .sheet::backdrop{ background:rgba(0,0,0,.55); }
+    .sheet header{
+      padding:14px 16px; border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
+      background:var(--card-surface, var(--surface));
+      color:var(--text);
+    }
+    .sheet .body{
+      padding:14px 16px; max-height:70vh; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+      background:var(--card-surface, var(--surface));
+    }
+    .kv{ display:grid; grid-template-columns:180px 1fr; gap:8px 12px; }
+    @media(max-width:700px){ .kv{ grid-template-columns:1fr } }
+    .k{ font-weight:800; color:var(--brand-green,#3B7E46); }
+    .v{ color:var(--text); }
+
+    .qrbox{
+      margin-top:14px; padding:14px; border:1px solid var(--border); border-radius:12px;
+      display:grid; place-items:center; gap:10px; background:var(--surface);
+    }
+    .qrbox img{
+      display:block; width:min(220px, 70%); height:auto;
+      image-rendering:crisp-edges; border-radius:8px;
+      border:1px solid var(--border); background:#fff;
+    }
+    .qrnote{ margin:0; color:var(--muted); font-size:13px; text-align:center; }
+
+    .sheet footer{
+      padding:12px 16px; border-top:1px solid var(--border);
+      display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;
+      background:var(--card-surface, var(--surface)); color:var(--text);
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--border); border-radius:12px;
+      background:var(--surface); color:var(--text);
+      padding:10px 14px; font-weight:800; cursor:pointer; text-decoration:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn[disabled], .btn.disabled{ opacity:.55; pointer-events:none; }
+    .btn-primary{ border-color:transparent; background:var(--brand-green,#3B7E46); color:#fff !important; }
+    #openHub.btn-primary{ color:#fff !important; }
+
+    dialog.sheet.sheet-print{ width:fit-content; max-width:calc(100vw - 24px); }
+    dialog.sheet.sheet-print .body{
+      width:fit-content; max-width:calc(100vw - 24px);
+      overflow-x:auto; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    }
+    .print-help{
+      color:var(--muted,#6f7772);
+      font-size:14px;
+      line-height:1.35;
+      margin:0 0 10px;
+      max-width: min(560px, calc(100vw - 48px));
+    }
+    #printWrap{
+      display:flex; width:100%; max-width:calc(100vw - 48px);
+      overflow-x:auto; overflow-y:hidden;
+      -webkit-overflow-scrolling:touch;
+      justify-content:flex-start;
+      padding: 4px 2px 2px;
+      box-sizing:border-box;
+    }
+    #printWrap.center{ justify-content:center; }
+    #pPreviewHost{ flex:0 0 auto; }
+
+    /* Desktop/Preview (landscape label) */
+    .pv-long{
+      width:fit-content;
+      height:62mm;
+      border:1px dashed var(--border);
+      border-radius:10px;
+      background:#fff;
+      color:#000;
+      display:grid;
+      grid-template-columns: max-content 48mm max-content;
+      align-items:center;
+      gap:2mm;
+      padding:2.2mm;
+      box-sizing:border-box;
+      white-space:nowrap;
+    }
+    .pv-long .left, .pv-long .right{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:max-content;
+    }
+    .pv-long .right{ padding-right:1mm; }
+    .pv-long .make{ font-weight:800; font-size:18pt; line-height:1.05; }
+    .pv-long .model{ font-weight:800; font-size:16pt; line-height:1.05; margin-top:1mm; }
+    /* ✅ 4mm gap (like pressing Enter) */
+    .pv-long .unit{ font-weight:800; font-size:14pt; line-height:1.05; margin-top:4mm; }
+    .pv-long .mid{ width:48mm; height:48mm; display:flex; align-items:center; justify-content:center; background:#fff; }
+    .pv-long .mid img{ width:100%; height:100%; image-rendering:pixelated; display:block; }
+    .pv-long .right{ align-items:flex-end; text-align:right; }
+    .pv-long .lab{ font-weight:800; font-size:12pt; line-height:1.05; opacity:.85; }
+    .pv-long .val{ font-weight:800; font-size:18pt; line-height:1.05; letter-spacing:.6px; margin-top:1mm; }
+
+    /* Summary (square) preview */
+    .pv-sf{
+      width:62mm;
+      height:62mm;
+      border:1px dashed var(--border);
+      border-radius:10px;
+      background:#fff;
+      color:#000;
+      display:grid;
+      grid-template-rows: 46mm max-content max-content;
+      align-content:center;
+      justify-items:center;
+      gap:1mm;
+      padding:2.2mm;
+      box-sizing:border-box;
+      overflow:hidden;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .pv-sf .qr{ width:46mm; height:46mm; display:flex; align-items:center; justify-content:center; }
+    .pv-sf .qr img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+    .pv-sf .lab{
+      width:100%;
+      text-align:center;
+      font-weight:800;
+      letter-spacing:.2px;
+      line-height:1.05;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:var(--sf-lab-font);
+      opacity:.85;
+    }
+    .pv-sf .val{
+      width:100%;
+      text-align:center;
+      font-weight:0;
+      letter-spacing:.6px;
+      line-height:1.05;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:16pt;
+    }
+
+    /* Hidden print iframe */
+    #fv-print-frame{ position:fixed; right:0; bottom:0; width:0; height:0; border:0; visibility:hidden; }
+
+    /* Overlay */
+    .pdf-loading{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:2147483647;
+      padding:16px;
+      pointer-events:auto;
+    }
+    .pdf-loading.hidden{ display:none; }
+    .pdf-loading-inner{
+      max-width:260px;
+      width:100%;
+      border-radius:16px;
+      background:var(--surface,#ffffff);
+      padding:16px 18px 14px;
+      box-shadow:0 18px 45px rgba(0,0,0,.26);
+      text-align:center;
+      border:1px solid var(--border);
+    }
+    .pdf-loading-spinner{
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      border:3px solid rgba(0,0,0,0.12);
+      border-top-color:var(--accent,#2F6C3C);
+      margin:0 auto 10px;
+      animation:pdf-spin 0.8s linear infinite;
+    }
+    .pdf-loading-text{
+      font-size:0.95rem;
+      font-weight:600;
+      color:var(--text,#111827);
+      margin:0;
+    }
+    .pdf-loading-sub{
+      font-size:0.78rem;
+      margin-top:4px;
+      color:var(--muted,#67706B);
+    }
+    @keyframes pdf-spin{ to{ transform:rotate(360deg); } }
+
+    /* Narrow label type popup */
+    dialog#labelChoice.sheet{ width:fit-content; max-width:min(260px, 92vw); }
+    .radio-box{
+      display:grid;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:var(--surface);
+    }
+    .radio-row{
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .radio-row:hover{ background:var(--surface-2, rgba(127,127,127,.08)); }
+
+    .radio-row,
+    .radio-row:focus,
+    .radio-row:focus-within{
+      outline:none !important;
+      box-shadow:none !important;
+    }
+    .radio-row input{
+      accent-color:var(--brand-green,#3B7E46);
+      outline:none !important;
+      box-shadow:none !important;
+    }
+    .radio-row input:focus{
+      outline:none !important;
+      box-shadow:none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="page">
+      <h1 id="pageTitle" class="title">Equipment Lookup</h1>
+      <p id="subtitle" class="sub">Showing Active only. Search by make, model, serial, year, or unit.</p>
+
+      <div class="bar">
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/></svg>
+          <input id="q" type="search" placeholder="Search" autocomplete="off"/>
+        </div>
+
+        <button id="filterBtn" class="icon-btn" aria-label="Filters" aria-haspopup="true" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+
+      <div id="filterPop" class="popover" hidden>
+        <header>Status</header>
+        <label class="opt"><input type="radio" name="statusMode" value="active" checked/> <span>Active</span></label>
+        <label class="opt"><input type="radio" name="statusMode" value="archived"/> <span>Archived</span></label>
+        <label class="opt"><input type="radio" name="statusMode" value="all"/> <span>All</span></label>
+      </div>
+
+      <p id="count" class="count">0 entries</p>
+      <div id="list"></div>
+    </div>
+  </fv-shell>
+
+  <!-- Overlay -->
+  <div id="pdfLoading" class="pdf-loading hidden" role="alertdialog" aria-live="assertive" aria-hidden="true">
+    <div class="pdf-loading-inner">
+      <div class="pdf-loading-spinner"></div>
+      <p id="pdfLoadingText" class="pdf-loading-text">Creating label PDF…</p>
+      <p id="pdfLoadingSub" class="pdf-loading-sub">Please keep this tab open.</p>
+    </div>
+  </div>
+
+  <!-- Hidden iframe for desktop print -->
+  <iframe id="fv-print-frame"></iframe>
+
+  <!-- Detail modal -->
+  <dialog id="detail" class="sheet" aria-modal="true">
+    <header>
+      <strong id="dTitle">Details</strong>
+      <button id="dClose" class="btn" type="button">Close</button>
+    </header>
+    <div class="body">
+      <div class="kv" id="dKV"></div>
+
+      <div id="qrSection" class="qrbox" hidden>
+        <h4>Equipment QR</h4>
+        <img id="qrImg" alt="Equipment QR"/>
+        <p id="qrLbl" class="qrnote"></p>
+      </div>
+    </div>
+    <footer>
+      <button id="btnPrintQR" class="btn" type="button" disabled>Reprint QR</button>
+      <a id="openHub" class="btn btn-primary disabled" href="#" aria-disabled="true">Open Hub</a>
+      <button id="dClose2" class="btn" type="button">Close</button>
+    </footer>
+  </dialog>
+
+  <!-- Label type (NO Close button; Cancel only) -->
+  <dialog id="labelChoice" class="sheet" aria-modal="true">
+    <header>
+      <strong>Label type</strong>
+      <span></span>
+    </header>
+    <div class="body">
+      <div class="radio-box">
+        <label class="radio-row"><input type="radio" name="labelMode" value="summary"/> <span><b>Summary</b></span></label>
+        <label class="radio-row"><input type="radio" name="labelMode" value="detailed"/> <span><b>Detailed</b></span></label>
+      </div>
+    </div>
+    <footer>
+      <button id="cOk" class="btn btn-primary" type="button">OK</button>
+      <button id="cCancel" class="btn" type="button">Cancel</button>
+    </footer>
+  </dialog>
+
+  <!-- Preview -->
+  <dialog id="printPrev" class="sheet sheet-print" aria-modal="true">
+    <header>
+      <strong id="pHdrTitle">QR Label Preview</strong>
+      <button id="pClose" class="btn" type="button">Close</button>
+    </header>
+    <div class="body">
+      <p id="pHelp" class="print-help">Tap <b>Create Label</b>.</p>
+      <div id="printWrap"><div id="pPreviewHost"></div></div>
+    </div>
+    <footer>
+      <button id="pCreate" class="btn btn-primary" type="button">Create Label</button>
+      <button id="pCancel" class="btn" type="button">Cancel</button>
+    </footer>
+  </dialog>
+
+  <script type="module">
+    /* =====================================================================
+       /pages/equipment/actions/lookup.html  (FULL FILE)
+       Rev: 2026-02-20f+unit-on-label+4mm-gap
+
+       FIX (per Dane):
+       ✅ NEVER wraps. Single line only.
+       ✅ NO ellipsis ever (we removed text-overflow:ellipsis).
+       ✅ Shrink that one row (down to --tile-title-font-min).
+       ✅ If still too long, scaleX the INNER span so it visually fits.
+
+       UPDATE (per Dane):
+       ✅ Detailed label LEFT column includes Unit ID / Unit # under Make + Model.
+       ✅ Add 4mm vertical gap between Model and Unit (like pressing Enter).
+       ===================================================================== */
+
+    import {
+      ready,
+      getFirestore,
+      collection, query, where, onSnapshot,
+      doc, setDoc, serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    const FV_LABEL_PDF_ENDPOINT = 'https://farmvista-pdf-label-300398089669.us-central1.run.app/label';
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    // Page elements
+    const list = $('#list');
+    const countEl = $('#count');
+    const qInput = $('#q');
+    const subtitle = $('#subtitle');
+    const pageTitleEl = $('#pageTitle');
+
+    const filterBtn = $('#filterBtn');
+    const filterPop = $('#filterPop');
+
+    // Overlay
+    const pdfLoading = $('#pdfLoading');
+    const pdfLoadingText = $('#pdfLoadingText');
+    const pdfLoadingSub = $('#pdfLoadingSub');
+
+    // Detail modal
+    const dlg = $('#detail');
+    const dTitle = $('#dTitle');
+    const dKV = $('#dKV');
+    const btnHub = $('#openHub');
+    const btnPrintQR = $('#btnPrintQR');
+    const qrSection = $('#qrSection');
+    const qrImg = $('#qrImg');
+    const qrLbl = $('#qrLbl');
+
+    // Label choice
+    const cDlg = $('#labelChoice');
+    const cOk = $('#cOk');
+    const cCancel = $('#cCancel');
+
+    // Preview modal
+    const pDlg = $('#printPrev');
+    const pHost = $('#pPreviewHost');
+    const pClose = $('#pClose');
+    const pCancel = $('#pCancel');
+    const pCreate = $('#pCreate');
+
+    const printFrame = $('#fv-print-frame');
+
+    // Query params
+    const qs = new URLSearchParams(location.search);
+    const TYPE = (qs.get('type') || 'tractor').toLowerCase();
+    const IS_STARFIRE = TYPE === 'starfire';
+
+    const TYPE_LABELS = {
+      tractor:{ sing:'Tractor', plural:'Tractors' },
+      combine:{ sing:'Combine', plural:'Combines' },
+      sprayer:{ sing:'Sprayer', plural:'Sprayers' },
+      implement:{ sing:'Implement', plural:'Implements' },
+      fertilizer:{ sing:'Fertilizer', plural:'Fertilizer Equipment' },
+      truck:{ sing:'Truck', plural:'Trucks' },
+      trailer:{ sing:'Trailer', plural:'Trailers' },
+      construction:{ sing:'Construction', plural:'Construction Equipment' },
+      starfire:{ sing:'StarFire', plural:'StarFire Receivers' }
+    };
+    function getTypeMeta(type){
+      const meta = TYPE_LABELS[type] || {};
+      const proper = type ? type.charAt(0).toUpperCase()+type.slice(1) : 'Equipment';
+      return { type, sing: meta.sing || proper, plural: meta.plural || (proper.endsWith('s') ? proper : proper+'s') };
+    }
+    const TYPE_META = getTypeMeta(TYPE);
+
+    document.title = `FarmVista • ${TYPE_META.plural}`;
+    if (pageTitleEl) pageTitleEl.textContent = `${TYPE_META.sing} Lookup`;
+
+    // Data
+    let DATA = [];
+    let unsub = null;
+    let mode = 'active';
+
+    // Utils
+    const last6 = v => String(v||'').slice(-6);
+    const safe = v => (v==null ? '' : String(v));
+
+    function isMobileLike(){
+      const ua = (navigator.userAgent || '').toLowerCase();
+      return /iphone|ipad|ipod|android|mobi/.test(ua);
+    }
+
+    function normStatus(d){
+      const s = String((d && d.status != null ? d.status : '')||'').toLowerCase().trim();
+      if (s === 'archived' || s === 'inactive') return 'archived';
+      if (d && d.active === false) return 'archived';
+      return 'active';
+    }
+    const isArchived = d => normStatus(d) === 'archived';
+
+    function unitIdText(d){
+      const u = (d && (d.unitId ?? d?.extras?.unitId)) ?? '';
+      return String(u || '').trim();
+    }
+
+    const mmText = d => [safe(d.makeName), safe(d.modelName)].filter(Boolean).join(' ').trim();
+
+    const displayLine = d => {
+      const mm = mmText(d);
+      const unit = unitIdText(d);
+      const ls = last6(d.serial);
+      const fallback = `(${TYPE_META.sing.toLowerCase()})`;
+
+      const leftParts = [mm, unit ? `(${unit})` : ''].filter(Boolean).join(' ');
+      if (leftParts){
+        return ls ? `${leftParts} — #${ls}` : leftParts;
+      }
+      return ls ? `#${ls}` : fallback;
+    };
+
+    const titleFor = d => {
+      const mm = mmText(d);
+      const unit = unitIdText(d);
+      const ls = last6(d.serial);
+      const fallback = `(${TYPE_META.sing})`;
+
+      const leftParts = [mm, unit].filter(Boolean).join(' ');
+      if (leftParts){
+        return ls ? `${leftParts} (#${ls})` : leftParts;
+      }
+      return d.name || fallback;
+    };
+
+    const hubUrl = (id) =>
+      `${location.origin}/pages/equipment/actions/hub.html?id=${encodeURIComponent(id)}`;
+
+    function setPdfLoading(active, text, sub){
+      if (pdfLoadingText && text) pdfLoadingText.textContent = text;
+      if (pdfLoadingSub && sub) pdfLoadingSub.textContent = sub;
+      if (active){
+        pdfLoading.classList.remove('hidden');
+        pdfLoading.setAttribute('aria-hidden','false');
+      } else {
+        pdfLoading.classList.add('hidden');
+        pdfLoading.setAttribute('aria-hidden','true');
+      }
+    }
+
+    function openDialog(d){
+      try{ d.showModal(); }catch{ d.setAttribute('open',''); }
+    }
+    function closeDialog(d){
+      try{ d.close(); }catch{ d.removeAttribute('open'); }
+    }
+
+    // ✅ shrink-to-fit + scaleX squeeze ON INNER SPAN
+    function fitCardTitles(){
+      if (!list) return;
+
+      const cs = getComputedStyle(document.documentElement);
+      const BASE = parseFloat(cs.getPropertyValue('--tile-title-font')) || 16;
+      const MIN  = parseFloat(cs.getPropertyValue('--tile-title-font-min')) || 8;
+
+      const spans = list.querySelectorAll('.card-title-text');
+      if (!spans.length) return;
+
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        spans.forEach(span=>{
+          const wrap = span.closest('.card-title');
+          if (!wrap) return;
+
+          // reset
+          span.style.transform = '';
+          span.style.fontSize = BASE + 'px';
+
+          // if fits, done
+          if (span.scrollWidth <= wrap.clientWidth) return;
+
+          // binary search font size down to MIN
+          let low = MIN, high = BASE, best = MIN;
+          for (let i=0;i<16;i++){
+            const mid = (low + high) / 2;
+            span.style.fontSize = mid + 'px';
+            if (span.scrollWidth <= wrap.clientWidth){
+              best = mid;
+              low = mid;
+            } else {
+              high = mid;
+            }
+          }
+          span.style.fontSize = Math.max(MIN, Math.min(BASE, best)) + 'px';
+
+          // if still too wide, scaleX (visual) to fit
+          if (span.scrollWidth > wrap.clientWidth){
+            const ratio = wrap.clientWidth / span.scrollWidth;
+            const clamped = Math.max(0.60, Math.min(1, ratio)); // allow heavy squeeze if needed
+            span.style.transform = `scaleX(${clamped})`;
+          }
+        });
+      }));
+    }
+
+    // Search + render
+    function render(){
+      const q = (qInput.value || '').toLowerCase().trim();
+
+      const statusFiltered = DATA.filter(d=>{
+        if (mode === 'all') return true;
+        return mode === 'archived' ? isArchived(d) : !isArchived(d);
+      });
+
+      const rows = statusFiltered.filter(d=>{
+        if (!q) return true;
+        const unit = unitIdText(d);
+        const blob = [
+          displayLine(d),
+          d.makeName,
+          d.modelName,
+          unit,
+          d.unitId,
+          d?.extras?.unitId,
+          d.serial,
+          d.year,
+          d.notes,
+          d.starfireSerial
+        ].map(x=>String(x||'').toLowerCase()).join(' ');
+        return blob.includes(q);
+      });
+
+      subtitle.textContent =
+        mode === 'all' ? `Showing Active + Archived. Search by make, model, serial, year, or unit.`
+        : mode === 'archived' ? `Showing Archived only. Search by make, model, serial, year, or unit.`
+        : `Showing Active only. Search by make, model, serial, year, or unit.`;
+
+      countEl.textContent = `${rows.length}/${statusFiltered.length} entries (${mode})`;
+      list.innerHTML = '';
+
+      if(!rows.length){
+        const p = document.createElement('p');
+        p.className='sub'; p.textContent='No matches.';
+        list.appendChild(p);
+        return;
+      }
+
+      const by = {};
+      rows.forEach(d=>{
+        const name = displayLine(d);
+        const k = (name || '?').charAt(0).toUpperCase();
+        (by[k] ||= []).push(d);
+      });
+
+      Object.keys(by).sort().forEach(letter=>{
+        const wrap = document.createElement('div'); wrap.className='group';
+        const h = document.createElement('h3'); h.textContent = letter; wrap.appendChild(h);
+
+        by[letter].forEach(d=>{
+          const card = document.createElement('div'); card.className='card'; card.setAttribute('role','button');
+
+          const left = document.createElement('div');
+          left.style.minWidth='0';
+          left.style.flex='1 1 auto';
+
+          const title = document.createElement('div');
+          title.className='card-title';
+
+          const span = document.createElement('span');
+          span.className = 'card-title-text';
+          span.textContent = displayLine(d);
+          title.appendChild(span);
+
+          left.append(title);
+
+          const right = document.createElement('div');
+          right.style.display='flex';
+          right.style.gap='8px';
+          right.style.alignItems='center';
+          right.style.flex='0 0 auto';
+
+          if (isArchived(d)) {
+            const badge = document.createElement('span');
+            badge.className='badge arch';
+            badge.textContent='Archived';
+            right.append(badge);
+          }
+
+          card.append(left, right);
+          card.addEventListener('click', ()=> openDetail(d));
+          wrap.appendChild(card);
+        });
+
+        list.appendChild(wrap);
+      });
+
+      fitCardTitles();
+    }
+
+    // Detail modal helpers
+    const has = v => !(v===undefined || v===null || v==='');
+    function addRow(k, v){
+      if(!has(v)) return;
+      const K = document.createElement('div'); K.className='k'; K.textContent = k;
+      const V = document.createElement('div'); V.className='v'; V.textContent = String(v);
+      dKV.append(K,V);
+    }
+
+    function getQrUrl(d){
+      try{
+        if (!d || !d.qr) return '';
+        const img = d.qr.image;
+        if (!img) return '';
+        if (typeof img === 'string') return img;
+        if (typeof img.url === 'string') return img.url;
+        return '';
+      }catch{ return ''; }
+    }
+
+    function normalizeSerial(s){ return String(s||'').trim().toUpperCase(); }
+    function serialLast6(serial){
+      const s = normalizeSerial(serial || '');
+      if(!s) return '';
+      return s.length <= 6 ? s : s.slice(-6);
+    }
+    function pickStarfireSerial(d){
+      const raw = normalizeSerial(d?.starfireSerial || d?.serial || '');
+      return raw || '';
+    }
+
+    function esc(s){
+      return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+    }
+
+    // --- Dynamic cut helpers (px <-> mm) ---
+    function pxToMm(px){ return (px * 25.4) / 96; }
+    function clampMm(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+    function roundUpMm(v){ return Math.ceil(v * 10) / 10; }
+
+    // ===== QR create (MATCH Add page) =====
+    async function waitQRReady(){
+      let tries=0;
+      while(!(window.__qrReady && window.QRCode && window.QRCode.CorrectLevel) && tries++<200){
+        await new Promise(r=>setTimeout(r,50));
+      }
+      if(!(window.QRCode && window.QRCode.CorrectLevel)) throw new Error('qr-lib');
+    }
+
+    async function makeQRForUrl(absUrl){
+      await waitQRReady();
+      const size=512, ecc=window.QRCode.CorrectLevel.H;
+      const holder=document.createElement('div');
+      new QRCode(holder,{ text:absUrl, width:size, height:size, colorDark:"#000000", colorLight:"#ffffff", correctLevel:ecc });
+
+      const node = await new Promise((res,rej)=>{
+        const start=Date.now();
+        (function check(){
+          const n = holder.querySelector('canvas') || holder.querySelector('img');
+          if(n) res(n);
+          else if(Date.now()-start>4000) rej(new Error('qr-timeout'));
+          else requestAnimationFrame(check);
+        })();
+      });
+
+      let canvas;
+      if(node.tagName==='CANVAS'){
+        canvas=node;
+      }else{
+        canvas=document.createElement('canvas'); canvas.width=size; canvas.height=size;
+        const ctx=canvas.getContext('2d');
+        await new Promise((res,rej)=>{
+          const img=new Image(); img.crossOrigin='anonymous';
+          img.onload=()=>{ ctx.drawImage(img,0,0,size,size); res(); };
+          img.onerror=rej; img.src=node.src;
+        });
+      }
+      return canvas.toDataURL('image/png');
+    }
+
+    // Label/print state
+    let __pending = null;
+    let __mode = 'detailed';
+    let __cutLenMm = 140;
+    let __previewQrSrc = '';
+
+    function clearPreviewHost(){
+      pHost.innerHTML = '';
+      __previewQrSrc = '';
+    }
+
+    function buildMobilePortraitHtml({ mode, qrSrc, make, model, unit, serial6, cutLenMm }){
+      const isSummary = mode === 'summary';
+      const pad = 2.2;
+
+      if (isSummary){
+        return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; overflow:hidden; }
+.page{ width:100%; height:100%; display:block; overflow:hidden; position:relative; }
+.rot{ width:${cutLenMm}mm; height:62mm; transform-origin:top left; transform:rotate(-90deg) translateX(-${cutLenMm}mm); }
+.label{
+  width:${cutLenMm}mm; height:62mm;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid; grid-template-rows:46mm max-content max-content;
+  align-content:center; justify-items:center;
+  gap:1mm;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000; overflow:hidden;
+}
+.qr{ width:46mm; height:46mm; display:flex; align-items:center; justify-content:center; }
+.qr img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.lab{ width:100%; text-align:center; font-weight:800; font-size:10pt; opacity:.85; letter-spacing:.2px; }
+.val{ width:100%; text-align:center; font-weight:0; font-size:16pt; letter-spacing:.6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+</style></head><body>
+<div class="page"><div class="rot"><div class="label">
+  <div class="qr"><img alt="QR" src="${qrSrc}"></div>
+  <div class="lab">VIN/Serial</div>
+  <div class="val">${esc(serial6 || '—')}</div>
+</div></div></div>
+</body></html>`;
+      }
+
+      return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; overflow:hidden; }
+.page{ width:100%; height:100%; display:block; overflow:hidden; position:relative; }
+.rot{ width:${cutLenMm}mm; height:62mm; transform-origin:top left; transform:rotate(90deg) translateY(-62mm); }
+.label{
+  width:${cutLenMm}mm; height:62mm;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid; grid-template-columns:max-content 48mm max-content;
+  gap:2mm; align-items:center;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000; overflow:hidden;
+}
+.left,.right{ display:flex; flex-direction:column; justify-content:center; min-width:max-content; }
+.make{ font-weight:0; font-size:18pt; line-height:1.05; white-space:nowrap; }
+.model{ font-weight:800; font-size:16pt; line-height:1.05; white-space:nowrap; margin-top:1mm; }
+/* ✅ 4mm gap (like pressing Enter) */
+.unit{ font-weight:800; font-size:14pt; line-height:1.05; white-space:nowrap; margin-top:4mm; }
+.mid{ width:48mm; height:48mm; display:flex; align-items:center; justify-content:center; }
+.mid img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.right{ align-items:flex-end; text-align:right; }
+.lab{ font-weight:800; font-size:12pt; line-height:1.05; opacity:.85; white-space:nowrap; }
+.val{ font-weight:0; font-size:18pt; line-height:1.05; letter-spacing:.6px; margin-top:1mm; white-space:nowrap; }
+</style></head><body>
+<div class="page"><div class="rot"><div class="label">
+  <div class="left">
+    <div class="make">${esc(make||'—')}</div>
+    <div class="model">${esc(model||'—')}</div>
+    <div class="unit">${esc(unit||'')}</div>
+  </div>
+  <div class="mid"><img alt="QR" src="${qrSrc}"></div>
+  <div class="right"><div class="lab">VIN/Serial</div><div class="val">${esc(serial6||'—')}</div></div>
+</div></div></div>
+</body></html>`;
+    }
+
+    function buildDesktopHtml({ mode, qrSrc, make, model, unit, serial6 }){
+      const isSummary = mode === 'summary';
+      const pad = 2.2;
+
+      if (isSummary){
+        return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; }
+.label{
+  width:100%; height:100%;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid; grid-template-rows:46mm max-content max-content;
+  align-content:center; justify-items:center;
+  gap:1mm;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000; overflow:hidden;
+}
+.qr{ width:46mm; height:46mm; display:flex; align-items:center; justify-content:center; }
+.qr img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.lab{ width:100%; text-align:center; font-weight:800; font-size:10pt; opacity:.85; letter-spacing:.2px; }
+.val{ width:100%; text-align:center; font-weight:0; font-size:16pt; letter-spacing:.6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+</style></head><body>
+<div class="label">
+  <div class="qr"><img alt="QR" src="${qrSrc}"></div>
+  <div class="lab">VIN/Serial</div>
+  <div class="val">${esc(serial6 || '—')}</div>
+</div>
+</body></html>`;
+      }
+
+      return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; }
+.label{
+  width:100%; height:100%;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid; grid-template-columns:max-content 48mm max-content;
+  gap:2mm; align-items:center;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000; overflow:hidden;
+}
+.left,.right{ display:flex; flex-direction:column; justify-content:center; min-width:max-content; }
+.make{ font-weight:0; font-size:18pt; line-height:1.05; white-space:nowrap; }
+.model{ font-weight:800; font-size:16pt; line-height:1.05; white-space:nowrap; margin-top:1mm; }
+/* ✅ 4mm gap (like pressing Enter) */
+.unit{ font-weight:800; font-size:14pt; line-height:1.05; white-space:nowrap; margin-top:4mm; }
+.mid{ width:48mm; height:48mm; display:flex; align-items:center; justify-content:center; background:#fff; }
+.mid img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.right{ align-items:flex-end; text-align:right; }
+.lab{ font-weight:800; font-size:12pt; line-height:1.05; opacity:.85; white-space:nowrap; }
+.val{ font-weight:0; font-size:18pt; line-height:1.05; letter-spacing:.6px; margin-top:1mm; white-space:nowrap; }
+</style></head><body>
+<div class="label">
+  <div class="left">
+    <div class="make">${esc(make||'—')}</div>
+    <div class="model">${esc(model||'—')}</div>
+    <div class="unit">${esc(unit||'')}</div>
+  </div>
+  <div class="mid"><img alt="QR" src="${qrSrc}"></div>
+  <div class="right"><div class="lab">VIN/Serial</div><div class="val">${esc(serial6||'—')}</div></div>
+</div>
+</body></html>`;
+    }
+
+    async function setPreview({ mode, url, make, model, unit, serial6, cutLenMm }){
+      const bust = (url && url.includes('?') ? '&' : '?') + '_=' + Date.now();
+      const qrSrc = url ? (url.startsWith('data:') ? url : (url + bust)) : '';
+
+      clearPreviewHost();
+      __previewQrSrc = qrSrc;
+
+      pCreate.disabled = true;
+
+      if (mode === 'summary'){
+        const wrap = document.createElement('div');
+        wrap.className = 'pv-sf';
+
+        const q = document.createElement('div'); q.className='qr';
+        const img = document.createElement('img'); img.alt='QR'; img.src=qrSrc; q.appendChild(img);
+
+        const lab = document.createElement('div'); lab.className='lab'; lab.textContent = 'VIN/Serial';
+        const val = document.createElement('div'); val.className='val'; val.textContent = serial6 || '—';
+
+        wrap.append(q, lab, val);
+        pHost.appendChild(wrap);
+
+        __cutLenMm = 62;
+        pCreate.disabled = false;
+        return;
+      }
+
+      const wrap = document.createElement('div');
+      wrap.className = 'pv-long';
+      wrap.style.width = `${cutLenMm}mm`;
+
+      const left = document.createElement('div'); left.className='left';
+      const mk = document.createElement('div'); mk.className='make'; mk.textContent = make || '—';
+      const md = document.createElement('div'); md.className='model'; md.textContent = model || '—';
+      const un = document.createElement('div'); un.className='unit'; un.textContent = unit || '';
+      left.append(mk,md,un);
+
+      const mid = document.createElement('div'); mid.className='mid';
+      const img = document.createElement('img'); img.alt='QR'; img.src=qrSrc; mid.appendChild(img);
+
+      const right = document.createElement('div'); right.className='right';
+      const lab = document.createElement('div'); lab.className='lab'; lab.textContent='VIN/Serial';
+      const val = document.createElement('div'); val.className='val'; val.textContent = serial6 || '—';
+      right.append(lab,val);
+
+      wrap.append(left,mid,right);
+      pHost.appendChild(wrap);
+
+      wrap.style.width = 'fit-content';
+      await new Promise(r=>requestAnimationFrame(r));
+      await new Promise(r=>requestAnimationFrame(r));
+
+      const rect = wrap.getBoundingClientRect();
+      let measuredMm = pxToMm(rect.width);
+
+      measuredMm = measuredMm + 1.0;
+      measuredMm = clampMm(measuredMm, 70, 210);
+      __cutLenMm = roundUpMm(measuredMm);
+
+      wrap.style.width = `${__cutLenMm}mm`;
+      pCreate.disabled = false;
+    }
+
+    async function showOverlayAndYield(){
+      closeDialog(pDlg);
+      closeDialog(cDlg);
+      closeDialog(dlg);
+
+      setPdfLoading(true, 'Creating label PDF…', 'Please keep this tab open.');
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      await new Promise(r=>setTimeout(r, 80));
+    }
+
+    async function createPdf(){
+      if (!__pending) return;
+
+      pCreate.disabled = true;
+      await showOverlayAndYield();
+
+      try{
+        const mobile = isMobileLike();
+        const cutLenMm = (__mode === 'summary') ? 62 : __cutLenMm;
+
+        const widthMm  = mobile ? 62 : cutLenMm;
+        const heightMm = mobile ? cutLenMm : 62;
+        const landscape = false;
+
+        const html = mobile
+          ? buildMobilePortraitHtml({
+              mode: __mode,
+              qrSrc: __previewQrSrc || __pending.url,
+              make: __pending.make,
+              model: __pending.model,
+              unit: __pending.unit,
+              serial6: __pending.serial6,
+              cutLenMm
+            })
+          : buildDesktopHtml({
+              mode: __mode,
+              qrSrc: __previewQrSrc || __pending.url,
+              make: __pending.make,
+              model: __pending.model,
+              unit: __pending.unit,
+              serial6: __pending.serial6
+            });
+
+        const resp = await fetch(FV_LABEL_PDF_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            html,
+            widthMm,
+            heightMm,
+            landscape,
+            filename: (__mode === 'summary' ? 'fv-qr-summary.pdf' : 'fv-qr-detailed.pdf')
+          })
+        });
+
+        const errText = !resp.ok ? await resp.text().catch(()=> '') : '';
+        if (!resp.ok){
+          console.warn('[label-pdf] failed', resp.status, errText);
+          alert('Label PDF failed. Check Cloud Run logs.');
+          return;
+        }
+
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+
+        if (mobile){
+          window.location.assign(url);
+        } else {
+          printFrame.onload = ()=> { try{ printFrame.contentWindow.focus(); printFrame.contentWindow.print(); } catch {} };
+          printFrame.src = url;
+        }
+      } finally {
+        setPdfLoading(false);
+        pCreate.disabled = false;
+      }
+    }
+
+    function wireReprintFlow(d, url){
+      btnPrintQR.disabled = false;
+      btnPrintQR.textContent = 'Reprint QR';
+      btnPrintQR.onclick = ()=>{
+        const rawSerial = IS_STARFIRE ? (pickStarfireSerial(d) || (d.serial || '')) : (d.serial || '');
+        const s6 = serialLast6(rawSerial) || serialLast6(d.serial) || '';
+
+        __pending = {
+          url,
+          make: d.makeName || '',
+          model: d.modelName || '',
+          unit: unitIdText(d) || '',
+          serial6: s6
+        };
+
+        __mode = IS_STARFIRE ? 'summary' : 'detailed';
+        __cutLenMm = (__mode === 'summary') ? 62 : 140;
+        clearPreviewHost();
+
+        const r = cDlg.querySelector(`input[name="labelMode"][value="${__mode}"]`);
+        if (r) r.checked = true;
+
+        openDialog(cDlg);
+      };
+    }
+
+    function openDetail(d){
+      btnHub.classList.remove('disabled');
+      btnHub.removeAttribute('aria-disabled');
+      btnHub.href = hubUrl(d.id);
+
+      dTitle.textContent = titleFor(d);
+      dKV.innerHTML = '';
+      addRow('Type', TYPE_META.sing);
+      addRow('Make', d.makeName);
+      addRow('Model', d.modelName);
+      addRow('Unit ID / Unit #', unitIdText(d));
+      addRow('Year', d.year);
+
+      const ls = last6(d.serial);
+      if(ls) addRow('Serial (last 6)', ls);
+      addRow('Notes', d.notes);
+
+      const labelText = [safe(d.modelName)].filter(Boolean).join(' ') + (ls ? ` - #${ls}` : '');
+
+      qrSection.hidden = false;
+
+      const url = getQrUrl(d);
+
+      if (url){
+        const bust = (url.includes('?') ? '&' : '?') + '_=' + Date.now();
+        qrImg.src = url.startsWith('data:') ? url : (url + bust);
+        qrImg.alt = `QR for ${labelText || TYPE_META.sing}`;
+        qrLbl.textContent = labelText || TYPE_META.sing;
+
+        wireReprintFlow(d, url);
+      } else {
+        qrImg.removeAttribute('src');
+        qrImg.alt = 'Equipment QR';
+        qrLbl.textContent = 'No QR image saved for this equipment.';
+
+        btnPrintQR.disabled = false;
+        btnPrintQR.textContent = 'Create QR Code';
+
+        btnPrintQR.onclick = async ()=>{
+          const prevText = btnPrintQR.textContent;
+          try{
+            btnPrintQR.disabled = true;
+            btnPrintQR.textContent = 'Creating…';
+
+            const hubAbs = location.origin + `/pages/equipment/actions/hub.html?id=${encodeURIComponent(d.id)}`;
+            const dataURL = await makeQRForUrl(hubAbs);
+
+            const db = getFirestore();
+            await setDoc(
+              doc(db,'equipment', d.id),
+              { qr: { image: dataURL, updatedAt: serverTimestamp() } },
+              { merge:true }
+            );
+
+            qrImg.src = dataURL;
+            qrImg.alt = `QR for ${labelText || TYPE_META.sing}`;
+            qrLbl.textContent = labelText || TYPE_META.sing;
+
+            wireReprintFlow(d, dataURL);
+          }catch(e){
+            console.error(e);
+            alert('Could not create QR code.');
+            btnPrintQR.disabled = false;
+            btnPrintQR.textContent = prevText || 'Create QR Code';
+          }
+        };
+      }
+
+      openDialog(dlg);
+    }
+
+    // Hub button click guard
+    btnHub.addEventListener('click', (e)=>{
+      const href = btnHub.getAttribute('href') || '';
+      if (!href.includes('id=')) e.preventDefault();
+    });
+
+    // Close buttons
+    const closeDetail = ()=> closeDialog(dlg);
+    $('#dClose').addEventListener('click', closeDetail);
+    $('#dClose2').addEventListener('click', closeDetail);
+
+    pClose.addEventListener('click', ()=> closeDialog(pDlg));
+    pCancel.addEventListener('click', ()=> closeDialog(pDlg));
+    cCancel.addEventListener('click', ()=> closeDialog(cDlg));
+    pCreate.addEventListener('click', createPdf);
+
+    cOk.addEventListener('click', ()=>{
+      const picked = cDlg.querySelector('input[name="labelMode"]:checked');
+      __mode = picked ? picked.value : __mode;
+      closeDialog(cDlg);
+
+      if (!__pending) return;
+
+      __cutLenMm = (__mode === 'summary') ? 62 : 140;
+
+      openDialog(pDlg);
+      setPreview({
+        mode: __mode,
+        url: __pending.url,
+        make: __pending.make,
+        model: __pending.model,
+        unit: __pending.unit,
+        serial6: __pending.serial6,
+        cutLenMm: __cutLenMm
+      });
+    });
+
+    // Filter popover
+    function openPop(){
+      if (!filterPop.hidden) return;
+      const r = filterBtn.getBoundingClientRect();
+      filterPop.style.top = `${r.bottom + window.scrollY + 8}px`;
+      const maxLeft = window.scrollX + document.documentElement.clientWidth - 12 - 220;
+      const desiredLeft = r.right + window.scrollX - 220;
+      filterPop.style.left = `${Math.max(12, Math.min(maxLeft, desiredLeft))}px`;
+      filterPop.hidden = false;
+      filterBtn.setAttribute('aria-expanded','true');
+    }
+    function closePop(){
+      if (filterPop.hidden) return;
+      filterPop.hidden = true;
+      filterBtn.setAttribute('aria-expanded','false');
+    }
+    filterBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if (filterPop.hidden) openPop(); else closePop();
+    });
+    document.addEventListener('click', (e)=>{
+      if (!filterPop.hidden && !filterPop.contains(e.target) && e.target !== filterBtn) closePop();
+    });
+    window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePop(); });
+    window.addEventListener('scroll', () => { if (!filterPop.hidden) closePop(); }, { passive:true });
+
+    filterPop.addEventListener('change', (e)=>{
+      if (e.target && e.target.name === 'statusMode') {
+        mode = e.target.value;
+        render();
+        closePop();
+      }
+    });
+
+    function syncRadios(){
+      const r = filterPop.querySelector(`input[name="statusMode"][value="${mode}"]`);
+      if (r) r.checked = true;
+    }
+
+    // Firestore listener
+    function attachListener(){
+      if (unsub) return;
+      const db = getFirestore();
+      const qref = query(collection(db,'equipment'), where('type','==', TYPE));
+      unsub = onSnapshot(qref, (snap)=>{
+        const out = [];
+        snap.forEach(docSnap=>{
+          const d = docSnap.data() || {};
+          out.push({ id: docSnap.id, ...d });
+        });
+        out.sort((a,b)=> displayLine(a).localeCompare(displayLine(b)));
+        DATA = out;
+        render();
+      }, (err)=> console.error(`${TYPE_META.plural} listener error:`, err));
+    }
+
+    function detachListener(){
+      if (unsub){
+        try{ unsub(); }catch{}
+        unsub = null;
+      }
+    }
+
+    function resume(){
+      attachListener();
+      fitCardTitles();
+    }
+
+    // Boot
+    (async()=>{
+      await ready;
+      attachListener();
+      syncRadios();
+
+      qInput.addEventListener('input', render);
+
+      window.addEventListener('resize', fitCardTitles, { passive:true });
+      window.addEventListener('orientationchange', ()=>setTimeout(fitCardTitles, 80), { passive:true });
+
+      window.addEventListener('pageshow', resume);
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') resume(); });
+      window.addEventListener('focus', resume);
+      window.addEventListener('pagehide', ()=>{ detachListener(); });
+    })();
+  </script>
+</body>
+</html>

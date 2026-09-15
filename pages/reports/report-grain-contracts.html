@@ -1,0 +1,4659 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Grain Contract Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <script src="/js/core/version/version.js" defer></script>
+  <script src="/js/core/core.js" defer></script>
+  <script src="/js/core/shell/fv-shell.js" defer></script>
+
+  <style>
+    :root{
+      --card-max:1450px;
+      --page-bottom-gap:90px;
+
+      --fv-green:#3B7E46;
+      --fv-green-dark:#2F6C3C;
+
+      --fv-orange:#E67E22;
+      --fv-orange-text:#A65300;
+      --fv-orange-bg:rgba(230,126,34,.15);
+
+      --fv-red:#B3261E;
+      --fv-red-text:#9D241E;
+      --fv-red-bg:rgba(179,38,30,.13);
+
+      --fv-blue:#2563EB;
+      --fv-blue-bg:rgba(37,99,235,.13);
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      background:var(--app-bg,var(--surface));
+    }
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:
+        calc(
+          env(safe-area-inset-bottom,0px) +
+          var(--ftr-h,42px) +
+          var(--page-bottom-gap)
+        ) !important;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+
+      min-height:40px;
+      padding:8px 13px;
+
+      border-radius:10px;
+      border:1px solid var(--border);
+
+      background:var(--surface);
+      color:var(--text) !important;
+
+      font:inherit;
+      font-size:.86rem;
+      font-weight:800;
+
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .btn-primary{
+      border-color:transparent;
+      background:var(--fv-green-dark);
+      color:#fff !important;
+    }
+
+    .btn-secondary{
+      background:var(--surface-2,#f1f1f1);
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+    }
+
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+
+      padding:14px 16px;
+
+      background:
+        linear-gradient(
+          90deg,
+          rgba(47,108,60,.12),
+          transparent
+        );
+
+      border-bottom:1px solid var(--border);
+    }
+
+    .hero-head .icon{
+      font-size:24px;
+    }
+
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3vw,27px);
+    }
+
+    .hero-head p{
+      margin:4px 0 0;
+      line-height:1.4;
+    }
+
+    .muted{
+      color:var(--muted,#67706B);
+    }
+
+    .body{
+      padding:16px;
+      display:grid;
+      gap:15px;
+    }
+
+    /* =========================================================
+       TOOLBAR
+    ========================================================= */
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .toolbar-left{
+      display:flex;
+      flex-wrap:wrap;
+      gap:9px;
+    }
+
+    .page-count{
+      font-size:.84rem;
+      font-weight:800;
+      opacity:.72;
+    }
+
+    /* =========================================================
+       FILTERS
+    ========================================================= */
+
+    .filters{
+      display:grid;
+      grid-template-columns:
+        minmax(150px,.8fr)
+        minmax(180px,1fr)
+        minmax(150px,.8fr)
+        minmax(250px,1.4fr)
+        auto;
+
+      gap:10px;
+      align-items:end;
+    }
+
+    .filter-field{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+
+    .filter-label{
+      font-size:.74rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      opacity:.7;
+    }
+
+    .filter-select,
+    .filter-input{
+      width:100%;
+      min-height:38px;
+      padding:7px 10px;
+
+      border:1px solid var(--border);
+      border-radius:9px;
+
+      background:var(--surface);
+      color:var(--text);
+
+      font:inherit;
+      font-size:.86rem;
+    }
+
+    @media(max-width:900px){
+      .filters{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .filter-search{
+        grid-column:1 / -1;
+      }
+    }
+
+    @media(max-width:560px){
+      .filters{
+        grid-template-columns:1fr;
+      }
+
+      .filter-search{
+        grid-column:auto;
+      }
+
+      #filterClear{
+        width:100%;
+      }
+    }
+
+    /* =========================================================
+       SUMMARY
+    ========================================================= */
+
+    .summary-row{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:8px 18px;
+
+      padding:9px 11px;
+
+      border:1px solid var(--border);
+      border-radius:9px;
+
+      background:var(--surface-2,#f5f5f5);
+    }
+
+    .summary-item{
+      display:flex;
+      align-items:baseline;
+      gap:5px;
+
+      font-size:.8rem;
+      white-space:nowrap;
+    }
+
+    .summary-label{
+      opacity:.65;
+      font-weight:700;
+    }
+
+    .summary-value{
+      font-weight:900;
+      font-variant-numeric:tabular-nums;
+    }
+
+    /* =========================================================
+       LEGEND
+    ========================================================= */
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:7px 15px;
+
+      padding:8px 10px;
+
+      font-size:.74rem;
+    }
+
+    .legend-title{
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      opacity:.65;
+    }
+
+    .legend-item{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      font-weight:700;
+    }
+
+    .legend-dot{
+      width:9px;
+      height:9px;
+      border-radius:50%;
+    }
+
+    .legend-dot.normal{
+      border:1px solid var(--border);
+      background:var(--surface);
+    }
+
+    .legend-dot.warning{
+      background:var(--fv-orange);
+    }
+
+    .legend-dot.severe{
+      background:var(--fv-red);
+    }
+
+    /* =========================================================
+       CONTRACT LIST
+    ========================================================= */
+
+    .contract-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .empty-state{
+      padding:22px;
+      text-align:center;
+      opacity:.7;
+
+      border:1px dashed var(--border);
+      border-radius:10px;
+    }
+
+    .contract-card{
+      border:1px solid var(--border);
+      border-radius:11px;
+      background:var(--surface);
+      overflow:hidden;
+      box-shadow:var(--shadow-soft,var(--shadow));
+    }
+
+    /* =========================================================
+       COMPACT SINGLE-LINE TILE
+    ========================================================= */
+
+    .contract-tile{
+      display:grid;
+
+      grid-template-columns:
+        minmax(130px,1fr)
+        minmax(150px,1.2fr)
+        minmax(120px,.8fr)
+        minmax(85px,.65fr)
+        minmax(120px,.85fr)
+        repeat(3,minmax(78px,.5fr))
+        26px;
+
+      gap:10px;
+      align-items:center;
+
+      min-height:58px;
+      padding:9px 12px;
+
+      cursor:pointer;
+
+      transition:
+        background .12s ease,
+        border-color .12s ease;
+    }
+
+    .contract-tile:hover{
+      background:rgba(59,126,70,.055);
+    }
+
+    .contract-tile.open{
+      background:rgba(59,126,70,.08);
+      border-bottom:1px solid var(--border);
+    }
+
+    .tile-cell{
+      min-width:0;
+    }
+
+    .tile-label{
+      display:none;
+      margin-bottom:2px;
+
+      font-size:.63rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-weight:800;
+      opacity:.58;
+    }
+
+    .tile-main{
+      font-size:.82rem;
+      font-weight:800;
+
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .tile-contract{
+      font-size:.92rem;
+      font-weight:950;
+    }
+
+    .tile-sub{
+      margin-top:2px;
+      font-size:.67rem;
+      opacity:.65;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .tile-number{
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .tile-grade{
+      text-align:center;
+
+      padding:6px 5px;
+      border-radius:7px;
+
+      font-size:.8rem;
+      font-weight:900;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .tile-grade.warning{
+      background:var(--fv-orange-bg);
+      color:var(--fv-orange-text);
+    }
+
+    .tile-grade.severe{
+      background:var(--fv-red-bg);
+      color:var(--fv-red-text);
+    }
+
+    .tile-arrow{
+      text-align:center;
+      font-size:17px;
+      opacity:.55;
+
+      transition:transform .15s ease;
+    }
+
+    .contract-tile.open .tile-arrow{
+      transform:rotate(180deg);
+    }
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+
+      padding:4px 7px;
+      border-radius:999px;
+
+      font-size:.69rem;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .status-open{
+      background:rgba(59,126,70,.14);
+      color:#2D6937;
+    }
+
+    .status-pending{
+      background:var(--fv-orange-bg);
+      color:var(--fv-orange-text);
+    }
+
+    .status-completed{
+      background:var(--fv-blue-bg);
+      color:#1D5BBF;
+    }
+
+    .status-voided{
+      background:var(--fv-red-bg);
+      color:var(--fv-red-text);
+    }
+
+    @media(max-width:1100px){
+
+      .contract-tile{
+        grid-template-columns:
+          minmax(130px,1fr)
+          minmax(140px,1fr)
+          minmax(100px,.7fr)
+          repeat(3,75px)
+          24px;
+      }
+
+      .tile-customer,
+      .tile-status{
+        display:none;
+      }
+    }
+
+    @media(max-width:720px){
+
+      .contract-tile{
+        grid-template-columns:
+          minmax(120px,1fr)
+          minmax(120px,1fr)
+          repeat(3,68px)
+          22px;
+
+        gap:6px;
+      }
+
+      .tile-bushels{
+        display:none;
+      }
+    }
+
+    @media(max-width:560px){
+
+      .contract-tile{
+        grid-template-columns:
+          minmax(0,1fr)
+          repeat(3,60px)
+          20px;
+
+        padding:8px;
+      }
+
+      .tile-buyer{
+        display:none;
+      }
+
+      .tile-grade{
+        font-size:.72rem;
+        padding:5px 3px;
+      }
+    }
+
+    /* =========================================================
+       EXPANDED CONTRACT DETAILS
+    ========================================================= */
+
+    .contract-details{
+      display:none;
+      padding:14px;
+      background:
+        color-mix(
+          in srgb,
+          var(--surface) 97%,
+          var(--border) 3%
+        );
+    }
+
+    .contract-details.open{
+      display:block;
+    }
+
+    .detail-toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+
+      margin-bottom:12px;
+    }
+
+    .detail-title{
+      font-size:1rem;
+      font-weight:950;
+    }
+
+    .detail-sub{
+      margin-top:3px;
+      font-size:.8rem;
+      opacity:.68;
+    }
+
+    .detail-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .contract-info-grid{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .info-box{
+      min-width:0;
+
+      padding:8px 9px;
+
+      border-radius:8px;
+      background:var(--surface-2,#f3f3f3);
+    }
+
+    .info-label{
+      font-size:.65rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-weight:900;
+      opacity:.62;
+    }
+
+    .info-value{
+      margin-top:3px;
+      font-size:.82rem;
+      font-weight:850;
+      overflow-wrap:anywhere;
+    }
+
+    @media(max-width:1000px){
+      .contract-info-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+      }
+    }
+
+    @media(max-width:600px){
+      .contract-info-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+
+    /* =========================================================
+       GRADE AVERAGES
+    ========================================================= */
+
+    .grade-section{
+      margin-top:13px;
+    }
+
+    .section-label{
+      margin-bottom:7px;
+
+      font-size:.72rem;
+      text-transform:uppercase;
+      letter-spacing:.07em;
+      font-weight:900;
+      opacity:.66;
+    }
+
+    .grade-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .grade-card{
+      padding:9px 10px;
+
+      border:1px solid var(--border);
+      border-radius:9px;
+
+      background:var(--surface);
+    }
+
+    .grade-card.warning{
+      background:var(--fv-orange-bg);
+      border-color:rgba(230,126,34,.45);
+      color:var(--fv-orange-text);
+    }
+
+    .grade-card.severe{
+      background:var(--fv-red-bg);
+      border-color:rgba(179,38,30,.45);
+      color:var(--fv-red-text);
+    }
+
+    .grade-name{
+      font-size:.68rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+
+    .grade-value{
+      margin-top:2px;
+      font-size:1.1rem;
+      font-weight:950;
+    }
+
+    .grade-limit{
+      margin-top:2px;
+      font-size:.65rem;
+      opacity:.7;
+    }
+
+    /* =========================================================
+       TICKETS
+    ========================================================= */
+
+    .ticket-section{
+      margin-top:14px;
+    }
+
+    .ticket-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+
+      margin-bottom:7px;
+    }
+
+    .ticket-title{
+      font-size:.74rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      opacity:.68;
+    }
+
+    .ticket-count{
+      font-size:.72rem;
+      font-weight:800;
+      opacity:.62;
+    }
+
+    .ticket-table-wrap{
+      width:100%;
+      overflow-x:auto;
+
+      border:1px solid var(--border);
+      border-radius:9px;
+    }
+
+    .ticket-table{
+      width:100%;
+      min-width:900px;
+      border-collapse:collapse;
+    }
+
+    .ticket-table th{
+      padding:7px 8px;
+
+      background:var(--surface-2,#f3f3f3);
+
+      border-bottom:1px solid var(--border);
+
+      font-size:.66rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      text-align:left;
+
+      white-space:nowrap;
+    }
+
+    .ticket-table td{
+      padding:8px;
+
+      border-bottom:1px solid var(--border);
+
+      font-size:.78rem;
+      vertical-align:middle;
+    }
+
+    .ticket-table tbody tr:last-child td{
+      border-bottom:0;
+    }
+
+    .ticket-row{
+      cursor:pointer;
+    }
+
+    .ticket-row:hover{
+      background:rgba(59,126,70,.07);
+    }
+
+    .ticket-number{
+      font-weight:950;
+    }
+
+    .number-cell{
+      text-align:right !important;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .grade-cell{
+      font-weight:900;
+    }
+
+    .grade-cell.warning{
+      background:var(--fv-orange-bg);
+      color:var(--fv-orange-text);
+    }
+
+    .grade-cell.severe{
+      background:var(--fv-red-bg);
+      color:var(--fv-red-text);
+    }
+
+    /* =========================================================
+       TICKET POPUP
+    ========================================================= */
+
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:10000;
+
+      display:none;
+
+      align-items:flex-start;
+      justify-content:center;
+
+      padding:18px;
+
+      overflow:auto;
+
+      background:rgba(0,0,0,.58);
+    }
+
+    .modal.open{
+      display:flex;
+    }
+
+    .modal-card{
+      width:min(1050px,100%);
+      margin:auto;
+
+      background:var(--surface);
+      color:var(--text);
+
+      border-radius:14px;
+      overflow:hidden;
+
+      box-shadow:0 20px 50px rgba(0,0,0,.35);
+    }
+
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+
+      padding:14px 16px;
+
+      border-bottom:1px solid var(--border);
+    }
+
+    .modal-title{
+      font-size:1.15rem;
+      font-weight:950;
+    }
+
+    .modal-sub{
+      margin-top:3px;
+      font-size:.8rem;
+      opacity:.65;
+    }
+
+    .modal-close{
+      width:38px;
+      height:38px;
+
+      border:0;
+      border-radius:9px;
+
+      background:var(--surface-2,#eee);
+      color:var(--text);
+
+      font-size:22px;
+      cursor:pointer;
+    }
+
+    .modal-body{
+      padding:15px;
+    }
+
+    .ticket-popup-layout{
+      display:grid;
+      grid-template-columns:minmax(300px,.8fr) minmax(400px,1.2fr);
+      gap:14px;
+      align-items:start;
+    }
+
+    @media(max-width:850px){
+      .ticket-popup-layout{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .popup-info-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .popup-info{
+      padding:8px 9px;
+      border-radius:8px;
+      background:var(--surface-2,#f3f3f3);
+    }
+
+    .popup-label{
+      font-size:.65rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      opacity:.62;
+    }
+
+    .popup-value{
+      margin-top:3px;
+      font-size:.82rem;
+      font-weight:850;
+      overflow-wrap:anywhere;
+    }
+
+    .popup-grades{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:7px;
+
+      margin-top:10px;
+    }
+
+    .popup-grade{
+      padding:8px;
+      text-align:center;
+
+      border:1px solid var(--border);
+      border-radius:8px;
+    }
+
+    .popup-grade.warning{
+      background:var(--fv-orange-bg);
+      color:var(--fv-orange-text);
+    }
+
+    .popup-grade.severe{
+      background:var(--fv-red-bg);
+      color:var(--fv-red-text);
+    }
+
+    .popup-grade-label{
+      font-size:.63rem;
+      font-weight:900;
+      opacity:.65;
+    }
+
+    .popup-grade-value{
+      margin-top:2px;
+      font-size:.95rem;
+      font-weight:950;
+    }
+
+    .image-panel{
+      border:1px solid var(--border);
+      border-radius:10px;
+      overflow:hidden;
+      background:#111;
+    }
+
+    .image-panel-title{
+      padding:8px 10px;
+
+      background:var(--surface);
+      color:var(--text);
+
+      font-size:.72rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+
+    .ticket-image-wrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      min-height:420px;
+      max-height:70vh;
+
+      overflow:auto;
+
+      background:#111;
+    }
+
+    .ticket-image{
+      display:block;
+      max-width:100%;
+      height:auto;
+    }
+
+    .no-image{
+      padding:50px 20px;
+      color:#fff;
+      text-align:center;
+      opacity:.7;
+    }
+
+    .modal-actions{
+      display:flex;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      gap:8px;
+
+      padding:12px 16px;
+
+      border-top:1px solid var(--border);
+    }
+
+    /* =========================================================
+       PRINT FRAME
+    ========================================================= */
+
+    #fv-print-frame{
+      position:fixed;
+      right:0;
+      bottom:0;
+      width:0;
+      height:0;
+      border:0;
+      visibility:hidden;
+    }
+  </style>
+
+  <script type="module">
+
+    import {
+      ready,
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc
+    } from "/js/core/firebase/firebase-init.js";
+
+    import { NAV_MENU } from "/js/shared/navigation/menu.js";
+
+    await ready;
+
+    const db =
+      getFirestore();
+
+    const CONTRACT_COLLECTION =
+      "grain_contracts";
+
+    const TICKET_COLLECTION =
+      "grain_tickets";
+
+    const $ =
+      (selector, root = document) =>
+        root.querySelector(selector);
+
+    const state = {
+      contracts:[],
+      tickets:[],
+      filteredContracts:[],
+      expandedContracts:new Set(),
+      activeTicket:null,
+      company:null
+    };
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
+
+    function clean(value){
+      return String(value ?? "").trim();
+    }
+
+    function escapeHtml(value){
+      return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function numberValue(value){
+      const n =
+        Number(value);
+
+      return Number.isFinite(n)
+        ? n
+        : 0;
+    }
+
+    function numberOrNull(value){
+
+      if(
+        value === null ||
+        value === undefined ||
+        value === ""
+      ){
+        return null;
+      }
+
+      const n =
+        Number(value);
+
+      return Number.isFinite(n)
+        ? n
+        : null;
+    }
+
+    function formatBushels(value){
+
+      const n =
+        Number(value);
+
+      if(!Number.isFinite(n)){
+        return "—";
+      }
+
+      return n.toLocaleString(
+        "en-US",
+        {
+          maximumFractionDigits:2
+        }
+      );
+    }
+
+    function formatWhole(value){
+
+      const n =
+        Number(value);
+
+      if(!Number.isFinite(n)){
+        return "—";
+      }
+
+      return Math.round(n)
+        .toLocaleString("en-US");
+    }
+
+    function formatGrade(value){
+
+      const n =
+        Number(value);
+
+      if(!Number.isFinite(n)){
+        return "—";
+      }
+
+      return n.toFixed(2);
+    }
+
+    function formatPrice(value){
+
+      const n =
+        Number(value);
+
+      if(!Number.isFinite(n)){
+        return "—";
+      }
+
+      return n.toLocaleString(
+        "en-US",
+        {
+          style:"currency",
+          currency:"USD",
+          minimumFractionDigits:2,
+          maximumFractionDigits:4
+        }
+      );
+    }
+
+    function formatDate(value){
+
+      if(!value){
+        return "—";
+      }
+
+      if(
+        typeof value === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ){
+        const [y,m,d] =
+          value.split("-");
+
+        return `${Number(m)}/${Number(d)}/${y}`;
+      }
+
+      try{
+
+        const date =
+          value?.toDate
+            ? value.toDate()
+            : new Date(value);
+
+        if(
+          !date ||
+          !Number.isFinite(
+            date.getTime()
+          )
+        ){
+          return clean(value) || "—";
+        }
+
+        return date.toLocaleDateString();
+
+      }
+      catch{
+        return clean(value) || "—";
+      }
+    }
+
+    function formatDateTime(date){
+
+      try{
+        return date.toLocaleString();
+      }
+      catch{
+        return "";
+      }
+    }
+
+    function normalizeCrop(value){
+
+      const crop =
+        clean(value)
+          .toLowerCase();
+
+      if(crop.includes("soy")){
+        return "soybeans";
+      }
+
+      if(crop.includes("corn")){
+        return "corn";
+      }
+
+      return crop;
+    }
+
+    function normalizeStatus(value){
+
+      const status =
+        clean(value)
+          .toLowerCase();
+
+      if(status.includes("void")){
+        return "voided";
+      }
+
+      if(status.includes("complete")){
+        return "completed";
+      }
+
+      if(status.includes("pending")){
+        return "pending";
+      }
+
+      return "open";
+    }
+
+    function statusLabel(value){
+
+      const status =
+        normalizeStatus(value);
+
+      if(status === "completed"){
+        return "Completed";
+      }
+
+      if(status === "pending"){
+        return "Pending";
+      }
+
+      if(status === "voided"){
+        return "Voided";
+      }
+
+      return "Open";
+    }
+
+    function statusClass(value){
+
+      return `status-${normalizeStatus(value)}`;
+
+    }
+
+    /* =========================================================
+       ALLOCATION MODEL
+    ========================================================= */
+
+    function getTicketAllocations(ticket){
+
+      if(
+        !ticket ||
+        ticket.voided
+      ){
+        return [];
+      }
+
+      if(
+        Array.isArray(
+          ticket.contractAllocations
+        )
+      ){
+
+        return ticket.contractAllocations
+          .map(allocation => ({
+
+            contractId:
+              clean(
+                allocation?.contractId
+              ),
+
+            contractNumber:
+              clean(
+                allocation?.contractNumber
+              ),
+
+            bushels:
+              numberValue(
+                allocation?.bushels
+              )
+
+          }))
+          .filter(allocation =>
+            allocation.contractId &&
+            allocation.bushels > 0
+          );
+      }
+
+      if(clean(ticket.contractId)){
+
+        return [{
+          contractId:
+            clean(ticket.contractId),
+
+          contractNumber:
+            clean(ticket.contractNumber),
+
+          bushels:
+            numberValue(
+              ticket.netBushels
+            )
+        }];
+
+      }
+
+      return [];
+    }
+
+    function getAllocationToContract(
+      ticket,
+      contractId
+    ){
+
+      return getTicketAllocations(ticket)
+        .find(allocation =>
+          clean(allocation.contractId) ===
+          clean(contractId)
+        ) || null;
+
+    }
+
+    function getAllocationBushels(
+      ticket,
+      contractId
+    ){
+
+      return numberValue(
+        getAllocationToContract(
+          ticket,
+          contractId
+        )?.bushels
+      );
+
+    }
+
+    function getContractTickets(contract){
+
+      return state.tickets
+        .filter(ticket =>
+          !ticket.voided &&
+          getAllocationBushels(
+            ticket,
+            contract.id
+          ) > 0
+        )
+        .sort((a,b) => {
+
+          const dateCompare =
+            clean(a.ticketDate)
+              .localeCompare(
+                clean(b.ticketDate)
+              );
+
+          if(dateCompare){
+            return dateCompare;
+          }
+
+          return clean(a.ticketNumber)
+            .localeCompare(
+              clean(b.ticketNumber),
+              undefined,
+              {
+                numeric:true,
+                sensitivity:"base"
+              }
+            );
+
+        });
+
+    }
+
+    /* =========================================================
+       GRADE LIMITS
+
+       MOISTURE:
+       Corn
+       Normal < 16.5
+       Orange 16.5 - 19
+       Red > 19
+
+       Soybeans
+       Normal < 13.5
+       Orange 13.5 - 15.5
+       Red > 15.5
+
+       DAMAGE:
+       Normal 0 - 5
+       Orange > 5 - 9
+       Red > 9
+
+       FM:
+       Normal 0 - 3
+       Orange > 3 - 8
+       Red > 8
+    ========================================================= */
+
+    function gradeSeverity(
+      type,
+      value,
+      crop
+    ){
+
+      const n =
+        Number(value);
+
+      if(!Number.isFinite(n)){
+        return "";
+      }
+
+      if(type === "damage"){
+
+        if(n > 9){
+          return "severe";
+        }
+
+        if(n > 5){
+          return "warning";
+        }
+
+        return "";
+      }
+
+      if(type === "fm"){
+
+        if(n > 8){
+          return "severe";
+        }
+
+        if(n > 3){
+          return "warning";
+        }
+
+        return "";
+      }
+
+      if(type === "moisture"){
+
+        const normalizedCrop =
+          normalizeCrop(crop);
+
+        if(normalizedCrop === "soybeans"){
+
+          if(n > 15.5){
+            return "severe";
+          }
+
+          if(n >= 13.5){
+            return "warning";
+          }
+
+          return "";
+        }
+
+        if(n > 19){
+          return "severe";
+        }
+
+        if(n >= 16.5){
+          return "warning";
+        }
+
+        return "";
+      }
+
+      return "";
+    }
+
+    function gradeLimitText(
+      type,
+      crop
+    ){
+
+      if(type === "damage"){
+        return "Normal ≤5 • Orange >5–9 • Red >9";
+      }
+
+      if(type === "fm"){
+        return "Normal ≤3 • Orange >3–8 • Red >8";
+      }
+
+      if(
+        type === "moisture" &&
+        normalizeCrop(crop) === "soybeans"
+      ){
+        return "Normal <13.5 • Orange 13.5–15.5 • Red >15.5";
+      }
+
+      return "Normal <16.5 • Orange 16.5–19 • Red >19";
+    }
+
+    /* =========================================================
+       CONTRACT STATS
+    ========================================================= */
+
+    function weightedAverage(
+      contract,
+      field
+    ){
+
+      const tickets =
+        getContractTickets(contract);
+
+      let totalWeight = 0;
+      let totalValue = 0;
+
+      tickets.forEach(ticket => {
+
+        const value =
+          numberOrNull(
+            ticket[field]
+          );
+
+        if(value === null){
+          return;
+        }
+
+        const bushels =
+          getAllocationBushels(
+            ticket,
+            contract.id
+          );
+
+        if(!(bushels > 0)){
+          return;
+        }
+
+        totalValue +=
+          value * bushels;
+
+        totalWeight +=
+          bushels;
+      });
+
+      if(!(totalWeight > 0)){
+        return null;
+      }
+
+      return totalValue /
+        totalWeight;
+    }
+
+    function getContractStats(contract){
+
+      const tickets =
+        getContractTickets(contract);
+
+      const delivered =
+        tickets.reduce(
+          (total,ticket) =>
+            total +
+            getAllocationBushels(
+              ticket,
+              contract.id
+            ),
+          0
+        );
+
+      const contracted =
+        numberValue(
+          contract.contractBushels
+        );
+
+      return {
+
+        tickets,
+
+        delivered,
+
+        remaining:
+          Math.max(
+            0,
+            contracted - delivered
+          ),
+
+        moisture:
+          weightedAverage(
+            contract,
+            "moisture"
+          ),
+
+        damage:
+          weightedAverage(
+            contract,
+            "damage"
+          ),
+
+        fm:
+          weightedAverage(
+            contract,
+            "foreignMaterial"
+          )
+
+      };
+    }
+
+    /* =========================================================
+       LOAD DATA
+    ========================================================= */
+
+    async function loadData(){
+
+      const [
+        contractSnap,
+        ticketSnap
+      ] =
+        await Promise.all([
+
+          getDocs(
+            collection(
+              db,
+              CONTRACT_COLLECTION
+            )
+          ),
+
+          getDocs(
+            collection(
+              db,
+              TICKET_COLLECTION
+            )
+          )
+
+        ]);
+
+      state.contracts =
+        contractSnap.docs
+          .map(snapshot => ({
+            id:snapshot.id,
+            ...(snapshot.data() || {})
+          }))
+          .sort((a,b) => {
+
+            const dateCompare =
+              clean(b.contractDate)
+                .localeCompare(
+                  clean(a.contractDate)
+                );
+
+            if(dateCompare){
+              return dateCompare;
+            }
+
+            return clean(a.contractNumber)
+              .localeCompare(
+                clean(b.contractNumber),
+                undefined,
+                {
+                  numeric:true,
+                  sensitivity:"base"
+                }
+              );
+          });
+
+      state.tickets =
+        ticketSnap.docs
+          .map(snapshot => ({
+            id:snapshot.id,
+            ...(snapshot.data() || {})
+          }));
+
+    }
+
+    /* =========================================================
+       FILTERS
+    ========================================================= */
+
+    function uniqueSorted(values){
+
+      return [
+        ...new Set(
+          values
+            .map(clean)
+            .filter(Boolean)
+        )
+      ]
+        .sort((a,b) =>
+          a.localeCompare(
+            b,
+            undefined,
+            {
+              numeric:true,
+              sensitivity:"base"
+            }
+          )
+        );
+    }
+
+    function fillSelect(
+      element,
+      values,
+      firstLabel
+    ){
+
+      const current =
+        element.value;
+
+      element.innerHTML =
+        `
+          <option value="all">
+            ${escapeHtml(firstLabel)}
+          </option>
+        ` +
+        values
+          .map(value =>
+            `
+              <option value="${escapeHtml(value)}">
+                ${escapeHtml(value)}
+              </option>
+            `
+          )
+          .join("");
+
+      const exists =
+        [...element.options]
+          .some(option =>
+            option.value === current
+          );
+
+      element.value =
+        exists
+          ? current
+          : "all";
+
+    }
+
+    function populateFilters(){
+
+      fillSelect(
+        $("#filterCrop"),
+        uniqueSorted(
+          state.contracts
+            .map(contract =>
+              contract.crop
+            )
+        ),
+        "All crops"
+      );
+
+      fillSelect(
+        $("#filterBuyer"),
+        uniqueSorted(
+          state.contracts
+            .map(contract =>
+              contract.buyerName
+            )
+        ),
+        "All buyers"
+      );
+
+    }
+
+    function applyFilters(){
+
+      const crop =
+        $("#filterCrop").value;
+
+      const buyer =
+        $("#filterBuyer").value;
+
+      const status =
+        $("#filterStatus").value;
+
+      const search =
+        clean(
+          $("#filterSearch").value
+        )
+          .toLowerCase();
+
+      state.filteredContracts =
+        state.contracts
+          .filter(contract => {
+
+            if(
+              crop !== "all" &&
+              clean(contract.crop) !== crop
+            ){
+              return false;
+            }
+
+            if(
+              buyer !== "all" &&
+              clean(contract.buyerName) !== buyer
+            ){
+              return false;
+            }
+
+            if(
+              status !== "all" &&
+              normalizeStatus(
+                contract.status
+              ) !== status
+            ){
+              return false;
+            }
+
+            if(search){
+
+              const haystack =
+                [
+                  contract.contractNumber,
+                  contract.buyerName,
+                  contract.customerName,
+                  contract.crop,
+                  contract.contractType,
+                  contract.deliveryLocationName,
+                  contract.deliveryCity,
+                  contract.deliveryState
+                ]
+                  .join(" ")
+                  .toLowerCase();
+
+              if(
+                !haystack.includes(
+                  search
+                )
+              ){
+                return false;
+              }
+            }
+
+            return true;
+
+          });
+
+      render();
+
+    }
+
+    /* =========================================================
+       RENDER GRADE
+    ========================================================= */
+
+    function gradeDisplay(
+      type,
+      value,
+      crop
+    ){
+
+      const severity =
+        gradeSeverity(
+          type,
+          value,
+          crop
+        );
+
+      return {
+        severity,
+        text:
+          value === null
+            ? "—"
+            : `${formatGrade(value)}%`
+      };
+
+    }
+
+    /* =========================================================
+       COMPACT CONTRACT TILE
+    ========================================================= */
+
+    function renderContractTile(contract){
+
+      const stats =
+        getContractStats(contract);
+
+      const moisture =
+        gradeDisplay(
+          "moisture",
+          stats.moisture,
+          contract.crop
+        );
+
+      const damage =
+        gradeDisplay(
+          "damage",
+          stats.damage,
+          contract.crop
+        );
+
+      const fm =
+        gradeDisplay(
+          "fm",
+          stats.fm,
+          contract.crop
+        );
+
+      const isOpen =
+        state.expandedContracts
+          .has(contract.id);
+
+      return `
+        <article
+          class="contract-card"
+          data-contract-card="${escapeHtml(contract.id)}"
+        >
+
+          <div
+            class="contract-tile ${isOpen ? "open" : ""}"
+            data-contract-toggle="${escapeHtml(contract.id)}"
+            role="button"
+            tabindex="0"
+          >
+
+            <div class="tile-cell">
+
+              <div class="tile-label">
+                Contract
+              </div>
+
+              <div class="tile-main tile-contract">
+                #${escapeHtml(
+                  contract.contractNumber || "—"
+                )}
+              </div>
+
+              <div class="tile-sub">
+                ${escapeHtml(
+                  contract.crop || "—"
+                )}
+                ·
+                ${stats.tickets.length}
+                load${stats.tickets.length === 1 ? "" : "s"}
+              </div>
+
+            </div>
+
+            <div class="tile-cell tile-buyer">
+
+              <div class="tile-label">
+                Buyer
+              </div>
+
+              <div class="tile-main">
+                ${escapeHtml(
+                  contract.buyerName || "—"
+                )}
+              </div>
+
+              <div class="tile-sub">
+                ${escapeHtml(
+                  contract.deliveryLocationName || "—"
+                )}
+              </div>
+
+            </div>
+
+            <div class="tile-cell tile-customer">
+
+              <div class="tile-label">
+                Customer
+              </div>
+
+              <div class="tile-main">
+                ${escapeHtml(
+                  contract.customerName || "—"
+                )}
+              </div>
+
+              <div class="tile-sub">
+                ${escapeHtml(
+                  contract.contractType || "—"
+                )}
+              </div>
+
+            </div>
+
+            <div class="tile-cell tile-status">
+
+              <span
+                class="status-pill ${statusClass(contract.status)}"
+              >
+                ${escapeHtml(
+                  statusLabel(contract.status)
+                )}
+              </span>
+
+            </div>
+
+            <div class="tile-cell tile-bushels">
+
+              <div class="tile-main tile-number">
+                ${formatBushels(
+                  stats.delivered
+                )}
+              </div>
+
+              <div class="tile-sub tile-number">
+                of
+                ${formatBushels(
+                  contract.contractBushels
+                )}
+                bu
+              </div>
+
+            </div>
+
+            <div
+              class="tile-grade ${moisture.severity}"
+              title="Average Moisture"
+            >
+              <div class="tile-label">
+                MO
+              </div>
+              MO ${moisture.text}
+            </div>
+
+            <div
+              class="tile-grade ${damage.severity}"
+              title="Average Damage"
+            >
+              <div class="tile-label">
+                DM
+              </div>
+              DM ${damage.text}
+            </div>
+
+            <div
+              class="tile-grade ${fm.severity}"
+              title="Average Foreign Material"
+            >
+              <div class="tile-label">
+                FM
+              </div>
+              FM ${fm.text}
+            </div>
+
+            <div class="tile-arrow">
+              ⌄
+            </div>
+
+          </div>
+
+          ${renderContractDetails(
+            contract,
+            stats,
+            isOpen
+          )}
+
+        </article>
+      `;
+
+    }
+
+    /* =========================================================
+       CONTRACT DETAILS
+    ========================================================= */
+
+    function renderGradeCard(
+      label,
+      type,
+      value,
+      crop
+    ){
+
+      const display =
+        gradeDisplay(
+          type,
+          value,
+          crop
+        );
+
+      return `
+        <div class="grade-card ${display.severity}">
+
+          <div class="grade-name">
+            ${escapeHtml(label)}
+          </div>
+
+          <div class="grade-value">
+            ${display.text}
+          </div>
+
+          <div class="grade-limit">
+            ${escapeHtml(
+              gradeLimitText(
+                type,
+                crop
+              )
+            )}
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    function renderContractDetails(
+      contract,
+      stats,
+      isOpen
+    ){
+
+      return `
+        <div
+          class="contract-details ${isOpen ? "open" : ""}"
+          data-contract-details="${escapeHtml(contract.id)}"
+        >
+
+          <div class="detail-toolbar">
+
+            <div>
+
+              <div class="detail-title">
+                Contract
+                ${escapeHtml(
+                  contract.contractNumber || "—"
+                )}
+              </div>
+
+              <div class="detail-sub">
+                ${escapeHtml(
+                  contract.buyerName || "—"
+                )}
+                ${
+                  contract.deliveryLocationName
+                    ? ` · ${escapeHtml(contract.deliveryLocationName)}`
+                    : ""
+                }
+                ${
+                  contract.customerName
+                    ? ` · ${escapeHtml(contract.customerName)}`
+                    : ""
+                }
+              </div>
+
+            </div>
+
+            <div class="detail-actions">
+
+              <button
+                type="button"
+                class="btn btn-primary"
+                data-print-contract="${escapeHtml(contract.id)}"
+              >
+                🖨 Print This Contract
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="contract-info-grid">
+
+            ${infoBox(
+              "Crop",
+              contract.crop
+            )}
+
+            ${infoBox(
+              "Contract Type",
+              contract.contractType
+            )}
+
+            ${infoBox(
+              "Status",
+              statusLabel(
+                contract.status
+              )
+            )}
+
+            ${infoBox(
+              "Contract Bushels",
+              `${formatBushels(
+                contract.contractBushels
+              )} bu`
+            )}
+
+            ${infoBox(
+              "Assigned Bushels",
+              `${formatBushels(
+                stats.delivered
+              )} bu`
+            )}
+
+            ${infoBox(
+              "Remaining",
+              `${formatBushels(
+                stats.remaining
+              )} bu`
+            )}
+
+            ${infoBox(
+              "Loads",
+              String(
+                stats.tickets.length
+              )
+            )}
+
+            ${infoBox(
+              "Contract Date",
+              formatDate(
+                contract.contractDate
+              )
+            )}
+
+            ${infoBox(
+              "Delivery Start",
+              formatDate(
+                contract.deliveryStart
+              )
+            )}
+
+            ${infoBox(
+              "Delivery End",
+              formatDate(
+                contract.deliveryEnd
+              )
+            )}
+
+            ${infoBox(
+              "Cash Price",
+              formatPrice(
+                contract.pricePerBushel
+              )
+            )}
+
+            ${infoBox(
+              "Hauling Job",
+              contract.haulingJobName ||
+              contract.haulingJobLabel ||
+              "—"
+            )}
+
+          </div>
+
+          <div class="grade-section">
+
+            <div class="section-label">
+              Contract Grade Averages
+              · Weighted by Allocated Bushels
+            </div>
+
+            <div class="grade-grid">
+
+              ${renderGradeCard(
+                "Moisture",
+                "moisture",
+                stats.moisture,
+                contract.crop
+              )}
+
+              ${renderGradeCard(
+                "Damage",
+                "damage",
+                stats.damage,
+                contract.crop
+              )}
+
+              ${renderGradeCard(
+                "Foreign Material",
+                "fm",
+                stats.fm,
+                contract.crop
+              )}
+
+            </div>
+
+          </div>
+
+          <div class="ticket-section">
+
+            <div class="ticket-head">
+
+              <div class="ticket-title">
+                Allocated Loads / Tickets
+              </div>
+
+              <div class="ticket-count">
+                ${stats.tickets.length}
+                ticket${stats.tickets.length === 1 ? "" : "s"}
+              </div>
+
+            </div>
+
+            ${
+              stats.tickets.length
+                ? `
+                  <div class="ticket-table-wrap">
+
+                    <table class="ticket-table">
+
+                      <thead>
+                        <tr>
+                          <th>Ticket #</th>
+                          <th>Date</th>
+                          <th>Driver</th>
+                          <th>Grain Source</th>
+                          <th class="number-cell">Ticket Bu</th>
+                          <th class="number-cell">Contract Bu</th>
+                          <th class="number-cell">TW</th>
+                          <th class="number-cell">MO</th>
+                          <th class="number-cell">DM</th>
+                          <th class="number-cell">FM</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+
+                        ${
+                          stats.tickets
+                            .map(ticket =>
+                              renderTicketRow(
+                                ticket,
+                                contract
+                              )
+                            )
+                            .join("")
+                        }
+
+                      </tbody>
+
+                    </table>
+
+                  </div>
+                `
+                : `
+                  <div class="empty-state">
+                    No grain tickets are allocated to this contract.
+                  </div>
+                `
+            }
+
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    function infoBox(
+      label,
+      value
+    ){
+
+      return `
+        <div class="info-box">
+
+          <div class="info-label">
+            ${escapeHtml(label)}
+          </div>
+
+          <div class="info-value">
+            ${escapeHtml(
+              value ?? "—"
+            )}
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    /* =========================================================
+       TICKET ROW
+    ========================================================= */
+
+    function renderTicketRow(
+      ticket,
+      contract
+    ){
+
+      const moisture =
+        numberOrNull(
+          ticket.moisture
+        );
+
+      const damage =
+        numberOrNull(
+          ticket.damage
+        );
+
+      const fm =
+        numberOrNull(
+          ticket.foreignMaterial
+        );
+
+      const moistureSeverity =
+        gradeSeverity(
+          "moisture",
+          moisture,
+          contract.crop
+        );
+
+      const damageSeverity =
+        gradeSeverity(
+          "damage",
+          damage,
+          contract.crop
+        );
+
+      const fmSeverity =
+        gradeSeverity(
+          "fm",
+          fm,
+          contract.crop
+        );
+
+      const source =
+        clean(
+          ticket.grainSourceName ||
+          ticket.grainSourceSiteName ||
+          ticket.grainSourceFieldName
+        );
+
+      return `
+        <tr
+          class="ticket-row"
+          data-ticket-id="${escapeHtml(ticket.id)}"
+          data-contract-id="${escapeHtml(contract.id)}"
+        >
+
+          <td class="ticket-number">
+            ${escapeHtml(
+              ticket.ticketNumber || "—"
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              formatDate(
+                ticket.ticketDate
+              )
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              ticket.driverName ||
+              ticket.reviewedByName ||
+              "—"
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              source || "—"
+            )}
+          </td>
+
+          <td class="number-cell">
+            ${formatBushels(
+              ticket.netBushels
+            )}
+          </td>
+
+          <td class="number-cell">
+            ${formatBushels(
+              getAllocationBushels(
+                ticket,
+                contract.id
+              )
+            )}
+          </td>
+
+          <td class="number-cell">
+            ${formatGrade(
+              ticket.testWeight
+            )}
+          </td>
+
+          <td
+            class="number-cell grade-cell ${moistureSeverity}"
+          >
+            ${
+              moisture === null
+                ? "—"
+                : `${formatGrade(moisture)}%`
+            }
+          </td>
+
+          <td
+            class="number-cell grade-cell ${damageSeverity}"
+          >
+            ${
+              damage === null
+                ? "—"
+                : `${formatGrade(damage)}%`
+            }
+          </td>
+
+          <td
+            class="number-cell grade-cell ${fmSeverity}"
+          >
+            ${
+              fm === null
+                ? "—"
+                : `${formatGrade(fm)}%`
+            }
+          </td>
+
+        </tr>
+      `;
+
+    }
+
+    /* =========================================================
+       TICKET POPUP
+    ========================================================= */
+
+    function getTicketImageUrl(ticket){
+
+      return clean(
+        ticket.ticketImageUrl ||
+        ticket.imageUrl ||
+        ""
+      );
+
+    }
+
+    function openTicketPopup(
+      ticketId,
+      contractId
+    ){
+
+      const ticket =
+        state.tickets
+          .find(item =>
+            item.id === ticketId
+          );
+
+      const contract =
+        state.contracts
+          .find(item =>
+            item.id === contractId
+          );
+
+      if(!ticket){
+        return;
+      }
+
+      state.activeTicket =
+        ticket;
+
+      $("#ticketModalTitle")
+        .textContent =
+          `Grain Ticket ${
+            ticket.ticketNumber || ""
+          }`;
+
+      $("#ticketModalSub")
+        .textContent =
+          contract
+            ? `Contract ${contract.contractNumber || "—"}`
+            : "Grain ticket detail";
+
+      $("#popupInfo").innerHTML = `
+
+        ${popupInfo(
+          "Ticket Number",
+          ticket.ticketNumber
+        )}
+
+        ${popupInfo(
+          "Ticket Date",
+          formatDate(
+            ticket.ticketDate
+          )
+        )}
+
+        ${popupInfo(
+          "Buyer",
+          ticket.buyerName
+        )}
+
+        ${popupInfo(
+          "Destination",
+          ticket.deliveryLocationName ||
+          ticket.destinationName
+        )}
+
+        ${popupInfo(
+          "Customer",
+          ticket.customerName
+        )}
+
+        ${popupInfo(
+          "Crop",
+          ticket.crop
+        )}
+
+        ${popupInfo(
+          "Driver",
+          ticket.driverName ||
+          ticket.reviewedByName
+        )}
+
+        ${popupInfo(
+          "Grain Source",
+          ticket.grainSourceName ||
+          ticket.grainSourceSiteName ||
+          ticket.grainSourceFieldName
+        )}
+
+        ${popupInfo(
+          "Gross Weight",
+          formatWhole(
+            ticket.grossWeight
+          )
+        )}
+
+        ${popupInfo(
+          "Tare Weight",
+          formatWhole(
+            ticket.tareWeight
+          )
+        )}
+
+        ${popupInfo(
+          "Net Weight",
+          formatWhole(
+            ticket.netWeight
+          )
+        )}
+
+        ${popupInfo(
+          "Gross Bushels",
+          formatBushels(
+            ticket.grossBushels
+          )
+        )}
+
+        ${popupInfo(
+          "Shrink Bushels",
+          formatBushels(
+            ticket.shrinkBushels
+          )
+        )}
+
+        ${popupInfo(
+          "Net Bushels",
+          formatBushels(
+            ticket.netBushels
+          )
+        )}
+
+        ${
+          contract
+            ? popupInfo(
+                "Allocated To Contract",
+                `${formatBushels(
+                  getAllocationBushels(
+                    ticket,
+                    contract.id
+                  )
+                )} bu`
+              )
+            : ""
+        }
+
+      `;
+
+      renderPopupGrades(
+        ticket,
+        contract
+      );
+
+      const imageUrl =
+        getTicketImageUrl(
+          ticket
+        );
+
+      const image =
+        $("#ticketPopupImage");
+
+      const noImage =
+        $("#ticketPopupNoImage");
+
+      if(imageUrl){
+
+        image.src =
+          imageUrl;
+
+        image.hidden =
+          false;
+
+        noImage.hidden =
+          true;
+
+      }
+      else{
+
+        image.src =
+          "";
+
+        image.hidden =
+          true;
+
+        noImage.hidden =
+          false;
+
+      }
+
+      $("#ticketModal")
+        .classList
+        .add("open");
+
+    }
+
+    function popupInfo(
+      label,
+      value
+    ){
+
+      return `
+        <div class="popup-info">
+
+          <div class="popup-label">
+            ${escapeHtml(label)}
+          </div>
+
+          <div class="popup-value">
+            ${escapeHtml(
+              value || "—"
+            )}
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    function renderPopupGrades(
+      ticket,
+      contract
+    ){
+
+      const crop =
+        contract?.crop ||
+        ticket.crop ||
+        "";
+
+      const moisture =
+        numberOrNull(
+          ticket.moisture
+        );
+
+      const damage =
+        numberOrNull(
+          ticket.damage
+        );
+
+      const fm =
+        numberOrNull(
+          ticket.foreignMaterial
+        );
+
+      $("#popupGrades").innerHTML = `
+
+        ${popupGrade(
+          "TW",
+          ticket.testWeight,
+          ""
+        )}
+
+        ${popupGrade(
+          "MO",
+          moisture,
+          gradeSeverity(
+            "moisture",
+            moisture,
+            crop
+          ),
+          "%"
+        )}
+
+        ${popupGrade(
+          "DM",
+          damage,
+          gradeSeverity(
+            "damage",
+            damage,
+            crop
+          ),
+          "%"
+        )}
+
+        ${popupGrade(
+          "FM",
+          fm,
+          gradeSeverity(
+            "fm",
+            fm,
+            crop
+          ),
+          "%"
+        )}
+
+      `;
+
+    }
+
+    function popupGrade(
+      label,
+      value,
+      severity = "",
+      suffix = ""
+    ){
+
+      const n =
+        numberOrNull(value);
+
+      return `
+        <div class="popup-grade ${severity}">
+
+          <div class="popup-grade-label">
+            ${escapeHtml(label)}
+          </div>
+
+          <div class="popup-grade-value">
+            ${
+              n === null
+                ? "—"
+                : `${formatGrade(n)}${suffix}`
+            }
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    function closeTicketPopup(){
+
+      $("#ticketModal")
+        .classList
+        .remove("open");
+
+      $("#ticketPopupImage")
+        .src = "";
+
+      state.activeTicket =
+        null;
+
+    }
+
+    /* =========================================================
+       PAGE SUMMARY
+    ========================================================= */
+
+    function renderSummary(){
+
+      const contracts =
+        state.filteredContracts;
+
+      let contracted = 0;
+      let assigned = 0;
+      let loads = 0;
+
+      contracts.forEach(contract => {
+
+        const stats =
+          getContractStats(contract);
+
+        contracted +=
+          numberValue(
+            contract.contractBushels
+          );
+
+        assigned +=
+          stats.delivered;
+
+        loads +=
+          stats.tickets.length;
+
+      });
+
+      $("#summaryContracts")
+        .textContent =
+          contracts.length
+            .toLocaleString();
+
+      $("#summaryContracted")
+        .textContent =
+          `${formatBushels(contracted)} bu`;
+
+      $("#summaryAssigned")
+        .textContent =
+          `${formatBushels(assigned)} bu`;
+
+      $("#summaryLoads")
+        .textContent =
+          loads.toLocaleString();
+
+      $("#contractCount")
+        .textContent =
+          `${contracts.length} contract${
+            contracts.length === 1
+              ? ""
+              : "s"
+          }`;
+
+    }
+
+    /* =========================================================
+       RENDER PAGE
+    ========================================================= */
+
+    function render(){
+
+      renderSummary();
+
+      const list =
+        $("#contractList");
+
+      if(
+        !state.filteredContracts
+          .length
+      ){
+
+        list.innerHTML = `
+          <div class="empty-state">
+            No grain contracts match the current filters.
+          </div>
+        `;
+
+        return;
+      }
+
+      list.innerHTML =
+        state.filteredContracts
+          .map(
+            renderContractTile
+          )
+          .join("");
+
+    }
+
+    /* =========================================================
+       TOGGLE CONTRACT
+    ========================================================= */
+
+    function toggleContract(
+      contractId
+    ){
+
+      if(
+        state.expandedContracts
+          .has(contractId)
+      ){
+
+        state.expandedContracts
+          .delete(contractId);
+
+      }
+      else{
+
+        state.expandedContracts
+          .add(contractId);
+
+      }
+
+      render();
+
+    }
+
+    /* =========================================================
+       COMPANY
+    ========================================================= */
+
+    async function loadCompany(){
+
+      if(state.company){
+        return state.company;
+      }
+
+      try{
+
+        const snapshot =
+          await getDoc(
+            doc(
+              db,
+              "company",
+              "main"
+            )
+          );
+
+        const data =
+          snapshot.exists()
+            ? snapshot.data() || {}
+            : {};
+
+        state.company = {
+
+          name:
+            data.name || "FarmVista",
+
+          address:[
+            data.addressStreet || "",
+            [
+              data.addressCity,
+              data.addressState
+            ]
+              .filter(Boolean)
+              .join(", "),
+            data.addressZip || ""
+          ]
+            .filter(Boolean)
+            .join(" · "),
+
+          phone:
+            data.phone || "",
+
+          email:
+            data.email || "",
+
+          logoUrl:
+            data?.logo?.url ||
+            data?.logoUrl ||
+            ""
+
+        };
+
+      }
+      catch(error){
+
+        console.warn(
+          "[grain-contract-report] Company load failed",
+          error
+        );
+
+        state.company = {
+          name:"FarmVista",
+          address:"",
+          phone:"",
+          email:"",
+          logoUrl:""
+        };
+
+      }
+
+      return state.company;
+
+    }
+
+    /* =========================================================
+       PRINT SINGLE CONTRACT
+    ========================================================= */
+
+    async function printSingleContract(
+      contractId
+    ){
+
+      const contract =
+        state.contracts
+          .find(item =>
+            item.id === contractId
+          );
+
+      if(!contract){
+        return;
+      }
+
+      const company =
+        await loadCompany();
+
+      const stats =
+        getContractStats(contract);
+
+      const html =
+        buildSingleContractPrintHtml(
+          company,
+          contract,
+          stats
+        );
+
+      printHtml(html);
+
+    }
+
+    function printHtml(html){
+
+      let iframe =
+        $("#fv-print-frame");
+
+      if(!iframe){
+
+        iframe =
+          document.createElement(
+            "iframe"
+          );
+
+        iframe.id =
+          "fv-print-frame";
+
+        document.body
+          .appendChild(
+            iframe
+          );
+
+      }
+
+      const docu =
+        iframe.contentDocument ||
+        iframe.contentWindow.document;
+
+      const win =
+        iframe.contentWindow;
+
+      docu.open();
+      docu.write(html);
+      docu.close();
+
+      setTimeout(() => {
+
+        try{
+
+          win.focus();
+          win.print();
+
+        }
+        catch(error){
+
+          console.error(
+            "Print failed:",
+            error
+          );
+
+        }
+
+      },450);
+
+    }
+
+    function buildSingleContractPrintHtml(
+      company,
+      contract,
+      stats
+    ){
+
+      const moisture =
+        gradeDisplay(
+          "moisture",
+          stats.moisture,
+          contract.crop
+        );
+
+      const damage =
+        gradeDisplay(
+          "damage",
+          stats.damage,
+          contract.crop
+        );
+
+      const fm =
+        gradeDisplay(
+          "fm",
+          stats.fm,
+          contract.crop
+        );
+
+      return `
+<!doctype html>
+<html>
+<head>
+
+<meta charset="utf-8">
+
+<title>
+Contract ${escapeHtml(
+  contract.contractNumber || ""
+)}
+</title>
+
+<style>
+
+  :root{
+    --green:#3B7E46;
+    --border:#D1D5DB;
+    --muted:#6B7280;
+    --orange-bg:#FFF0E3;
+    --orange:#A65300;
+    --red-bg:#FBE7E5;
+    --red:#9D241E;
+  }
+
+  *{
+    box-sizing:border-box;
+  }
+
+  body{
+    margin:0;
+    padding:20px;
+
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+
+    color:#111827;
+    background:#fff;
+  }
+
+  .page{
+    max-width:1000px;
+    margin:0 auto;
+  }
+
+  .header{
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:13px;
+    align-items:center;
+
+    padding-bottom:11px;
+
+    border-bottom:2px solid var(--green);
+  }
+
+  .logo{
+    width:58px;
+    height:58px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    overflow:hidden;
+
+    border:1px solid var(--border);
+    border-radius:12px;
+
+    background:var(--green);
+    color:#fff;
+
+    font-weight:950;
+  }
+
+  .logo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  .company{
+    font-size:15px;
+    font-weight:950;
+  }
+
+  .company-line{
+    margin-top:2px;
+    font-size:9px;
+    color:var(--muted);
+  }
+
+  .header-meta{
+    text-align:right;
+    font-size:9px;
+    color:var(--muted);
+  }
+
+  .title{
+    margin:14px 0 2px;
+    font-size:20px;
+    font-weight:950;
+  }
+
+  .subtitle{
+    margin:0 0 12px;
+    font-size:10px;
+    color:var(--muted);
+  }
+
+  .info-grid{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:6px;
+  }
+
+  .box{
+    padding:7px;
+    border:1px solid var(--border);
+    border-radius:7px;
+  }
+
+  .label{
+    font-size:7px;
+    color:var(--muted);
+    font-weight:900;
+    text-transform:uppercase;
+  }
+
+  .value{
+    margin-top:2px;
+    font-size:9px;
+    font-weight:850;
+  }
+
+  .grades{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
+    margin-top:10px;
+  }
+
+  .grade{
+    padding:8px;
+    border:1px solid var(--border);
+    border-radius:8px;
+  }
+
+  .grade.warning{
+    background:var(--orange-bg);
+    color:var(--orange);
+  }
+
+  .grade.severe{
+    background:var(--red-bg);
+    color:var(--red);
+  }
+
+  .grade-title{
+    font-size:7px;
+    text-transform:uppercase;
+    font-weight:900;
+  }
+
+  .grade-value{
+    margin-top:2px;
+    font-size:15px;
+    font-weight:950;
+  }
+
+  .grade-note{
+    margin-top:2px;
+    font-size:6.5px;
+  }
+
+  .section-title{
+    margin:14px 0 6px;
+
+    font-size:9px;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    border:1px solid var(--border);
+  }
+
+  th{
+    padding:5px;
+    background:#F3F4F6;
+    border-bottom:1px solid var(--border);
+
+    font-size:6.5px;
+    text-transform:uppercase;
+    text-align:left;
+  }
+
+  td{
+    padding:5px;
+    border-bottom:1px solid #E5E7EB;
+    font-size:7.5px;
+  }
+
+  tr:last-child td{
+    border-bottom:0;
+  }
+
+  .num{
+    text-align:right;
+  }
+
+  .warning{
+    background:var(--orange-bg);
+    color:var(--orange);
+  }
+
+  .severe{
+    background:var(--red-bg);
+    color:var(--red);
+  }
+
+  .footer{
+    margin-top:12px;
+    padding-top:7px;
+
+    border-top:1px solid var(--border);
+
+    display:flex;
+    justify-content:space-between;
+
+    font-size:7px;
+    color:var(--muted);
+  }
+
+  @media print{
+
+    body{
+      padding:7mm 8mm;
+    }
+
+    .page{
+      max-width:none;
+    }
+
+  }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+  <div class="header">
+
+    ${
+      company.logoUrl
+        ? `
+          <div class="logo">
+            <img
+              src="${escapeHtml(company.logoUrl)}"
+              alt="Logo"
+            >
+          </div>
+        `
+        : `
+          <div class="logo">
+            FV
+          </div>
+        `
+    }
+
+    <div>
+
+      <div class="company">
+        ${escapeHtml(
+          company.name || "FarmVista"
+        )}
+      </div>
+
+      <div class="company-line">
+        ${escapeHtml(
+          company.address || ""
+        )}
+      </div>
+
+    </div>
+
+    <div class="header-meta">
+      Grain Contract Report<br>
+      ${escapeHtml(
+        formatDateTime(
+          new Date()
+        )
+      )}
+    </div>
+
+  </div>
+
+  <div class="title">
+    Contract
+    ${escapeHtml(
+      contract.contractNumber || "—"
+    )}
+  </div>
+
+  <div class="subtitle">
+    ${escapeHtml(
+      contract.buyerName || "—"
+    )}
+    ·
+    ${escapeHtml(
+      contract.deliveryLocationName || "—"
+    )}
+    ·
+    ${escapeHtml(
+      contract.customerName || "—"
+    )}
+  </div>
+
+  <div class="info-grid">
+
+    ${printInfo(
+      "Crop",
+      contract.crop
+    )}
+
+    ${printInfo(
+      "Type",
+      contract.contractType
+    )}
+
+    ${printInfo(
+      "Status",
+      statusLabel(
+        contract.status
+      )
+    )}
+
+    ${printInfo(
+      "Contract Bu",
+      `${formatBushels(
+        contract.contractBushels
+      )} bu`
+    )}
+
+    ${printInfo(
+      "Assigned Bu",
+      `${formatBushels(
+        stats.delivered
+      )} bu`
+    )}
+
+    ${printInfo(
+      "Remaining",
+      `${formatBushels(
+        stats.remaining
+      )} bu`
+    )}
+
+    ${printInfo(
+      "Loads",
+      stats.tickets.length
+    )}
+
+    ${printInfo(
+      "Contract Date",
+      formatDate(
+        contract.contractDate
+      )
+    )}
+
+    ${printInfo(
+      "Delivery Start",
+      formatDate(
+        contract.deliveryStart
+      )
+    )}
+
+    ${printInfo(
+      "Delivery End",
+      formatDate(
+        contract.deliveryEnd
+      )
+    )}
+
+    ${printInfo(
+      "Cash Price",
+      formatPrice(
+        contract.pricePerBushel
+      )
+    )}
+
+    ${printInfo(
+      "Customer",
+      contract.customerName
+    )}
+
+  </div>
+
+  <div class="grades">
+
+    ${printGrade(
+      "Average Moisture",
+      moisture.text,
+      moisture.severity,
+      gradeLimitText(
+        "moisture",
+        contract.crop
+      )
+    )}
+
+    ${printGrade(
+      "Average Damage",
+      damage.text,
+      damage.severity,
+      gradeLimitText(
+        "damage",
+        contract.crop
+      )
+    )}
+
+    ${printGrade(
+      "Average Foreign Material",
+      fm.text,
+      fm.severity,
+      gradeLimitText(
+        "fm",
+        contract.crop
+      )
+    )}
+
+  </div>
+
+  <div class="section-title">
+    Allocated Grain Tickets
+  </div>
+
+  <table>
+
+    <thead>
+      <tr>
+        <th>Ticket</th>
+        <th>Date</th>
+        <th>Driver</th>
+        <th>Source</th>
+        <th class="num">Ticket Bu</th>
+        <th class="num">Contract Bu</th>
+        <th class="num">TW</th>
+        <th class="num">MO</th>
+        <th class="num">DM</th>
+        <th class="num">FM</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      ${
+        stats.tickets
+          .map(ticket =>
+            printTicketRow(
+              ticket,
+              contract
+            )
+          )
+          .join("")
+      }
+
+    </tbody>
+
+  </table>
+
+  <div class="footer">
+
+    <div>
+      Contract averages are weighted by bushels allocated to this contract.
+    </div>
+
+    <div>
+      FarmVista
+    </div>
+
+  </div>
+
+</div>
+
+  <script src="/js/grain/tickets/images/grain-ticket-image-download.js?v=20260909-5"></script>
+</body>
+</html>
+      `;
+
+    }
+
+    function printInfo(
+      label,
+      value
+    ){
+
+      return `
+        <div class="box">
+
+          <div class="label">
+            ${escapeHtml(label)}
+          </div>
+
+          <div class="value">
+            ${escapeHtml(
+              String(
+                value ?? "—"
+              )
+            )}
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    function printGrade(
+      label,
+      value,
+      severity,
+      note
+    ){
+
+      return `
+        <div class="grade ${severity}">
+
+          <div class="grade-title">
+            ${escapeHtml(label)}
+          </div>
+
+          <div class="grade-value">
+            ${escapeHtml(value)}
+          </div>
+
+          <div class="grade-note">
+            ${escapeHtml(note)}
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    function printTicketRow(
+      ticket,
+      contract
+    ){
+
+      const moisture =
+        numberOrNull(
+          ticket.moisture
+        );
+
+      const damage =
+        numberOrNull(
+          ticket.damage
+        );
+
+      const fm =
+        numberOrNull(
+          ticket.foreignMaterial
+        );
+
+      return `
+        <tr>
+
+          <td>
+            ${escapeHtml(
+              ticket.ticketNumber || "—"
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              formatDate(
+                ticket.ticketDate
+              )
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              ticket.driverName ||
+              ticket.reviewedByName ||
+              "—"
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              ticket.grainSourceName ||
+              ticket.grainSourceSiteName ||
+              ticket.grainSourceFieldName ||
+              "—"
+            )}
+          </td>
+
+          <td class="num">
+            ${formatBushels(
+              ticket.netBushels
+            )}
+          </td>
+
+          <td class="num">
+            ${formatBushels(
+              getAllocationBushels(
+                ticket,
+                contract.id
+              )
+            )}
+          </td>
+
+          <td class="num">
+            ${formatGrade(
+              ticket.testWeight
+            )}
+          </td>
+
+          <td
+            class="num ${gradeSeverity(
+              "moisture",
+              moisture,
+              contract.crop
+            )}"
+          >
+            ${
+              moisture === null
+                ? "—"
+                : `${formatGrade(moisture)}%`
+            }
+          </td>
+
+          <td
+            class="num ${gradeSeverity(
+              "damage",
+              damage,
+              contract.crop
+            )}"
+          >
+            ${
+              damage === null
+                ? "—"
+                : `${formatGrade(damage)}%`
+            }
+          </td>
+
+          <td
+            class="num ${gradeSeverity(
+              "fm",
+              fm,
+              contract.crop
+            )}"
+          >
+            ${
+              fm === null
+                ? "—"
+                : `${formatGrade(fm)}%`
+            }
+          </td>
+
+        </tr>
+      `;
+
+    }
+
+    /* =========================================================
+       PRINT FILTERED OVERVIEW
+    ========================================================= */
+
+    async function printFiltered(){
+
+      if(
+        !state.filteredContracts.length
+      ){
+        alert(
+          "No contracts match the current filters."
+        );
+
+        return;
+      }
+
+      const company =
+        await loadCompany();
+
+      const cards =
+        state.filteredContracts
+          .map(contract => {
+
+            const stats =
+              getContractStats(
+                contract
+              );
+
+            return `
+              <div
+                style="
+                  border:1px solid #D1D5DB;
+                  border-radius:8px;
+                  padding:9px;
+                  margin-bottom:7px;
+                "
+              >
+
+                <div
+                  style="
+                    display:flex;
+                    justify-content:space-between;
+                    gap:10px;
+                    font-weight:900;
+                    font-size:11px;
+                  "
+                >
+
+                  <span>
+                    Contract
+                    ${escapeHtml(
+                      contract.contractNumber || "—"
+                    )}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      contract.crop || "—"
+                    )}
+                  </span>
+
+                </div>
+
+                <div
+                  style="
+                    margin-top:3px;
+                    font-size:8px;
+                    color:#6B7280;
+                  "
+                >
+                  ${escapeHtml(
+                    contract.buyerName || "—"
+                  )}
+                  ·
+                  ${escapeHtml(
+                    contract.customerName || "—"
+                  )}
+                  ·
+                  ${formatBushels(
+                    stats.delivered
+                  )}
+                  /
+                  ${formatBushels(
+                    contract.contractBushels
+                  )}
+                  bu
+                  ·
+                  MO
+                  ${formatGrade(
+                    stats.moisture
+                  )}
+                  ·
+                  DM
+                  ${formatGrade(
+                    stats.damage
+                  )}
+                  ·
+                  FM
+                  ${formatGrade(
+                    stats.fm
+                  )}
+                </div>
+
+              </div>
+            `;
+
+          })
+          .join("");
+
+      printHtml(`
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Grain Contracts Overview</title>
+<style>
+body{
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  margin:0;
+  padding:9mm;
+  color:#111827;
+}
+h1{
+  margin:0 0 4px;
+  font-size:18px;
+}
+p{
+  margin:0 0 12px;
+  font-size:9px;
+  color:#6B7280;
+}
+</style>
+</head>
+<body>
+<h1>Grain Contracts Overview</h1>
+<p>
+${escapeHtml(
+  company.name || "FarmVista"
+)}
+·
+${escapeHtml(
+  formatDateTime(
+    new Date()
+  )
+)}
+</p>
+${cards}
+</body>
+</html>
+      `);
+
+    }
+
+    /* =========================================================
+       EVENTS
+    ========================================================= */
+
+    function wireEvents(){
+
+$("#btnBack")
+  .addEventListener(
+    "click",
+    () => {
+      history.back();
+    }
+  );
+
+      $("#btnPrint")
+        .addEventListener(
+          "click",
+          printFiltered
+        );
+
+      [
+        "#filterCrop",
+        "#filterBuyer",
+        "#filterStatus"
+      ]
+        .forEach(selector => {
+
+          $(selector)
+            .addEventListener(
+              "change",
+              applyFilters
+            );
+
+        });
+
+      $("#filterSearch")
+        .addEventListener(
+          "input",
+          applyFilters
+        );
+
+      $("#filterClear")
+        .addEventListener(
+          "click",
+          () => {
+
+            $("#filterCrop").value =
+              "all";
+
+            $("#filterBuyer").value =
+              "all";
+
+            $("#filterStatus").value =
+              "all";
+
+            $("#filterSearch").value =
+              "";
+
+            applyFilters();
+
+          }
+        );
+
+      $("#contractList")
+        .addEventListener(
+          "click",
+          event => {
+
+            const printButton =
+              event.target.closest(
+                "[data-print-contract]"
+              );
+
+            if(printButton){
+
+              event.stopPropagation();
+
+              printSingleContract(
+                printButton.dataset
+                  .printContract
+              );
+
+              return;
+            }
+
+            const ticketRow =
+              event.target.closest(
+                ".ticket-row"
+              );
+
+            if(ticketRow){
+
+              event.stopPropagation();
+
+              openTicketPopup(
+                ticketRow.dataset
+                  .ticketId,
+                ticketRow.dataset
+                  .contractId
+              );
+
+              return;
+            }
+
+            const toggle =
+              event.target.closest(
+                "[data-contract-toggle]"
+              );
+
+            if(toggle){
+
+              toggleContract(
+                toggle.dataset
+                  .contractToggle
+              );
+
+            }
+
+          }
+        );
+
+      $("#contractList")
+        .addEventListener(
+          "keydown",
+          event => {
+
+            if(
+              event.key !== "Enter" &&
+              event.key !== " "
+            ){
+              return;
+            }
+
+            const toggle =
+              event.target.closest(
+                "[data-contract-toggle]"
+              );
+
+            if(!toggle){
+              return;
+            }
+
+            event.preventDefault();
+
+            toggleContract(
+              toggle.dataset
+                .contractToggle
+            );
+
+          }
+        );
+
+      $("#closeTicketModal")
+        .addEventListener(
+          "click",
+          closeTicketPopup
+        );
+
+      $("#closeTicketModalBottom")
+        .addEventListener(
+          "click",
+          closeTicketPopup
+        );
+
+      $("#ticketModal")
+        .addEventListener(
+          "click",
+          event => {
+
+            if(
+              event.target.id ===
+              "ticketModal"
+            ){
+              closeTicketPopup();
+            }
+
+          }
+        );
+
+      document.addEventListener(
+        "keydown",
+        event => {
+
+          if(
+            event.key === "Escape"
+          ){
+            closeTicketPopup();
+          }
+
+        }
+      );
+
+    }
+
+    /* =========================================================
+       START
+    ========================================================= */
+
+    async function start(){
+
+      const shell =
+        document.querySelector(
+          "fv-shell"
+        );
+
+      if(shell){
+        shell.nav =
+          NAV_MENU;
+      }
+
+      wireEvents();
+
+      try{
+
+        await loadData();
+
+        populateFilters();
+
+        state.filteredContracts =
+          [...state.contracts];
+
+        render();
+
+      }
+      catch(error){
+
+        console.error(
+          "[Grain Contract Report] Load failed:",
+          error
+        );
+
+        $("#contractList")
+          .innerHTML = `
+            <div class="empty-state">
+              Unable to load grain contract report.
+              Check the browser console for details.
+            </div>
+          `;
+
+      }
+
+    }
+
+    start();
+
+  </script>
+
+</head>
+
+<body>
+
+  <fv-shell>
+
+    <div class="wrap">
+
+      <section class="hero">
+
+        <header class="hero-head">
+
+          <div
+            class="icon"
+            aria-hidden="true"
+          >
+            🌾
+          </div>
+
+          <div>
+
+            <h1>
+              Grain Contract Report
+            </h1>
+
+            <p class="muted">
+              Contract delivery progress and grain quality.
+              Click any contract to view its loads and full details.
+            </p>
+
+          </div>
+
+        </header>
+
+        <div class="body">
+
+          <div class="toolbar">
+
+            <div class="toolbar-left">
+
+<button
+  id="btnBack"
+  type="button"
+  class="btn btn-secondary"
+>
+  ← Back
+</button>
+
+              <button
+                id="btnPrint"
+                type="button"
+                class="btn btn-primary"
+              >
+                🖨 Print Overview
+              </button>
+
+            </div>
+
+            <div
+              id="contractCount"
+              class="page-count"
+            >
+              0 contracts
+            </div>
+
+          </div>
+
+          <div class="filters">
+
+            <div class="filter-field">
+
+              <label
+                class="filter-label"
+                for="filterCrop"
+              >
+                Crop
+              </label>
+
+              <select
+                id="filterCrop"
+                class="filter-select"
+              >
+                <option value="all">
+                  All Crops
+                </option>
+              </select>
+
+            </div>
+
+            <div class="filter-field">
+
+              <label
+                class="filter-label"
+                for="filterBuyer"
+              >
+                Buyer
+              </label>
+
+              <select
+                id="filterBuyer"
+                class="filter-select"
+              >
+                <option value="all">
+                  All Buyers
+                </option>
+              </select>
+
+            </div>
+
+            <div class="filter-field">
+
+              <label
+                class="filter-label"
+                for="filterStatus"
+              >
+                Status
+              </label>
+
+              <select
+                id="filterStatus"
+                class="filter-select"
+              >
+
+                <option value="all">
+                  All Statuses
+                </option>
+
+                <option value="open">
+                  Open
+                </option>
+
+                <option value="pending">
+                  Pending
+                </option>
+
+                <option value="completed">
+                  Completed
+                </option>
+
+                <option value="voided">
+                  Voided
+                </option>
+
+              </select>
+
+            </div>
+
+            <div class="filter-field filter-search">
+
+              <label
+                class="filter-label"
+                for="filterSearch"
+              >
+                Search
+              </label>
+
+              <input
+                id="filterSearch"
+                class="filter-input"
+                type="search"
+                placeholder="Contract #, buyer, customer, destination…"
+                autocomplete="off"
+              >
+
+            </div>
+
+            <button
+              id="filterClear"
+              type="button"
+              class="btn btn-secondary"
+            >
+              Clear
+            </button>
+
+          </div>
+
+          <div class="summary-row">
+
+            <div class="summary-item">
+              <span class="summary-label">
+                Contracts
+              </span>
+              <span
+                class="summary-value"
+                id="summaryContracts"
+              >
+                0
+              </span>
+            </div>
+
+            <div class="summary-item">
+              <span class="summary-label">
+                Contracted
+              </span>
+              <span
+                class="summary-value"
+                id="summaryContracted"
+              >
+                0
+              </span>
+            </div>
+
+            <div class="summary-item">
+              <span class="summary-label">
+                Assigned
+              </span>
+              <span
+                class="summary-value"
+                id="summaryAssigned"
+              >
+                0
+              </span>
+            </div>
+
+            <div class="summary-item">
+              <span class="summary-label">
+                Loads
+              </span>
+              <span
+                class="summary-value"
+                id="summaryLoads"
+              >
+                0
+              </span>
+            </div>
+
+          </div>
+
+          <div class="legend">
+
+            <span class="legend-title">
+              Grade Colors
+            </span>
+
+            <span class="legend-item">
+              <span class="legend-dot normal"></span>
+              Normal
+            </span>
+
+            <span class="legend-item">
+              <span class="legend-dot warning"></span>
+              Trending High
+            </span>
+
+            <span class="legend-item">
+              <span class="legend-dot severe"></span>
+              Severe
+            </span>
+
+          </div>
+
+          <section
+            id="contractList"
+            class="contract-list"
+            aria-label="Grain contracts"
+          >
+
+            <div class="empty-state">
+              Loading grain contracts…
+            </div>
+
+          </section>
+
+        </div>
+
+      </section>
+
+      <iframe id="fv-print-frame"></iframe>
+
+    </div>
+
+  </fv-shell>
+
+
+  <!-- ========================================================
+       TICKET POPUP
+  ========================================================= -->
+
+  <div
+    class="modal"
+    id="ticketModal"
+    role="dialog"
+    aria-modal="true"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-head">
+
+        <div>
+
+          <div
+            class="modal-title"
+            id="ticketModalTitle"
+          >
+            Grain Ticket
+          </div>
+
+          <div
+            class="modal-sub"
+            id="ticketModalSub"
+          >
+            Ticket details
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          class="modal-close"
+          id="closeTicketModal"
+          aria-label="Close ticket"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div class="ticket-popup-layout">
+
+          <div>
+
+            <div
+              class="popup-info-grid"
+              id="popupInfo"
+            ></div>
+
+            <div
+              class="popup-grades"
+              id="popupGrades"
+            ></div>
+
+          </div>
+
+          <div class="image-panel">
+
+            <div class="image-panel-title">
+              Original Grain Ticket Scan
+            </div>
+
+            <div class="ticket-image-wrap">
+
+              <img
+                id="ticketPopupImage"
+                class="ticket-image"
+                src=""
+                alt="Original grain ticket scan"
+                hidden
+              >
+
+              <div
+                id="ticketPopupNoImage"
+                class="no-image"
+              >
+                No scanned ticket image is available for this ticket.
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          id="closeTicketModalBottom"
+        >
+          Close
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

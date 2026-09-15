@@ -1,0 +1,5772 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Setup → Grain Bin Sites</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Standard includes -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <!-- Permission UI controller -->
+  <script src="/js/shared/permissions/perm-ui.js"></script>
+
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Firebase config -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <style>
+
+    .page{
+      max-width:1100px;
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(
+        env(safe-area-inset-bottom,0px) +
+        var(--ftr-h,42px) +
+        96px
+      ) !important;
+    }
+
+    .page-title{
+      margin:0 0 8px 0;
+    }
+
+    .page-sub{
+      margin:0 0 14px 0;
+      color:var(--muted,#67706B);
+    }
+
+
+    /* ============================================================
+       SECTION
+    ============================================================ */
+
+    .section{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+    }
+
+    .section-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(
+        90deg,
+        rgba(47,108,60,.12),
+        transparent
+      );
+    }
+
+    .section-head .icon{
+      width:24px;
+      height:24px;
+      color:#2F6C3C;
+      display:grid;
+      place-items:center;
+    }
+
+    .section-body{
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+
+
+    /* ============================================================
+       FORM
+    ============================================================ */
+
+    .row{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1fr auto;
+      align-items:end;
+    }
+
+    @media(max-width:720px){
+
+      .row{
+        grid-template-columns:1fr;
+        align-items:stretch;
+      }
+
+    }
+
+    .field label{
+      display:block;
+      font-weight:800;
+      margin:0 0 6px 0;
+    }
+
+    .input,
+    .select{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      outline:none;
+      box-sizing:border-box;
+    }
+
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:148px;
+      padding:12px 16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:800;
+      color:var(--text);
+      cursor:pointer;
+    }
+
+    .btn[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff;
+    }
+
+    .btn-danger{
+      border-color:#b3261e;
+      color:#b3261e;
+      background:var(--surface);
+    }
+
+    .btn-quiet{
+      min-width:auto;
+      padding:8px 12px;
+    }
+
+
+    /* ============================================================
+       FARM / FIELD ROW
+    ============================================================ */
+
+    .farm-field-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      align-items:start;
+    }
+
+    @media(max-width:720px){
+
+      .farm-field-row{
+        grid-template-columns:1fr;
+      }
+
+    }
+
+
+    /* ============================================================
+       CUSTOM DROPDOWNS
+    ============================================================ */
+
+    .combo{
+      position:relative;
+      min-width:0;
+    }
+
+    .combo-anchor{
+      position:relative;
+      width:100%;
+      min-width:0;
+    }
+
+    .buttonish{
+      width:100%;
+      box-sizing:border-box;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      padding-right:42px;
+      outline:none;
+      text-align:left;
+      cursor:pointer;
+      position:relative;
+      min-width:0;
+    }
+
+    .buttonish.has-caret::after{
+      content:"";
+      position:absolute;
+      right:14px;
+      top:50%;
+      width:0;
+      height:0;
+      border-left:6px solid transparent;
+      border-right:6px solid transparent;
+      border-top:7px solid var(--muted,#67706B);
+      transform:translateY(-50%);
+      pointer-events:none;
+    }
+
+    .combo-panel{
+      position:absolute;
+      left:0;
+      right:0;
+      top:calc(100% + 4px);
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 12px 26px rgba(0,0,0,.18);
+      padding:8px;
+      display:none;
+      z-index:10050;
+      box-sizing:border-box;
+      min-width:0;
+    }
+
+    .combo-panel.show{
+      display:block;
+    }
+
+    .combo-panel .search{
+      padding:4px 2px 8px;
+    }
+
+    .combo-panel .search input{
+      width:100%;
+      box-sizing:border-box;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      font:inherit;
+      font-size:16px;
+      outline:none;
+    }
+
+    .combo-panel .combo-list{
+      max-height:42vh;
+      overflow-y:auto;
+      overflow-x:hidden;
+      border-top:1px solid var(--border);
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+    }
+
+    .combo-panel .combo-list::-webkit-scrollbar{
+      display:none;
+    }
+
+    .combo-item{
+      padding:10px 8px;
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+      white-space:normal;
+      overflow-wrap:anywhere;
+    }
+
+    .combo-item:hover{
+      background:rgba(0,0,0,.04);
+    }
+
+    .combo-item:last-child{
+      border-bottom:none;
+    }
+
+    .combo-empty{
+      padding:10px 8px;
+      color:var(--muted,#67706B);
+    }
+
+    .req{
+      color:#2F6C3C;
+    }
+
+
+    /* ============================================================
+       BINS
+    ============================================================ */
+
+    .bins-card{
+      border:1px dashed var(--border);
+      border-radius:12px;
+      padding:12px;
+      display:grid;
+      gap:12px;
+      background:var(--card-surface,var(--surface));
+      min-width:0;
+    }
+
+    .bins-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .bins-head-add{
+      justify-content:flex-end;
+    }
+
+    .bins-title{
+      font-weight:800;
+    }
+
+    .bins-title-wrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .bin-row{
+      display:grid;
+      grid-template-columns:120px minmax(0,1fr) auto;
+      gap:10px;
+      align-items:center;
+      margin-bottom:8px;
+      min-width:0;
+    }
+
+    @media(max-width:720px){
+
+      .bin-row{
+        grid-template-columns:80px minmax(0,1fr) auto;
+      }
+
+    }
+
+    .bin-num{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .bin-num .badge{
+      min-width:44px;
+      text-align:center;
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:8px 10px;
+      background:var(--surface);
+      font-weight:800;
+    }
+
+    .bin-remove{
+      border:1px solid var(--border);
+      background:var(--surface);
+      border-radius:10px;
+      padding:8px 12px;
+      font-weight:700;
+      cursor:pointer;
+      color:var(--text) !important;
+    }
+
+    .totals{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      font-size:13px;
+      border:1px solid var(--border);
+      padding:6px 10px;
+      border-radius:999px;
+      color:var(--muted,#67706B);
+      background:var(--surface);
+    }
+
+
+    /* ============================================================
+       LIST
+    ============================================================ */
+
+    .list-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border-top:1px solid var(--border);
+    }
+
+    .list-title{
+      font-size:clamp(18px,2.6vw,22px);
+      font-weight:800;
+    }
+
+    .list{
+      padding:14px 16px;
+      display:grid;
+      gap:12px;
+    }
+
+    .item{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:var(--card-surface,var(--surface));
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .item-main{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1 1 auto;
+      min-width:0;
+    }
+
+    .item-meta{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .name{
+      font-weight:800;
+    }
+
+    .view{
+      border:1px solid var(--border);
+      background:var(--surface);
+      border-radius:10px;
+      padding:8px 12px;
+      font-weight:700;
+      cursor:pointer;
+      color:var(--text) !important;
+      align-self:center;
+      flex-shrink:0;
+    }
+
+
+    /* ============================================================
+       MODAL
+    ============================================================ */
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      background:rgba(0,0,0,.42);
+      z-index:9999;
+      transition:opacity .15s;
+      opacity:0;
+      padding:12px;
+      box-sizing:border-box;
+    }
+
+    .modal[open]{
+      display:grid;
+      opacity:1;
+    }
+
+    .dialog{
+      width:min(980px,96vw);
+      max-height:92vh;
+      display:flex;
+      flex-direction:column;
+      background:var(--surface);
+      color:var(--text);
+      border-radius:14px;
+      border:1px solid var(--border);
+      box-shadow:0 16px 36px rgba(0,0,0,.28);
+      min-width:0;
+      overflow:hidden;
+    }
+
+    .dialog-sm{
+      width:min(560px,94vw);
+    }
+
+    .dialog-head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-shrink:0;
+    }
+
+    .dialog-body{
+      padding:14px;
+      display:grid;
+      gap:12px;
+
+      overflow-y:auto;
+      overflow-x:hidden;
+
+      min-width:0;
+
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+    }
+
+    .dialog-body::-webkit-scrollbar{
+      display:none;
+    }
+
+    .dialog-footer{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      border-top:1px solid var(--border);
+      flex-shrink:0;
+    }
+
+    .left-btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .closex{
+      border:1px solid var(--border);
+      background:var(--surface);
+      border-radius:10px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-weight:700;
+      color:var(--text) !important;
+    }
+
+
+    /* ============================================================
+       INFO
+    ============================================================ */
+
+    .info-ico{
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--surface);
+      width:28px;
+      height:28px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+      color:var(--muted,#67706B);
+      flex-shrink:0;
+    }
+
+
+    /* ============================================================
+       TOAST / ERROR
+    ============================================================ */
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(
+        env(safe-area-inset-bottom,0px) +
+        72px
+      );
+      transform:translateX(-50%);
+      background:#2F6C3C;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;
+      display:none;
+    }
+
+    .toast.show{
+      display:block;
+      animation:fadeout 2.8s forwards;
+    }
+
+    @keyframes fadeout{
+      0%{opacity:1}
+      85%{opacity:1}
+      100%{opacity:0}
+    }
+
+    .error{
+      border:1px solid #b3261e;
+      background:#fff;
+      color:#b3261e;
+      border-radius:10px;
+      padding:10px 12px;
+      display:none;
+    }
+
+    .error.show{
+      display:block;
+    }
+
+    .muted{
+      color:var(--muted,#67706B);
+    }
+
+
+    /* ============================================================
+       GPS LOCATION PICKER
+    ============================================================ */
+
+    .gps-row{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+
+    .gps-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    #siteLocationMapShell,
+    #editSiteLocationMapShell{
+      border-radius:12px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      background:#000;
+    }
+
+    #siteMap,
+    #editSiteMap{
+      width:100%;
+      height:52vh;
+      min-height:320px;
+      max-height:680px;
+    }
+
+    @media (max-width:699px){
+      #siteMap,
+      #editSiteMap{
+        height:58vh;
+        min-height:340px;
+        max-height:560px;
+      }
+    }
+
+    @media (min-width:700px){
+      #siteMap,
+      #editSiteMap{
+        height:64vh;
+        min-height:460px;
+        max-height:720px;
+      }
+    }
+
+  </style>
+
+  <script>
+    (function(){
+
+      if(!customElements.get('fv-shell')){
+
+        const s = document.createElement('script');
+
+        s.src = '/js/core/shell/fv-shell.js';
+        s.defer = true;
+
+        document.head.appendChild(s);
+
+      }
+
+    })();
+  </script>
+
+</head>
+
+<body>
+
+  <fv-shell>
+
+    <div
+      class="page container"
+      data-perm="setup-grain-sites:view"
+    >
+
+      <h1 class="page-title">
+        Grain Bin Sites
+      </h1>
+
+      <p class="page-sub">
+        Create a site, add bins with
+        <strong>rated corn bushel</strong>
+        capacity, and we’ll total it up for you.
+      </p>
+
+
+      <section class="section">
+
+        <header class="section-head">
+
+          <div
+            class="icon"
+            aria-hidden="true"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linejoin="round"
+            >
+
+              <path d="M6.5 7 L12 3.8 L17.5 7"/>
+
+              <rect
+                x="7"
+                y="7"
+                width="10"
+                height="13"
+                rx="1.6"
+              />
+
+              <path
+                d="M10 7v13M14 7v13"
+                stroke-linecap="round"
+              />
+
+            </svg>
+
+          </div>
+
+          <div>
+            <strong>Add Bin Site</strong>
+          </div>
+
+        </header>
+
+
+        <div
+          class="section-body"
+          data-perm="setup-grain-sites:add"
+        >
+
+          <div
+            id="err"
+            class="error"
+          ></div>
+
+
+          <!-- SITE NAME -->
+
+          <div class="row">
+
+            <div class="field">
+
+              <label for="siteName">
+                Site Name
+              </label>
+
+              <input
+                id="siteName"
+                class="input"
+                placeholder="e.g., Home Site"
+              >
+
+            </div>
+
+
+            <div class="actions">
+
+              <button
+                id="clear"
+                class="btn"
+                type="button"
+              >
+                Clear
+              </button>
+
+              <button
+                id="save"
+                class="btn btn-primary"
+                type="button"
+              >
+                Save
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <!-- ADD SITE TYPE -->
+
+          <div class="field combo">
+
+            <label for="siteTypeBtn">
+              Site Type
+            </label>
+
+            <input
+              id="siteType"
+              type="hidden"
+              value="field"
+            >
+
+            <div class="combo-anchor">
+
+              <button
+                id="siteTypeBtn"
+                class="buttonish has-caret"
+                type="button"
+              >
+                Field-Linked Bin Site
+              </button>
+
+              <div
+                id="siteTypePanel"
+                class="combo-panel"
+                role="listbox"
+                aria-label="Site Type"
+              >
+
+                <div
+                  id="siteTypeList"
+                  class="combo-list"
+                ></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ADD FARM / FIELD -->
+
+          <div
+            class="farm-field-row"
+            id="addFarmFieldRow"
+          >
+
+            <div class="field combo">
+
+              <label for="farmBtn">
+                Farm
+                <span class="req">*</span>
+              </label>
+
+              <div class="combo-anchor">
+
+                <button
+                  id="farmBtn"
+                  class="buttonish has-caret"
+                  type="button"
+                >
+                  Select farm…
+                </button>
+
+                <div
+                  class="combo-panel"
+                  id="farmPanel"
+                  role="listbox"
+                  aria-label="Farm list"
+                >
+
+                  <div class="search">
+
+                    <input
+                      id="farmSearch"
+                      type="search"
+                      placeholder="Search farms…"
+                    >
+
+                  </div>
+
+                  <div
+                    class="combo-list"
+                    id="farmList"
+                  ></div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="field combo">
+
+              <label for="fieldBtn">
+                Field
+                <span class="req">*</span>
+              </label>
+
+              <div class="combo-anchor">
+
+                <button
+                  id="fieldBtn"
+                  class="buttonish has-caret"
+                  type="button"
+                >
+                  Select field…
+                </button>
+
+                <div
+                  class="combo-panel"
+                  id="fieldPanel"
+                  role="listbox"
+                  aria-label="Field list"
+                >
+
+                  <div class="search">
+
+                    <input
+                      id="fieldSearch"
+                      type="search"
+                      placeholder="Search fields…"
+                    >
+
+                  </div>
+
+                  <div
+                    class="combo-list"
+                    id="fieldList"
+                  ></div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ADD GPS LOCATION -->
+
+          <div class="gps-row">
+            <div class="field">
+              <label>
+                GPS Location
+                <span class="muted">(optional)</span>
+              </label>
+
+              <div class="gps-actions">
+                <button id="btnMarkLocation" class="btn" type="button">
+                  Mark Location
+                </button>
+              </div>
+
+              <input id="siteLat" type="hidden">
+              <input id="siteLng" type="hidden">
+
+              <div id="siteLocationLabel" class="muted" style="margin-top:4px;">
+                No location set.
+              </div>
+            </div>
+          </div>
+
+
+          <!-- ADD BINS -->
+
+          <div class="bins-card">
+
+            <div class="bins-head bins-head-add">
+
+              <button
+                id="addBin"
+                class="btn"
+                type="button"
+              >
+                Add Bin
+              </button>
+
+            </div>
+
+            <div id="bins"></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- SITE LIST -->
+
+        <div class="list-head">
+
+          <div class="list-title">
+            Bin Sites
+          </div>
+
+        </div>
+
+        <div
+          id="list"
+          class="list"
+        >
+
+          <div class="muted">
+            No bin sites yet.
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </fv-shell>
+
+
+  <!-- TOAST -->
+
+  <div
+    id="toast"
+    class="toast"
+    role="status"
+    aria-live="polite"
+  >
+    Successfully saved.
+  </div>
+
+
+  <!-- ============================================================
+       ADD BIN MODAL
+  ============================================================ -->
+
+  <div
+    id="binModal"
+    class="modal"
+    aria-hidden="true"
+  >
+
+    <div
+      class="dialog dialog-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="binMdTitle"
+    >
+
+      <div class="dialog-head">
+
+        <h3 id="binMdTitle">
+          Add Bin
+        </h3>
+
+        <button
+          id="binMdClose"
+          class="closex"
+          type="button"
+        >
+          Back
+        </button>
+
+      </div>
+
+
+      <div
+        class="dialog-body"
+        data-perm="setup-grain-sites:add"
+      >
+
+        <div class="field">
+
+          <label for="binBushels">
+            Bushels
+          </label>
+
+          <div
+            style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+              flex-wrap:wrap;
+            "
+          >
+
+            <input
+              id="binBushels"
+              class="input"
+              placeholder="Bushels (corn bu)"
+              inputmode="decimal"
+            >
+
+            <button
+              id="binInfoBtn"
+              class="info-ico"
+              type="button"
+              title="These bushels are rated for corn. Other crop capacities will be calculated automatically based on their crop conversion factors."
+            >
+              i
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="dialog-footer">
+
+        <span></span>
+
+        <button
+          id="binMdSave"
+          class="btn btn-primary"
+          type="button"
+          data-perm="setup-grain-sites:add"
+        >
+          Add Bin
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       VIEW / EDIT MODAL
+  ============================================================ -->
+
+  <div
+    id="modal"
+    class="modal"
+    aria-hidden="true"
+  >
+
+    <div
+      class="dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mdTitle"
+    >
+
+      <div class="dialog-head">
+
+        <h3 id="mdTitle">
+          View / Edit Bin Site
+        </h3>
+
+        <button
+          id="mdClose"
+          class="closex"
+          type="button"
+        >
+          Back
+        </button>
+
+      </div>
+
+
+      <div
+        class="dialog-body"
+        data-perm="setup-grain-sites:edit"
+      >
+
+
+        <!-- EDIT NAME -->
+
+        <div class="field">
+
+          <label for="editName">
+            Site Name
+          </label>
+
+          <input
+            id="editName"
+            class="input"
+            placeholder="Site name"
+          >
+
+        </div>
+
+
+        <!-- EDIT SITE TYPE -->
+
+        <div class="field combo">
+
+          <label for="editSiteTypeBtn">
+            Site Type
+          </label>
+
+          <input
+            id="editSiteType"
+            type="hidden"
+            value="field"
+          >
+
+          <div class="combo-anchor">
+
+            <button
+              id="editSiteTypeBtn"
+              class="buttonish has-caret"
+              type="button"
+            >
+              Field-Linked Bin Site
+            </button>
+
+            <div
+              id="editSiteTypePanel"
+              class="combo-panel"
+              role="listbox"
+              aria-label="Edit Site Type"
+            >
+
+              <div
+                id="editSiteTypeList"
+                class="combo-list"
+              ></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- EDIT FARM / FIELD -->
+
+        <div
+          class="farm-field-row"
+          id="editFarmFieldRow"
+        >
+
+          <div class="field combo">
+
+            <label for="editFarmBtn">
+              Farm
+              <span class="req">*</span>
+            </label>
+
+            <div class="combo-anchor">
+
+              <button
+                id="editFarmBtn"
+                class="buttonish has-caret"
+                type="button"
+              >
+                Select farm…
+              </button>
+
+              <div
+                class="combo-panel"
+                id="editFarmPanel"
+                role="listbox"
+                aria-label="Edit farm list"
+              >
+
+                <div class="search">
+
+                  <input
+                    id="editFarmSearch"
+                    type="search"
+                    placeholder="Search farms…"
+                  >
+
+                </div>
+
+                <div
+                  class="combo-list"
+                  id="editFarmList"
+                ></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="field combo">
+
+            <label for="editFieldBtn">
+              Field
+              <span class="req">*</span>
+            </label>
+
+            <div class="combo-anchor">
+
+              <button
+                id="editFieldBtn"
+                class="buttonish has-caret"
+                type="button"
+              >
+                Select field…
+              </button>
+
+              <div
+                class="combo-panel"
+                id="editFieldPanel"
+                role="listbox"
+                aria-label="Edit field list"
+              >
+
+                <div class="search">
+
+                  <input
+                    id="editFieldSearch"
+                    type="search"
+                    placeholder="Search fields…"
+                  >
+
+                </div>
+
+                <div
+                  class="combo-list"
+                  id="editFieldList"
+                ></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- EDIT GPS LOCATION -->
+
+        <div class="gps-row">
+          <div class="field">
+            <label>
+              GPS Location
+              <span class="muted">(optional)</span>
+            </label>
+
+            <div class="gps-actions">
+              <button id="editBtnMarkLocation" class="btn" type="button">
+                Edit Location on Map
+              </button>
+            </div>
+
+            <input id="editSiteLat" type="hidden">
+            <input id="editSiteLng" type="hidden">
+
+            <div id="editSiteLocationLabel" class="muted" style="margin-top:4px;">
+              No location set.
+            </div>
+          </div>
+        </div>
+
+
+        <!-- EDIT BINS -->
+
+        <div class="bins-card">
+
+          <div class="bins-head">
+
+            <div class="bins-title-wrap">
+
+              <div class="bins-title">
+                Bushels
+              </div>
+
+              <button
+                id="mdInfoBtn"
+                class="info-ico"
+                type="button"
+                title="These bushels are rated for corn. Other crop capacities will be calculated automatically based on their crop conversion factors."
+              >
+                i
+              </button>
+
+            </div>
+
+
+            <button
+              id="mdAddBin"
+              class="btn"
+              type="button"
+              data-perm="setup-grain-sites:edit"
+            >
+              Add Bin
+            </button>
+
+          </div>
+
+
+          <div id="mdBins"></div>
+
+
+          <div class="totals">
+
+            <span
+              class="pill"
+              id="mdBinCountPill"
+            >
+              0 bins
+            </span>
+
+            <span
+              class="pill"
+              id="mdBushelTotalPill"
+            >
+              0 corn bu
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div
+          class="field"
+          id="statusRow"
+        >
+
+          <span
+            class="pill"
+            id="statusPill"
+          >
+            Active
+          </span>
+
+          <span
+            class="pill"
+            id="usedPill"
+            style="display:none"
+          >
+            In use
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="dialog-footer">
+
+        <div class="left-btns">
+
+          <button
+            id="mdArchive"
+            class="btn btn-quiet"
+            type="button"
+            data-perm="setup-grain-sites:edit"
+          >
+            Archive
+          </button>
+
+          <button
+            id="mdDelete"
+            class="btn btn-danger"
+            type="button"
+            title="Delete is disabled if the site is in use."
+            data-perm="setup-grain-sites:delete"
+          >
+            Delete
+          </button>
+
+        </div>
+
+
+        <button
+          id="mdSave"
+          class="btn btn-primary"
+          type="button"
+          data-perm="setup-grain-sites:edit"
+        >
+          Save Changes
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       ADD GPS LOCATION MODAL
+  ============================================================ -->
+
+  <div id="siteLocationModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="siteLocationTitle">
+      <div class="dialog-head">
+        <h3 id="siteLocationTitle">Set Bin Site Location</h3>
+        <button id="siteLocationClose" class="closex" type="button">Back</button>
+      </div>
+
+      <div class="dialog-body" data-perm="setup-grain-sites:add">
+        <button id="siteUseLocation" class="btn" type="button">Use my location</button>
+        <p id="siteLocationStatus" class="muted" style="margin-top:4px;">
+          Tap on the map to drop a pin, or use your current location.
+        </p>
+        <div id="siteLocationMapShell">
+          <div id="siteMap"></div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <div class="left-btns">
+          <button id="siteLocationClear" class="btn btn-quiet" type="button">Clear</button>
+          <button id="siteLocationCancel" class="btn" type="button">Cancel</button>
+        </div>
+        <button id="siteLocationSave" class="btn btn-primary" type="button" data-perm="setup-grain-sites:add">Save location</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       EDIT GPS LOCATION MODAL
+  ============================================================ -->
+
+  <div id="editSiteLocationModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="editSiteLocationTitle">
+      <div class="dialog-head">
+        <h3 id="editSiteLocationTitle">Edit Bin Site Location</h3>
+        <button id="editSiteLocationClose" class="closex" type="button">Back</button>
+      </div>
+
+      <div class="dialog-body" data-perm="setup-grain-sites:edit">
+        <button id="editSiteUseLocation" class="btn" type="button">Use my location</button>
+        <p id="editSiteLocationStatus" class="muted" style="margin-top:4px;">
+          Tap on the map to drop a pin, or use your current location.
+        </p>
+        <div id="editSiteLocationMapShell">
+          <div id="editSiteMap"></div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <div class="left-btns">
+          <button id="editSiteLocationClear" class="btn btn-quiet" type="button" data-perm="setup-grain-sites:edit">Clear</button>
+          <button id="editSiteLocationCancel" class="btn" type="button">Cancel</button>
+        </div>
+        <button id="editSiteLocationSave" class="btn btn-primary" type="button" data-perm="setup-grain-sites:edit">Save location</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCzKBEQ1-wCJ8_nv1dR3wQI0nTk1IrgWzY"></script>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+
+  <script type="module">
+
+    import {
+
+      ready,
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      getDoc,
+      setDoc,
+      deleteDoc,
+      doc,
+      serverTimestamp
+
+    } from '/js/core/firebase/firebase-init.js';
+
+
+    (function(){
+
+      "use strict";
+
+
+      /* ============================================================
+         HELPERS
+      ============================================================ */
+
+      const canNow = (k)=>
+        (
+          window.FV &&
+          typeof window.FV.can === 'function'
+        )
+          ? window.FV.can(k)
+          : true;
+
+
+      const $ = id =>
+        document.getElementById(id);
+
+
+      const toast =
+        $("toast");
+
+      const errBox =
+        $("err");
+
+
+      const binsBox =
+        $("bins");
+
+      const addBtn =
+        $("addBin");
+
+      const saveBtn =
+        $("save");
+
+      const clearBtn =
+        $("clear");
+
+      const siteName =
+        $("siteName");
+
+      const siteType =
+        $("siteType");
+
+      const addFarmFieldRow =
+        $("addFarmFieldRow");
+
+
+      const binModal =
+        $("binModal");
+
+      const binMdClose =
+        $("binMdClose");
+
+      const binMdSave =
+        $("binMdSave");
+
+      const binBushels =
+        $("binBushels");
+
+      const binMdTitle =
+        $("binMdTitle");
+
+
+      const listBox =
+        $("list");
+
+
+      const modal =
+        $("modal");
+
+      const mdClose =
+        $("mdClose");
+
+      const mdSave =
+        $("mdSave");
+
+      const mdArchive =
+        $("mdArchive");
+
+      const mdDelete =
+        $("mdDelete");
+
+      const mdName =
+        $("editName");
+
+      const mdBinsBox =
+        $("mdBins");
+
+      const mdBinCountPill =
+        $("mdBinCountPill");
+
+      const mdBushelTotalPill =
+        $("mdBushelTotalPill");
+
+      const editSiteType =
+        $("editSiteType");
+
+      const editFarmFieldRow =
+        $("editFarmFieldRow");
+
+      const statusPill =
+        $("statusPill");
+
+      const usedPill =
+        $("usedPill");
+
+
+      let db = null;
+
+      let siteMap = null;
+      let siteMapMarker = null;
+      let siteMapLatLng = null;
+
+      let editSiteMap = null;
+      let editSiteMapMarker = null;
+      let editSiteMapLatLng = null;
+
+
+      /* ============================================================
+         SITE TYPE OPTIONS
+      ============================================================ */
+
+      const SITE_TYPE_OPTIONS = [
+
+        {
+          id:"field",
+          name:"Field-Linked Bin Site"
+        },
+
+        {
+          id:"central",
+          name:"Central Elevator / No Field"
+        }
+
+      ];
+
+
+      /* ============================================================
+         FARM / FIELD STATE
+      ============================================================ */
+
+      const farmFieldState = {
+
+        farms:[],
+        fields:[],
+
+        addFarm:null,
+        addField:null,
+
+        editFarm:null,
+        editField:null
+
+      };
+
+
+      let addSiteTypeCombo = null;
+      let editSiteTypeCombo = null;
+
+      let addFarmCombo = null;
+      let addFieldCombo = null;
+
+      let editFarmCombo = null;
+      let editFieldCombo = null;
+
+
+      let addBins = [];
+
+      let editId = null;
+
+      let mdBins = [];
+
+      let pendingBinNum = null;
+
+      let lockedBinNums =
+        new Set();
+
+
+      const COLL =
+        'binSites';
+
+
+      /* ============================================================
+         TOAST / ERROR
+      ============================================================ */
+
+      const showToast = (
+        msg = "Successfully saved."
+      )=>{
+
+        toast.textContent = msg;
+
+        toast.classList.remove("show");
+
+        void toast.offsetWidth;
+
+        toast.style.display = "block";
+
+        toast.classList.add("show");
+
+        setTimeout(()=>{
+
+          toast.classList.remove("show");
+
+          toast.style.display = "none";
+
+        },2800);
+
+      };
+
+
+      const showErr = (msg)=>{
+
+        if(!errBox){
+          return;
+        }
+
+        errBox.textContent =
+          msg || "";
+
+        errBox.classList.toggle(
+          "show",
+          !!msg
+        );
+
+      };
+
+
+      const escapeHTML = (s)=>
+        String(s || "")
+          .replace(
+            /[&<>"']/g,
+            m=>({
+              "&":"&amp;",
+              "<":"&lt;",
+              ">":"&gt;",
+              '"':"&quot;",
+              "'":"&#39;"
+            }[m])
+          );
+
+
+      function inferName(data){
+
+        return (
+          data.name ||
+          data.farmName ||
+          data.fieldName ||
+          data.label ||
+          "Unnamed"
+        );
+
+      }
+
+
+      /* ============================================================
+         DROPDOWN CONTROL
+      ============================================================ */
+
+      function closeAllCombos(
+        exceptPanel = null
+      ){
+
+        document
+          .querySelectorAll(
+            ".combo-panel.show"
+          )
+          .forEach(panel=>{
+
+            if(panel !== exceptPanel){
+
+              panel.classList.remove(
+                "show"
+              );
+
+            }
+
+          });
+
+      }
+
+
+      /*
+        Clicking anywhere outside a dropdown
+        closes all dropdowns.
+      */
+      document.addEventListener(
+        "click",
+        ()=>{
+          closeAllCombos();
+        }
+      );
+
+
+      document.addEventListener(
+        "keydown",
+        e=>{
+
+          if(e.key === "Escape"){
+
+            closeAllCombos();
+
+          }
+
+        }
+      );
+
+
+      function makeCombo({
+
+        btn,
+        panel,
+        list,
+        searchInput,
+        items = [],
+        formatter = x=>x.name || "",
+        onPick
+
+      }){
+
+        if(
+          !btn ||
+          !panel ||
+          !list
+        ){
+
+          return null;
+
+        }
+
+
+        let DATA =
+          items || [];
+
+
+        /*
+          Clicking inside the panel must not
+          trigger the document close handler.
+        */
+        panel.addEventListener(
+          "click",
+          e=>e.stopPropagation()
+        );
+
+
+        panel.addEventListener(
+          "mousedown",
+          e=>e.stopPropagation()
+        );
+
+
+        function render(q = ""){
+
+          const qq =
+            String(q || "")
+              .trim()
+              .toLowerCase();
+
+
+          const rows =
+            DATA.filter(x=>{
+
+              const label =
+                formatter(x)
+                  .toLowerCase();
+
+              return (
+                !qq ||
+                label.includes(qq)
+              );
+
+            });
+
+
+          list.innerHTML =
+            rows.length
+
+              ? rows.map(x=>`
+
+                  <div
+                    class="combo-item"
+                    data-id="${escapeHTML(String(x.id))}"
+                  >
+                    ${escapeHTML(formatter(x))}
+                  </div>
+
+                `).join("")
+
+              : `
+                  <div class="combo-empty">
+                    (no matches)
+                  </div>
+                `;
+
+        }
+
+
+        function open(){
+
+          /*
+            IMPORTANT:
+            Close every other dropdown first.
+
+            This means Site Type, Farm and Field
+            can NEVER remain open together.
+          */
+          closeAllCombos(panel);
+
+
+          panel.classList.add(
+            "show"
+          );
+
+
+          render("");
+
+
+          if(searchInput){
+
+            searchInput.value =
+              "";
+
+            setTimeout(()=>{
+
+              searchInput.focus();
+
+            },0);
+
+          }
+
+        }
+
+
+        function close(){
+
+          panel.classList.remove(
+            "show"
+          );
+
+        }
+
+
+        btn.addEventListener(
+          "click",
+          e=>{
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+
+            if(
+              panel.classList.contains("show")
+            ){
+
+              close();
+
+            }
+            else{
+
+              open();
+
+            }
+
+          }
+        );
+
+
+        list.addEventListener(
+          "mousedown",
+          e=>{
+
+            const row =
+              e.target.closest(
+                ".combo-item"
+              );
+
+
+            if(!row){
+              return;
+            }
+
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+
+            const item =
+              DATA.find(
+                x=>
+                  String(x.id) ===
+                  String(row.dataset.id)
+              );
+
+
+            if(!item){
+              return;
+            }
+
+
+            onPick?.(item);
+
+            close();
+
+          }
+        );
+
+
+        searchInput?.addEventListener(
+          "input",
+          e=>render(
+            e.target.value
+          )
+        );
+
+
+        return {
+
+          setItems(arr){
+
+            DATA =
+              arr || [];
+
+            render("");
+
+          },
+
+          close,
+
+          open
+
+        };
+
+      }
+
+
+      /* ============================================================
+         SITE TYPE
+      ============================================================ */
+
+      function setAddSiteType(item){
+
+        siteType.value =
+          item.id;
+
+
+        $("siteTypeBtn").textContent =
+          item.name;
+
+
+        syncAddSiteType();
+
+      }
+
+
+      function setEditSiteType(item){
+
+        editSiteType.value =
+          item.id;
+
+
+        $("editSiteTypeBtn").textContent =
+          item.name;
+
+
+        syncEditSiteType();
+
+      }
+
+
+      function syncAddSiteType(){
+
+        const isCentral =
+          siteType.value === "central";
+
+
+        addFarmFieldRow.style.display =
+          isCentral
+            ? "none"
+            : "grid";
+
+
+        if(isCentral){
+
+          resetAddFarmField();
+
+        }
+
+      }
+
+
+      function syncEditSiteType(){
+
+        const isCentral =
+          editSiteType.value === "central";
+
+
+        editFarmFieldRow.style.display =
+          isCentral
+            ? "none"
+            : "grid";
+
+
+        if(isCentral){
+
+          farmFieldState.editFarm =
+            null;
+
+          farmFieldState.editField =
+            null;
+
+
+          $("editFarmBtn").textContent =
+            "Select farm…";
+
+          $("editFieldBtn").textContent =
+            "Select field…";
+
+
+          editFarmCombo?.setItems(
+            farmFieldState.farms
+          );
+
+          editFieldCombo?.setItems(
+            farmFieldState.fields
+          );
+
+        }
+
+      }
+
+
+      /* ============================================================
+         FARM / FIELD
+      ============================================================ */
+
+      function fieldsForFarm(farmId){
+
+        if(!farmId){
+
+          return farmFieldState.fields;
+
+        }
+
+
+        return farmFieldState.fields.filter(
+          f=>
+            String(f.farmId || "") ===
+            String(farmId)
+        );
+
+      }
+
+
+      function setAddFarm(farm){
+
+        farmFieldState.addFarm =
+          farm || null;
+
+
+        $("farmBtn").textContent =
+          farm
+            ? farm.name
+            : "Select farm…";
+
+
+        addFieldCombo?.setItems(
+          fieldsForFarm(
+            farm?.id || null
+          )
+        );
+
+
+        if(
+          farmFieldState.addField &&
+          farm &&
+          String(
+            farmFieldState.addField.farmId || ""
+          ) !==
+          String(farm.id)
+        ){
+
+          farmFieldState.addField =
+            null;
+
+          $("fieldBtn").textContent =
+            "Select field…";
+
+        }
+
+      }
+
+
+      function setAddField(field){
+
+        farmFieldState.addField =
+          field || null;
+
+
+        $("fieldBtn").textContent =
+          field
+            ? field.name
+            : "Select field…";
+
+
+        if(field?.farmId){
+
+          const farm =
+            farmFieldState.farms.find(
+              f=>
+                String(f.id) ===
+                String(field.farmId)
+            ) || null;
+
+
+          farmFieldState.addFarm =
+            farm;
+
+
+          $("farmBtn").textContent =
+            farm
+              ? farm.name
+              : "Select farm…";
+
+
+          addFieldCombo?.setItems(
+            fieldsForFarm(
+              field.farmId
+            )
+          );
+
+        }
+
+        if(field?.location){
+          setAddLocationValues(
+            field.location.lat,
+            field.location.lng,
+            true
+          );
+        }
+
+      }
+
+
+      function resetAddFarmField(){
+
+        farmFieldState.addFarm =
+          null;
+
+        farmFieldState.addField =
+          null;
+
+
+        $("farmBtn").textContent =
+          "Select farm…";
+
+        $("fieldBtn").textContent =
+          "Select field…";
+
+
+        addFarmCombo?.setItems(
+          farmFieldState.farms
+        );
+
+        addFieldCombo?.setItems(
+          farmFieldState.fields
+        );
+
+      }
+
+
+      function setEditFarm(farm){
+
+        farmFieldState.editFarm =
+          farm || null;
+
+
+        $("editFarmBtn").textContent =
+          farm
+            ? farm.name
+            : "Select farm…";
+
+
+        editFieldCombo?.setItems(
+          fieldsForFarm(
+            farm?.id || null
+          )
+        );
+
+
+        if(
+          farmFieldState.editField &&
+          farm &&
+          String(
+            farmFieldState.editField.farmId || ""
+          ) !==
+          String(farm.id)
+        ){
+
+          farmFieldState.editField =
+            null;
+
+          $("editFieldBtn").textContent =
+            "Select field…";
+
+        }
+
+      }
+
+
+      function setEditField(field){
+
+        farmFieldState.editField =
+          field || null;
+
+
+        $("editFieldBtn").textContent =
+          field
+            ? field.name
+            : "Select field…";
+
+
+        if(field?.farmId){
+
+          const farm =
+            farmFieldState.farms.find(
+              f=>
+                String(f.id) ===
+                String(field.farmId)
+            ) || null;
+
+
+          farmFieldState.editFarm =
+            farm;
+
+
+          $("editFarmBtn").textContent =
+            farm
+              ? farm.name
+              : "Select farm…";
+
+
+          editFieldCombo?.setItems(
+            fieldsForFarm(
+              field.farmId
+            )
+          );
+
+        }
+
+        if(field?.location){
+          setEditLocationValues(
+            field.location.lat,
+            field.location.lng,
+            true
+          );
+        }
+
+      }
+
+
+      function restoreEditFarmField(site){
+
+        const fieldId =
+          site.fieldId || "";
+
+        const farmId =
+          site.farmId || "";
+
+
+        let field =
+          null;
+
+        let farm =
+          null;
+
+
+        if(fieldId){
+
+          field =
+            farmFieldState.fields.find(
+              f=>
+                String(f.id) ===
+                String(fieldId)
+            ) || null;
+
+        }
+
+
+        const resolvedFarmId =
+          field?.farmId ||
+          farmId ||
+          "";
+
+
+        if(resolvedFarmId){
+
+          farm =
+            farmFieldState.farms.find(
+              f=>
+                String(f.id) ===
+                String(resolvedFarmId)
+            ) || null;
+
+        }
+
+
+        farmFieldState.editFarm =
+          farm;
+
+        farmFieldState.editField =
+          field;
+
+
+        $("editFarmBtn").textContent =
+          farm?.name ||
+          site.farmName ||
+          "Select farm…";
+
+
+        $("editFieldBtn").textContent =
+          field?.name ||
+          site.fieldName ||
+          "Select field…";
+
+
+        editFarmCombo?.setItems(
+          farmFieldState.farms
+        );
+
+
+        editFieldCombo?.setItems(
+          fieldsForFarm(
+            resolvedFarmId || null
+          )
+        );
+
+      }
+
+
+      async function loadFarmsAndFields(){
+
+        const [
+          farmSnap,
+          fieldSnap
+        ] = await Promise.all([
+
+          getDocs(
+            collection(
+              db,
+              "farms"
+            )
+          ),
+
+          getDocs(
+            collection(
+              db,
+              "fields"
+            )
+          )
+
+        ]);
+
+
+        farmFieldState.farms =
+          farmSnap.docs
+            .map(d=>{
+
+              const data =
+                d.data() || {};
+
+              return {
+
+                id:d.id,
+                name:inferName(data)
+
+              };
+
+            })
+            .sort(
+              (a,b)=>
+                a.name.localeCompare(b.name)
+            );
+
+
+        farmFieldState.fields =
+          fieldSnap.docs
+            .map(d=>{
+
+              const data =
+                d.data() || {};
+
+              return {
+
+                id:d.id,
+
+                name:
+                  inferName(data),
+
+                farmId:
+                  data.farmId ||
+                  data.farm ||
+                  data.farmDocId ||
+                  null,
+
+                location:
+                  (
+                    data.location &&
+                    Number.isFinite(Number(data.location.lat)) &&
+                    Number.isFinite(Number(data.location.lng))
+                  )
+                    ? {
+                        lat:Number(data.location.lat),
+                        lng:Number(data.location.lng)
+                      }
+                    : null
+
+              };
+
+            })
+            .sort(
+              (a,b)=>
+                a.name.localeCompare(b.name)
+            );
+
+
+        addFarmCombo?.setItems(
+          farmFieldState.farms
+        );
+
+        editFarmCombo?.setItems(
+          farmFieldState.farms
+        );
+
+        addFieldCombo?.setItems(
+          farmFieldState.fields
+        );
+
+        editFieldCombo?.setItems(
+          farmFieldState.fields
+        );
+
+      }
+
+
+
+      /* ============================================================
+         GPS LOCATION
+      ============================================================ */
+
+      const DEFAULT_MAP_CENTER = { lat:39.56556, lng:-89.65722 }; // Divernon, Illinois
+
+      function validLatLng(lat,lng){
+        const latN = Number(lat);
+        const lngN = Number(lng);
+
+        return (
+          Number.isFinite(latN) &&
+          Number.isFinite(lngN) &&
+          Math.abs(latN) <= 90 &&
+          Math.abs(lngN) <= 180 &&
+          !(Math.abs(latN) < 0.000001 && Math.abs(lngN) < 0.000001)
+        );
+      }
+
+
+      function setAddLocationValues(lat,lng,fromField=false){
+
+        if(!validLatLng(lat,lng)){
+          return;
+        }
+
+        const latN = Number(lat);
+        const lngN = Number(lng);
+
+        $("siteLat").value = latN;
+        $("siteLng").value = lngN;
+
+        $("siteLocationLabel").textContent =
+          `${fromField ? "Using field GPS: " : "Location set: "}${latN.toFixed(5)}, ${lngN.toFixed(5)}`;
+
+        if(window.google && window.google.maps){
+          siteMapLatLng = new google.maps.LatLng(latN,lngN);
+        }
+
+      }
+
+
+      function setEditLocationValues(lat,lng,fromField=false){
+
+        if(!validLatLng(lat,lng)){
+          return;
+        }
+
+        const latN = Number(lat);
+        const lngN = Number(lng);
+
+        $("editSiteLat").value = latN;
+        $("editSiteLng").value = lngN;
+
+        $("editSiteLocationLabel").textContent =
+          `${fromField ? "Using field GPS: " : "Location set: "}${latN.toFixed(5)}, ${lngN.toFixed(5)}`;
+
+        if(window.google && window.google.maps){
+          editSiteMapLatLng = new google.maps.LatLng(latN,lngN);
+        }
+
+      }
+
+
+      function clearAddLocation(){
+
+        $("siteLat").value = "";
+        $("siteLng").value = "";
+        $("siteLocationLabel").textContent = "No location set.";
+
+        siteMapLatLng = null;
+
+        if(siteMapMarker){
+          siteMapMarker.setMap(null);
+          siteMapMarker = null;
+        }
+
+      }
+
+
+      function clearEditLocation(){
+
+        $("editSiteLat").value = "";
+        $("editSiteLng").value = "";
+        $("editSiteLocationLabel").textContent = "No location set.";
+
+        editSiteMapLatLng = null;
+
+        if(editSiteMapMarker){
+          editSiteMapMarker.setMap(null);
+          editSiteMapMarker = null;
+        }
+
+      }
+
+
+      function getAddLocationPayload(){
+
+        const lat = $("siteLat").value;
+        const lng = $("siteLng").value;
+
+        return validLatLng(lat,lng)
+          ? {lat:Number(lat),lng:Number(lng)}
+          : null;
+
+      }
+
+
+      function getEditLocationPayload(){
+
+        const lat = $("editSiteLat").value;
+        const lng = $("editSiteLng").value;
+
+        return validLatLng(lat,lng)
+          ? {lat:Number(lat),lng:Number(lng)}
+          : null;
+
+      }
+
+
+      function ensureSiteMap(){
+
+        if(siteMap){
+          return;
+        }
+
+        if(!(window.google && window.google.maps)){
+          $("siteLocationStatus").textContent =
+            "Map failed to load. Check your connection.";
+          return;
+        }
+
+        siteMap = new google.maps.Map(
+          $("siteMap"),
+          {
+            center:DEFAULT_MAP_CENTER,
+            zoom:15,
+            mapTypeId:google.maps.MapTypeId.HYBRID,
+            disableDefaultUI:true,
+            zoomControl:false,
+            gestureHandling:"greedy"
+          }
+        );
+
+        siteMap.addListener(
+          "click",
+          ev=>setSiteMapMarker(ev.latLng)
+        );
+
+      }
+
+
+      function setSiteMapMarker(latLng){
+
+        if(!latLng){
+          return;
+        }
+
+        if(!siteMapMarker){
+          siteMapMarker =
+            new google.maps.Marker({
+              position:latLng,
+              map:siteMap
+            });
+        }else{
+          siteMapMarker.setPosition(latLng);
+          siteMapMarker.setMap(siteMap);
+        }
+
+        siteMapLatLng = latLng;
+
+        const lat = latLng.lat();
+        const lng = latLng.lng();
+
+        $("siteLocationStatus").textContent =
+          `Pin set at ${lat.toFixed(5)}, ${lng.toFixed(5)}. Tap again to move it.`;
+
+      }
+
+
+      function ensureEditSiteMap(){
+
+        if(editSiteMap){
+          return;
+        }
+
+        if(!(window.google && window.google.maps)){
+          $("editSiteLocationStatus").textContent =
+            "Map failed to load. Check your connection.";
+          return;
+        }
+
+        editSiteMap = new google.maps.Map(
+          $("editSiteMap"),
+          {
+            center:DEFAULT_MAP_CENTER,
+            zoom:15,
+            mapTypeId:google.maps.MapTypeId.HYBRID,
+            disableDefaultUI:true,
+            zoomControl:false,
+            gestureHandling:"greedy"
+          }
+        );
+
+        editSiteMap.addListener(
+          "click",
+          ev=>setEditSiteMapMarker(ev.latLng)
+        );
+
+      }
+
+
+      function setEditSiteMapMarker(latLng){
+
+        if(!latLng){
+          return;
+        }
+
+        if(!editSiteMapMarker){
+          editSiteMapMarker =
+            new google.maps.Marker({
+              position:latLng,
+              map:editSiteMap
+            });
+        }else{
+          editSiteMapMarker.setPosition(latLng);
+          editSiteMapMarker.setMap(editSiteMap);
+        }
+
+        editSiteMapLatLng = latLng;
+
+        const lat = latLng.lat();
+        const lng = latLng.lng();
+
+        $("editSiteLocationStatus").textContent =
+          `Pin set at ${lat.toFixed(5)}, ${lng.toFixed(5)}. Tap again to move it.`;
+
+      }
+
+
+      function openSiteLocationModal(){
+
+        closeAllCombos();
+
+        if(!canNow("setup-grain-sites:add")){
+          alert("You don't have permission to add bin sites.");
+          return;
+        }
+
+        const gpsModal = $("siteLocationModal");
+
+        gpsModal.setAttribute("open","");
+        gpsModal.setAttribute("aria-hidden","false");
+
+        document.documentElement.classList.add("no-scroll");
+        document.body.classList.add("no-scroll");
+
+        $("siteLocationStatus").textContent =
+          "Tap on the map to drop a pin, or use your current location.";
+
+        ensureSiteMap();
+
+        const lat = $("siteLat").value;
+        const lng = $("siteLng").value;
+
+        if(siteMap && validLatLng(lat,lng)){
+
+          const ll =
+            new google.maps.LatLng(
+              Number(lat),
+              Number(lng)
+            );
+
+          siteMap.setCenter(ll);
+          siteMap.setZoom(18);
+          setSiteMapMarker(ll);
+
+        }else if(siteMap){
+
+          siteMap.setCenter(DEFAULT_MAP_CENTER);
+          siteMap.setZoom(15);
+
+        }
+
+        setTimeout(()=>{
+          if(siteMap){
+            google.maps.event.trigger(siteMap,"resize");
+            if(siteMapLatLng){
+              siteMap.setCenter(siteMapLatLng);
+            }
+          }
+        },80);
+
+      }
+
+
+      function closeSiteLocationModal(){
+
+        const gpsModal = $("siteLocationModal");
+
+        gpsModal.removeAttribute("open");
+        gpsModal.setAttribute("aria-hidden","true");
+
+        document.documentElement.classList.remove("no-scroll");
+        document.body.classList.remove("no-scroll");
+
+      }
+
+
+      function openEditSiteLocationModal(){
+
+        closeAllCombos();
+
+        if(!canNow("setup-grain-sites:edit")){
+          alert("You don't have permission to edit bin sites.");
+          return;
+        }
+
+        const gpsModal = $("editSiteLocationModal");
+
+        gpsModal.setAttribute("open","");
+        gpsModal.setAttribute("aria-hidden","false");
+
+        document.documentElement.classList.add("no-scroll");
+        document.body.classList.add("no-scroll");
+
+        $("editSiteLocationStatus").textContent =
+          "Tap on the map to drop a pin, or use your current location.";
+
+        ensureEditSiteMap();
+
+        const lat = $("editSiteLat").value;
+        const lng = $("editSiteLng").value;
+
+        if(editSiteMap && validLatLng(lat,lng)){
+
+          const ll =
+            new google.maps.LatLng(
+              Number(lat),
+              Number(lng)
+            );
+
+          editSiteMap.setCenter(ll);
+          editSiteMap.setZoom(18);
+          setEditSiteMapMarker(ll);
+
+        }else if(editSiteMap){
+
+          editSiteMap.setCenter(DEFAULT_MAP_CENTER);
+          editSiteMap.setZoom(15);
+
+        }
+
+        setTimeout(()=>{
+          if(editSiteMap){
+            google.maps.event.trigger(editSiteMap,"resize");
+            if(editSiteMapLatLng){
+              editSiteMap.setCenter(editSiteMapLatLng);
+            }
+          }
+        },80);
+
+      }
+
+
+      function closeEditSiteLocationModal(){
+
+        const gpsModal = $("editSiteLocationModal");
+
+        gpsModal.removeAttribute("open");
+        gpsModal.setAttribute("aria-hidden","true");
+
+        document.documentElement.classList.remove("no-scroll");
+        document.body.classList.remove("no-scroll");
+
+      }
+
+
+      function setupGpsPickers(){
+
+        $("btnMarkLocation").addEventListener(
+          "click",
+          openSiteLocationModal
+        );
+
+        $("siteLocationClose").addEventListener(
+          "click",
+          closeSiteLocationModal
+        );
+
+        $("siteLocationCancel").addEventListener(
+          "click",
+          closeSiteLocationModal
+        );
+
+        $("siteLocationModal").addEventListener(
+          "click",
+          e=>{
+            if(e.target === $("siteLocationModal")){
+              closeSiteLocationModal();
+            }
+          }
+        );
+
+        $("siteUseLocation").addEventListener(
+          "click",
+          ()=>{
+
+            if(!navigator.geolocation){
+              $("siteLocationStatus").textContent =
+                "Geolocation not supported on this device.";
+              return;
+            }
+
+            $("siteLocationStatus").textContent =
+              "Getting your location…";
+
+            navigator.geolocation.getCurrentPosition(
+              pos=>{
+
+                ensureSiteMap();
+
+                if(!siteMap){
+                  return;
+                }
+
+                const ll =
+                  new google.maps.LatLng(
+                    pos.coords.latitude,
+                    pos.coords.longitude
+                  );
+
+                siteMap.panTo(ll);
+                siteMap.setZoom(18);
+                setSiteMapMarker(ll);
+
+              },
+              ()=>{
+                $("siteLocationStatus").textContent =
+                  "Could not get current location. Check permissions.";
+              },
+              {
+                enableHighAccuracy:true,
+                timeout:12000
+              }
+            );
+
+          }
+        );
+
+        $("siteLocationSave").addEventListener(
+          "click",
+          ()=>{
+
+            if(!siteMapLatLng){
+              $("siteLocationStatus").textContent =
+                "Tap on the map to set a pin before saving.";
+              return;
+            }
+
+            setAddLocationValues(
+              siteMapLatLng.lat(),
+              siteMapLatLng.lng(),
+              false
+            );
+
+            showToast("Bin site location set.");
+            closeSiteLocationModal();
+
+          }
+        );
+
+        $("siteLocationClear").addEventListener(
+          "click",
+          ()=>{
+
+            clearAddLocation();
+            showToast("Bin site location cleared.");
+            closeSiteLocationModal();
+
+          }
+        );
+
+
+        $("editBtnMarkLocation").addEventListener(
+          "click",
+          openEditSiteLocationModal
+        );
+
+        $("editSiteLocationClose").addEventListener(
+          "click",
+          closeEditSiteLocationModal
+        );
+
+        $("editSiteLocationCancel").addEventListener(
+          "click",
+          closeEditSiteLocationModal
+        );
+
+        $("editSiteLocationModal").addEventListener(
+          "click",
+          e=>{
+            if(e.target === $("editSiteLocationModal")){
+              closeEditSiteLocationModal();
+            }
+          }
+        );
+
+        $("editSiteUseLocation").addEventListener(
+          "click",
+          ()=>{
+
+            if(!navigator.geolocation){
+              $("editSiteLocationStatus").textContent =
+                "Geolocation not supported on this device.";
+              return;
+            }
+
+            $("editSiteLocationStatus").textContent =
+              "Getting your location…";
+
+            navigator.geolocation.getCurrentPosition(
+              pos=>{
+
+                ensureEditSiteMap();
+
+                if(!editSiteMap){
+                  return;
+                }
+
+                const ll =
+                  new google.maps.LatLng(
+                    pos.coords.latitude,
+                    pos.coords.longitude
+                  );
+
+                editSiteMap.panTo(ll);
+                editSiteMap.setZoom(18);
+                setEditSiteMapMarker(ll);
+
+              },
+              ()=>{
+                $("editSiteLocationStatus").textContent =
+                  "Could not get current location. Check permissions.";
+              },
+              {
+                enableHighAccuracy:true,
+                timeout:12000
+              }
+            );
+
+          }
+        );
+
+        $("editSiteLocationSave").addEventListener(
+          "click",
+          ()=>{
+
+            if(!editSiteMapLatLng){
+              $("editSiteLocationStatus").textContent =
+                "Tap on the map to set a pin before saving.";
+              return;
+            }
+
+            setEditLocationValues(
+              editSiteMapLatLng.lat(),
+              editSiteMapLatLng.lng(),
+              false
+            );
+
+            showToast("Bin site location updated.");
+            closeEditSiteLocationModal();
+
+          }
+        );
+
+        $("editSiteLocationClear").addEventListener(
+          "click",
+          ()=>{
+
+            clearEditLocation();
+            showToast("Bin site location cleared.");
+            closeEditSiteLocationModal();
+
+          }
+        );
+
+      }
+
+
+      /* ============================================================
+         NUMBER FORMATTING
+      ============================================================ */
+
+      const fmtComma = (n)=>{
+
+        if(
+          n == null ||
+          n === ""
+        ){
+
+          return "";
+
+        }
+
+
+        const num =
+          Number(
+            String(n)
+              .replace(/,/g,"")
+          );
+
+
+        if(!isFinite(num)){
+
+          return String(n);
+
+        }
+
+
+        return num.toLocaleString();
+
+      };
+
+
+      const formatNumericString = (str)=>{
+
+        if(str == null){
+
+          return "";
+
+        }
+
+
+        const clean =
+          String(str)
+            .replace(/,/g,"")
+            .trim();
+
+
+        if(clean === ""){
+
+          return "";
+
+        }
+
+
+        const parts =
+          clean.split(".");
+
+
+        const intPart =
+          parts[0]
+            .replace(/[^\d]/g,"");
+
+
+        const decPart =
+          parts[1]
+            ?.replace(/[^\d]/g,"");
+
+
+        const intWithCommas =
+          intPart.replace(
+            /\B(?=(\d{3})+(?!\d))/g,
+            ","
+          );
+
+
+        return decPart
+          ? `${intWithCommas}.${decPart}`
+          : intWithCommas;
+
+      };
+
+
+      const toNum = (v)=>{
+
+        const n =
+          Number(
+            String(v || "")
+              .replace(/,/g,"")
+              .trim()
+          );
+
+
+        return isFinite(n)
+          ? n
+          : 0;
+
+      };
+
+
+      const nextBinNumber = (list)=>
+        list.length
+
+          ? (
+              Math.max(
+                ...list.map(
+                  b=>Number(b.num) || 0
+                )
+              ) + 1
+            )
+
+          : 1;
+
+
+      /* ============================================================
+         BIN TOTALS
+      ============================================================ */
+
+      function updateTotals(
+        list,
+        pills
+      ){
+
+        if(
+          !pills ||
+          !pills.count ||
+          !pills.total
+        ){
+
+          return;
+
+        }
+
+
+        const count =
+          list.length;
+
+
+        const total =
+          list.reduce(
+            (s,b)=>
+              s + toNum(b.bushels),
+            0
+          );
+
+
+        pills.count.textContent =
+          `${count} ${
+            count === 1
+              ? "bin"
+              : "bins"
+          }`;
+
+
+        pills.total.textContent =
+          `${fmtComma(total)} corn bu`;
+
+      }
+
+
+      function attachCommaInput(
+        el,
+        binObj,
+        list,
+        pills
+      ){
+
+        el.addEventListener(
+          "input",
+          e=>{
+
+            const input =
+              e.target;
+
+
+            const rawBefore =
+              input.value;
+
+
+            const cursorPos =
+              input.selectionStart || 0;
+
+
+            const plainBeforeCursor =
+              rawBefore
+                .slice(
+                  0,
+                  cursorPos
+                )
+                .replace(/,/g,"");
+
+
+            const plainAll =
+              rawBefore.replace(
+                /,/g,
+                ""
+              );
+
+
+            if(plainAll === ""){
+
+              binObj.bushels =
+                0;
+
+              input.value =
+                "";
+
+              updateTotals(
+                list,
+                pills
+              );
+
+              return;
+
+            }
+
+
+            const numeric =
+              toNum(plainAll);
+
+
+            binObj.bushels =
+              numeric;
+
+
+            const formatted =
+              formatNumericString(
+                plainAll
+              );
+
+
+            input.value =
+              formatted;
+
+
+            const digitsUpToCursor =
+              plainBeforeCursor.length;
+
+
+            let newPos =
+              0;
+
+            let digitCount =
+              0;
+
+
+            for(
+              let i = 0;
+              i < formatted.length;
+              i++
+            ){
+
+              if(
+                /\d/.test(
+                  formatted[i]
+                )
+              ){
+
+                digitCount++;
+
+              }
+
+
+              if(
+                digitCount >=
+                digitsUpToCursor
+              ){
+
+                newPos =
+                  i + 1;
+
+                break;
+
+              }
+
+            }
+
+
+            input.setSelectionRange(
+              newPos,
+              newPos
+            );
+
+
+            updateTotals(
+              list,
+              pills
+            );
+
+          }
+        );
+
+      }
+
+
+      function renderBins(
+        list,
+        box,
+        pills,
+        opts = {}
+      ){
+
+        const locked =
+          opts.lockedBinNums ||
+          new Set();
+
+
+        box.innerHTML =
+          "";
+
+
+        list.forEach(
+          (b,idx)=>{
+
+            const row =
+              document.createElement(
+                "div"
+              );
+
+
+            row.className =
+              "bin-row";
+
+
+            row.innerHTML = `
+
+              <div class="bin-num">
+
+                <span class="badge">
+                  Bin ${escapeHTML(b.num)}
+                </span>
+
+              </div>
+
+              <input
+                class="input bu"
+                placeholder="Bushels (corn bu)"
+                inputmode="decimal"
+                value="${escapeHTML(
+                  formatNumericString(
+                    b.bushels
+                  )
+                )}"
+              >
+
+              <button
+                type="button"
+                class="bin-remove"
+              >
+                Remove
+              </button>
+
+            `;
+
+
+            const bu =
+              row.querySelector(
+                ".bu"
+              );
+
+
+            attachCommaInput(
+              bu,
+              b,
+              list,
+              pills
+            );
+
+
+            const removeBtn =
+              row.querySelector(
+                ".bin-remove"
+              );
+
+
+            const isLocked =
+              locked.has(
+                String(b.num)
+              );
+
+
+            if(isLocked){
+
+              removeBtn.disabled =
+                true;
+
+              removeBtn.title =
+                "This bin has grain on hand and cannot be removed.";
+
+            }
+            else{
+
+              removeBtn.addEventListener(
+                "click",
+                ()=>{
+
+                  if(
+                    opts.requireEditPerm &&
+                    !canNow(
+                      "setup-grain-sites:edit"
+                    )
+                  ){
+
+                    return;
+
+                  }
+
+
+                  list.splice(
+                    idx,
+                    1
+                  );
+
+
+                  renderBins(
+                    list,
+                    box,
+                    pills,
+                    opts
+                  );
+
+                }
+              );
+
+            }
+
+
+            box.appendChild(
+              row
+            );
+
+          }
+        );
+
+
+        updateTotals(
+          list,
+          pills
+        );
+
+      }
+
+
+      /* ============================================================
+         ADD BIN MODAL
+      ============================================================ */
+
+      function openBinModal(){
+
+        closeAllCombos();
+
+
+        if(
+          !canNow(
+            "setup-grain-sites:add"
+          )
+        ){
+
+          alert(
+            "You don't have permission to add bin sites."
+          );
+
+          return;
+
+        }
+
+
+        pendingBinNum =
+          nextBinNumber(
+            addBins
+          );
+
+
+        binMdTitle.textContent =
+          `Add Bin ${pendingBinNum}`;
+
+
+        binBushels.value =
+          "";
+
+
+        binModal.setAttribute(
+          "open",
+          ""
+        );
+
+
+        binModal.setAttribute(
+          "aria-hidden",
+          "false"
+        );
+
+
+        document.documentElement
+          .classList.add(
+            "no-scroll"
+          );
+
+        document.body
+          .classList.add(
+            "no-scroll"
+          );
+
+
+        setTimeout(
+          ()=>binBushels.focus(),
+          0
+        );
+
+      }
+
+
+      function closeBinModal(){
+
+        binModal.removeAttribute(
+          "open"
+        );
+
+
+        binModal.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+
+        document.documentElement
+          .classList.remove(
+            "no-scroll"
+          );
+
+        document.body
+          .classList.remove(
+            "no-scroll"
+          );
+
+
+        pendingBinNum =
+          null;
+
+      }
+
+
+      addBtn.addEventListener(
+        "click",
+        openBinModal
+      );
+
+
+      binMdClose.addEventListener(
+        "click",
+        closeBinModal
+      );
+
+
+      binModal.addEventListener(
+        "click",
+        e=>{
+
+          if(
+            e.target ===
+            binModal
+          ){
+
+            closeBinModal();
+
+          }
+
+        }
+      );
+
+
+      document.addEventListener(
+        "keydown",
+        e=>{
+
+          if(
+            e.key === "Escape" &&
+            binModal.hasAttribute(
+              "open"
+            )
+          ){
+
+            closeBinModal();
+
+          }
+
+        }
+      );
+
+
+      binMdSave.addEventListener(
+        "click",
+        ()=>{
+
+          if(
+            !canNow(
+              "setup-grain-sites:add"
+            )
+          ){
+
+            alert(
+              "You don't have permission to add bins."
+            );
+
+            return;
+
+          }
+
+
+          const bu =
+            toNum(
+              binBushels.value
+            );
+
+
+          if(
+            !bu ||
+            bu <= 0
+          ){
+
+            alert(
+              "Please enter bushels for this bin."
+            );
+
+            return;
+
+          }
+
+
+          const num =
+            pendingBinNum ||
+            nextBinNumber(
+              addBins
+            );
+
+
+          addBins.push({
+
+            num,
+            bushels:bu
+
+          });
+
+
+          renderBins(
+            addBins,
+            binsBox,
+            null,
+            {}
+          );
+
+
+          closeBinModal();
+
+        }
+      );
+
+
+      /* ============================================================
+         CLEAR
+      ============================================================ */
+
+      clearBtn.addEventListener(
+        "click",
+        ()=>{
+
+          closeAllCombos();
+
+
+          siteName.value =
+            "";
+
+
+          siteType.value =
+            "field";
+
+
+          $("siteTypeBtn").textContent =
+            "Field-Linked Bin Site";
+
+
+          addBins =
+            [];
+
+
+          resetAddFarmField();
+
+          clearAddLocation();
+
+          syncAddSiteType();
+
+
+          renderBins(
+            addBins,
+            binsBox,
+            null,
+            {}
+          );
+
+
+          showErr("");
+
+        }
+      );
+
+
+      /* ============================================================
+         FETCH / LIST
+      ============================================================ */
+
+      async function fetchSites(){
+
+        const snap =
+          await getDocs(
+            collection(
+              db,
+              COLL
+            )
+          );
+
+
+        const arr =
+          [];
+
+
+        snap.forEach(
+          d=>{
+
+            const v =
+              d.data() || {};
+
+
+            arr.push({
+
+              id:d.id,
+              ...v
+
+            });
+
+          }
+        );
+
+
+        arr.sort(
+          (a,b)=>{
+
+            const sa =
+              (
+                a.status ||
+                "active"
+              ) ===
+              "archived";
+
+
+            const sb =
+              (
+                b.status ||
+                "active"
+              ) ===
+              "archived";
+
+
+            const ta =
+              a.updatedAt?.seconds ||
+              a.createdAt?.seconds ||
+              0;
+
+
+            const tb =
+              b.updatedAt?.seconds ||
+              b.createdAt?.seconds ||
+              0;
+
+
+            return (
+              (sa - sb) ||
+              (tb - ta)
+            );
+
+          }
+        );
+
+
+        return arr;
+
+      }
+
+
+      async function renderList(){
+
+        const items =
+          await fetchSites();
+
+
+        if(!items.length){
+
+          listBox.innerHTML = `
+            <div class="muted">
+              No bin sites yet.
+            </div>
+          `;
+
+          return;
+
+        }
+
+
+        listBox.innerHTML =
+          "";
+
+
+        items.forEach(
+          it=>{
+
+            const div =
+              document.createElement(
+                "div"
+              );
+
+
+            div.className =
+              "item";
+
+
+            const binsCount =
+              (it.bins || [])
+                .length;
+
+
+            const pills = `
+
+              <span class="pill">
+
+                ${binsCount}
+                ${
+                  binsCount === 1
+                    ? "bin"
+                    : "bins"
+                }
+
+              </span>
+
+              <span class="pill">
+
+                ${fmtComma(
+                  it.totalBushels || 0
+                )}
+                corn bu
+
+              </span>
+
+              ${
+                it.location &&
+                validLatLng(it.location.lat,it.location.lng)
+                  ? `
+                      <span class="pill">
+                        GPS set
+                      </span>
+                    `
+                  : ""
+              }
+
+              ${
+                it.siteType ===
+                "central"
+
+                  ? `
+                      <span class="pill">
+                        Central Elevator / No Field
+                      </span>
+                    `
+
+                  : `
+
+                      ${
+                        it.fieldName
+
+                          ? `
+                              <span class="pill">
+                                Field:
+                                ${escapeHTML(
+                                  it.fieldName
+                                )}
+                              </span>
+                            `
+
+                          : `
+                              <span class="pill">
+                                Field not assigned
+                              </span>
+                            `
+                      }
+
+                      ${
+                        it.farmName
+
+                          ? `
+                              <span class="pill">
+                                Farm:
+                                ${escapeHTML(
+                                  it.farmName
+                                )}
+                              </span>
+                            `
+
+                          : ""
+                      }
+
+                    `
+              }
+
+              ${
+                it.status ===
+                "archived"
+
+                  ? `
+                      <span class="pill">
+                        Archived
+                      </span>
+                    `
+
+                  : ""
+              }
+
+            `;
+
+
+            div.innerHTML = `
+
+              <div class="item-main">
+
+                <div class="name">
+                  ${escapeHTML(
+                    it.name ||
+                    "(Unnamed)"
+                  )}
+                </div>
+
+                <div class="item-meta">
+                  ${pills}
+                </div>
+
+              </div>
+
+              <button
+                class="view"
+                type="button"
+                data-perm="setup-grain-sites:view"
+              >
+                View / Edit
+              </button>
+
+            `;
+
+
+            div
+              .querySelector(".view")
+              .addEventListener(
+                "click",
+                ()=>openEdit(it.id)
+              );
+
+
+            listBox.appendChild(
+              div
+            );
+
+          }
+        );
+
+      }
+
+
+      /* ============================================================
+         EDIT MODAL
+      ============================================================ */
+
+      function openModal(){
+
+        closeAllCombos();
+
+
+        modal.setAttribute(
+          "open",
+          ""
+        );
+
+
+        modal.setAttribute(
+          "aria-hidden",
+          "false"
+        );
+
+
+        document.documentElement
+          .classList.add(
+            "no-scroll"
+          );
+
+        document.body
+          .classList.add(
+            "no-scroll"
+          );
+
+
+        setTimeout(
+          ()=>mdName.focus(),
+          0
+        );
+
+      }
+
+
+      function closeModal(){
+
+        closeAllCombos();
+
+
+        modal.removeAttribute(
+          "open"
+        );
+
+
+        modal.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+
+        document.documentElement
+          .classList.remove(
+            "no-scroll"
+          );
+
+        document.body
+          .classList.remove(
+            "no-scroll"
+          );
+
+
+        editId =
+          null;
+
+
+        lockedBinNums =
+          new Set();
+
+
+        farmFieldState.editFarm =
+          null;
+
+        farmFieldState.editField =
+          null;
+
+      }
+
+
+      mdClose.addEventListener(
+        "click",
+        closeModal
+      );
+
+
+      modal.addEventListener(
+        "click",
+        e=>{
+
+          if(
+            e.target ===
+            modal
+          ){
+
+            closeModal();
+
+          }
+
+        }
+      );
+
+
+      document.addEventListener(
+        "keydown",
+        e=>{
+
+          if(
+            e.key === "Escape" &&
+            modal.hasAttribute(
+              "open"
+            )
+          ){
+
+            closeModal();
+
+          }
+
+        }
+      );
+
+
+      async function openEdit(id){
+
+        try{
+
+          closeAllCombos();
+
+
+          const snap =
+            await getDoc(
+              doc(
+                db,
+                COLL,
+                id
+              )
+            );
+
+
+          if(!snap.exists()){
+
+            return;
+
+          }
+
+
+          const it =
+            snap.data() || {};
+
+
+          editId =
+            id;
+
+
+          mdName.value =
+            it.name || "";
+
+
+          editSiteType.value =
+            (
+              it.siteType ===
+              "central"
+            )
+              ? "central"
+              : "field";
+
+
+          $("editSiteTypeBtn").textContent =
+            editSiteType.value ===
+            "central"
+
+              ? "Central Elevator / No Field"
+
+              : "Field-Linked Bin Site";
+
+
+          restoreEditFarmField(
+            it
+          );
+
+
+          syncEditSiteType();
+
+          if(
+            it.location &&
+            validLatLng(it.location.lat,it.location.lng)
+          ){
+            setEditLocationValues(
+              Number(it.location.lat),
+              Number(it.location.lng),
+              false
+            );
+          }else{
+            clearEditLocation();
+          }
+
+
+          const totalOnHand =
+            Number(
+              it.totalOnHand || 0
+            );
+
+
+          lockedBinNums =
+            new Set();
+
+
+          const rawBins =
+            (it.bins || [])
+              .map(b=>{
+
+                const num =
+                  Number(
+                    b.num
+                  ) || 0;
+
+
+                const bu =
+                  Number(
+                    b.bushels
+                  ) || 0;
+
+
+                const onHand =
+                  Number(
+                    b.onHand || 0
+                  );
+
+
+                if(onHand > 0){
+
+                  lockedBinNums.add(
+                    String(num)
+                  );
+
+                }
+
+
+                return {
+
+                  num,
+                  bushels:bu,
+                  onHand
+
+                };
+
+              });
+
+
+          mdBins =
+            rawBins.map(
+              b=>({
+
+                num:b.num,
+                bushels:b.bushels
+
+              })
+            );
+
+
+          const hasGrain =
+            (
+              totalOnHand > 0
+            ) ||
+            rawBins.some(
+              b=>b.onHand > 0
+            );
+
+
+          const used =
+            !!it.used;
+
+
+          statusPill.textContent =
+            (
+              it.status ===
+              "archived"
+            )
+              ? "Archived"
+              : "Active";
+
+
+          usedPill.style.display =
+            used
+              ? "inline-block"
+              : "none";
+
+
+          mdArchive.textContent =
+            (
+              it.status ===
+              "archived"
+            )
+              ? "Unarchive"
+              : "Archive";
+
+
+          if(hasGrain){
+
+            mdArchive.disabled =
+              true;
+
+            mdArchive.title =
+              "This site has grain on hand and cannot be archived. Move grain out of all bins first.";
+
+
+            mdDelete.disabled =
+              true;
+
+            mdDelete.title =
+              "This site has grain on hand and cannot be deleted.";
+
+          }
+          else{
+
+            if(used){
+
+              mdArchive.disabled =
+                false;
+
+              mdArchive.title =
+                "Archive this site.";
+
+
+              mdDelete.disabled =
+                true;
+
+              mdDelete.title =
+                "This site has been used and cannot be deleted. Archive instead.";
+
+            }
+            else{
+
+              mdArchive.disabled =
+                true;
+
+              mdArchive.title =
+                "This site has never been used and does not need to be archived.";
+
+
+              mdDelete.disabled =
+                false;
+
+              mdDelete.title =
+                "Delete this unused site.";
+
+            }
+
+          }
+
+
+          renderBins(
+
+            mdBins,
+
+            mdBinsBox,
+
+            {
+              count:mdBinCountPill,
+              total:mdBushelTotalPill
+            },
+
+            {
+              lockedBinNums,
+              requireEditPerm:true
+            }
+
+          );
+
+
+          openModal();
+
+        }
+        catch(e){
+
+          console.error(e);
+
+          showErr(
+            "Failed to open site."
+          );
+
+        }
+
+      }
+
+
+      $("mdAddBin")
+        .addEventListener(
+          "click",
+          ()=>{
+
+            closeAllCombos();
+
+
+            if(
+              !canNow(
+                "setup-grain-sites:edit"
+              )
+            ){
+
+              alert(
+                "You don't have permission to edit bin sites."
+              );
+
+              return;
+
+            }
+
+
+            mdBins.push({
+
+              num:
+                nextBinNumber(
+                  mdBins
+                ),
+
+              bushels:0
+
+            });
+
+
+            renderBins(
+
+              mdBins,
+
+              mdBinsBox,
+
+              {
+                count:
+                  mdBinCountPill,
+
+                total:
+                  mdBushelTotalPill
+              },
+
+              {
+                lockedBinNums,
+                requireEditPerm:true
+              }
+
+            );
+
+          }
+        );
+
+
+      /* ============================================================
+         SAVE NEW SITE
+      ============================================================ */
+
+      saveBtn.addEventListener(
+        "click",
+        async ()=>{
+
+          closeAllCombos();
+
+
+          if(
+            !canNow(
+              "setup-grain-sites:add"
+            )
+          ){
+
+            alert(
+              "You don't have permission to add bin sites."
+            );
+
+            return;
+
+          }
+
+
+          const name =
+            siteName.value.trim();
+
+
+          const selectedSiteType =
+            siteType.value ===
+            "central"
+
+              ? "central"
+
+              : "field";
+
+
+          const farm =
+            farmFieldState.addFarm;
+
+
+          const field =
+            farmFieldState.addField;
+
+
+          if(!name){
+
+            alert(
+              "Please enter a site name."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            selectedSiteType ===
+              "field" &&
+            !field
+          ){
+
+            alert(
+              "Please select a field for this bin site."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            selectedSiteType ===
+              "field" &&
+            !farm
+          ){
+
+            alert(
+              "The selected field must be assigned to a farm."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            addBins.length === 0
+          ){
+
+            alert(
+              "Please add at least one bin before saving."
+            );
+
+            return;
+
+          }
+
+
+          const bins =
+            addBins.map(
+              b=>({
+
+                num:
+                  Number(b.num) ||
+                  0,
+
+                bushels:
+                  toNum(
+                    b.bushels
+                  )
+
+              })
+            );
+
+
+          const set =
+            new Set();
+
+
+          let dup =
+            false;
+
+
+          bins.forEach(
+            b=>{
+
+              const k =
+                String(b.num);
+
+
+              if(
+                set.has(k)
+              ){
+
+                dup =
+                  true;
+
+              }
+
+
+              set.add(k);
+
+            }
+          );
+
+
+          if(dup){
+
+            alert(
+              "Duplicate bin numbers. Please adjust."
+            );
+
+            return;
+
+          }
+
+
+          const total =
+            bins.reduce(
+              (s,b)=>
+                s +
+                (
+                  b.bushels ||
+                  0
+                ),
+              0
+            );
+
+
+          try{
+
+            showErr("");
+
+
+            await addDoc(
+              collection(
+                db,
+                COLL
+              ),
+              {
+
+                name,
+
+                siteType:
+                  selectedSiteType,
+
+                farmId:
+                  selectedSiteType ===
+                  "field"
+                    ? farm.id
+                    : null,
+
+                farmName:
+                  selectedSiteType ===
+                  "field"
+                    ? farm.name
+                    : null,
+
+                fieldId:
+                  selectedSiteType ===
+                  "field"
+                    ? field.id
+                    : null,
+
+                fieldName:
+                  selectedSiteType ===
+                  "field"
+                    ? field.name
+                    : null,
+
+                location:
+                  getAddLocationPayload(),
+
+                bins,
+
+                totalBushels:
+                  total,
+
+                status:
+                  "active",
+
+                used:
+                  false,
+
+                createdAt:
+                  serverTimestamp(),
+
+                updatedAt:
+                  serverTimestamp()
+
+              }
+            );
+
+
+            showToast(
+              "Successfully saved."
+            );
+
+
+            siteName.value =
+              "";
+
+
+            siteType.value =
+              "field";
+
+
+            $("siteTypeBtn").textContent =
+              "Field-Linked Bin Site";
+
+
+            addBins =
+              [];
+
+
+            resetAddFarmField();
+
+            clearAddLocation();
+
+            syncAddSiteType();
+
+
+            renderBins(
+              addBins,
+              binsBox,
+              null,
+              {}
+            );
+
+
+            await renderList();
+
+
+            window.scrollTo({
+
+              top:0,
+              behavior:"smooth"
+
+            });
+
+          }
+          catch(e){
+
+            console.error(e);
+
+            showErr(
+              "Save failed. Check permissions or network."
+            );
+
+          }
+
+        }
+      );
+
+
+      /* ============================================================
+         SAVE EDIT
+      ============================================================ */
+
+      mdSave.addEventListener(
+        "click",
+        async ()=>{
+
+          closeAllCombos();
+
+
+          if(
+            !canNow(
+              "setup-grain-sites:edit"
+            )
+          ){
+
+            alert(
+              "You don't have permission to edit bin sites."
+            );
+
+            return;
+
+          }
+
+
+          const name =
+            mdName.value.trim();
+
+
+          const selectedSiteType =
+            editSiteType.value ===
+            "central"
+
+              ? "central"
+
+              : "field";
+
+
+          const farm =
+            farmFieldState.editFarm;
+
+
+          const field =
+            farmFieldState.editField;
+
+
+          if(!name){
+
+            alert(
+              "Please enter a site name."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            selectedSiteType ===
+              "field" &&
+            !field
+          ){
+
+            alert(
+              "Please select a field for this bin site."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            selectedSiteType ===
+              "field" &&
+            !farm
+          ){
+
+            alert(
+              "The selected field must be assigned to a farm."
+            );
+
+            return;
+
+          }
+
+
+          if(
+            mdBins.length === 0
+          ){
+
+            alert(
+              "Please keep at least one bin on the site."
+            );
+
+            return;
+
+          }
+
+
+          const bins =
+            mdBins.map(
+              b=>({
+
+                num:
+                  Number(b.num) ||
+                  0,
+
+                bushels:
+                  toNum(
+                    b.bushels
+                  )
+
+              })
+            );
+
+
+          const usedNums =
+            new Set();
+
+
+          let dup =
+            false;
+
+
+          bins.forEach(
+            b=>{
+
+              const k =
+                String(b.num);
+
+
+              if(
+                usedNums.has(k)
+              ){
+
+                dup =
+                  true;
+
+              }
+
+
+              usedNums.add(k);
+
+            }
+          );
+
+
+          if(dup){
+
+            alert(
+              "Duplicate bin numbers. Please adjust."
+            );
+
+            return;
+
+          }
+
+
+          const total =
+            bins.reduce(
+              (s,b)=>
+                s +
+                (
+                  b.bushels ||
+                  0
+                ),
+              0
+            );
+
+
+          try{
+
+            await setDoc(
+
+              doc(
+                db,
+                COLL,
+                editId
+              ),
+
+              {
+
+                name,
+
+                siteType:
+                  selectedSiteType,
+
+                farmId:
+                  selectedSiteType ===
+                  "field"
+                    ? farm.id
+                    : null,
+
+                farmName:
+                  selectedSiteType ===
+                  "field"
+                    ? farm.name
+                    : null,
+
+                fieldId:
+                  selectedSiteType ===
+                  "field"
+                    ? field.id
+                    : null,
+
+                fieldName:
+                  selectedSiteType ===
+                  "field"
+                    ? field.name
+                    : null,
+
+                location:
+                  getEditLocationPayload(),
+
+                bins,
+
+                totalBushels:
+                  total,
+
+                updatedAt:
+                  serverTimestamp()
+
+              },
+
+              {
+                merge:true
+              }
+
+            );
+
+
+            showToast(
+              "Changes saved."
+            );
+
+
+            await renderList();
+
+            closeModal();
+
+          }
+          catch(e){
+
+            console.error(e);
+
+            showErr(
+              "Update failed."
+            );
+
+          }
+
+        }
+      );
+
+
+      /* ============================================================
+         ARCHIVE
+      ============================================================ */
+
+      mdArchive.addEventListener(
+        "click",
+        async ()=>{
+
+          closeAllCombos();
+
+
+          if(
+            !canNow(
+              "setup-grain-sites:edit"
+            )
+          ){
+
+            alert(
+              "You don't have permission to archive/unarchive bin sites."
+            );
+
+            return;
+
+          }
+
+
+          if(mdArchive.disabled){
+
+            return;
+
+          }
+
+
+          try{
+
+            const snap =
+              await getDoc(
+                doc(
+                  db,
+                  COLL,
+                  editId
+                )
+              );
+
+
+            if(!snap.exists()){
+
+              return;
+
+            }
+
+
+            const cur =
+              snap.data() || {};
+
+
+            const next =
+              cur.status ===
+              "archived"
+
+                ? "active"
+
+                : "archived";
+
+
+            const totalOnHand =
+              Number(
+                cur.totalOnHand || 0
+              );
+
+
+            if(
+              totalOnHand > 0
+            ){
+
+              alert(
+                "This site has grain on hand and cannot be archived."
+              );
+
+              return;
+
+            }
+
+
+            await setDoc(
+
+              doc(
+                db,
+                COLL,
+                editId
+              ),
+
+              {
+
+                status:
+                  next,
+
+                updatedAt:
+                  serverTimestamp()
+
+              },
+
+              {
+                merge:true
+              }
+
+            );
+
+
+            showToast(
+
+              next ===
+              "archived"
+
+                ? "Site archived."
+
+                : "Site unarchived."
+
+            );
+
+
+            await renderList();
+
+
+            statusPill.textContent =
+              next ===
+              "archived"
+
+                ? "Archived"
+
+                : "Active";
+
+
+            mdArchive.textContent =
+              next ===
+              "archived"
+
+                ? "Unarchive"
+
+                : "Archive";
+
+          }
+          catch(e){
+
+            console.error(e);
+
+            showErr(
+              "Archive toggle failed."
+            );
+
+          }
+
+        }
+      );
+
+
+      /* ============================================================
+         DELETE
+      ============================================================ */
+
+      mdDelete.addEventListener(
+        "click",
+        async ()=>{
+
+          closeAllCombos();
+
+
+          if(
+            !canNow(
+              "setup-grain-sites:delete"
+            )
+          ){
+
+            alert(
+              "You don't have permission to delete bin sites."
+            );
+
+            return;
+
+          }
+
+
+          if(mdDelete.disabled){
+
+            return;
+
+          }
+
+
+          try{
+
+            const snap =
+              await getDoc(
+                doc(
+                  db,
+                  COLL,
+                  editId
+                )
+              );
+
+
+            if(!snap.exists()){
+
+              return;
+
+            }
+
+
+            const cur =
+              snap.data() || {};
+
+
+            const totalOnHand =
+              Number(
+                cur.totalOnHand || 0
+              );
+
+
+            if(
+              totalOnHand > 0
+            ){
+
+              alert(
+                "This site has grain on hand and cannot be deleted."
+              );
+
+              return;
+
+            }
+
+
+            if(cur.used){
+
+              alert(
+                "This site has been used and cannot be deleted. Archive instead."
+              );
+
+              return;
+
+            }
+
+
+            if(
+              !confirm(
+                `Delete site "${cur.name || ""}"? This cannot be undone.`
+              )
+            ){
+
+              return;
+
+            }
+
+
+            await deleteDoc(
+              doc(
+                db,
+                COLL,
+                editId
+              )
+            );
+
+
+            showToast(
+              "Site deleted."
+            );
+
+
+            await renderList();
+
+            closeModal();
+
+          }
+          catch(e){
+
+            console.error(e);
+
+            showErr(
+              "Delete failed."
+            );
+
+          }
+
+        }
+      );
+
+
+      /* ============================================================
+         INITIALIZE
+      ============================================================ */
+
+      (async ()=>{
+
+        try{
+
+          await ready;
+
+          db =
+            getFirestore();
+
+        }
+        catch(e){
+
+          console.warn(e);
+
+          showErr(
+            "Firebase not ready."
+          );
+
+          return;
+
+        }
+
+
+        setupGpsPickers();
+
+
+        /* SITE TYPE - ADD */
+
+        addSiteTypeCombo =
+          makeCombo({
+
+            btn:
+              $("siteTypeBtn"),
+
+            panel:
+              $("siteTypePanel"),
+
+            list:
+              $("siteTypeList"),
+
+            searchInput:
+              null,
+
+            items:
+              SITE_TYPE_OPTIONS,
+
+            formatter:
+              x=>x.name,
+
+            onPick:
+              setAddSiteType
+
+          });
+
+
+        /* SITE TYPE - EDIT */
+
+        editSiteTypeCombo =
+          makeCombo({
+
+            btn:
+              $("editSiteTypeBtn"),
+
+            panel:
+              $("editSiteTypePanel"),
+
+            list:
+              $("editSiteTypeList"),
+
+            searchInput:
+              null,
+
+            items:
+              SITE_TYPE_OPTIONS,
+
+            formatter:
+              x=>x.name,
+
+            onPick:
+              setEditSiteType
+
+          });
+
+
+        /* FARM - ADD */
+
+        addFarmCombo =
+          makeCombo({
+
+            btn:
+              $("farmBtn"),
+
+            panel:
+              $("farmPanel"),
+
+            list:
+              $("farmList"),
+
+            searchInput:
+              $("farmSearch"),
+
+            formatter:
+              x=>x.name,
+
+            onPick:
+              setAddFarm
+
+          });
+
+
+        /* FIELD - ADD */
+
+        addFieldCombo =
+          makeCombo({
+
+            btn:
+              $("fieldBtn"),
+
+            panel:
+              $("fieldPanel"),
+
+            list:
+              $("fieldList"),
+
+            searchInput:
+              $("fieldSearch"),
+
+            formatter:
+              x=>x.name,
+
+            onPick:
+              setAddField
+
+          });
+
+
+        /* FARM - EDIT */
+
+        editFarmCombo =
+          makeCombo({
+
+            btn:
+              $("editFarmBtn"),
+
+            panel:
+              $("editFarmPanel"),
+
+            list:
+              $("editFarmList"),
+
+            searchInput:
+              $("editFarmSearch"),
+
+            formatter:
+              x=>x.name,
+
+            onPick:
+              setEditFarm
+
+          });
+
+
+        /* FIELD - EDIT */
+
+        editFieldCombo =
+          makeCombo({
+
+            btn:
+              $("editFieldBtn"),
+
+            panel:
+              $("editFieldPanel"),
+
+            list:
+              $("editFieldList"),
+
+            searchInput:
+              $("editFieldSearch"),
+
+            formatter:
+              x=>x.name,
+
+            onPick:
+              setEditField
+
+          });
+
+
+        try{
+
+          await loadFarmsAndFields();
+
+        }
+        catch(e){
+
+          console.error(
+            "Farm/field load failed",
+            e
+          );
+
+          showErr(
+            "Unable to load farms/fields. Check Firestore or network."
+          );
+
+        }
+
+
+        /*
+          Initial defaults
+        */
+
+        siteType.value =
+          "field";
+
+        $("siteTypeBtn").textContent =
+          "Field-Linked Bin Site";
+
+
+        editSiteType.value =
+          "field";
+
+        $("editSiteTypeBtn").textContent =
+          "Field-Linked Bin Site";
+
+
+        resetAddFarmField();
+
+        syncAddSiteType();
+
+
+        renderBins(
+          addBins,
+          binsBox,
+          null,
+          {}
+        );
+
+
+        await renderList();
+
+      })();
+
+
+    })();
+
+  </script>
+
+</body>
+</html>

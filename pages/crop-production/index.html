@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Crop Production</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+   <!-- Early theme boot (prevents flash) -->
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- PWA + icons -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+
+
+  <!-- Firebase config + FVData (needed for Field Maintenance KPI) -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+  <script src="/js/shared/data/fv-data.js"></script>
+
+  <!-- Global CSS (same as Setup / Dashboard) -->
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+
+  <style>
+    body{
+      background:var(--app-bg,var(--surface));
+      min-height:100vh;
+    }
+    .page{
+      max-width:1100px;
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
+    }
+
+    /* Dashboard-style KPI badge (same as main Dashboard) */
+    .dash-kpi{
+      display:block;
+      margin:12px 0 18px 0;
+      padding:14px 16px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:var(--surface);
+      box-shadow:0 8px 18px rgba(0,0,0,0.06);
+      text-decoration:none;
+      color:inherit;
+      transition:transform 0.08s ease, box-shadow 0.08s ease, border-color 0.08s ease;
+    }
+    .dash-kpi:hover{
+      transform:translateY(-1px);
+      box-shadow:0 12px 24px rgba(0,0,0,0.10);
+      border-color:rgba(59,126,70,0.55);
+    }
+    .dash-kpi-main{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .dash-kpi-text{
+      flex:1 1 auto;
+      min-width:0;
+    }
+    .dash-kpi-label{
+      font-size:13px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-weight:600;
+      color:var(--muted,#67706B);
+      margin-bottom:4px;
+    }
+    .dash-kpi-title,
+    .dash-kpi-title-secondary{
+      font-size:15px;
+      font-weight:600;
+      color:var(--text,#1d211f);
+    }
+    .dash-kpi-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:6px;
+    }
+    /* extra space between first and second row so circles don't touch */
+    .dash-kpi-row + .dash-kpi-row{
+      margin-top:10px;
+    }
+
+    .dash-kpi-count{
+      min-width:52px;
+      min-height:52px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      font-weight:700;
+      border:1px solid rgba(59,126,70,0.4);
+      background:rgba(59,126,70,0.10);
+      color:var(--text,#1d211f);
+    }
+    /* second circle same size as first */
+    .dash-kpi-count-secondary{
+      /* same size, just re-use base style */
+    }
+
+    .dash-kpi-sub{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted,#67706B);
+    }
+    .dash-kpi-empty .dash-kpi-count,
+    .dash-kpi-empty .dash-kpi-count-secondary{
+      border-color:rgba(0,0,0,0.12);
+      background:rgba(0,0,0,0.02);
+      color:var(--muted,#67706B);
+    }
+
+    /* Badge links (keep numbers black, no purple visited) */
+    .dash-kpi-count-link{
+      text-decoration:none;
+      display:inline-flex;
+      color:inherit;
+    }
+    .dash-kpi-count-link:visited{
+      color:inherit;
+    }
+    .dash-kpi-count-link:focus-visible{
+      outline:2px solid var(--accent,#3B7E46);
+      outline-offset:2px;
+    }
+
+    /* Permission hidden helper */
+    .perm-hidden{
+      display:none !important;
+    }
+
+    /* ===========================
+       Trial Scorecard embed card
+       =========================== */
+    .trial-scorecard-card{
+      margin-top:24px;
+      border-radius:18px;
+      overflow:hidden;
+      padding:0;
+      background:var(--surface-raised,#f7faf7);
+      border:1px solid rgba(47,108,60,0.35);
+      box-shadow:0 18px 40px rgba(0,0,0,0.08);
+    }
+
+    .trial-scorecard-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:16px 18px 12px 18px;
+      background:linear-gradient(135deg,#2F6C3C,#4E9B5A);
+      color:#fff;
+    }
+
+    .trial-scorecard-title{
+      margin:0;
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+
+    .trial-scorecard-sub{
+      margin:4px 0 0 0;
+      font-size:13px;
+      opacity:0.9;
+    }
+
+    .trial-scorecard-pill{
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      background:rgba(255,255,255,0.16);
+      border:1px solid rgba(255,255,255,0.6);
+      white-space:nowrap;
+    }
+
+    .trial-scorecard-body{
+      padding:12px 16px 16px 16px;
+    }
+
+    .trial-scorecard-note{
+      font-size:12px;
+      margin:0 0 10px 0;
+      color:var(--muted,#6f786f);
+    }
+
+    .trial-scorecard-embed{
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,0.06);
+      background:#ffffff;
+    }
+
+    .trial-scorecard-embed iframe{
+      width:100%;
+      border:0;
+      min-height:460px;
+      display:block;
+      background:#ffffff;
+    }
+
+    @media (max-width: 700px){
+      .trial-scorecard-header{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .trial-scorecard-pill{
+        align-self:flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <fv-shell>
+    <div class="page container">
+      <h1 class="page-title">Crop Production Dashboard</h1>
+
+      <p class="muted" style="margin:0 0 18px 0; color:var(--muted, #87908a);">
+        The Crop Production module is your central hub for recording and managing in-field operations across the season—planting,
+        in-season passes, maintenance, and harvest results.
+      </p>
+      <p class="muted" style="margin:0 0 18px 0; color:var(--muted, #87908a);">
+        It also captures agronomic <strong>trials</strong> and <strong>check strips</strong> so you can compare hybrids, fertility programs,
+        and application strategies across farms and years.
+      </p>
+      <p class="muted" style="margin:0 10px 22px 0; color:var(--muted, #87908a);">
+        Use the sidebar to jump into <em>Planting</em>, <em>Spraying</em>, <em>Fertilizer</em>, <em>Maintenance</em>, <em>Harvest</em>,
+        <em>Aerial Applications</em>, and <em>Trials</em>.
+      </p>
+
+      <!-- ============================
+           KPI: Pending / In-Progress Field Maintenance
+           Gate: cap-kpi-field-maint
+           ============================ -->
+      <a
+        href="field-maintenance/maintenance-active.html"
+        class="dash-kpi dash-kpi-empty"
+        id="wo-active-kpi"
+      >
+        <div class="dash-kpi-main">
+          <div class="dash-kpi-text">
+            <div class="dash-kpi-label">Field Maintenance</div>
+            <div class="dash-kpi-row">
+              <div class="dash-kpi-title">
+                Pending &amp; in-progress work orders
+              </div>
+              <div class="dash-kpi-count" id="wo-active-count">–</div>
+            </div>
+          </div>
+          <div class="dash-kpi-sub" id="wo-active-sub">
+            Checking for active field maintenance work orders…
+          </div>
+        </div>
+      </a>
+
+      <!-- ============================
+           KPI: Active Field Trials
+           Gate: crop-trials (module access)
+           ============================ -->
+      <div
+        class="dash-kpi dash-kpi-empty"
+        id="trials-kpi"
+      >
+        <div class="dash-kpi-main">
+          <div class="dash-kpi-text">
+            <div class="dash-kpi-label">Field Trials</div>
+
+            <!-- Row 1: Active crop trials & check strips -->
+            <div class="dash-kpi-row">
+              <div class="dash-kpi-title">
+                Active crop trials &amp; check strips
+              </div>
+              <a
+                href="trials/trials-edit.html"
+                class="dash-kpi-count-link"
+                aria-label="View active trials"
+                id="trials-link-edit"
+              >
+                <div class="dash-kpi-count" id="trials-count-trials">–</div>
+              </a>
+            </div>
+
+            <!-- Row 2: Fields enrolled in those active trials -->
+            <div class="dash-kpi-row">
+              <div class="dash-kpi-title-secondary">
+                Fields enrolled in active trials
+              </div>
+              <a
+                href="/pages/reports/reports-field-activetrials.html"
+                class="dash-kpi-count-link"
+                aria-label="View report of fields in active trials"
+                id="trials-link-report"
+              >
+                <div class="dash-kpi-count dash-kpi-count-secondary" id="trials-count-fields">–</div>
+              </a>
+            </div>
+          </div>
+
+          <div class="dash-kpi-sub" id="trials-sub">
+            Tap a circle to edit trials or open the active fields report.
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================
+           Embedded Trial Scorecard
+           Gate: crop-trials (module access)
+           ============================ -->
+      <section class="card trial-scorecard-card" id="trial-scorecard-card">
+        <div class="trial-scorecard-header">
+          <div>
+            <h2 class="trial-scorecard-title">Trial Scorecard</h2>
+            <p class="trial-scorecard-sub">
+              Live hybrid &amp; treatment scorecard, opening on the current crop year.
+            </p>
+          </div>
+          <div class="trial-scorecard-pill">Scorecard</div>
+        </div>
+        <div class="trial-scorecard-body">
+          <p class="muted small trial-scorecard-note">
+            The embedded report defaults to the current year. Use the report’s own controls to pick which trial you want to review each time you open this page.
+          </p>
+          <div class="trial-scorecard-embed">
+            <iframe
+              id="trial-scorecard-frame"
+              title="Hybrid &amp; treatment trial scorecard"
+              loading="lazy"
+              referrerpolicy="same-origin"
+              src=""
+            ></iframe>
+          </div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <!-- =========================================================
+       Crop Production Capability Permissions (Role + Employee Overrides)
+       Sources:
+         - employees/{lowercaseEmail} (permissionGroup + overrides)
+         - accountRoles (lookup by name == permissionGroup)
+       Outputs:
+         - window.FV_CROP_PERMS  (merged perms object)
+         - window.FV_CROP_CAN(key, action) => boolean
+         - dispatches "fv:crop-perms-ready" (detail: {permsKnown})
+       IMPORTANT:
+         - FAIL-OPEN: do NOT hide anything unless perms are successfully resolved
+     ========================================================= -->
+  <script type="module">
+    import {
+      ready,
+      getAuth,
+      onAuthStateChanged,
+      getFirestore,
+      doc,
+      getDoc,
+      collection,
+      getDocs,
+      query,
+      where
+    } from '/js/core/firebase/firebase-init.js';
+
+    (function(){
+      "use strict";
+
+      // What we gate on this page:
+      // 1) Field Maintenance KPI tile => cap-kpi-field-maint
+      // 2) Trials KPI + Scorecard => crop-trials (module access)
+      //
+      // NOTE: If later you want scorecard controlled by a different perm, just change KEY_SCORECARD below.
+      const KEYS = {
+        KPI_FIELD_MAINT: "cap-kpi-field-maint",
+        TRIALS: "crop-trials",
+        SCORECARD: "crop-trials"
+      };
+
+      const els = {
+        kpiFieldMaint: document.getElementById("wo-active-kpi"),
+        trialsCard:    document.getElementById("trials-kpi"),
+        trialsEdit:    document.getElementById("trials-link-edit"),
+        trialsReport:  document.getElementById("trials-link-report"),
+        scorecardCard: document.getElementById("trial-scorecard-card"),
+        scorecardFrame:document.getElementById("trial-scorecard-frame")
+      };
+
+      function hide(el){
+        if (!el) return;
+        el.classList.add("perm-hidden");
+        el.setAttribute("aria-hidden","true");
+        el.setAttribute("tabindex","-1");
+      }
+      function show(el){
+        if (!el) return;
+        el.classList.remove("perm-hidden");
+        el.removeAttribute("aria-hidden");
+        el.removeAttribute("tabindex");
+      }
+
+      function hasPermObj(p){
+        return p && typeof p === "object" && (
+          Object.prototype.hasOwnProperty.call(p,"view") ||
+          Object.prototype.hasOwnProperty.call(p,"add") ||
+          Object.prototype.hasOwnProperty.call(p,"edit") ||
+          Object.prototype.hasOwnProperty.call(p,"delete")
+        );
+      }
+
+      function canFromPermValue(val, action){
+        if (val == null) return false;
+        if (val === true) return true;
+        if (val === false) return false;
+
+        if (typeof val === "object"){
+          if (typeof val.on === "boolean") return !!val.on;
+
+          if (hasPermObj(val)){
+            const a = (action || "view").toLowerCase();
+            if (typeof val[a] === "boolean") return !!val[a];
+            return !!(val.view || val.add || val.edit || val.delete);
+          }
+        }
+        return false;
+      }
+
+      function makeCan(perms){
+        return function(key, action){
+          if (!key) return true;
+          return canFromPermValue(perms ? perms[key] : null, action || "view");
+        };
+      }
+
+      function deepClone(obj){
+        try { return JSON.parse(JSON.stringify(obj || {})); } catch { return {}; }
+      }
+
+      function mergePerms(base, overrides){
+        const out = deepClone(base || {});
+        const ov = (overrides && typeof overrides === "object") ? overrides : {};
+        for (const k of Object.keys(ov)){
+          out[k] = ov[k];
+        }
+        return out;
+      }
+
+      function extractEmployeeGroupAndOverrides(emp){
+        const e = emp || {};
+        const permissionGroup = (e.permissionGroup || "").toString().trim();
+
+        let overrides =
+          (e.overrides && e.overrides.perms && typeof e.overrides.perms === "object" ? e.overrides.perms : null) ||
+          (e.overrides && typeof e.overrides === "object" ? e.overrides : null) ||
+          (e.perms && typeof e.perms === "object" ? e.perms : null) ||
+          {};
+
+        return { permissionGroup, overrides };
+      }
+
+      async function readEmployeeByEmail(db, user){
+        const email = (user && user.email ? user.email.toString().trim().toLowerCase() : "");
+        if (!email) return null;
+        const ref = doc(db, "employees", email);
+        const snap = await getDoc(ref);
+        return snap.exists() ? (snap.data() || {}) : null;
+      }
+
+      async function readRolePermsByDocId(db, maybeId){
+        if (!maybeId) return null;
+        try{
+          const ref = doc(db, "accountRoles", maybeId);
+          const snap = await getDoc(ref);
+          if (!snap.exists()) return null;
+          const d = snap.data() || {};
+          return (d.perms && typeof d.perms === "object") ? d.perms : {};
+        }catch{
+          return null;
+        }
+      }
+
+      async function readRolePermsByName(db, roleName){
+        if (!roleName) return null;
+        try{
+          const qy = query(collection(db, "accountRoles"), where("name", "==", roleName));
+          const ss = await getDocs(qy);
+          let first = null;
+          ss.forEach(d => { if (!first) first = d; });
+          if (!first) return null;
+          const d = first.data() || {};
+          return (d.perms && typeof d.perms === "object") ? d.perms : {};
+        }catch{
+          return null;
+        }
+      }
+
+      // FAIL-OPEN unless permsKnown true
+      function applyVisibility(perms, permsKnown){
+        if (!permsKnown){
+          show(els.kpiFieldMaint);
+          show(els.trialsCard);
+          show(els.trialsEdit);
+          show(els.trialsReport);
+          show(els.scorecardCard);
+          // do not clear iframe here (prevents flicker)
+          window.FV_CROP_PERMS = null;
+          window.FV_CROP_CAN = null;
+          document.dispatchEvent(new CustomEvent("fv:crop-perms-ready", { detail:{ permsKnown:false } }));
+          return;
+        }
+
+        const can = makeCan(perms);
+
+        // Field Maintenance KPI tile
+        if (els.kpiFieldMaint){
+          if (!can(KEYS.KPI_FIELD_MAINT, "view")) hide(els.kpiFieldMaint); else show(els.kpiFieldMaint);
+        }
+
+        // Trials area (card + its links)
+        // We treat the whole card as controlled by crop-trials view.
+        if (els.trialsCard){
+          if (!can(KEYS.TRIALS, "view")){
+            hide(els.trialsCard);
+          }else{
+            show(els.trialsCard);
+          }
+        }
+
+        // If you ever want the two circles to have different perms, change keys here.
+        if (els.trialsEdit){
+          if (!can(KEYS.TRIALS, "view")) hide(els.trialsEdit); else show(els.trialsEdit);
+        }
+        if (els.trialsReport){
+          if (!can(KEYS.TRIALS, "view")) hide(els.trialsReport); else show(els.trialsReport);
+        }
+
+        // Scorecard card
+        if (els.scorecardCard){
+          if (!can(KEYS.SCORECARD, "view")){
+            hide(els.scorecardCard);
+            // optional: clear iframe to avoid loading a report user can't view
+            if (els.scorecardFrame) els.scorecardFrame.src = "";
+          }else{
+            show(els.scorecardCard);
+          }
+        }
+
+        window.FV_CROP_PERMS = perms || {};
+        window.FV_CROP_CAN = can;
+
+        document.dispatchEvent(new CustomEvent("fv:crop-perms-ready", { detail:{ permsKnown:true } }));
+      }
+
+      async function init(){
+        await ready;
+
+        const auth = getAuth();
+        const db = getFirestore();
+
+        applyVisibility(null, false); // fail-open start
+
+        onAuthStateChanged(auth, async (user)=>{
+          try{
+            if (!user){
+              applyVisibility(null, false);
+              return;
+            }
+
+            const emp = await readEmployeeByEmail(db, user);
+            if (!emp){
+              console.warn("[crop-production] employees doc not found for:", user.email);
+              applyVisibility(null, false);
+              return;
+            }
+
+            const { permissionGroup, overrides } = extractEmployeeGroupAndOverrides(emp);
+
+            let basePerms = await readRolePermsByDocId(db, permissionGroup);
+            if (!basePerms) basePerms = await readRolePermsByName(db, permissionGroup);
+
+            if (!basePerms){
+              console.warn("[crop-production] accountRoles not found for permissionGroup:", permissionGroup);
+              applyVisibility(null, false);
+              return;
+            }
+
+            const merged = mergePerms(basePerms, overrides);
+            applyVisibility(merged, true);
+          }catch(err){
+            console.warn("[crop-production] perms resolver failed:", err);
+            applyVisibility(null, false);
+          }
+        });
+      }
+
+      init();
+    })();
+  </script>
+
+  <!-- Bootloader: identical order/paths as the working Setup page -->
+  <script>
+    (function () {
+      const urlRev = new URL(location.href).searchParams.get('rev');
+      const REV = urlRev || String(Date.now());
+      const files = [
+        '/js/core/version/version.js',
+        '/js/core/core.js',
+        '/js/shared/ui/fv-hero-card.js',
+        '/js/core/shell/fv-shell.js',
+        '/js/shared/ui/fv-hero.js'
+      ];
+      (async function loadSeq() {
+        for (const src of files) {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src + '?rev=' + REV;
+            s.async = false;
+            s.onload = resolve;
+            s.onerror = () => reject(new Error('Failed to load ' + s.src));
+            document.body.appendChild(s);
+          });
+        }
+      })().catch(err => console.error('Bootloader failed:', err));
+    })();
+  </script>
+
+  <!-- ===========================================
+       Field Maintenance KPI JS (pending + in progress)
+       - now respects gating (tile may be hidden)
+       =========================================== -->
+  <script>
+    (function(){
+      "use strict";
+
+      const kpiEl   = document.getElementById("wo-active-kpi");
+      const countEl = document.getElementById("wo-active-count");
+      const subEl   = document.getElementById("wo-active-sub");
+
+      if (!kpiEl || !countEl || !subEl) return;
+
+      function isHidden(){
+        return kpiEl.classList.contains("perm-hidden") || kpiEl.getAttribute("aria-hidden") === "true";
+      }
+
+      function applyState(count){
+        const n = Number(count) || 0;
+        countEl.textContent = n.toString();
+
+        if (!n){
+          kpiEl.classList.add("dash-kpi-empty");
+          subEl.textContent = "No pending or in-progress field maintenance work orders.";
+        }else{
+          kpiEl.classList.remove("dash-kpi-empty");
+          subEl.textContent = n === 1
+            ? "field maintenance work order currently pending or in progress."
+            : "field maintenance work orders currently pending or in progress.";
+        }
+      }
+
+      async function loadActive(){
+        try{
+          if (isHidden()) return;
+
+          if (!window.FVData || typeof FVData.getWhere !== "function"){
+            console.warn("[crop-production] FVData.getWhere not available for KPI.");
+            applyState(0);
+            return;
+          }
+
+          if (typeof FVData.ready === "function"){
+            await FVData.ready();
+          }
+
+          const [pendingDocs, inProgDocs] = await Promise.all([
+            FVData.getWhere("fieldMaintenance", "status", "==", "pending",      { limit: 500 }) || [],
+            FVData.getWhere("fieldMaintenance", "status", "==", "in progress", { limit: 500 }) || []
+          ]);
+
+          const ids = new Set();
+          pendingDocs.forEach(d => { if (d && d.id) ids.add(d.id); });
+          inProgDocs.forEach(d => { if (d && d.id) ids.add(d.id); });
+
+          applyState(ids.size);
+        }catch(err){
+          console.warn("[crop-production] failed to load active work-order KPI:", err);
+          applyState(0);
+        }
+      }
+
+      loadActive();
+      document.addEventListener("fv:crop-perms-ready", () => loadActive());
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") loadActive();
+      });
+    })();
+  </script>
+
+  <!-- ===========================================
+       Field Trials KPI JS
+       - Counts active trials
+       - Counts fields in those active trials
+       - Feeds both circles
+       - now skips reads if card is hidden
+       =========================================== -->
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection,
+      getDocs,
+      query,
+      where
+    } from '/js/core/firebase/firebase-init.js';
+
+    const kpiEl        = document.getElementById("trials-kpi");
+    const trialsEl     = document.getElementById("trials-count-trials");
+    const fieldsEl     = document.getElementById("trials-count-fields");
+    const subElTrials  = document.getElementById("trials-sub");
+
+    function isHidden(el){
+      return !el || el.classList.contains("perm-hidden") || el.getAttribute("aria-hidden") === "true";
+    }
+
+    if (kpiEl && trialsEl && fieldsEl && subElTrials) {
+      function applyState(trialCount, fieldCount){
+        const nTrials = Number(trialCount) || 0;
+        const nFields = Number(fieldCount) || 0;
+
+        trialsEl.textContent = nTrials.toString();
+        fieldsEl.textContent = nFields.toString();
+
+        if (!nTrials){
+          kpiEl.classList.add("dash-kpi-empty");
+          subElTrials.textContent = "No active field trials found.";
+        }else{
+          kpiEl.classList.remove("dash-kpi-empty");
+          subElTrials.textContent = "Tap a circle to edit trials or open the active fields report.";
+        }
+      }
+
+      async function loadTrials(){
+        try{
+          if (isHidden(kpiEl)) return;
+
+          await ready;
+          const db = getFirestore();
+
+          const trialsRef = collection(db, "fieldTrials");
+          const q = query(trialsRef, where("status", "==", "active"));
+          const snap = await getDocs(q);
+
+          const trialCount = typeof snap.size === "number" ? snap.size : 0;
+
+          if (!trialCount){
+            applyState(0, 0);
+            return;
+          }
+
+          const trialIds = [];
+          snap.forEach(docSnap => {
+            if (docSnap && docSnap.id) trialIds.push(docSnap.id);
+          });
+
+          let fieldCount = 0;
+
+          if (trialIds.length){
+            const fieldPromises = trialIds.map(trialId => {
+              const fieldsRef = collection(db, "fieldTrials", trialId, "fields");
+              return getDocs(fieldsRef).then(fieldsSnap => {
+                return typeof fieldsSnap.size === "number" ? fieldsSnap.size : 0;
+              });
+            });
+
+            const fieldCounts = await Promise.all(fieldPromises);
+            fieldCount = fieldCounts.reduce((sum, n) => sum + (Number(n) || 0), 0);
+          }
+
+          applyState(trialCount, fieldCount);
+        }catch(err){
+          console.warn("[crop-production] failed to load field trials KPI:", err);
+          applyState(0, 0);
+        }
+      }
+
+      loadTrials();
+      document.addEventListener("fv:crop-perms-ready", () => loadTrials());
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") loadTrials();
+      });
+    }
+  </script>
+
+  <!-- ===========================================
+     Trial Scorecard iframe bootstrap
+     - Sets src with current year by default
+     - now respects gating (card may be hidden)
+     =========================================== -->
+<script>
+  (function(){
+    const card  = document.getElementById('trial-scorecard-card');
+    const frame = document.getElementById('trial-scorecard-frame');
+    if (!card || !frame) return;
+
+    const year = new Date().getFullYear();
+    const SCORECARD_PATH = '/pages/reports/reports-mh-scoreboard.html';
+    const url = SCORECARD_PATH + '?embed=1&year=' + encodeURIComponent(year);
+
+    function isHidden(){
+      return card.classList.contains("perm-hidden") || card.getAttribute("aria-hidden") === "true";
+    }
+
+    function apply(){
+      if (isHidden()){
+        frame.removeAttribute('src');  // clear attribute so it truly stops
+        return;
+      }
+
+      // IMPORTANT: check the attribute, not frame.src property (which is often non-empty even when unset)
+      const cur = frame.getAttribute('src') || '';
+      if (!cur){
+        frame.setAttribute('src', url);
+      }else{
+        // if it already has something, leave it alone
+        // (or you can force-refresh by always setting it)
+      }
+    }
+
+    apply();
+    document.addEventListener("fv:crop-perms-ready", apply);
+  })();
+</script>
+
+  <!-- ===========================================
+       Auto-resize listener for embedded scorecard
+       =========================================== -->
+  <script>
+    (function(){
+      const FRAME_ID = 'trial-scorecard-frame';
+
+      window.addEventListener('message', function(event){
+        try{
+          if (event.origin !== window.location.origin) return;
+          const data = event.data || {};
+          if (data.type !== 'fv-scorecard-height') return;
+
+          const frame = document.getElementById(FRAME_ID);
+          if (!frame) return;
+
+          const h = Number(data.height) || 0;
+          if (!h) return;
+
+          frame.style.height = (h + 24) + 'px';
+        }catch(err){
+          console.warn('[crop-production] scorecard height listener failed', err);
+        }
+      });
+    })();
+  </script>
+
+  <noscript>
+    <div class="container"><div class="card">JavaScript is required for Crop Production.</div></div>
+  </noscript>
+</body>
+</html>

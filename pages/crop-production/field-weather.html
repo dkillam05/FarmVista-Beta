@@ -1,0 +1,1740 @@
+<!-- =====================================================================
+/pages/field-readiness.html  (FULL FILE)
+Rev: 2026-03-29b-details-add-soil-moisture-and-surface-wetness-sections
+
+Change (per Dane):
+✅ Added Field Search box directly under Results per page area
+✅ Search box matches FarmVista dropdown/input box styling
+✅ Uses plain text input (NOT native search type) to avoid iPhone rounded search UI
+✅ Added light gray in-box placeholder text "Search"
+✅ Expanded farm/page/filter row from 2 columns to 3 columns on desktop
+✅ NEW: Added Details "Current Moisture Snapshot" panel
+✅ NEW: Added separate "Soil Moisture Trace" table
+✅ NEW: Renamed old "Tank Trace" table to "Surface Wetness Trace"
+✅ NEW: Labels now match Quick View wording:
+   - Soil Moisture
+   - Surface Wetness
+✅ Everything else preserved
+===================================================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Field Readiness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <!-- ===========================
+       ABSOLUTE PATHS (REQUIRED)
+       =========================== -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <!-- Theme + base app styles -->
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+  
+  <script>
+    window.FV_DATE_RANGE_PICKER_CONFIG = {
+      disallowFuture: true,
+      maxLookbackDays: 30
+    };
+  </script>
+
+  <!-- Date range picker (your file) -->
+  <script src="/js/shared/ui/fv-date-range-picker.js"></script>
+
+  <!-- Ensure fv-shell (global header/footer/menu) -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max:1100px;
+      --page-bottom-gap:96px;
+      --accent:#2F6C3C;
+    }
+    body{ background:var(--app-bg,var(--surface)); }
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap))!important;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:visible;
+      margin-bottom:var(--page-bottom-gap);
+      position:relative;
+    }
+    .hero-head{
+      display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:center;
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    }
+    .hero-head .icon{width:24px;height:24px;color:var(--accent);display:grid;place-items:center}
+    .hero-head h1{margin:0;font-size:clamp(20px,3.2vw,26px);line-height:1.2}
+    .muted{color:var(--muted,#67706B)}
+    .body{padding:16px;display:grid;gap:14px}
+
+    /* ✅ Rain map quick link */
+    .rainmap-strip{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      margin-bottom:2px;
+    }
+    .rainmap-link{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:color-mix(in srgb, var(--accent) 10%, var(--surface) 90%);
+      color:var(--text);
+      text-decoration:none;
+      font-weight:900;
+      line-height:1;
+      box-shadow:0 6px 16px rgba(0,0,0,.06);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .rainmap-link:hover{
+      background:color-mix(in srgb, var(--accent) 14%, var(--surface) 86%);
+    }
+    .rainmap-link:active{
+      transform:translateY(1px);
+    }
+    .rainmap-link .emoji{
+      font-size:16px;
+      line-height:1;
+      flex:0 0 auto;
+    }
+    .rainmap-link .beta{
+      color:var(--muted,#67706B);
+      font-weight:800;
+      font-size:12px;
+    }
+
+    /* Controls (3 equal columns) */
+    .row{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1fr 1fr 1fr;
+      align-items:end;
+    }
+    @media (max-width:880px){
+      .row{grid-template-columns:1fr;align-items:stretch}
+    }
+
+    /* ✅ Filter row */
+    .row2{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1fr 1fr 1fr;
+      align-items:end;
+      margin-top:10px;
+    }
+    @media (max-width:880px){
+      .row2{grid-template-columns:1fr;align-items:stretch}
+    }
+
+    .field{min-width:0;}
+    .field label{display:block;font-weight:800;margin:0 0 6px}
+
+    .input,.select{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      outline:none;
+    }
+
+    /* ✅ Search input shell styled to match dropdowns and avoid iPhone native search chrome */
+    .search-input{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      line-height:1.2;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      outline:none;
+      box-shadow:none;
+      -webkit-appearance:none;
+      appearance:none;
+      background-image:none;
+    }
+    .search-input::-webkit-search-decoration,
+    .search-input::-webkit-search-cancel-button,
+    .search-input::-webkit-search-results-button,
+    .search-input::-webkit-search-results-decoration{
+      -webkit-appearance:none;
+      appearance:none;
+      display:none;
+    }
+    .search-input::placeholder{
+      color:var(--muted,#67706B);
+      opacity:.78;
+    }
+    .search-input:focus{
+      border-color:color-mix(in srgb, var(--accent) 45%, var(--border) 55%);
+      box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent 84%);
+    }
+
+    /* ------------------------------------------------------------
+       ✅ Buttons (local safety net so they never look "square")
+       Matches FarmVista vibe + avoids blue defaults
+       ------------------------------------------------------------ */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      font:inherit;
+      font-weight:900;
+      font-size:13px;
+      line-height:1;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{ transform:translateY(1px); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+    /* Primary: green with white text (your rule) */
+    .btn-primary{
+      background: var(--accent);
+      border-color: transparent;
+      color:#fff !important;
+    }
+    html.dark .btn-primary{ color:#fff !important; }
+
+    /* Operation label becomes a button */
+    .label-btn{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:0;
+      margin:0 0 6px;
+      border:none;
+      background:transparent;
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      text-align:left;
+    }
+    .label-btn .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:28px;height:28px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      font-weight:900;
+      line-height:1;
+      user-select:none;
+    }
+    .label-btn:active{transform:translateY(1px)}
+
+    /* Rain range inline help inside the input box */
+    .range-input-wrap{
+      position:relative;
+      width:100%;
+    }
+    #jobRangeInput{
+      width:100%;
+      cursor:pointer;
+      white-space:nowrap;
+      padding-right:54px;
+    }
+    .range-help-btn{
+      position:absolute;
+      top:50%;
+      right:10px;
+      transform:translateY(-50%);
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      border:1px solid color-mix(in srgb, var(--border) 82%, transparent 18%);
+      background:color-mix(in srgb, var(--accent) 12%, var(--surface) 88%);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      box-shadow:0 4px 12px rgba(0,0,0,.10);
+      z-index:2;
+      padding:0;
+    }
+    .range-help-btn:hover{
+      background:color-mix(in srgb, var(--accent) 16%, var(--surface) 84%);
+    }
+    .range-help-btn:active{
+      transform:translateY(-50%) scale(.97);
+    }
+    .range-help-btn svg{
+      width:16px;
+      height:16px;
+      display:block;
+    }
+    .range-help-btn .qmark{
+      font-size:13px;
+      font-weight:900;
+      line-height:1;
+    }
+    .range-help-tip{
+      position:absolute;
+      right:0;
+      top:calc(100% + 8px);
+      width:min(320px, 86vw);
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:0 16px 50px rgba(0,0,0,.22);
+      padding:12px;
+      font-size:13px;
+      color:var(--text);
+      z-index:100001;
+      display:none;
+    }
+    .range-help-tip.on{display:block}
+    .range-help-tip b{font-weight:900}
+    .range-help-tip .muted{font-size:12px}
+    .range-help-tip:before{
+      content:"";
+      position:absolute;
+      top:-7px;
+      right:16px;
+      width:12px;
+      height:12px;
+      background:var(--surface);
+      border-left:1px solid var(--border);
+      border-top:1px solid var(--border);
+      transform:rotate(45deg);
+    }
+
+    /* Calendar popover: open inward */
+    #calendarPopover{
+      position:absolute;
+      top:calc(100% + 8px);
+      right:0;
+      left:auto;
+      width:min(360px, 92vw);
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:0 14px 45px rgba(0,0,0,.25);
+      padding:12px;
+      display:none;
+      z-index:100000;
+    }
+    @media (max-width:520px){
+      #calendarPopover{width:min(340px, 92vw);right:0;}
+    }
+
+    /* ✅ Popover header: adds an X button like other modals */
+    .cal-top{
+      display:grid;
+      grid-template-columns:1fr 1fr 36px;
+      gap:10px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .cal-xbtn{
+      width:34px;height:34px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-xbtn svg{width:18px;height:18px;display:block}
+    .cal-xbtn:active{transform:translateY(1px)}
+
+    #calDays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .cal-day{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 0;
+      text-align:center;
+      font-size:12px;
+      cursor:pointer;
+      background:color-mix(in srgb, var(--surface) 94%, #ffffff 6%);
+      user-select:none;
+      color:var(--text);
+    }
+    .cal-day.other-month{opacity:.45}
+    .cal-day.in-range{background:color-mix(in srgb, var(--accent) 14%, var(--surface) 86%)}
+    .cal-day.range-start,.cal-day.range-end,.cal-day.single-day,.cal-day.start-selected{
+      background:var(--accent);color:#fff;border-color:transparent
+    }
+    .cal-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+
+    /* Fields list */
+    .list{display:grid;gap:10px;}
+    .tile{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      padding:12px;
+      display:grid;
+      gap:8px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tile.active{
+      outline:2px solid color-mix(in srgb, var(--accent) 70%, transparent 30%);
+      outline-offset:2px;
+    }
+    .tile-top{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+      flex-wrap:wrap;
+    }
+    .titleline{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;
+      flex:1 1 auto;
+    }
+    .name{
+      font-weight:900;
+      font-size:14px;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:520px;
+    }
+    @media (max-width:520px){ .name{max-width:240px;} }
+
+    .readiness-pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      font-weight:900;
+      font-size:12px;
+      color:#fff;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    .subline{
+      margin:0;
+      font-size:12px;
+      color:var(--muted,#67706B);
+      line-height:1.2;
+    }
+
+    /* Chips readable */
+    .chips{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;align-items:center;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      font-weight:900;font-size:12px;
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      color:var(--text);
+    }
+    .chip.wet{background:color-mix(in srgb, #c83b3b 18%, var(--surface) 82%)}
+    .chip.readiness{background:color-mix(in srgb, #2f8f4b 18%, var(--surface) 82%)}
+
+    .gauge-wrap{display:grid;gap:8px}
+    .gauge{
+      position:relative;
+      height:16px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      background:linear-gradient(90deg, #c83b3b 0%, #d8b23b 55%, #2f8f4b 100%);
+    }
+    .marker{
+      position:absolute;top:-10px;width:4px;height:36px;
+      background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);
+      border-radius:3px;transform:translateX(-2px);
+    }
+    .thr{
+      position:absolute;top:-10px;width:2px;height:36px;
+      background:#000;opacity:.85;transform:translateX(-1px);
+    }
+    .badge{
+      position:absolute;top:-34px;transform:translateX(-50%);
+      padding:5px 8px;border-radius:999px;border:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      font-size:12px;font-weight:900;white-space:nowrap;
+      box-shadow:0 10px 25px rgba(0,0,0,.12);
+      color:var(--text);
+    }
+    .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted,#67706B)}
+
+    /* Details */
+    details{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      overflow:hidden;
+    }
+    summary{
+      list-style:none;
+      cursor:pointer;
+      padding:12px 14px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      color:var(--text);
+    }
+    summary::-webkit-details-marker{display:none}
+
+    .details-body{
+      padding:14px;
+      display:grid;
+      gap:12px;
+      max-height: calc(100svh - 220px);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .panel{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:color-mix(in srgb, var(--surface) 96%, #ffffff 4%);
+      padding:12px;
+      color:var(--text);
+    }
+    .panel h3{margin:0 0 8px;font-size:13px;font-weight:900;color:var(--text)}
+    .panel-subhead{
+      margin:14px 0 8px;
+      font-size:12px;
+      font-weight:900;
+      color:var(--text);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:8px 12px;
+      align-items:start;
+    }
+    .kv .k{
+      font-weight:900;
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .kv .v{
+      color:var(--text);
+      min-width:0;
+    }
+
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;}
+
+    .table-scroll{
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:820px;
+    }
+    th,td{
+      padding:10px;
+      border-bottom:1px solid var(--border);
+      font-size:12px;
+      text-align:left;
+      vertical-align:top;
+      white-space:nowrap;
+      color:var(--text);
+    }
+    th{
+      background:color-mix(in srgb, var(--surface) 90%, #ffffff 10%);
+      font-weight:900;
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tr:last-child td{border-bottom:none}
+    .right{text-align:right}
+
+    @media (max-width:700px){
+      .table-scroll{overflow-x:visible;border:none;border-radius:0}
+      table{min-width:0}
+      th,td{white-space:normal;font-size:11px;padding:8px}
+      th{position:static}
+      .kv{grid-template-columns:1fr}
+    }
+
+    .pv-hide{display:none!important}
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.45);
+      display:flex;align-items:center;justify-content:center;
+      padding:16px;z-index:99999;
+    }
+    .modal{
+      width:min(620px, 94vw);
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 18px 60px rgba(0,0,0,.35);
+      overflow:hidden;
+      position:relative;
+    }
+    .modal-h{
+      padding:14px 48px 10px 14px;
+      border-bottom:1px solid var(--border);
+      position:relative;
+    }
+    .modal-h h3{margin:0;font-size:15px;font-weight:900;color:var(--text)}
+    .modal-b{padding:14px;color:var(--text)}
+    .help{font-size:13px;color:var(--muted,#67706B);margin-top:6px}
+    .error{color:#b00020;font-weight:800}
+
+    .xbtn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:34px;height:34px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    .xbtn svg{width:18px;height:18px;display:block}
+    .xbtn:active{transform:translateY(1px)}
+
+    .varlist{ display:grid; gap:8px; }
+    .vgroup{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:var(--surface);
+    }
+    .vgroup-title{
+      font-weight:900;
+      font-size:12px;
+      margin:0 0 8px;
+      color:var(--text);
+    }
+    .vitems{ display:grid; gap:6px; }
+    .vitem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:8px 10px;
+      background:color-mix(in srgb, var(--surface) 96%, #ffffff 4%);
+      font-size:12px;
+    }
+    .vname{font-weight:900}
+    .vmeta{color:var(--muted,#67706B);font-weight:800}
+    .vtag{
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .tag-primary{ background:color-mix(in srgb, var(--accent) 12%, var(--surface) 88%); }
+    .tag-light{ background:color-mix(in srgb, #d8b23b 14%, var(--surface) 86%); }
+    .tag-pulled{ background:color-mix(in srgb, #67706B 10%, var(--surface) 90%); }
+    .tag-missing{ background:color-mix(in srgb, #b00020 10%, var(--surface) 90%); }
+
+    /* ✅ Fields label: look like normal labels (NOT light grey),
+          still clickable hotspot for calibration */
+    #fieldsTitle{
+      display:inline-block;
+      width:auto;
+      cursor:pointer;
+      user-select:none;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:0;
+      text-transform:none;
+      opacity:1;
+      padding:0;
+      margin:0;
+      line-height:1.2;
+      color:var(--text);
+    }
+    #fieldsTitle:hover{
+      text-decoration:underline;
+      text-decoration-style:dotted;
+    }
+    #fieldsTitle:active{ transform:translateY(1px); }
+  </style>
+</head>
+
+<body>
+  <fv-shell data-boot-hold-ms="3000">
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🧭</div>
+          <div>
+            <h1>Field Readiness</h1>
+            <p class="muted">Weather data is retrieved through our Open-Meteo proxy and refreshed three times daily at 5:00 AM, 12:00 PM, and 7:00 PM.
+Field Readiness calculations run continuously using this data, with global calibration and field-level adjustments available when conditions require refinement.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <!-- ✅ Rainfall Map quick link -->
+          <div class="rainmap-strip">
+            <a class="rainmap-link" href="/pages/crop-production/weather-readiness-map.html">
+              <span class="emoji" aria-hidden="true">🗺️</span>
+              <span>Rainfall Map <span class=""></span></span>
+            </a>
+          </div>
+
+          <!-- CONTROLS -->
+          <div class="row opCard" style="position:relative;">
+            <div class="field">
+              <button id="opBtn" class="label-btn" type="button" aria-label="Operation thresholds">
+                <span>Operation</span>
+                <span class="pill" title="Edit thresholds">⚙</span>
+              </button>
+              <select id="opSel" class="select">
+                <option value="spring_tillage">Spring tillage</option>
+                <option value="planting">Planting</option>
+                <option value="spraying">Spraying</option>
+                <option value="harvest">Harvest</option>
+                <option value="fall_tillage">Fall tillage</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="sortSel">Sort</label>
+              <select id="sortSel" class="select">
+                <option value="name_az">Name (A → Z)</option>
+                <option value="name_za">Name (Z → A)</option>
+                <option value="ready_dry_wet">Readiness (Dry → Wet)</option>
+                <option value="ready_wet_dry">Readiness (Wet → Dry)</option>
+                <option value="rain_most">Most rain (range)</option>
+                <option value="rain_least">Least rain (range)</option>
+              </select>
+            </div>
+
+            <div class="field" style="position:relative;">
+              <label for="jobRangeInput" style="margin:0 0 6px;font-weight:800;">Rain range</label>
+
+              <div class="range-input-wrap">
+                <input id="jobRangeInput" class="input" readonly placeholder="Choose date range"/>
+
+                <button
+                  id="rainHelpBtn"
+                  class="range-help-btn"
+                  type="button"
+                  aria-label="Rain range help"
+                  aria-expanded="false"
+                  title="Rain range help"
+                >
+                  <span class="qmark">?</span>
+                </button>
+
+                <div id="rainHelpTip" class="range-help-tip" role="dialog" aria-modal="false">
+                  <b>Rain range</b><br/>
+                  Totals shown on tiles are calculated over this date range.<br/>
+                  <div class="muted" style="margin-top:6px;">Defaults to last 72 hours until you choose a range.</div>
+                </div>
+              </div>
+
+              <div id="calendarPopover">
+                <div class="cal-top">
+                  <select id="monthSelect" class="select" style="padding:10px"></select>
+                  <select id="yearSelect" class="select" style="padding:10px"></select>
+
+                  <!-- ✅ X close (instead of square "Close" button) -->
+                  <button id="closeCalBtn" class="cal-xbtn" type="button" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div id="calDays"></div>
+
+                <div class="cal-footer">
+                  <span id="rangeSummary" class="muted" style="font-size:12px;">No dates selected</span>
+                  <div style="display:flex;gap:8px;">
+                    <button id="clearRangeBtn" class="btn" type="button" style="min-width:auto;">Clear</button>
+                    <button id="applyRangeBtn" class="btn btn-primary" type="button" style="min-width:auto;">Apply</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FARM + PAGE SIZE + SEARCH FILTERS -->
+          <div class="row2">
+            <div class="field">
+              <label for="farmSel">Farm</label>
+              <select id="farmSel" class="select">
+                <option value="__all__">All</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="pageSel">Results per page</label>
+              <select id="pageSel" class="select" autocomplete="off">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+                <option value="__all__">All</option>
+              </select>
+              <script>
+                (function(){
+                  try{
+                    var sel = document.getElementById('pageSel');
+                    if (!sel) return;
+
+                    var raw = String(localStorage.getItem('fv_fr_page_size_v1') || '25').trim();
+                    var allowed = ['25','50','100','250','__all__'];
+                    if (!allowed.includes(raw)) raw = '25';
+
+                    sel.value = raw;
+
+                    if (sel.value !== raw){
+                      Array.from(sel.options || []).forEach(function(opt){
+                        opt.selected = (String(opt.value) === raw);
+                      });
+                    }
+                  }catch(_){}
+                })();
+              </script>
+            </div>
+
+            <div class="field">
+              <label for="fieldSearch" aria-hidden="true" style="opacity:0;pointer-events:none;">Search</label>
+              <input
+                id="fieldSearch"
+                class="search-input"
+                type="text"
+                inputmode="search"
+                autocomplete="off"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                placeholder="Search"
+                aria-label="Search fields"
+              />
+            </div>
+          </div>
+
+          <!-- FIELDS -->
+<div class="field">
+  <label>
+    <span
+      id="fieldsTitle"
+      style="cursor:pointer;"
+    >
+      Fields
+    </span>
+  </label>
+
+  <div id="fieldsGrid" class="list"></div>
+
+  <div
+    id="emptyMsg"
+    class="help muted"
+    style="display:none;"
+  >
+    No active fields with GPS (lat/lng) found.
+  </div>
+</div>
+
+<div id="err" class="help error" hidden></div>
+
+<script type="module">
+
+  const calBtn =
+    document.getElementById('fieldsTitle');
+
+  if (calBtn) {
+
+    calBtn.addEventListener('click', async ()=>{
+
+      try {
+
+        console.log('[CAL] button clicked');
+
+        const mod =
+          await import('/js/field-readiness/global-calibration.js');
+
+        console.log('[CAL] module loaded', mod);
+
+        if (
+          typeof mod.openGlobalCalibration !== 'function'
+        ){
+          throw new Error(
+            'openGlobalCalibration export missing'
+          );
+        }
+
+        await mod.openGlobalCalibration(
+          window.__FV_FR
+        );
+
+      } catch (err) {
+
+        console.error('[CAL] modal failed', err);
+
+        alert(
+          'Calibration modal failed:\n\n' +
+          (err?.message || err)
+        );
+
+      }
+
+    });
+
+  }
+
+</script>
+
+          <!-- DETAILS -->
+          <details id="detailsPanel">
+            <summary>
+              <span>Details</span>
+              <span class="muted" style="font-size:12px;">(beta + tables)</span>
+            </summary>
+
+            <div class="details-body">
+              <div class="panel">
+                <h3>Beta: Data pulled into the model</h3>
+                <div class="help" id="betaInputsMeta">—</div>
+                <div id="betaInputs" class="varlist" style="margin-top:10px;"></div>
+              </div>
+
+              <!-- ✅ NEW: current values panel matching Quick View labels -->
+              <div class="panel">
+                <h3>Current Moisture Snapshot</h3>
+                <div class="kv">
+                  <div class="k">Soil Moisture</div>
+                  <div class="v mono" id="detailsSoilMoisture">—</div>
+
+                  <div class="k">Surface Wetness</div>
+                  <div class="v mono" id="detailsSurfaceWetness">—</div>
+                </div>
+                <div class="help">Labels match Quick View so current values and 30-day traces are easier to compare.</div>
+              </div>
+
+              <!-- ✅ NEW: separate soil moisture trace -->
+              <div class="panel">
+                <h3>Soil Moisture Trace</h3>
+                <div class="table-scroll">
+                  <table aria-label="Soil Moisture Trace">
+                    <thead>
+                      <tr>
+                        <th style="width:110px;">Date</th>
+                        <th class="right">Rain</th>
+                        <th class="right">infilMult</th>
+                        <th class="right">Add</th>
+                        <th class="right">DryPwr</th>
+                        <th class="right">Loss</th>
+                        <th class="right">Soil Moisture</th>
+                      </tr>
+                    </thead>
+                    <tbody id="soilTraceRows">
+                      <tr><td colspan="7" class="muted">Waiting for soil moisture trace.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- ✅ RENAMED: old tank trace is really surface trace -->
+              <div class="panel">
+                <h3>Surface Wetness Trace</h3>
+                <div class="table-scroll">
+                  <table aria-label="Surface Wetness Trace">
+                    <thead>
+                      <tr>
+                        <th style="width:110px;">Date</th>
+                        <th class="right">Rain</th>
+                        <th class="right">infilMult</th>
+                        <th class="right">Add</th>
+                        <th class="right">DryPwr</th>
+                        <th class="right">Loss</th>
+                        <th class="right">Surface Wetness</th>
+                      </tr>
+                    </thead>
+                    <tbody id="surfaceTraceRows">
+                      <tr><td colspan="7" class="muted">Run the model.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h3>DryPwr Breakdown</h3>
+                <div class="table-scroll">
+                  <table aria-label="DryPwr Breakdown">
+                    <thead>
+                      <tr>
+                        <th style="width:110px;">Date</th>
+                        <th class="right">Temp</th>
+                        <th class="right">tempN</th>
+                        <th class="right">Wind</th>
+                        <th class="right">windN</th>
+                        <th class="right">RH</th>
+                        <th class="right">rhN</th>
+                        <th class="right">Solar</th>
+                        <th class="right">solarN</th>
+                        <th class="right">VPD</th>
+                        <th class="right">vpdN</th>
+                        <th class="right">Cloud</th>
+                        <th class="right">cloudN</th>
+                        <th class="right">raw</th>
+                        <th class="right">DryPwr</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dryRows">
+                      <tr><td colspan="15" class="muted">Run the model.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="panel">
+                <h3>Weather Inputs</h3>
+                <div class="table-scroll">
+                  <table aria-label="Weather Inputs">
+                    <thead>
+                      <tr>
+                        <th style="width:110px;">Date</th>
+                        <th class="right">Rain</th>
+                        <th class="right">Temp</th>
+                        <th class="right">Wind</th>
+                        <th class="right">RH</th>
+                        <th class="right">Solar</th>
+                        <th class="right">ET0</th>
+                        <th class="right">SM 0–10</th>
+                        <th class="right">ST 0–10</th>
+                      </tr>
+                    </thead>
+                    <tbody id="wxRows">
+                      <tr><td colspan="9" class="muted">Waiting for JS…</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- ✅ NEW: MRMS section directly under weather / forecast area -->
+              <div class="panel" id="mrmsPanel">
+                <h3>MRMS Rainfall</h3>
+                <div class="help" id="mrmsMeta">Waiting for MRMS data…</div>
+
+                <div class="chips" style="margin-top:10px;">
+                  <span class="chip">Latest hour: <span class="mono" id="mrmsLatestHour" style="margin-left:6px;">—</span></span>
+                  <span class="chip">Last 24h: <span class="mono" id="mrmsLast24Total" style="margin-left:6px;">—</span></span>
+                  <span class="chip">Last 7d: <span class="mono" id="mrmsLast7dTotal" style="margin-left:6px;">—</span></span>
+                  <span class="chip">Units: <span class="mono" id="mrmsUnits" style="margin-left:6px;">mm</span></span>
+                </div>
+
+                <div class="panel-subhead">MRMS Hourly (last 24)</div>
+                <div class="table-scroll">
+                  <table aria-label="MRMS Hourly">
+                    <thead>
+                      <tr>
+                        <th style="width:170px;">Hour</th>
+                        <th class="right">Rain (mm)</th>
+                        <th>Product</th>
+                        <th>Mode</th>
+                        <th>Source</th>
+                      </tr>
+                    </thead>
+                    <tbody id="mrmsHourlyRows">
+                      <tr><td colspan="5" class="muted">Waiting for MRMS hourly data…</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="panel-subhead">MRMS Daily (last 30 days)</div>
+                <div class="table-scroll">
+                  <table aria-label="MRMS Daily">
+                    <thead>
+                      <tr>
+                        <th style="width:120px;">Date</th>
+                        <th class="right">Hours</th>
+                        <th class="right">Rain (mm)</th>
+                        <th class="right">Rain (in)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="mrmsDailyRows">
+                      <tr><td colspan="4" class="muted">Waiting for MRMS daily data…</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </details>
+
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+<!-- =========================================================
+CALIBRATION MODAL — FULL REPLACEMENT
+REPLACE YOUR ENTIRE:
+<div id="adjustBackdrop"...></div>
+SECTION WITH THIS
+========================================================= -->
+<!-- =========================================================
+MODERN CALIBRATION MODAL
+FULL REPLACEMENT
+========================================================= -->
+
+<div
+  id="adjustBackdrop"
+  class="modal-backdrop pv-hide"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="adjustTitle"
+>
+
+  <div class="modal overflow-vis modern-adjust-modal">
+
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+
+    <div class="modal-h modern-adjust-head">
+
+      <div>
+        <h3 id="adjustTitle">Adjust</h3>
+
+        <div
+          class="muted"
+          style="font-size:13px;margin-top:4px;"
+          id="adjustSub"
+        >
+          —
+        </div>
+      </div>
+
+      <button
+        id="btnAdjX"
+        class="xbtn modern-xbtn"
+        type="button"
+        aria-label="Close"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M6 6L18 18M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- BODY -->
+    <!-- ===================================================== -->
+
+    <div class="modal-b modern-modal-body">
+
+      <div class="adj-grid modern-adjust-grid">
+
+        <!-- ================================================= -->
+        <!-- TOP STATUS PILLS -->
+        <!-- ================================================= -->
+
+        <div class="minirow modern-minirow">
+
+          <span class="mini-pill modern-pill">
+            Readiness:
+            <span class="mono" id="adjReadiness">—</span>
+          </span>
+
+          <span class="mini-pill modern-pill">
+            Wetness:
+            <span class="mono" id="adjWetness">—</span>
+          </span>
+
+          <span class="mini-pill modern-pill modern-model-pill">
+            Model:
+            <span class="mono" id="adjModelClass">—</span>
+          </span>
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- CALIBRATION -->
+        <!-- ================================================= -->
+
+        <div class="modern-cal-section">
+
+          <div class="modern-cal-label">
+            Calibration input
+            <span class="modern-cal-sub">
+              (pick the opposite if the model is wrong)
+            </span>
+          </div>
+
+          <!-- ============================================= -->
+          <!-- WET / DRY BUTTONS -->
+          <!-- ============================================= -->
+
+          <div class="seg modern-seg" id="feelSeg">
+
+            <button
+              class="segbtn modern-segbtn"
+              type="button"
+              data-feel="wet"
+              id="btnFeelWet"
+            >
+              💧 Wet
+            </button>
+
+            <button
+              class="segbtn modern-segbtn"
+              type="button"
+              data-feel="dry"
+              id="btnFeelDry"
+            >
+              ☀️ Dry
+            </button>
+
+          </div>
+
+          <!-- ============================================= -->
+          <!-- NOTE -->
+          <!-- ============================================= -->
+
+          <div
+            class="note modern-note"
+            id="adjHint"
+          >
+            —
+          </div>
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- SLIDER -->
+        <!-- ================================================= -->
+
+        <div
+          class="intensity modern-intensity pv-hide"
+          id="intensityBox"
+        >
+
+          <div class="intensity-top modern-intensity-top">
+
+            <div
+              class="intensity-title modern-intensity-title"
+              id="intensityTitle"
+            >
+              How wet/dry is it?
+            </div>
+
+            <div class="intensity-val modern-intensity-val">
+              Level:
+              <span class="mono" id="adjIntensityVal">50</span>/100
+            </div>
+
+          </div>
+
+          <div class="modern-slider-wrap">
+
+            <input
+              id="adjIntensity"
+              class="modern-slider"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="50"
+            />
+
+          </div>
+
+          <div class="intensity-scale modern-scale">
+
+            <span id="intensityLeft">
+              Slightly wetter
+            </span>
+
+            <span id="intensityRight">
+              Extremely wetter
+            </span>
+
+          </div>
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- GUARD -->
+        <!-- ================================================= -->
+
+        <div
+          class="help modern-guard"
+          id="adjGuard"
+        >
+          —
+        </div>
+
+        <div id="calibCooldownMsg"></div>
+
+        <!-- ================================================= -->
+        <!-- BUTTONS -->
+        <!-- ================================================= -->
+
+        <div class="adj-actions modern-actions">
+
+          <button
+            id="btnAdjCancel"
+            class="btn modern-cancel-btn"
+            type="button"
+          >
+            Cancel
+          </button>
+
+          <button
+            id="btnAdjApply"
+            class="btn btn-primary modern-apply-btn"
+            type="button"
+          >
+            Apply Adjustment
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+
+/* =========================================================
+MODAL
+========================================================= */
+
+.modern-adjust-modal{
+  width:min(720px, 94vw);
+  border-radius:24px;
+  overflow:hidden;
+}
+
+.modern-adjust-head{
+  padding:18px 20px 14px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+}
+
+.modern-modal-body{
+  padding:16px 18px 18px;
+}
+
+.modern-adjust-grid{
+  display:grid;
+  gap:18px;
+}
+
+/* =========================================================
+TOP PILLS
+========================================================= */
+
+.modern-minirow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.modern-pill{
+  border-radius:999px;
+  padding:10px 16px;
+  border:1px solid var(--border);
+
+  background:
+    color-mix(
+      in srgb,
+      var(--surface) 92%,
+      white 8%
+    );
+
+  font-weight:900;
+  font-size:14px;
+
+  box-shadow:
+    0 4px 12px rgba(0,0,0,.06);
+}
+
+.modern-model-pill{
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 12%,
+      var(--surface) 88%
+    );
+}
+
+/* =========================================================
+SECTION
+========================================================= */
+
+.modern-cal-section{
+  display:grid;
+  gap:12px;
+}
+
+.modern-cal-label{
+  text-align:center;
+  font-weight:900;
+  font-size:18px;
+  line-height:1.2;
+}
+
+.modern-cal-sub{
+  font-size:13px;
+  color:var(--muted);
+  font-weight:800;
+}
+
+/* =========================================================
+BUTTONS
+========================================================= */
+
+.modern-seg{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.modern-segbtn{
+  min-width:180px;
+  height:66px;
+
+  border-radius:20px;
+  border:2px solid transparent;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.96),
+      rgba(245,245,245,.92)
+    );
+
+  box-shadow:
+    0 10px 22px rgba(0,0,0,.08);
+
+  font-size:28px;
+  font-weight:900;
+  color:var(--text);
+
+  transition:
+    transform .14s ease,
+    box-shadow .14s ease,
+    border-color .14s ease;
+}
+
+.modern-segbtn:hover{
+  transform:translateY(-1px);
+}
+
+.modern-segbtn.on{
+  border-color:var(--accent);
+
+  box-shadow:
+    0 0 0 4px rgba(47,108,60,.12),
+    0 10px 24px rgba(0,0,0,.12);
+}
+
+/* =========================================================
+NOTE
+========================================================= */
+
+.modern-note{
+  font-size:15px;
+  line-height:1.4;
+  text-align:center;
+  max-width:620px;
+  margin:0 auto;
+}
+
+/* =========================================================
+SLIDER
+========================================================= */
+
+.modern-intensity{
+  display:grid;
+  gap:12px;
+}
+
+.modern-intensity-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.modern-intensity-title{
+  font-size:22px;
+  font-weight:900;
+}
+
+.modern-intensity-val{
+  font-size:17px;
+  font-weight:900;
+}
+
+.modern-slider-wrap{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.modern-slider{
+  width:100%;
+  height:12px;
+  border-radius:999px;
+  appearance:none;
+
+  background:
+    linear-gradient(
+      90deg,
+      #53a8ff 0%,
+      #2f8f4b 100%
+    );
+
+  outline:none;
+}
+
+.modern-slider::-webkit-slider-thumb{
+  appearance:none;
+
+  width:32px;
+  height:32px;
+
+  border-radius:50%;
+
+  background:#fff;
+
+  border:4px solid var(--accent);
+
+  cursor:pointer;
+
+  box-shadow:
+    0 4px 16px rgba(0,0,0,.22);
+}
+
+.modern-scale{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+
+  font-size:14px;
+  color:var(--muted);
+  font-weight:800;
+}
+
+/* =========================================================
+GUARD
+========================================================= */
+
+.modern-guard{
+  text-align:center;
+  font-size:14px;
+}
+
+/* =========================================================
+BOTTOM BUTTONS
+========================================================= */
+
+.modern-actions{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:2px;
+}
+
+.modern-cancel-btn{
+  min-width:160px;
+  height:54px;
+  border-radius:18px;
+  font-size:18px;
+  font-weight:900;
+}
+
+.modern-apply-btn{
+  min-width:250px;
+  height:54px;
+  border-radius:18px;
+  font-size:18px;
+  font-weight:900;
+  color:#fff !important;
+}
+
+/* =========================================================
+MOBILE
+========================================================= */
+
+@media (max-width:700px){
+
+  .modern-adjust-head{
+    padding:16px 16px 12px;
+  }
+
+  .modern-modal-body{
+    padding:14px 14px 16px;
+  }
+
+  .modern-adjust-grid{
+    gap:16px;
+  }
+
+  .modern-segbtn{
+    width:100%;
+    min-width:0;
+    height:62px;
+    font-size:26px;
+  }
+
+  .modern-intensity-title{
+    font-size:20px;
+  }
+
+  .modern-intensity-val{
+    font-size:15px;
+  }
+
+  .modern-apply-btn,
+  .modern-cancel-btn{
+    width:100%;
+  }
+
+}
+
+</style>
+
+  <!-- Confirm Calibration Modal -->
+  <div id="confirmAdjBackdrop" class="modal-backdrop pv-hide" role="dialog" aria-modal="true" aria-labelledby="confirmAdjTitle">
+    <div class="modal">
+      <div class="modal-h">
+        <h3 id="confirmAdjTitle">Confirm Calibration</h3>
+      </div>
+      <div class="modal-b">
+        <div style="font-size:14px; line-height:1.35;">
+          This adjustment will be saved and used to <b>calibrate the model</b>.
+        </div>
+        <div class="help muted" style="margin-top:8px;">
+          Only confirm if you’re sure this is correct.
+        </div>
+        <div class="adj-actions" style="margin-top:16px;">
+          <button id="btnAdjNo" class="btn" type="button">Cancel</button>
+          <button id="btnAdjYes" class="btn btn-primary" type="button">Yes, Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operation Thresholds Modal -->
+  <div id="opBackdrop" class="modal-backdrop pv-hide" role="dialog" aria-modal="true" aria-labelledby="opTitle">
+    <div class="modal">
+      <div class="modal-h">
+        <h3 id="opTitle">Operation Thresholds</h3>
+        <button id="btnOpX" class="xbtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="muted" style="font-size:12px; margin-top:4px;" id="opSub">Set the readiness threshold (0–100) for each operation.</div>
+      </div>
+      <div class="modal-b">
+        <div class="oplist" id="opList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Modal -->
+  <div id="mapBackdrop" class="modal-backdrop pv-hide" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+    <div class="modal map-modal">
+      <div class="modal-h">
+        <h3 id="mapTitle">Map</h3>
+        <button id="btnMapX" class="xbtn" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="muted" style="font-size:12px; margin-top:4px;" id="mapSub">—</div>
+      </div>
+      <div class="modal-b">
+        <div id="mapError" class="help error" style="display:none;"></div>
+        <div id="mapWrap" class="map-wrap">
+          <div id="fvMapCanvas" aria-label="Field map"></div>
+        </div>
+        <div class="map-meta">
+          <div class="muted">Pin is dropped on the field GPS.</div>
+          <div class="mono" id="mapLatLng">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/field-readiness/index.js"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCzKBEQ1-wCJ8_nv1dR3wQI0nTk1IrgWzY"></script>
+
+</body>
+</html>

@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Setup → Account Roles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+  
+  <!-- Standard includes -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  
+
+  <!-- ✅ Permission UI controller -->
+  <script src="/js/shared/permissions/perm-ui.js"></script>
+
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <style>
+    body{
+      background:var(--app-bg,var(--surface));
+      min-height:100vh
+    }
+    .page{
+      max-width:1100px;
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
+    }
+    .page-title{margin:0 0 8px 0;}
+    .page-sub{margin:0 0 14px 0;color:var(--muted,#67706B);}
+
+    .section{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+    }
+    .section-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    }
+    .section-head .icon{
+      width:22px;
+      height:22px;
+      color:#2F6C3C;
+      display:grid;
+      place-items:center;
+    }
+    .section-body{
+      padding:12px;
+      display:grid;
+      gap:12px;
+    }
+
+    .row{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1fr 1fr
+    }
+    @media(max-width:900px){
+      .row{grid-template-columns:1fr}
+    }
+    .field label{
+      display:block;
+      font-weight:800;
+      margin:0 0 6px 0;
+    }
+    .input,.select{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px;
+      outline:none;
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:128px;
+      padding:9px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:800;
+      color:var(--text);
+      cursor:pointer;
+    }
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff;
+    }
+    .btn-quiet{
+      min-width:auto;
+      padding:6px 10px
+    }
+
+    .footer-guard{
+      height:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 24px)
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 30px);
+      transform:translateX(-50%);
+      background:#2F6C3C;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;
+      display:none;
+    }
+    .toast.show{
+      display:block;
+      animation:fadeout 2.8s forwards;
+    }
+    @keyframes fadeout{
+      0%{opacity:1}
+      85%{opacity:1}
+      100%{opacity:0}
+    }
+    
+    /* ==========================================================
+   MOBILE PORTRAIT — REQUIRE LANDSCAPE
+========================================================== */
+
+.fv-rotate-device{
+  display:none;
+}
+
+@media (orientation:portrait) and (max-width:600px){
+
+  /*
+    Keep FarmVista shell/header/footer visible.
+    Only cover the Account Roles page content.
+  */
+
+  .page{
+    visibility:hidden;
+  }
+
+  .fv-rotate-device{
+    position:fixed;
+
+    /*
+      Leave room for the FarmVista header/footer.
+      Matches Grain Contracts.
+    */
+    top:92px;
+    bottom:0px;
+    left:0;
+    right:0;
+
+    z-index:50;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:24px;
+
+    background:var(--surface,#fff);
+    color:inherit;
+    text-align:center;
+  }
+
+  .fv-rotate-device-card{
+    width:min(420px,100%);
+  }
+
+  .fv-rotate-device-icon{
+    width:72px;
+    height:72px;
+    margin:0 auto 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:20px;
+    background:rgba(59,126,70,.12);
+
+    color:#3B7E46;
+    font-size:42px;
+    line-height:1;
+    font-weight:800;
+  }
+
+  .fv-rotate-device-title{
+    margin:0 0 10px;
+    font-size:1.65rem;
+    font-weight:800;
+  }
+
+  .fv-rotate-device-copy{
+    margin:0;
+    font-size:1rem;
+    line-height:1.45;
+    opacity:.72;
+  }
+}
+    
+  </style>
+
+  <!-- Ensure fv-shell is loaded -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <!-- Firebase config -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+</head>
+
+<body>
+    <!-- ========================================================
+       NARROW PORTRAIT SCREEN NOTICE
+  ========================================================= -->
+
+  <div class="fv-rotate-device" aria-hidden="true">
+    <div class="fv-rotate-device-card">
+
+      <div class="fv-rotate-device-icon">
+        ↻
+      </div>
+
+      <h1 class="fv-rotate-device-title">
+        Rotate Your Phone
+      </h1>
+
+      <p class="fv-rotate-device-copy">
+        Account Roles needs a wider screen.
+        Turn your phone sideways to continue.
+      </p>
+
+    </div>
+  </div>
+  
+  <fv-shell>
+    <!-- Page visibility -->
+    <div class="page container" data-perm="setup-roles:view">
+      <h1 class="page-title">Account Roles</h1>
+      <p class="page-sub">
+        Pick a role, adjust what it can do, then save.<br/>
+        The card below controls <strong>View, Add, Edit, Delete</strong> for each menu.
+      </p>
+
+      <!-- Role header -->
+      <section class="section" style="margin-bottom:14px;">
+        <header class="section-head">
+          <div class="icon" aria-hidden="true">👥</div>
+          <div><strong>Role Details</strong></div>
+        </header>
+        <div class="section-body">
+          <div class="row">
+            <div class="field">
+              <label for="rolePicker">Existing Roles</label>
+              <select id="rolePicker" class="select">
+                <option value="">Add New Role</option>
+              </select>
+            </div>
+
+            <div class="field" id="roleNameField" data-perm="setup-roles:edit">
+              <label for="roleName">Role Name</label>
+              <input id="roleName" class="input" placeholder="e.g., Seasonal Operator">
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="saveRole" class="btn btn-primary" type="button" data-perm="setup-roles:edit">Save Role</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Shared permissions hero + matrix -->
+      <fv-perms-hero id="permsHero"></fv-perms-hero>
+    </div>
+
+    <div class="footer-guard" aria-hidden="true"></div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <script type="module">
+    import '/js/shared/permissions/fv-perms-hero.js';
+    import {
+      ready,
+      getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc,
+      onSnapshot, orderBy, query, serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    (function(){
+      "use strict";
+      const $ = id => document.getElementById(id);
+      const toast = $("toast");
+
+      /* ====== CONFIG ====== */
+      const COLLECTION = 'accountRoles';
+      const ROLE_INDEX = 'roleIndex'; // <-- automatic bridge for Firestore rules
+
+      /* ====== PERM HELPERS ====== */
+      const canNow = (k)=> (window.FV && typeof window.FV.can === 'function') ? window.FV.can(k) : true;
+
+      /* ====== STATE ====== */
+      let MODE = 'stub'; // 'firebase' or 'stub'
+      let currentRoleId = "";
+      let roleDraft = { id:"", name:"", perms:{} };
+
+      /* ====== LOCKED ROLE RULE ====== */
+      function isAdminRoleName(name){
+        return String(name||"").trim().toLowerCase() === "admin";
+      }
+      function isLockedRole(){
+        return isAdminRoleName(roleDraft.name || $("roleName")?.value || "");
+      }
+
+      /* ====== VALIDATION (roleIndex doc id must be safe) ====== */
+      function normalizeRoleName(name){
+        return String(name || "").trim();
+      }
+      function assertRoleNameSafe(name){
+        // Firestore doc IDs cannot contain "/" and should not be empty.
+        if(!name) throw new Error("Missing role name.");
+        if(name.includes("/")) throw new Error('Role name cannot contain "/".');
+        if(name.length > 80) throw new Error("Role name is too long (max 80 characters).");
+      }
+
+      /* ====== QC / CAP DEPENDENCIES ====== */
+      const CAP_QR = 'cap-qr-scanner';
+      const CAP_CAMERA = 'cap-camera-popup';
+
+      // Drivers:
+      const DRIVE_QR_BY = 'eq-maint-workorders';
+      const DRIVE_CAM_BY = 'exp-expenditures';
+
+      function normalizePermEntry(v){
+        if (typeof v === 'boolean') {
+          return { view: v, add: false, edit: false, delete: false };
+        }
+        if (v && typeof v.on === 'boolean' && !('view' in v)) {
+          return { view: !!v.on, add: false, edit: false, delete: false };
+        }
+        return {
+          view: !!(v && v.view),
+          add: !!(v && v.add),
+          edit: !!(v && v.edit),
+          delete: !!(v && v.delete)
+        };
+      }
+
+      function normalizePermMap(map){
+        const out = {};
+        Object.keys(map || {}).forEach(k=>{
+          if (k === 'home') return;
+          out[k] = normalizePermEntry(map[k]);
+        });
+        return out;
+      }
+
+      function applyCapabilityDeps(map){
+        const perms = normalizePermMap(map || {});
+        const qrNeeded  = !!(perms[DRIVE_QR_BY] && perms[DRIVE_QR_BY].add);
+        const camNeeded = !!(perms[DRIVE_CAM_BY] && perms[DRIVE_CAM_BY].add);
+
+        perms[CAP_QR] = Object.assign(
+          { view:false, add:false, edit:false, delete:false },
+          (perms[CAP_QR] || {}),
+          { view: !!qrNeeded }
+        );
+
+        perms[CAP_CAMERA] = Object.assign(
+          { view:false, add:false, edit:false, delete:false },
+          (perms[CAP_CAMERA] || {}),
+          { view: !!camNeeded }
+        );
+
+        return perms;
+      }
+
+      function showToast(msg="Saved."){
+        toast.textContent = msg;
+        toast.classList.remove("show");
+        void toast.offsetWidth;
+        toast.classList.add("show");
+      }
+
+      const LS_KEY = "fv:roles:v1";
+      const uid = () => String(Date.now()) + Math.random().toString(36).slice(2,7);
+      const loadLS = () => {
+        try{
+          const a=JSON.parse(localStorage.getItem(LS_KEY)||"[]");
+          return Array.isArray(a)?a:[];
+        }catch{
+          return [];
+        }
+      };
+      const saveLS = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
+
+      function showRoleNameField(show){
+        const box = $("roleNameField");
+        if(!box) return;
+        box.style.display = show ? "" : "none";
+      }
+
+      /* ====== HERO SYNC ====== */
+      function updateHero(){
+        const hero = $("permsHero");
+        if(!hero) return;
+
+        const nameFromDraft = roleDraft.name || "";
+        const nameFromInput = $("roleName") ? $("roleName").value.trim() : "";
+        const name = nameFromDraft || nameFromInput || (currentRoleId ? "(unnamed)" : "New Role");
+
+        const canDelete = canNow('setup-roles:delete');
+        const locked = isAdminRoleName(name);
+
+        hero.config = {
+          mode: 'role',
+          name,
+          perms: roleDraft.perms || {},
+          onDeleteRole: (currentRoleId && canDelete && !locked) ? handleDeleteRole : null,
+          onPermsChange: (updatedPerms) => {
+            if (!canNow('setup-roles:edit')) return;
+            roleDraft.perms = applyCapabilityDeps(updatedPerms || {});
+          }
+        };
+      }
+
+      /* ====== FIRESTORE BACKEND ====== */
+      async function loadRolesFS(){
+        const db = getFirestore();
+        const qref = query(collection(db, COLLECTION), orderBy('name'));
+        const snap = await getDocs(qref);
+        const out = [];
+        snap.forEach(docSnap=>{
+          const d = docSnap.data() || {};
+          out.push({
+            id: docSnap.id,
+            name: d.name || "(unnamed)",
+            perms: d.perms || {},
+            t: d.updatedAt || d.createdAt || 0
+          });
+        });
+        return out;
+      }
+
+      // ⭐ KEY CHANGE: keep roleIndex in sync automatically
+      async function upsertRoleIndexFS(roleName, roleId){
+        const db = getFirestore();
+        const safeName = normalizeRoleName(roleName);
+        assertRoleNameSafe(safeName);
+
+        // roleIndex/{Role Name} -> { roleId, updatedAt }
+        await setDoc(doc(db, ROLE_INDEX, safeName), {
+          roleId: roleId,
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+      }
+
+      async function deleteRoleIndexFS(roleName){
+        const db = getFirestore();
+        const safeName = normalizeRoleName(roleName);
+        if(!safeName) return;
+        if(safeName.includes("/")) return;
+        await deleteDoc(doc(db, ROLE_INDEX, safeName));
+      }
+
+      async function saveRoleFS(id, name, perms){
+        const db = getFirestore();
+        const clean = applyCapabilityDeps(perms || {});
+        const safeName = normalizeRoleName(name);
+        assertRoleNameSafe(safeName);
+
+        // NOTE: Existing roles do NOT rename (roleNameField hidden).
+        // We keep the name stable so employees.permissionGroup stays valid.
+
+        if(id){
+          await setDoc(doc(db, COLLECTION, id), {
+            name: safeName,
+            perms: clean,
+            updatedAt: serverTimestamp()
+          }, { merge:true });
+
+          // Ensure roleIndex exists for this role name
+          await upsertRoleIndexFS(safeName, id);
+
+          return id;
+        }else{
+          const ref = await addDoc(collection(db, COLLECTION), {
+            name: safeName,
+            perms: clean,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+
+          // Create roleIndex entry automatically
+          await upsertRoleIndexFS(safeName, ref.id);
+
+          return ref.id;
+        }
+      }
+
+      async function deleteRoleFS(id, roleName){
+        const db = getFirestore();
+        await deleteDoc(doc(db, COLLECTION, id));
+
+        // Remove roleIndex entry (keeps rules clean)
+        await deleteRoleIndexFS(roleName);
+      }
+
+      async function loadRoles(){
+        return MODE==='firebase' ? await loadRolesFS() : loadLS();
+      }
+
+      async function saveRole(name, perms){
+        if(!name) throw new Error("Missing role name");
+        const normalized = applyCapabilityDeps(perms || {});
+        if(MODE==='firebase'){
+          return await saveRoleFS(currentRoleId, name, normalized);
+        } else {
+          const all = loadLS();
+          if(currentRoleId){
+            const i = all.findIndex(r=>r.id===currentRoleId);
+            if(i>=0) all[i] = { id: currentRoleId, name, perms: normalized, t: Date.now() };
+          }else{
+            const id = uid();
+            all.unshift({ id, name, perms: normalized, t: Date.now() });
+            currentRoleId = id;
+          }
+          saveLS(all);
+          return currentRoleId;
+        }
+      }
+
+      async function deleteRole(){
+        if(!currentRoleId) return;
+        if(isLockedRole()){
+          throw new Error("Admin role cannot be deleted.");
+        }
+        if(MODE==='firebase'){
+          const name = roleDraft.name || $("roleName").value || "";
+          await deleteRoleFS(currentRoleId, name);
+        } else {
+          saveLS(loadLS().filter(x=>x.id!==currentRoleId));
+        }
+      }
+
+function populateRolePickerFromArray(arr){
+  const sel = $("rolePicker");
+  if(!sel) return;
+
+  const roles = Array.isArray(arr) ? arr : [];
+
+  sel.innerHTML = "";
+
+  const addOpt = document.createElement("option");
+  addOpt.value = "";
+  addOpt.textContent = "Add New Role";
+  sel.appendChild(addOpt);
+
+  roles.forEach(r=>{
+    const o = document.createElement("option");
+    o.value = r.id;
+    o.textContent = r.name || "(unnamed)";
+    sel.appendChild(o);
+  });
+
+  /*
+    IMPORTANT:
+    The permissions card is controlled by currentRoleId / roleDraft.
+
+    Therefore the dropdown MUST follow currentRoleId instead of
+    independently remembering whatever value happened to be in
+    the select when Firestore refreshed.
+  */
+
+  const currentStillExists =
+    currentRoleId &&
+    roles.some(r => r.id === currentRoleId);
+
+  if(currentStillExists){
+    sel.value = currentRoleId;
+  }
+  else if(roles.length > 0){
+    sel.value = roles[0].id;
+  }
+  else{
+    sel.value = "";
+  }
+
+  showRoleNameField(sel.value === "");
+}
+
+      function newDraft(){
+        currentRoleId = "";
+        roleDraft = { id:"", name:"", perms:{} };
+        $("roleName").value = "";
+        $("rolePicker").value = "";
+        showRoleNameField(true);
+
+        roleDraft.perms = applyCapabilityDeps(roleDraft.perms || {});
+        updateHero();
+      }
+
+      async function loadRoleIntoDraft(id){
+        if(!id){ newDraft(); return; }
+
+        const all = await loadRoles();
+        const r = all.find(x=>x.id===id);
+        if(!r){ newDraft(); return; }
+
+        currentRoleId = r.id;
+        const perms = applyCapabilityDeps(r.perms || {});
+        roleDraft = { id:r.id, name:r.name, perms };
+
+        $("roleName").value = r.name || "";
+        showRoleNameField(false);
+        updateHero();
+      }
+
+      /* ====== DELETE HANDLER ====== */
+      async function handleDeleteRole(){
+        if(!canNow('setup-roles:delete')){
+          alert("You don't have permission to delete roles.");
+          return;
+        }
+        if(!currentRoleId){
+          alert("No role selected.");
+          return;
+        }
+        const name = roleDraft.name || $("roleName").value || "(unnamed)";
+
+        if(isAdminRoleName(name)){
+          alert('The "Admin" role is locked and cannot be deleted.');
+          return;
+        }
+
+        if(!confirm(`Delete role "${name}"? This cannot be undone.`)) return;
+
+        try{
+          await deleteRole();
+          const all = await loadRoles();
+          populateRolePickerFromArray(all);
+
+          if((all||[]).length > 0){
+            const first = all[0];
+            $("rolePicker").value = first.id;
+            await loadRoleIntoDraft(first.id);
+          }else{
+            newDraft();
+          }
+
+          showToast(MODE==='firebase' ? "Role deleted from Firestore." : "Role deleted locally.");
+        }catch(err){
+          console.error(err);
+          alert("Delete failed.\n\n" + (err?.message || err));
+        }
+      }
+
+      /* ====== EVENTS ====== */
+      $("saveRole").addEventListener("click", async ()=>{
+        if(!canNow('setup-roles:edit')){
+          alert("You don't have permission to edit roles.");
+          return;
+        }
+
+        const isNew = $("rolePicker").value === "";
+        const name = $("roleName").value.trim();
+
+        if(isNew && !name){
+          alert("Please enter a role name for the new role.");
+          return;
+        }
+
+        try{
+          const finalName = isNew
+            ? name
+            : (roleDraft.name || $("roleName").value.trim() || "(unnamed)");
+
+          // enforce safe doc id for roleIndex
+          const safeName = normalizeRoleName(finalName);
+          assertRoleNameSafe(safeName);
+
+          roleDraft.name = safeName;
+          roleDraft.perms = applyCapabilityDeps(roleDraft.perms || {});
+
+          const id = await saveRole(safeName, roleDraft.perms);
+          currentRoleId = id;
+
+          const all = await loadRoles();
+          populateRolePickerFromArray(all);
+
+          $("rolePicker").value = id;
+          showRoleNameField(false);
+          updateHero();
+          showToast(MODE==='firebase' ? "Saved" : "Saved locally (stub mode).");
+        }catch(err){
+          console.error(err);
+          alert("Save failed.\n\n" + (err?.message || err));
+        }
+      });
+
+      $("rolePicker").addEventListener("change", async ()=>{
+        const id = $("rolePicker").value;
+        if(!id){ newDraft(); return; }
+        await loadRoleIntoDraft(id);
+      });
+
+      /* ====== LIVE SYNC (Firestore) ====== */
+      function liveBind(){
+        if(MODE!=='firebase') return;
+        try{
+          const db = getFirestore();
+          const qref = query(collection(db, COLLECTION), orderBy('name'));
+          onSnapshot(qref, (snap)=>{
+            const arr=[];
+            snap.forEach(docSnap=>{
+              const d=docSnap.data()||{};
+              arr.push({
+                id: docSnap.id,
+                name: d.name||"(unnamed)",
+                perms: d.perms||{},
+                t: d.updatedAt||d.createdAt||0
+              });
+            });
+            populateRolePickerFromArray(arr);
+          });
+        }catch(e){}
+      }
+
+      /* ====== INIT ====== */
+      async function init(){
+        const { mode } = await ready;
+        MODE = mode || 'stub';
+
+        const roles = await loadRoles();
+        populateRolePickerFromArray(roles);
+
+        if((roles||[]).length > 0){
+          const first = roles[0];
+          $("rolePicker").value = first.id;
+          await loadRoleIntoDraft(first.id);
+        }else{
+          newDraft();
+        }
+
+        liveBind();
+
+        document.addEventListener('fv:user-ready', () => {
+          updateHero();
+        });
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

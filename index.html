@@ -1,0 +1,1732 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Dashboard</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no"
+  />
+  <meta name="theme-color" content="#3B7E46" />
+  <base href="/">
+
+  <script src="js/core/theme/theme-boot.js"></script>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="assets/css/theme.css?v=PV1" />
+  <link rel="stylesheet" href="assets/css/app.css?v=PV1" />
+
+  <script src="js/core/firebase/firebase-config.js"></script>
+  <script src="js/shared/data/fv-data.js"></script>
+  <script src="js/grain/inventory/grain-capacity.js?v=PV1"></script>
+  <script src="js/core/core.js?v=PV1"></script>
+  <script src="js/core/shell/fv-shell.js?v=PV1" defer></script>
+
+  <style>
+    :root{
+      --dash-green:#2f6c3c;
+      --dash-green-soft:rgba(47,108,60,.11);
+      --dash-red:#b3261e;
+      --dash-red-soft:rgba(179,38,30,.11);
+      --dash-amber:#9a6700;
+      --dash-amber-soft:rgba(154,103,0,.12);
+    }
+
+    *{box-sizing:border-box;}
+
+    body{
+      background:var(--app-bg,var(--surface));
+      min-height:100vh;
+    }
+
+    .page{
+      max-width:1580px;
+      margin:0 auto;
+      padding:clamp(12px,2vw,24px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
+    }
+
+    .page-title{
+      margin:0;
+      font-size:clamp(24px,2.2vw,34px);
+      line-height:1.1;
+    }
+
+    .page-sub{
+      margin:5px 0 0;
+      color:var(--muted,#67706b);
+      font-size:13px;
+      font-weight:700;
+    }
+
+.dashboard-heading{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.dashboard-heading.dashboard-single-column{
+  max-width:900px;
+  margin:0 auto 14px;
+}
+
+.dashboard-heading.dashboard-single-column .dashboard-date{
+  justify-self:end;
+}
+
+.dashboard-date{
+  color:var(--muted,#67706b);
+  font-size:13px;
+  font-weight:800;
+  text-align:right;
+}
+
+    .section{
+      border:1px solid var(--border);
+      border-radius:15px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+      min-width:0;
+    }
+
+    .section-head{
+      display:grid;
+      grid-template-columns:34px minmax(0,1fr) auto;
+      gap:10px;
+      align-items:center;
+      padding:13px 15px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg,rgba(47,108,60,.12),transparent);
+    }
+
+    .section-head .icon{
+      width:24px;
+      height:24px;
+      display:grid;
+      place-items:center;
+      color:var(--dash-green);
+      font-size:19px;
+    }
+
+    .section-head strong{
+      display:block;
+      font-weight:950;
+    }
+
+    .section-head .sub{
+      margin-top:2px;
+      color:var(--muted,#67706b);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .section-link{
+      text-decoration:none;
+      color:var(--dash-green);
+      font-size:12px;
+      font-weight:950;
+      white-space:nowrap;
+    }
+
+    .section-body{
+      padding:14px;
+      min-width:0;
+    }
+
+    .perm-hidden{display:none!important;}
+
+    /* Desktop command-center layout */
+    .desktop-dashboard{
+      display:none;
+    }
+
+@media (min-width:900px){
+  .desktop-dashboard{
+    display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);
+    gap:14px;
+    align-items:start;
+  }
+
+  .desktop-left,
+  .desktop-right{
+    display:grid;
+    gap:14px;
+    min-width:0;
+  }
+
+  .desktop-right{
+    position:sticky;
+    top:calc(var(--hdr-h,56px) + 12px);
+  }
+
+  .desktop-dashboard.dashboard-single-column{
+    grid-template-columns:minmax(0,900px);
+    justify-content:center;
+  }
+
+  .desktop-dashboard.dashboard-single-column .desktop-left{
+    width:100%;
+  }
+
+  .desktop-dashboard.dashboard-single-column .desktop-right{
+    display:none!important;
+  }
+
+  #mobile-dashboard{
+    display:none!important;
+  }
+}
+
+    /* Mobile dashboard */
+    #mobile-dashboard{
+      display:grid;
+      gap:12px;
+    }
+
+    /* Quick links */
+    .ql-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:9px;
+    }
+
+    @media (min-width:560px) and (max-width:899px){
+      .ql-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+
+    .ql-btn{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-height:68px;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:13px;
+      background:var(--card-surface,var(--surface));
+      color:inherit;
+      text-decoration:none;
+      box-shadow:0 6px 14px rgba(0,0,0,.05);
+    }
+
+    .ql-left{
+      min-width:0;
+      display:grid;
+      gap:2px;
+    }
+
+    .ql-label{
+      color:var(--muted,#67706b);
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .ql-title{
+      font-size:15px;
+      font-weight:950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .ql-sub{
+      color:var(--muted,#67706b);
+      font-size:12px;
+      font-weight:650;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .ql-right{
+      flex:0 0 auto;
+      width:39px;
+      height:39px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(47,108,60,.35);
+      background:var(--dash-green-soft);
+      font-size:18px;
+    }
+
+
+    @media (min-width:900px){
+      #ql-steering{display:none!important;}
+    }
+
+    /* Weather */
+    #fv-weather{
+      min-width:0;
+    }
+
+    .fv-weather-card{
+      border-radius:14px;
+      border:1px solid var(--border,#d1d5db);
+      background:var(--card-surface,var(--surface));
+      box-shadow:0 8px 18px rgba(0,0,0,.06);
+      padding:10px 14px 12px;
+      cursor:pointer;
+    }
+
+    /* Markets */
+    #fv-markets{display:grid;gap:10px;}
+    .fv-mkt-grid{display:grid;gap:10px;grid-template-columns:1fr 1fr;}
+
+    /* KPI tiles */
+    .kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .dash-kpi{
+      display:block;
+      min-width:0;
+      padding:13px;
+      border-radius:13px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      color:inherit;
+      text-decoration:none;
+      box-shadow:0 6px 14px rgba(0,0,0,.05);
+    }
+
+    .dash-kpi-main{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+    }
+
+    .dash-kpi-text{min-width:0;}
+
+    .dash-kpi-label{
+      color:var(--muted,#67706b);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .dash-kpi-title{
+      margin-top:4px;
+      font-size:13px;
+      line-height:1.25;
+      font-weight:900;
+    }
+
+    .dash-kpi-count{
+      flex:0 0 auto;
+      min-width:43px;
+      height:43px;
+      padding:0 9px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(47,108,60,.38);
+      background:var(--dash-green-soft);
+      font-size:18px;
+      font-weight:950;
+    }
+
+    .dash-kpi-sub{
+      margin-top:7px;
+      color:var(--muted,#67706b);
+      font-size:11px;
+      line-height:1.3;
+      font-weight:700;
+    }
+
+    /* Logistics panel */
+    .logistics-summary{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .logistics-stat{
+      padding:10px 8px;
+      border:1px solid var(--border);
+      border-radius:11px;
+      background:var(--card-surface,var(--surface));
+      text-align:center;
+    }
+
+    .logistics-stat-value{
+      font-size:21px;
+      font-weight:1000;
+      line-height:1;
+    }
+
+    .logistics-stat-label{
+      margin-top:4px;
+      color:var(--muted,#67706b);
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+
+    .logistics-list{
+      display:grid;
+      gap:7px;
+    }
+
+    .inspection-row{
+      display:grid;
+      grid-template-columns:10px minmax(0,1fr) auto;
+      gap:9px;
+      align-items:center;
+      padding:9px 10px;
+      border:1px solid var(--border);
+      border-radius:11px;
+      background:var(--card-surface,var(--surface));
+      color:inherit;
+      text-decoration:none;
+    }
+
+    .inspection-dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:#9ca3af;
+    }
+
+    .inspection-row.good .inspection-dot{background:var(--dash-green);}
+    .inspection-row.bad .inspection-dot{background:var(--dash-red);}
+
+    .inspection-main{min-width:0;}
+
+    .inspection-driver{
+      font-size:13px;
+      font-weight:950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .inspection-unit{
+      margin-top:2px;
+      color:var(--muted,#67706b);
+      font-size:11px;
+      font-weight:750;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .inspection-meta{
+      text-align:right;
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .inspection-meta.bad{color:var(--dash-red);}
+    .inspection-empty{
+      color:var(--muted,#67706b);
+      font-size:12px;
+      font-weight:750;
+      padding:8px 2px;
+    }
+
+    /* Messages */
+    .msg{
+      border:1px solid var(--border);
+      border-radius:11px;
+      padding:11px;
+      background:var(--card-surface,var(--surface));
+    }
+
+    .msg .title{font-weight:900;margin-bottom:4px;}
+    .empty{color:var(--muted,#67706b);}
+
+    /* Copilot */
+    .ai-body{
+      display:grid;
+      gap:10px;
+      grid-template-rows:minmax(170px,250px) auto;
+    }
+
+    .ai-log{
+      border:1px solid var(--border);
+      border-radius:11px;
+      padding:10px;
+      background:var(--card-surface,var(--surface));
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:auto;
+      max-height:250px;
+      font-size:13px;
+    }
+
+    .ai-empty{
+      color:var(--muted,#67706b);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .ai-form{display:grid;gap:7px;}
+    .ai-input-wrap{position:relative;}
+
+    .ai-input{
+      width:100%;
+      resize:none;
+      border-radius:14px;
+      border:1px solid var(--border);
+      padding:10px 42px 10px 11px;
+      min-height:42px;
+      max-height:95px;
+      font:inherit;
+      font-size:13px;
+      background:var(--surface);
+      color:inherit;
+    }
+
+    .ai-mic{
+      position:absolute;
+      right:9px;
+      top:50%;
+      transform:translateY(-50%);
+      width:27px;
+      height:27px;
+      border:0;
+      background:transparent;
+      color:var(--muted,#67706b);
+      display:grid;
+      place-items:center;
+    }
+
+    .ai-mic-icon{
+      width:18px;
+      height:18px;
+      stroke:currentColor;
+      stroke-width:1.8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      fill:none;
+    }
+
+    @media (min-width:900px){
+      .ai-mic{display:none!important;}
+      .ai-input{padding-right:11px;}
+    }
+
+    .ai-actions{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+
+    .ai-send{
+      border:0;
+      border-radius:999px;
+      background:#3b7e46;
+      color:#fff!important;
+      padding:8px 16px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .ai-status,
+    .ai-hint{
+      color:var(--muted,#67706b);
+      font-size:11px;
+    }
+
+    /* Weather modal */
+    .fv-weather-modal{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:calc(var(--hdr-h,56px) + 16px) 16px calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 16px);
+      background:rgba(15,23,42,.45);
+    }
+
+    .fv-weather-modal[hidden]{display:none!important;}
+
+    .fv-weather-modal-inner{
+      position:relative;
+      width:100%;
+      max-width:900px;
+      max-height:calc(100vh - var(--hdr-h,56px) - var(--ftr-h,42px) - 48px);
+
+      /* Still scrolls with mouse wheel / touch, but no visible bar */
+      overflow-y:auto;
+      overflow-x:hidden;
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+
+      padding:16px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:var(--surface);
+      box-shadow:0 18px 40px rgba(0,0,0,.3);
+    }
+
+    .fv-weather-modal-inner::-webkit-scrollbar{
+      width:0;
+      height:0;
+      display:none;
+    }
+
+    .fv-weather-modal-close{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:29px;
+      height:29px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--surface);
+      color:inherit;
+      cursor:pointer;
+    }
+
+    .fv-weather-modal-title{
+      margin:0 0 10px;
+      font-size:16px;
+    }
+
+    @media (max-width:899px){
+      .page{padding:10px 8px calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 86px)!important;}
+      .dashboard-heading{padding:2px 4px 0;}
+      .dashboard-date{display:none;}
+      .kpi-grid{grid-template-columns:1fr;}
+      .fv-mkt-grid{grid-template-columns:1fr;}
+    }
+
+    @media (max-width:899px){
+      #mobile-dashboard{
+        display:grid;
+        gap:14px;
+      }
+
+      #mobile-dashboard > div:empty{
+        display:none;
+      }
+
+#mobile-dashboard #fv-weather{
+  margin:0;
+}
+
+#mobile-dashboard .fv-weather-card{
+  padding:9px 12px;
+  border-radius:13px;
+  box-shadow:0 4px 10px rgba(0,0,0,.05);
+}
+
+      #mobile-dashboard .section{
+        width:100%;
+      }
+
+      #mobile-dashboard #attention-section{
+        border:0;
+        box-shadow:none;
+        background:transparent;
+        overflow:visible;
+      }
+
+      #mobile-dashboard #attention-section > .section-head{
+        display:none;
+      }
+
+      #mobile-dashboard #attention-section > .section-body{
+        padding:0;
+      }
+
+      #mobile-dashboard .kpi-grid{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:0;
+      }
+
+      #mobile-dashboard .dash-kpi{
+        margin:0 0 14px;
+        padding:14px 16px;
+      }
+
+      #mobile-dashboard .ai-body{
+        grid-template-rows:minmax(220px,320px) auto;
+      }
+
+      #mobile-dashboard .ai-log{
+        max-height:320px;
+      }
+
+      #quick-links{
+        margin:0;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <main class="page container">
+      <div class="dashboard-heading">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub">Farm operations at a glance.</p>
+        </div>
+        <div class="dashboard-date" id="dashboard-date"></div>
+      </div>
+
+      <!-- DESKTOP COMMAND CENTER -->
+      <div class="desktop-dashboard">
+        <div class="desktop-left" id="desktop-left">
+          <div id="fv-weather" aria-label="Weather"></div>
+
+          <section class="section" id="markets-section" aria-label="Markets">
+            <header class="section-head">
+              <div class="icon" aria-hidden="true">📈</div>
+              <div><strong>Markets</strong><div class="sub">Corn and soybean markets</div></div>
+            </header>
+            <div class="section-body" id="fv-markets">
+              <div class="fv-mkt-grid">
+                <div data-fv="mktCorn" aria-label="Corn markets"></div>
+                <div data-fv="mktSoy" aria-label="Soybean markets"></div>
+              </div>
+              <div data-fv="mktMeta" aria-label="Markets meta"></div>
+            </div>
+          </section>
+
+          <section class="section" id="message-board-section" aria-label="Message Board">
+            <header class="section-head">
+              <div class="icon" aria-hidden="true">📢</div>
+              <div><strong>Message Board</strong><div class="sub">Current farm notices</div></div>
+            </header>
+            <div class="section-body" id="board">
+              <div class="msg empty">No messages at this time.</div>
+            </div>
+          </section>
+
+          <section class="section ai-section" id="ai-section" aria-label="FarmVista Copilot">
+            <header class="section-head">
+              <div class="icon" aria-hidden="true">🤖</div>
+              <div><strong>FarmVista Copilot</strong><div class="sub">Ask about fields, equipment, work orders, and more</div></div>
+            </header>
+            <div class="section-body ai-body">
+              <div id="ai-chat-log" class="ai-log" aria-live="polite">
+                <div class="ai-empty">
+                  Try asking:<br>
+                  • Show pending field maintenance.<br>
+                  • Summarize grain bag inventory.<br>
+                  • Review recent equipment activity.
+                </div>
+              </div>
+              <form id="ai-chat-form" class="ai-form" autocomplete="off">
+                <div class="ai-input-wrap">
+                  <textarea id="ai-input" class="ai-input" rows="1" placeholder="Ask FarmVista Copilot..."></textarea>
+                  <button type="button" id="ai-mic" class="ai-mic" aria-label="Start voice dictation">
+                    <svg class="ai-mic-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 5a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-5 0v-4A2.5 2.5 0 0 1 12 5z"/>
+                      <path d="M8 11.5v.5a4 4 0 0 0 8 0v-.5"/>
+                      <path d="M12 16v3"/><path d="M9.5 19h5"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="ai-actions">
+                  <button type="submit" id="ai-send" class="ai-send">Send</button>
+                  <div class="ai-status" id="ai-status" aria-live="polite"></div>
+                </div>
+                <div class="ai-hint">Connected to your FarmVista AI backend.</div>
+              </form>
+            </div>
+          </section>
+        </div>
+
+        <aside class="desktop-right" id="desktop-right">
+          <section class="section" id="logistics-panel" aria-label="Today's Pre-Trip Inspections">
+            <header class="section-head">
+              <div class="icon" aria-hidden="true">🚛</div>
+              <div>
+                <strong>Today's Pre-Trips</strong>
+                <div class="sub">Driver inspections submitted today</div>
+              </div>
+              <a class="section-link" href="pages/logistics/index.html">Open Logistics →</a>
+            </header>
+            <div class="section-body">
+              <div class="logistics-summary">
+                <div class="logistics-stat">
+                  <div class="logistics-stat-value" id="logistics-total">–</div>
+                  <div class="logistics-stat-label">Submitted</div>
+                </div>
+                <div class="logistics-stat">
+                  <div class="logistics-stat-value" id="logistics-good">–</div>
+                  <div class="logistics-stat-label">Passed</div>
+                </div>
+                <div class="logistics-stat">
+                  <div class="logistics-stat-value" id="logistics-defects">–</div>
+                  <div class="logistics-stat-label">Defects</div>
+                </div>
+              </div>
+              <div class="logistics-list" id="logistics-list">
+                <div class="inspection-empty">Loading today's inspections…</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="attention-section" aria-label="Items Needing Attention">
+            <header class="section-head">
+              <div class="icon" aria-hidden="true">🔔</div>
+              <div><strong>Needs Attention</strong><div class="sub">Open items based on your permissions</div></div>
+            </header>
+            <div class="section-body">
+              <div class="kpi-grid">
+                <a href="pages/crop-production/field-maintenance/maintenance-approve.html" class="dash-kpi dash-kpi-empty" id="wo-approve-kpi">
+                  <div class="dash-kpi-main">
+                    <div class="dash-kpi-text">
+                      <div class="dash-kpi-label">Maintenance</div>
+                      <div class="dash-kpi-title">Awaiting approval</div>
+                    </div>
+                    <div class="dash-kpi-count" id="wo-approve-count">–</div>
+                  </div>
+                  <div class="dash-kpi-sub" id="wo-approve-sub">Checking work orders…</div>
+                </a>
+
+                <a href="pages/reports/reports-boundary-requests.html" class="dash-kpi dash-kpi-empty" id="boundary-kpi">
+                  <div class="dash-kpi-main">
+                    <div class="dash-kpi-text">
+                      <div class="dash-kpi-label">Boundaries</div>
+                      <div class="dash-kpi-title">Map corrections</div>
+                    </div>
+                    <div class="dash-kpi-count" id="boundary-kpi-count">–</div>
+                  </div>
+                  <div class="dash-kpi-sub" id="boundary-kpi-sub">Checking requests…</div>
+                </a>
+
+                <a href="pages/reports/reports-grain-bag-inventory.html" class="dash-kpi dash-kpi-empty" id="bag-kpi">
+                  <div class="dash-kpi-main">
+                    <div class="dash-kpi-text">
+                      <div class="dash-kpi-label">Grain Bags</div>
+                      <div class="dash-kpi-title">Inventory on hand</div>
+                    </div>
+                    <div class="dash-kpi-count" id="bag-kpi-count">–</div>
+                  </div>
+                  <div class="dash-kpi-sub" id="bag-kpi-sub">Checking inventory…</div>
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="desktop-quick-links" aria-label="Quick Links">
+            <header class="section-head">
+              <div class="icon" aria-hidden="true">⚡</div>
+              <div><strong>Quick Links</strong><div class="sub">Pages available to you</div></div>
+            </header>
+<div class="section-body">
+  <div class="ql-grid">
+
+<a href="pages/logistics/pre-trip.html"
+   class="ql-btn"
+   id="ql-pretrip-add">
+  <div class="ql-left">
+    <div class="ql-label">Logistics</div>
+    <div class="ql-title">Add Pre-Trip</div>
+    <div class="ql-sub">Complete today's inspection</div>
+  </div>
+  <div class="ql-right" aria-hidden="true">🚛</div>
+</a>
+
+
+    <a href="pages/office/field-boundaries.html" class="ql-btn" id="ql-boundaries">
+                  <div class="ql-left"><div class="ql-label">Office</div><div class="ql-title">Field Boundaries</div><div class="ql-sub">Manage boundary requests</div></div>
+                  <div class="ql-right">🗺️</div>
+                </a>
+                <a href="pages/crop-production/field-maintenance/maintenance-add.html" class="ql-btn" id="ql-maint-add">
+                  <div class="ql-left"><div class="ql-label">Crop Production</div><div class="ql-title">Add Maintenance</div><div class="ql-sub">Start a work order</div></div>
+                  <div class="ql-right">🧰</div>
+                </a>
+                <a href="pages/equipment/shop-equipment-bulk.html" class="ql-btn" id="ql-equip-overview">
+                  <div class="ql-left"><div class="ql-label">Equipment</div><div class="ql-title">Equipment Overview</div><div class="ql-sub">Bulk status view</div></div>
+                  <div class="ql-right">🚜</div>
+                </a>
+                <a href="pages/crop-production/field-weather.html" class="ql-btn" id="ql-field-weather">
+                  <div class="ql-left"><div class="ql-label">Crop Production</div><div class="ql-title">Field Readiness</div><div class="ql-sub">Forecast and rainfall</div></div>
+                  <div class="ql-right">🌦️</div>
+                </a>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <!-- MOBILE: original dashboard order restored -->
+<div id="mobile-dashboard">
+
+  <section class="section" id="quick-links" aria-label="Quick Links">
+    <header class="section-head">
+      <div class="icon" aria-hidden="true">⚡</div>
+      <div><strong>Quick Links</strong></div>
+    </header>
+
+    <div class="section-body">
+      <div class="ql-grid">
+
+        <a href="pages/logistics/pre-trip.html"
+           class="ql-btn"
+           id="ql-pretrip-add-mobile"
+           aria-label="Add Pre-Trip Inspection">
+          <div class="ql-left">
+            <div class="ql-label">Logistics</div>
+            <div class="ql-title">Add Pre-Trip</div>
+            <div class="ql-sub">Complete today's inspection</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">🚛</div>
+        </a>
+
+        <a href="pages/grain/grain-ticket-scan.html"
+   class="ql-btn"
+   id="ql-grain-ticket-scan-mobile"
+   aria-label="Scan Grain Ticket">
+  <div class="ql-left">
+    <div class="ql-label">Grain</div>
+    <div class="ql-title">Scan Grain Ticket</div>
+    <div class="ql-sub">Take a picture of a grain ticket</div>
+  </div>
+  <div class="ql-right" aria-hidden="true">🧾</div>
+</a>
+
+            <a href="pages/qr-scan.html"
+           class="ql-btn"
+           id="ql-equipment-service-mobile"
+           aria-label="Add Equipment Service Request">
+          <div class="ql-left">
+            <div class="ql-label">Equipment</div>
+            <div class="ql-title">Equipment Repair Request</div>
+            <div class="ql-sub">Scan equipment QR code and add request</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">📷</div>
+        </a>    
+
+        <a href="pages/crop-production/field-maintenance/maintenance-add.html"
+           class="ql-btn"
+           id="ql-maint-add-mobile"
+           aria-label="Field Repair Request">
+          <div class="ql-left">
+            <div class="ql-label">Crop Production</div>
+            <div class="ql-title">Field Repair Request</div>
+            <div class="ql-sub">Report a field repair or maintenance need</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">🧰</div>
+        </a>
+
+        <a href="pages/office/field-boundaries.html"
+           class="ql-btn"
+           id="ql-boundaries-mobile"
+           aria-label="Boundary Correction Needed">
+          <div class="ql-left">
+            <div class="ql-label">Office</div>
+            <div class="ql-title">Boundary Correction Needed</div>
+            <div class="ql-sub">Request a field boundary correction</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">🗺️</div>
+        </a>
+
+        <a href="pages/equipment/shop-equipment-bulk.html"
+           class="ql-btn"
+           id="ql-equip-overview-mobile"
+           aria-label="Equipment Overview">
+          <div class="ql-left">
+            <div class="ql-label">Equipment</div>
+            <div class="ql-title">Equipment Overview</div>
+            <div class="ql-sub">Bulk view / quick scan</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">🚜</div>
+        </a>
+
+        <a href="pages/crop-production/field-weather.html"
+           class="ql-btn"
+           id="ql-field-weather-mobile"
+           aria-label="Field Readiness">
+          <div class="ql-left">
+            <div class="ql-label">Crop Production</div>
+            <div class="ql-title">Field Readiness</div>
+            <div class="ql-sub">Forecast + rainfall by field</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">🌦️</div>
+        </a>
+
+        <a href="pages/equipment/steering.html"
+           class="ql-btn"
+           id="ql-steering"
+           aria-label="FarmVista Steering">
+          <div class="ql-left">
+            <div class="ql-label">Equipment</div>
+            <div class="ql-title">FarmVista Steering</div>
+            <div class="ql-sub">Open tractor steering controls</div>
+          </div>
+          <div class="ql-right" aria-hidden="true">↔️</div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <div id="mobile-weather-slot"></div>
+
+  <div id="mobile-markets-slot"></div>
+
+  <div id="mobile-board-slot"></div>
+  <div id="mobile-kpi-slot"></div>
+  <div id="mobile-copilot-slot"></div>
+</div>
+    </main>
+  </fv-shell>
+
+  <div id="fv-weather-modal" class="fv-weather-modal" role="presentation" hidden>
+    <div class="fv-weather-modal-inner" role="dialog" aria-modal="true" aria-labelledby="fv-weather-modal-title">
+      <button type="button" id="fv-weather-modal-close" class="fv-weather-modal-close" aria-label="Close weather details">×</button>
+      <h2 id="fv-weather-modal-title" class="fv-weather-modal-title">Weather details</h2>
+      <div id="fv-weather-modal-body"></div>
+    </div>
+  </div>
+
+  <script src="js/shared/weather/fv-weather.js?v=PV1"></script>
+  <script src="js/dashboard/weather/dash-weather-modal.js?v=PV1"></script>
+
+  <script>
+    window.FV_MARKETS_BASE_URL =
+      "https://farmvista-markets-300398089669.us-central1.run.app";
+  </script>
+
+  <script src="js/shared/markets/markets.js?v=PV20260202"></script>
+  <script src="js/dashboard/markets/dash-markets-style.js?v=PV2"></script>
+  <script src="js/dashboard/markets/dash-markets-chart.js?v=PV3"></script>
+  <script src="js/dashboard/markets/dash-markets-series.js?v=PV2"></script>
+  <script src="js/dashboard/markets/dash-markets-quotes.js?v=PV2"></script>
+  <script src="js/dashboard/markets/dash-markets-ui.js?v=PV3"></script>
+
+  <script type="module" src="js/dashboard/permissions/dash-perms.js?v=PV6"></script>
+  <script src="js/dashboard/messages/dash-message-board.js?v=PV1"></script>
+<script src="js/dashboard/kpi/dash-kpi-wo.js?v=PV1"></script>
+<script type="module" src="js/dashboard/kpi/dash-kpi-boundary.js?v=PV1"></script>
+<script type="module" src="js/dashboard/kpi/dash-kpi-bags.js?v=PV1"></script>
+<script src="js/dashboard/kpi/dash-kpi-dynamic.js?v=PV1"></script>
+
+  <script>
+    (function(){
+      "use strict";
+
+      const dateEl = document.getElementById("dashboard-date");
+      if(dateEl){
+        dateEl.textContent = new Intl.DateTimeFormat("en-US", {
+          weekday:"long", month:"long", day:"numeric", year:"numeric"
+        }).format(new Date());
+      }
+
+const WEATHER_GOOGLE_KEY =
+  "AIzaSyD5qLrXZch_rM4sVXmBrpGDH3Zp7RgfVHc";
+
+
+function companyWeatherLabel(
+  company
+){
+
+  const city =
+    String(
+      company?.addressCity ||
+      "Divernon"
+    ).trim();
+
+
+  const state =
+    String(
+      company?.addressState ||
+      "IL"
+    ).trim();
+
+
+  return (
+    city &&
+    state
+  )
+    ? `${city}, ${state}`
+    : "Divernon, Illinois";
+
+}
+
+
+async function initWeather(){
+
+  const shell =
+    document.getElementById(
+      "fv-weather"
+    );
+
+
+  if (
+    !shell
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !window.FVWeather ||
+    typeof window.FVWeather.initWeatherModule !==
+      "function"
+  ) {
+
+    console.warn(
+      "[dashboard] FVWeather module not found."
+    );
+
+    return;
+
+  }
+
+
+  shell.innerHTML =
+    `
+      <div class="fv-weather-card">
+        Loading weather…
+      </div>
+    `;
+
+
+  /*
+    FarmVista company weather.
+
+    company/main has:
+      addressZip: 62530
+      addressCity: Divernon
+      addressState: IL
+
+    The weather module already contains the
+    correct Divernon coordinates, so we do not
+    need Google Geocoding here.
+  */
+
+  const company =
+    window.FV_COMPANY ||
+    {};
+
+
+  const zip =
+    String(
+      company.addressZip ||
+      "62530"
+    )
+      .replace(
+        /[^\d]/g,
+        ""
+      )
+      .slice(
+        0,
+        5
+      );
+
+
+  const locationLabel =
+    companyWeatherLabel(
+      company
+    );
+
+
+  /*
+    Default coordinates for Divernon, IL 62530.
+
+    This guarantees the dashboard weather loads
+    even if company/main has not finished loading.
+  */
+
+  let weatherLocation = {
+    lat:
+      39.5656,
+
+    lon:
+      -89.6573,
+
+    locationLabel:
+      locationLabel
+  };
+
+
+  /*
+    Use company/main addressZip when available.
+
+    fv-weather.js uses Zippopotam.us for ZIP
+    changes, so use the same service here.
+  */
+
+  if (
+    zip
+  ) {
+
+    try {
+
+      const response =
+        await fetch(
+          `https://api.zippopotam.us/us/${encodeURIComponent(zip)}`,
+          {
+            cache:
+              "no-store"
+          }
+        );
+
+
+      if (
+        response.ok
+      ) {
+
+        const data =
+          await response.json();
+
+
+        const place =
+          Array.isArray(
+            data?.places
+          )
+            ? data.places[0]
+            : null;
+
+
+        const lat =
+          Number(
+            place?.latitude
+          );
+
+
+        const lon =
+          Number(
+            place?.longitude
+          );
+
+
+        if (
+          Number.isFinite(
+            lat
+          ) &&
+          Number.isFinite(
+            lon
+          )
+        ) {
+
+          const city =
+            String(
+              place?.["place name"] ||
+              company.addressCity ||
+              "Divernon"
+            ).trim();
+
+
+          const state =
+            String(
+              place?.["state abbreviation"] ||
+              company.addressState ||
+              "IL"
+            ).trim();
+
+
+          weatherLocation = {
+            lat,
+            lon,
+
+            locationLabel:
+              `${city}, ${state}`
+          };
+
+        }
+
+      }
+
+    }
+    catch (
+      error
+    ) {
+
+      /*
+        Do not fail the dashboard.
+
+        If ZIP lookup is unavailable, FarmVista
+        simply uses the Divernon default above.
+      */
+
+      console.warn(
+        "[dashboard] ZIP weather lookup failed; using Divernon default.",
+        error
+      );
+
+    }
+
+  }
+
+
+  /*
+    The modal reads this same location.
+  */
+
+  window.FV_DASH_WEATHER_LOCATION =
+    weatherLocation;
+
+
+  /*
+    Start the existing FarmVista weather module.
+  */
+
+  window.FVWeather.initWeatherModule({
+    googleApiKey:
+      WEATHER_GOOGLE_KEY,
+
+    lat:
+      weatherLocation.lat,
+
+    lon:
+      weatherLocation.lon,
+
+    unitsSystem:
+      "IMPERIAL",
+
+    selector:
+      "#fv-weather",
+
+    showOpenMeteo:
+      true,
+
+    mode:
+      "card",
+
+    locationLabel:
+      weatherLocation.locationLabel
+  });
+
+}
+
+      function startMarkets(){
+        try{
+          if(window.FVMarkets && typeof window.FVMarkets.start === "function"){
+            window.FVMarkets.start();
+          }
+        }catch(error){
+          console.warn("[dashboard] markets start failed:", error);
+        }
+      }
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    startMarkets();
+
+
+    /*
+      fv-shell loads company/main after Firebase authentication.
+
+      If it is already available, start weather now.
+      Otherwise wait for the shell's fv:company event.
+    */
+
+    if (
+      window.FV_COMPANY
+    ) {
+
+      initWeather();
+
+    }
+    else {
+
+      const weatherShell =
+        document.getElementById(
+          "fv-weather"
+        );
+
+
+      if (
+        weatherShell
+      ) {
+
+        weatherShell.innerHTML =
+          `
+            <div class="fv-weather-card">
+              Loading weather…
+            </div>
+          `;
+
+      }
+
+    }
+
+  },
+  {
+    once:true
+  }
+);
+
+
+document.addEventListener(
+  "fv:company",
+  () => {
+
+    initWeather();
+
+  }
+);
+
+      const form = document.getElementById("ai-chat-form");
+      if(form){
+        form.addEventListener("submit", event=>{
+          if(!window.__FV_COPILOT_WIRED){
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }, true);
+      }
+    })();
+  </script>
+
+
+  <script>
+    (function(){
+      "use strict";
+
+      const BREAKPOINT = 900;
+      let mobileMode = null;
+
+      const refs = {};
+
+      function remember(){
+        refs.weather = document.getElementById("fv-weather");
+        refs.markets = document.getElementById("markets-section");
+        refs.board = document.getElementById("message-board-section");
+        refs.attention = document.getElementById("attention-section");
+        refs.copilot = document.getElementById("ai-section");
+
+        refs.desktopLeft = document.getElementById("desktop-left");
+        refs.desktopRight = document.getElementById("desktop-right");
+
+        refs.mobileWeather = document.getElementById("mobile-weather-slot");
+        refs.mobileMarkets = document.getElementById("mobile-markets-slot");
+        refs.mobileBoard = document.getElementById("mobile-board-slot");
+        refs.mobileKpi = document.getElementById("mobile-kpi-slot");
+        refs.mobileCopilot = document.getElementById("mobile-copilot-slot");
+      }
+
+      function moveToMobile(){
+        if(refs.weather && refs.mobileWeather) refs.mobileWeather.appendChild(refs.weather);
+        if(refs.markets && refs.mobileMarkets) refs.mobileMarkets.appendChild(refs.markets);
+        if(refs.board && refs.mobileBoard) refs.mobileBoard.appendChild(refs.board);
+        if(refs.attention && refs.mobileKpi) refs.mobileKpi.appendChild(refs.attention);
+        if(refs.copilot && refs.mobileCopilot) refs.mobileCopilot.appendChild(refs.copilot);
+      }
+
+      function moveToDesktop(){
+        if(refs.weather && refs.desktopLeft) refs.desktopLeft.insertBefore(refs.weather, refs.desktopLeft.firstChild);
+        if(refs.markets && refs.desktopLeft){
+          const weather = refs.weather;
+          if(weather && weather.nextSibling){
+            refs.desktopLeft.insertBefore(refs.markets, weather.nextSibling);
+          }else{
+            refs.desktopLeft.appendChild(refs.markets);
+          }
+        }
+        if(refs.board && refs.desktopLeft){
+          const copilot = refs.copilot;
+          if(copilot){
+            refs.desktopLeft.insertBefore(refs.board, copilot);
+          }else{
+            refs.desktopLeft.appendChild(refs.board);
+          }
+        }
+        if(refs.copilot && refs.desktopLeft) refs.desktopLeft.appendChild(refs.copilot);
+
+        if(refs.attention && refs.desktopRight){
+          const quickLinks = document.getElementById("desktop-quick-links");
+          if(quickLinks){
+            refs.desktopRight.insertBefore(refs.attention, quickLinks);
+          }else{
+            refs.desktopRight.appendChild(refs.attention);
+          }
+        }
+      }
+
+      function applyLayout(){
+        const shouldBeMobile = window.innerWidth < BREAKPOINT;
+        if(shouldBeMobile === mobileMode) return;
+
+        mobileMode = shouldBeMobile;
+
+        if(shouldBeMobile){
+          moveToMobile();
+        }else{
+          moveToDesktop();
+        }
+
+        window.dispatchEvent(new Event("resize"));
+      }
+
+      document.addEventListener("DOMContentLoaded", ()=>{
+        remember();
+        applyLayout();
+        window.addEventListener("resize", applyLayout, {passive:true});
+      }, {once:true});
+    })();
+  </script>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection,
+      getDocs
+    } from "/js/core/firebase/firebase-init.js";
+
+    const $ = selector => document.querySelector(selector);
+
+    function localISODate(date = new Date()){
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function toDate(value){
+      if(!value) return null;
+      if(value instanceof Date) return value;
+      if(typeof value.toDate === "function") return value.toDate();
+      if(typeof value.seconds === "number") return new Date(value.seconds * 1000);
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function inspectionDate(row){
+      return String(
+        row.inspectionDate ||
+        row.date ||
+        row.preTripDate ||
+        row.createdDate ||
+        ""
+      ).slice(0,10);
+    }
+
+    function driverName(row){
+      return (
+        row.driverName ||
+        row.submittedByName ||
+        row.userName ||
+        row.driver?.name ||
+        row.submittedBy?.name ||
+        row.submittedBy?.email ||
+        "Unknown Driver"
+      );
+    }
+
+    function equipmentLabel(row, type){
+      const direct = type === "truck"
+        ? (row.truckLabel || row.truckName || row.truckUnitId || row.truckNumber)
+        : (row.trailerLabel || row.trailerName || row.trailerUnitId || row.trailerNumber);
+
+      if(direct) return String(direct);
+
+      const obj = row[type] || {};
+      return String(
+        obj.unitId ||
+        obj.name ||
+        obj.label ||
+        obj.number ||
+        ""
+      );
+    }
+
+    function defectCount(row){
+      const direct = Number(row.defectCount ?? row.totalDefects);
+      if(Number.isFinite(direct)) return direct;
+
+      if(Array.isArray(row.defects)) return row.defects.length;
+
+      if(row.responses && typeof row.responses === "object"){
+        return Object.values(row.responses).filter(value=>{
+          const v = typeof value === "string" ? value.toLowerCase() : value;
+          return v === "defect" || v === "fail" || v === false;
+        }).length;
+      }
+
+      return 0;
+    }
+
+    function submittedTime(row){
+      const date = toDate(
+        row.submittedAt ||
+        row.createdAt ||
+        row.updatedAt ||
+        row.completedAt
+      );
+
+      if(!date) return "";
+      return new Intl.DateTimeFormat("en-US", {
+        hour:"numeric",
+        minute:"2-digit"
+      }).format(date);
+    }
+
+    function escapeHtml(value){
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+      }[char]));
+    }
+
+    function renderLogistics(rows){
+      const today = localISODate();
+
+      const todaysRows = rows
+        .filter(row => inspectionDate(row) === today)
+        .sort((a,b)=>{
+          const aDate = toDate(a.submittedAt || a.createdAt || a.updatedAt);
+          const bDate = toDate(b.submittedAt || b.createdAt || b.updatedAt);
+          return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
+        });
+
+      const good = todaysRows.filter(row => defectCount(row) === 0).length;
+      const bad = todaysRows.filter(row => defectCount(row) > 0).length;
+
+      $("#logistics-total").textContent = String(todaysRows.length);
+      $("#logistics-good").textContent = String(good);
+      $("#logistics-defects").textContent = String(bad);
+
+      const list = $("#logistics-list");
+
+      if(!todaysRows.length){
+        list.innerHTML = `
+          <div class="inspection-empty">
+            No pre-trip inspections have been submitted today.
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = todaysRows.map(row=>{
+        const defects = defectCount(row);
+        const truck = equipmentLabel(row, "truck");
+        const trailer = equipmentLabel(row, "trailer");
+        const unit = [
+          truck ? `Truck ${truck}` : "",
+          trailer ? `Trailer ${trailer}` : ""
+        ].filter(Boolean).join(" • ") || "Equipment not listed";
+
+        return `
+          <a class="inspection-row ${defects > 0 ? "bad" : "good"}"
+             href="pages/logistics/index.html">
+            <span class="inspection-dot" aria-hidden="true"></span>
+            <span class="inspection-main">
+              <span class="inspection-driver">${escapeHtml(driverName(row))}</span>
+              <span class="inspection-unit">${escapeHtml(unit)}</span>
+            </span>
+            <span class="inspection-meta ${defects > 0 ? "bad" : ""}">
+              ${defects > 0
+                ? `${defects} defect${defects === 1 ? "" : "s"}`
+                : escapeHtml(submittedTime(row) || "Passed")}
+            </span>
+          </a>
+        `;
+      }).join("");
+    }
+
+    async function loadLogistics(){
+      const panel = $("#logistics-panel");
+      if(!panel) return;
+
+      try{
+        await ready;
+        const db = getFirestore();
+        const snap = await getDocs(collection(db, "logisticsInspections"));
+        const rows = snap.docs.map(doc => ({id:doc.id, ...doc.data()}));
+        renderLogistics(rows);
+      }catch(error){
+        console.error("[dashboard] logistics load failed:", error);
+        $("#logistics-list").innerHTML = `
+          <div class="inspection-empty">
+            Today's inspections could not be loaded.
+          </div>
+        `;
+      }
+    }
+
+    function mirrorPermission(sourceId, targetId){
+      const source = document.getElementById(sourceId);
+      const target = document.getElementById(targetId);
+      if(!source || !target) return;
+
+      const sync = ()=>{
+        target.classList.toggle(
+          "perm-hidden",
+          source.classList.contains("perm-hidden") ||
+          source.hidden ||
+          getComputedStyle(source).display === "none"
+        );
+      };
+
+      sync();
+
+      new MutationObserver(sync).observe(source, {
+        attributes:true,
+        attributeFilter:["class","hidden","style"]
+      });
+    }
+
+function syncPermissions(){
+  mirrorPermission("ql-pretrip-add", "ql-pretrip-add-mobile");
+  mirrorPermission("ql-boundaries", "ql-boundaries-mobile");
+
+mirrorPermission("ql-maint-add", "ql-maint-add-mobile");
+
+  mirrorPermission("ql-equip-overview", "ql-equip-overview-mobile");
+  mirrorPermission("ql-field-weather", "ql-field-weather-mobile");
+}
+
+    loadLogistics();
+    syncPermissions();
+
+    document.addEventListener("fv:dash-perms-ready", syncPermissions);
+    document.addEventListener("visibilitychange", ()=>{
+      if(!document.hidden) loadLogistics();
+    });
+    window.addEventListener("focus", loadLogistics);
+    setInterval(()=>{
+      if(!document.hidden) loadLogistics();
+    }, 60000);
+  </script>
+
+  <script type="module">
+    import { FVCopilotUI } from "/js/shared/ai/copilot-ui.js";
+
+    let initialized = false;
+
+    function init(){
+      if(initialized) return;
+      initialized = true;
+
+      try{
+        FVCopilotUI.init();
+      }catch(error){
+        console.warn("[dashboard] copilot-ui init failed:", error);
+      }
+    }
+
+    init();
+    document.addEventListener("fv:dash-perms-ready", init);
+  </script>
+</body>
+</html>

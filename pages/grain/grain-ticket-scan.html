@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>FarmVista • Grain Ticket Scan</title>
+  <style>
+    html,body{margin:0;width:100%;height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{display:grid;place-items:center}.fv-loader{text-align:center;padding:24px}.fv-spin{width:38px;height:38px;margin:0 auto 14px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:fvspin .8s linear infinite}@keyframes fvspin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="fv-loader"><div class="fv-spin"></div><div>Opening Grain Ticket Scanner…</div></div>
+  <script>
+  (() => {
+    'use strict';
+
+    const CORE_URL = '/pages/grain/grain-ticket-scan-core.html?v=20260911-10';
+
+    function replaceRequired(text, oldValue, newValue, label) {
+      if (!text.includes(oldValue)) throw new Error(`Scanner patch marker missing: ${label}`);
+      return text.replace(oldValue, newValue);
+    }
+
+    async function boot() {
+      const response = await fetch(CORE_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Scanner core request failed (${response.status})`);
+      let html = await response.text();
+
+      const landscapeCss = `
+@media (orientation: landscape) and (max-height: 700px) {
+  .camera-page{display:flex !important;flex-direction:column !important;width:100vw !important;height:100dvh !important;overflow:hidden !important}
+  .camera-header{position:relative !important;flex:0 0 auto !important;width:100% !important;min-height:0 !important;box-sizing:border-box !important;padding:calc(env(safe-area-inset-top,0px) + 2px) calc(env(safe-area-inset-right,0px) + 16px) 2px calc(env(safe-area-inset-left,0px) + 16px) !important;background:#000 !important}
+  .camera-title{font-size:15px !important;line-height:1.05 !important;margin:0 !important}.camera-subtitle{font-size:10px !important;line-height:1.05 !important;margin-top:1px !important}.close-btn{padding:5px 8px !important;font-size:15px !important}
+  .camera-view{position:relative !important;inset:auto !important;flex:1 1 auto !important;min-height:0 !important;width:100vw !important;max-width:none !important;height:auto !important;margin:0 !important;padding:0 !important;overflow:hidden !important}
+  .ticket-frame{position:absolute !important;left:50vw !important;right:auto !important;top:50% !important;bottom:auto !important;margin:0 !important;transform:translate(-50%,-50%) !important;width:min(70vw,900px) !important;height:min(92%,470px) !important;max-width:calc(100vw - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px) - 110px) !important;max-height:calc(100% - 14px) !important;box-sizing:border-box !important;border:3px solid #fff !important;border-radius:12px !important;box-shadow:0 0 0 1px rgba(0,0,0,.18) !important}
+  .ticket-frame.good,.ticket-frame.ready,.ticket-frame.focus-good,.ticket-frame.is-good,.ticket-frame[data-ready="true"]{border-color:#fff !important}
+  .camera-tip{display:none !important;visibility:hidden !important;opacity:0 !important;pointer-events:none !important}
+  .camera-footer{position:relative !important;left:auto !important;right:auto !important;bottom:auto !important;flex:0 0 auto !important;width:100% !important;box-sizing:border-box !important;min-height:62px !important;padding:4px calc(env(safe-area-inset-right,0px) + 16px) calc(env(safe-area-inset-bottom,0px) + 4px) calc(env(safe-area-inset-left,0px) + 16px) !important;background:#000 !important}
+  .capture-btn{width:52px !important;height:52px !important;border-width:3px !important}.capture-btn::before{width:40px !important;height:40px !important}.torch-btn,.fallback-btn{padding:6px 10px !important;font-size:10px !important}
+}`;
+      html = replaceRequired(html, '</style>', landscapeCss + '\n</style>', 'landscape camera layout');
+
+      const oldAlias = `  if (\n    ocrName\n  ) {\n\n    const alias =\n      findLearnedAlias(\n        "customer",\n        ocrName\n      );\n\n\n    if (\n      alias?.targetId\n    ) {\n\n      const customer =\n        candidates.find(\n          item =>\n            item.id ===\n            alias.targetId\n        );\n\n\n      if (\n        customer\n      ) {\n\n        return {\n          matched:\n            true,\n\n          matchType:\n            "learned_alias",\n\n          customer\n        };\n\n      }\n\n    }\n\n  }\n`;
+      const newAlias = `  const learnedCustomerAlias =\n    (ocrAccount ? findLearnedAlias("customer", ocrAccount) : null) ||\n    (ocrName ? findLearnedAlias("customer", ocrName) : null);\n\n  if (learnedCustomerAlias?.targetId) {\n    const customer = candidates.find(item => String(item.id) === String(learnedCustomerAlias.targetId));\n    if (customer) return { matched:true, matchType:"learned_alias", customer };\n  }\n`;
+      html = replaceRequired(html, oldAlias, newAlias, 'customer alias lookup');
+
+      const destinationCityHelper = `function normalizeCityForDestinationMatch(value) {\n  return String(value ?? "")\n    .trim()\n    .toLowerCase()\n    .replace(/\\be\\.?(?=\\s|$)/g,"east")\n    .replace(/\\bw\\.?(?=\\s|$)/g,"west")\n    .replace(/\\bn\\.?(?=\\s|$)/g,"north")\n    .replace(/\\bs\\.?(?=\\s|$)/g,"south")\n    .replace(/[^a-z0-9]/g,"");\n}\n\n`;
+      html = replaceRequired(html, `function findDeliveryLocationMatch(\n  grainTicket\n) {`, destinationCityHelper + `function findDeliveryLocationMatch(\n  grainTicket\n) {`, 'destination city normalization helper');
+      html = replaceRequired(html, `      const aliasOcrCity =\n        normalizeMatchText(\n          aliasHeaderCityState.city ||\n          grainTicket?.deliveryCity ||\n          ""\n        );`, `      const aliasOcrCity =\n        normalizeCityForDestinationMatch(\n          aliasHeaderCityState.city ||\n          grainTicket?.deliveryCity ||\n          ""\n        );`, 'learned destination OCR city normalization');
+      html = replaceRequired(html, `      const aliasLocationCity =\n        normalizeMatchText(\n          getLocationCity(location)\n        );`, `      const aliasLocationCity =\n        normalizeCityForDestinationMatch(\n          getLocationCity(location)\n        );`, 'learned destination FarmVista city normalization');
+      html = replaceRequired(html, `  const ocrCity =\n    normalized(\n      headerCityState.city ||\n      grainTicket?.deliveryCity\n    );`, `  const ocrCity =\n    normalizeCityForDestinationMatch(\n      headerCityState.city ||\n      grainTicket?.deliveryCity\n    );`, 'destination OCR city normalization');
+      html = replaceRequired(html, `          const locationCity =\n            normalized(\n              getLocationCity(\n                location\n              )\n            );`, `          const locationCity =\n            normalizeCityForDestinationMatch(\n              getLocationCity(\n                location\n              )\n            );`, 'destination FarmVista city normalization');
+
+      html = replaceRequired(html,
+        `function haulingJobCustomerId(\n  job\n) {\n\n  return String(\n    job?.customerId ||\n    job?.grainCustomerId ||\n    ""\n  ).trim();\n\n}\n`,
+        `function haulingJobCustomerId(\n  job\n) {\n\n  return String(\n    job?.customerId ||\n    job?.soldUnderId ||\n    job?.grainCustomerId ||\n    ""\n  ).trim();\n\n}\n`,
+        'hauling job sold under id normalization');
+
+      html = replaceRequired(html,
+        `  if (\n    haulingJob?.id\n  ) {\n\n    contracts.forEach(\n`,
+        `  if (\n    haulingJob?.id\n  ) {\n\n    const directHaulingJobCustomerId = haulingJobCustomerId(haulingJob);\n    if (directHaulingJobCustomerId) ids.add(directHaulingJobCustomerId);\n\n    contracts.forEach(\n`,
+        'driver assist direct hauling job sold under');
+
+      html = replaceRequired(html,
+        `  return ids;\n\n}\n\n\nfunction findCustomerBlockClues(\n`,
+        `  haulingJobs.filter(haulingJobIsActive).forEach(job => {\n    const jobCrop = normalizeMatchText(job?.crop || job?.commodity);\n    if (crop && jobCrop && crop !== jobCrop) return;\n    const jobLocationId = String(job?.deliveryLocationId || job?.locationId || job?.destinationId || "").trim();\n    if (locationId && jobLocationId && jobLocationId !== locationId) return;\n    const jobBuyerId = String(job?.buyerId || job?.grainBuyerId || job?.elevatorId || "").trim();\n    if (buyerId && jobBuyerId && jobBuyerId !== buyerId) return;\n    const jobCustomerId = haulingJobCustomerId(job);\n    if (jobCustomerId) ids.add(jobCustomerId);\n  });\n\n  return ids;\n\n}\n\n\nfunction findCustomerBlockClues(\n`,
+        'simple hauling job sold under customer candidates');
+
+      const oldSoldUnderJobFilter = `  /*\n    Sold Under and Hauling Job work in both directions.\n    Once Sold Under is known, keep only jobs with an OPEN linked\n    contract for that customer and crop.\n  */\n  if (customerId) {\n    matches =\n      matches.filter(\n        job =>\n          contracts.some(\n            contract => {\n              if (!contractIsAvailableForDriverAssist(contract)) {\n                return false;\n              }\n\n              const contractJobId =\n                String(\n                  contract?.haulingJobId ||\n                  ""\n                ).trim();\n\n              const contractCustomerId =\n                String(\n                  firstExistingValue(\n                    contract,\n                    ["customerId", "grainCustomerId"]\n                  ) ||\n                  ""\n                ).trim();\n\n              const contractCrop =\n                normalizeScannedCrop(\n                  firstExistingValue(\n                    contract,\n                    ["crop", "commodity"]\n                  )\n                );\n\n              const contractLocationId =\n                String(\n                  firstExistingValue(\n                    contract,\n                    [\n                      "deliveryLocationId",\n                      "locationId",\n                      "destinationId"\n                    ]\n                  ) ||\n                  ""\n                ).trim();\n\n              const contractBuyerId =\n                String(\n                  firstExistingValue(\n                    contract,\n                    ["buyerId", "elevatorId"]\n                  ) ||\n                  ""\n                ).trim();\n\n              return (\n                contractJobId === String(job.id || "").trim() &&\n                contractCustomerId === customerId &&\n                (!contractCrop || contractCrop === crop) &&\n                (\n                  !matchedLocationId ||\n                  !contractLocationId ||\n                  contractLocationId === matchedLocationId\n                ) &&\n                (\n                  !matchedBuyerId ||\n                  !contractBuyerId ||\n                  contractBuyerId === matchedBuyerId\n                )\n              );\n            }\n          )\n      );\n  }\n`;
+      const newSoldUnderJobFilter = `  if (customerId) {\n    matches = matches.filter(job => {\n      const directJobCustomerId = haulingJobCustomerId(job);\n      if (directJobCustomerId && directJobCustomerId === customerId) return true;\n      return contracts.some(contract => {\n        if (!contractIsAvailableForDriverAssist(contract)) return false;\n        const contractJobId = String(contract?.haulingJobId || "").trim();\n        const contractCustomerId = String(firstExistingValue(contract,["customerId","grainCustomerId"]) || "").trim();\n        const contractCrop = normalizeScannedCrop(firstExistingValue(contract,["crop","commodity"]));\n        const contractLocationId = String(firstExistingValue(contract,["deliveryLocationId","locationId","destinationId"]) || "").trim();\n        const contractBuyerId = String(firstExistingValue(contract,["buyerId","elevatorId"]) || "").trim();\n        return contractJobId === String(job.id || "").trim() &&\n          contractCustomerId === customerId &&\n          (!contractCrop || contractCrop === crop) &&\n          (!matchedLocationId || !contractLocationId || contractLocationId === matchedLocationId) &&\n          (!matchedBuyerId || !contractBuyerId || contractBuyerId === matchedBuyerId);\n      });\n    });\n  }\n`;
+      html = replaceRequired(html, oldSoldUnderJobFilter, newSoldUnderJobFilter, 'sold under hauling-job matching');
+
+      html = replaceRequired(html,
+        `function automaticHaulingJobForTicket(\n  grainTicket,\n  customer = null,\n  locationOverride = null,\n  buyerOverride = null\n) {\n  const matches =\n    matchingActiveHaulingJobsForTicket(\n      grainTicket,\n      customer,\n      locationOverride,\n      buyerOverride\n    );\n\n  return matches.length === 1\n    ? matches[0]\n    : null;\n}\n`,
+        `function haulingJobCreatedMillis(job) {\n  const created = job?.createdAt || job?.created || null;\n  if (created?.toMillis) return created.toMillis();\n  if (created?.toDate) return created.toDate().getTime();\n  const parsed = new Date(created || 0).getTime();\n  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;\n}\n\nfunction haulingJobOldestFirst(a,b) {\n  const aStart = normalizedTicketDateISO(a?.deliveryStartDate || a?.startDate) || "9999-12-31";\n  const bStart = normalizedTicketDateISO(b?.deliveryStartDate || b?.startDate) || "9999-12-31";\n  if (aStart !== bStart) return aStart.localeCompare(bStart);\n  const createdDifference = haulingJobCreatedMillis(a) - haulingJobCreatedMillis(b);\n  if (createdDifference) return createdDifference;\n  return String(a?.id || "").localeCompare(String(b?.id || ""));\n}\n\nfunction automaticHaulingJobForTicket(grainTicket,customer=null,locationOverride=null,buyerOverride=null) {\n  if (!customer?.id) return null;\n  const matches = matchingActiveHaulingJobsForTicket(grainTicket,customer,locationOverride,buyerOverride);\n  return [...matches].sort(haulingJobOldestFirst)[0] || null;\n}\n`,
+        'oldest hauling-job auto assignment');
+
+      const assistMarker = `async function runDriverAssistQuestions(\n  grainTicket,\n  ocrResult,\n  matching\n) {`;
+      const aliasHelpers = `function customerAliasEvidence(grainTicket) {\n  return Array.from(new Set([String(grainTicket?.customerAccountText || "").trim(),String(grainTicket?.customerText || "").trim()].filter(Boolean)));\n}\n\nasync function saveDriverCustomerAliases(grainTicket,customer) {\n  if (!customer?.id) return;\n  const targetId = String(customer.id);\n  const targetName = getCustomerName(customer);\n  for (const ocrText of customerAliasEvidence(grainTicket)) {\n    const normalizedText = normalizeAliasText(ocrText);\n    if (!normalizedText) continue;\n    const aliasId = ("customer_" + normalizedText).replace(/[^a-z0-9_-]+/g,"_").slice(0,180);\n    const payload = {type:"customer",ocrText,normalizedText,targetId,targetName:targetName || null,source:"driver_confirmation",active:true,updatedAt:serverTimestamp()};\n    try {\n      await setDoc(doc(db,ALIAS_COLLECTION,aliasId),payload,{merge:true});\n      const existingIndex = ocrAliases.findIndex(alias => String(alias.type || "") === "customer" && normalizeAliasText(alias.normalizedText || alias.ocrText) === normalizedText);\n      const localAlias = {id:aliasId,...payload};\n      if (existingIndex >= 0) ocrAliases[existingIndex] = localAlias; else ocrAliases.push(localAlias);\n    } catch (error) { console.warn("[Grain Ticket] Could not save Sold Under alias:",error); }\n  }\n}\n\nasync function saveDriverDestinationAlias(grainTicket,location) {\n  if (!location?.id) return;\n  const ocrText = String(buildLocationAliasText(grainTicket) || "").trim();\n  const normalizedText = normalizeAliasText(ocrText);\n  if (!normalizedText) return;\n  const targetId = String(location.id);\n  const targetName = getLocationName(location);\n  const aliasId = ("delivery_location_" + normalizedText).replace(/[^a-z0-9_-]+/g,"_").slice(0,180);\n  const payload = {type:"delivery_location",ocrText,normalizedText,targetId,targetName:targetName || null,source:"driver_confirmation",active:true,updatedAt:serverTimestamp()};\n  try {\n    await setDoc(doc(db,ALIAS_COLLECTION,aliasId),payload,{merge:true});\n    const existingIndex = ocrAliases.findIndex(alias => String(alias.type || "") === "delivery_location" && normalizeAliasText(alias.normalizedText || alias.ocrText) === normalizedText);\n    const localAlias = {id:aliasId,...payload};\n    if (existingIndex >= 0) ocrAliases[existingIndex] = localAlias; else ocrAliases.push(localAlias);\n    console.log("[Grain Ticket] Learned destination alias:",{ocrText,targetId,targetName});\n  } catch (error) { console.warn("[Grain Ticket] Could not save destination alias:",error); }\n}\n\n`;
+      html = replaceRequired(html, assistMarker, aliasHelpers + assistMarker, 'driver assist insertion');
+
+      const destinationCorrectionBlock = `    ocrResult.manualCorrections = {\n      ...(ocrResult.manualCorrections || {}),\n      destination: {\n        originalValue: originalEvidence || null,\n        selectedId: selectedLocation.id,\n        selectedValue: getLocationName(selectedLocation),\n        source: "driver_selection",\n        learningEligible: Boolean(originalEvidence),\n        learningReason:\n          originalEvidence\n            ? "ocr_evidence_confirmed"\n            : "driver_supplied_missing_value"\n      }\n    };\n`;
+      html = replaceRequired(html, destinationCorrectionBlock, destinationCorrectionBlock + `\n    await saveDriverDestinationAlias(grainTicket,selectedLocation);\n`, 'destination alias learning');
+
+      html = replaceRequired(html,
+        `    if (eligibleCustomers.length === 1) {\n      customer = eligibleCustomers[0];\n    }\n    else if (eligibleCustomers.length > 1) {\n      const selectedCustomer =\n`,
+        `    const eligibleCustomerIds = new Set(eligibleCustomers.map(item => String(item.id)));\n    const soldUnderCustomers = [...eligibleCustomers,...customers.filter(item => !eligibleCustomerIds.has(String(item.id)))];\n\n    if (soldUnderCustomers.length) {\n      const selectedCustomer =\n`,
+        'sold under verification branch');
+      html = replaceRequired(html, '            ...eligibleCustomers.map(\n', '            ...soldUnderCustomers.map(\n', 'sold under customer list');
+
+      const correctionBlock = `        ocrResult.manualCorrections = {\n          ...(ocrResult.manualCorrections || {}),\n          customer: {\n            originalValue: originalEvidence || null,\n            selectedId: selectedCustomer.id,\n            selectedValue: getCustomerName(selectedCustomer),\n            source: "driver_selection",\n            learningEligible: Boolean(originalEvidence),\n            learningReason:\n              originalEvidence\n                ? "ocr_evidence_confirmed"\n                : "driver_supplied_missing_value"\n          }\n        };\n`;
+      html = replaceRequired(html, correctionBlock, correctionBlock + `\n        await saveDriverCustomerAliases(grainTicket,selectedCustomer);\n`, 'sold under alias learning');
+
+      const oldPostAssist = `  matching =\n    await runDriverAssistQuestions(\n      grainTicket,\n      ocrResult,\n      matching\n    );\n\n\n  /*\n    DUPLICATE PROTECTION\n`;
+      const newPostAssist = `  matching =\n    await runDriverAssistQuestions(\n      grainTicket,\n      ocrResult,\n      matching\n    );\n\n\n  if (!matching?.haulingJob && matching?.grainSource && matching?.customerMatch?.customer?.id && matching?.locationMatch?.location?.id && matching?.buyerMatch?.buyer?.id) {\n    const finalHaulingJob = automaticHaulingJobForTicket(grainTicket,matching.customerMatch.customer,matching.locationMatch.location,matching.buyerMatch.buyer);\n    if (finalHaulingJob) {\n      const remainingReasons = (Array.isArray(matching.reviewReasons) ? matching.reviewReasons : []).filter(reason => reason !== "hauling_job_not_assigned" && reason !== "hauling_job_not_auto_assigned");\n      matching = rebuildMatchingAfterDriverAssist(grainTicket,finalHaulingJob,matching.locationMatch.location,matching.buyerMatch.buyer,matching.customerMatch.customer,matching.grainSource,matching,remainingReasons);\n      ocrResult.driverContext = {\n        ...(ocrResult.driverContext || {}),\n        haulingJob:{id:finalHaulingJob.id,name:haulingJobDisplayLabel(finalHaulingJob).label,source:"final_save_reconciliation"}\n      };\n      console.log("[Grain Ticket] Final save-time hauling job reconciliation:",{ticketNumber:grainTicket?.ticketNumber || null,haulingJobId:finalHaulingJob.id,validationStatus:matching.validationStatus});\n    }\n  }\n\n  const finalMoistureForReview = Number(grainTicket?.moisture);\n  if (!Number.isFinite(finalMoistureForReview) || finalMoistureForReview <= 0) {\n    const finalReviewReasons = Array.isArray(matching?.reviewReasons) ? [...matching.reviewReasons] : [];\n    if (!finalReviewReasons.includes("moisture_missing_or_zero")) finalReviewReasons.push("moisture_missing_or_zero");\n    matching = { ...matching, validationStatus:"needs_review", reviewReasons:finalReviewReasons };\n    console.warn("[Grain Ticket] Moisture missing/zero — routing ticket to review.",{ticketNumber:grainTicket?.ticketNumber || null,moisture:grainTicket?.moisture ?? null});\n  }\n\n\n  /*\n    DUPLICATE PROTECTION\n`;
+      html = replaceRequired(html, oldPostAssist, newPostAssist, 'final save hauling job reconciliation and moisture review');
+
+      const admNote = `/*\n  NOTE:\n  ADM-specific grade-factor interpretation belongs in the OCR\n  backend / Google function. FarmVista should consume the OCR\n  function's structured values rather than maintain a second\n  ADM parser here.\n*/`;
+      const admTemplate = `/*\n  ADM PROCESSING + BARTLETT JACKSONVILLE GRADE TEMPLATES\n*/\nfunction fvGradeNumber(text) {\n  const match = String(text || "").replace(/,/g,"").match(/-?\\d{1,3}(?:\\.\\d+)?/);\n  if (!match) return null;\n  const value = Number(match[0]);\n  return Number.isFinite(value) ? value : null;\n}\n\nfunction applyAdmProcessingGradeTemplate(result) {\n  const ticket = result?.grainTicket;\n  if (!ticket) return;\n  const rawText = String(result?.document?.text || ticket?.rawText || "");\n  const identityText = (rawText + " " + String(ticket?.elevatorName || "")).toUpperCase();\n  const isAdm = identityText.includes("ARCHER DANIELS MIDLAND") || identityText.includes("ADM PROCESSING");\n  if (!isAdm) return;\n  const gradeStart = rawText.search(/GRADE\\s+U\\.?S\\.?/i);\n  if (gradeStart < 0) return;\n  const remainder = rawText.slice(gradeStart);\n  const endMatch = remainder.search(/(?:OTHER\\s+FACTORS|GRADED\\s+BY|ELEV\\s+TKT|FARM\\s+NAME)/i);\n  const gradeBlock = endMatch >= 0 ? remainder.slice(0,endMatch) : remainder.slice(0,1800);\n  const lines = gradeBlock.split(/\\r?\\n/).map(line => String(line || "").trim()).filter(Boolean);\n  const flatGrade = lines.join(" ").replace(/\\s+/g," ").trim();\n  function valueBeforeAnchor(anchor) {\n    const match = flatGrade.match(new RegExp("(-?\\\\d{1,3}(?:\\\\.\\\\d+)?)\\\\s+" + anchor + "\\\\b","i"));\n    return match ? fvGradeNumber(match[1]) : null;\n  }\n  function valueForLabel(label) {\n    const inline = new RegExp("^" + label + "\\\\b[^0-9-]*(-?\\\\d{1,3}(?:\\\\.\\\\d+)?)", "i");\n    const labelOnly = new RegExp("^" + label + "$", "i");\n    for (let i = 0; i < lines.length; i++) {\n      const sameLine = lines[i].match(inline);\n      if (sameLine) return fvGradeNumber(sameLine[1]);\n      if (labelOnly.test(lines[i])) {\n        for (let j = i + 1; j < Math.min(lines.length,i + 3); j++) {\n          if (/^[A-Z]{1,4}$/i.test(lines[j])) break;\n          const value = fvGradeNumber(lines[j]);\n          if (value !== null) return value;\n        }\n      }\n    }\n    return null;\n  }\n  const hasCoAnchor = /(?:^|\\s)CO(?:\\s|$)/i.test(flatGrade);\n  const tw = valueBeforeAnchor("AC") ?? valueForLabel("TW");\n  const mo = valueBeforeAnchor("GN") ?? valueForLabel("MO");\n  const dm = valueBeforeAnchor("OP") ?? valueForLabel("DM");\n  const fm = (hasCoAnchor ? valueBeforeAnchor("CO") : valueBeforeAnchor("IF")) ?? valueForLabel("FM");\n  if (tw !== null && tw >= 35 && tw <= 70) ticket.testWeight = tw;\n  if (mo !== null && mo >= 0 && mo <= 40) ticket.moisture = mo;\n  if (dm !== null && dm >= 0 && dm <= 50) ticket.damage = dm;\n  if (fm !== null && fm >= 0 && fm <= 50) ticket.foreignMaterial = fm;\n  console.log("[Grain Ticket] ADM fixed-row grade template applied:",{ticketNumber:ticket.ticketNumber || null,testWeight:ticket.testWeight ?? null,moisture:ticket.moisture ?? null,damage:ticket.damage ?? null,foreignMaterial:ticket.foreignMaterial ?? null});\n}\n\nfunction applyBartlettJacksonvilleGradeTemplate(result) {\n  const ticket = result?.grainTicket;\n  if (!ticket) return;\n  const rawText = String(result?.document?.text || ticket?.rawText || "");\n  const identityText = (rawText + " " + String(ticket?.elevatorName || "")).toUpperCase();\n  const isBartlett = identityText.includes("BARTLETT JACKSONVILLE") && identityText.includes("2350 SOUTH MAIN");\n  if (!isBartlett) return;\n\n  const lines = rawText.split(/\\r?\\n/).map(line => String(line || "").trim()).filter(Boolean);\n  const gradeIndex = lines.findIndex(line => /^GRADE\\s*FACTOR$/i.test(line));\n  if (gradeIndex < 0) return;\n  const gradeLines = lines.slice(gradeIndex + 1, gradeIndex + 24);\n\n  function valueAfterLabel(label) {\n    const exact = new RegExp("^" + label + "$");\n    const inline = new RegExp("^" + label + "\\\\s+(-?\\\\d{1,3}(?:\\\\.\\\\d+)?)$", "i");\n    for (let i = 0; i < gradeLines.length; i++) {\n      const sameLine = gradeLines[i].match(inline);\n      if (sameLine) return fvGradeNumber(sameLine[1]);\n      if (exact.test(gradeLines[i])) {\n        const next = gradeLines[i + 1] || "";\n        const nextValue = fvGradeNumber(next);\n        if (nextValue !== null) return nextValue;\n      }\n    }\n    return null;\n  }\n\n  const tw = valueAfterLabel("TW");\n  const mt = valueAfterLabel("MT");\n  const dm = valueAfterLabel("DM");\n  const bcfm = valueAfterLabel("BCFM");\n\n  if (tw !== null && tw >= 35 && tw <= 70) ticket.testWeight = tw;\n  if (mt !== null && mt >= 0 && mt <= 40) ticket.moisture = mt;\n  if (dm !== null && dm >= 0 && dm <= 50) ticket.damage = dm;\n  if (bcfm !== null && bcfm >= 0 && bcfm <= 50) ticket.foreignMaterial = bcfm;\n\n  if (!result.fields || typeof result.fields !== "object") result.fields = {};\n  if (tw !== null) result.fields.testWeight = tw;\n  if (mt !== null) result.fields.moisture = mt;\n  if (dm !== null) result.fields.damage = dm;\n  if (bcfm !== null) result.fields.foreignMaterial = bcfm;\n\n  console.log("[Grain Ticket] Bartlett Jacksonville fixed-layout template applied:",{ticketNumber:ticket.ticketNumber || null,testWeight:ticket.testWeight ?? null,moisture:ticket.moisture ?? null,damage:ticket.damage ?? null,foreignMaterial:ticket.foreignMaterial ?? null});\n}\n\napplyAdmProcessingGradeTemplate(result);\napplyBartlettJacksonvilleGradeTemplate(result);`;
+      html = replaceRequired(html, admNote, admTemplate, 'ADM and Bartlett grade templates');
+
+      const validationMarker = `  const validationStatus =\n    reviewReasons.length\n      ? "needs_review"\n      : "verified";`;
+      const moistureReview = `  const scannedMoistureForReview = Number(grainTicket?.moisture);\n\n  if (!Number.isFinite(scannedMoistureForReview) || scannedMoistureForReview <= 0) {\n    if (!reviewReasons.includes("moisture_missing_or_zero")) reviewReasons.push("moisture_missing_or_zero");\n  }\n\n\n` + validationMarker;
+      html = replaceRequired(html, validationMarker, moistureReview, 'zero moisture review rule');
+
+      const timeoutHelper = `function withScannerTimeout(promise,timeoutMs,label) {\n  let timer = null;\n  const timeout = new Promise((_,reject) => {\n    timer = setTimeout(() => reject(new Error(label + " took too long. Check your connection and try again.")),timeoutMs);\n  });\n  return Promise.race([promise,timeout]).finally(() => { if (timer) clearTimeout(timer); });\n}\n\n`;
+      html = replaceRequired(html, 'async function loadFarmVistaData() {', timeoutHelper + 'async function loadFarmVistaData() {', 'scanner timeout helper');
+      html = replaceRequired(html,
+        `  haulingJobSnapshot,\n  ticketSnapshot,\n  employeeSnapshot,`,
+        `  haulingJobSnapshot,\n  employeeSnapshot,`,
+        'remove full ticket snapshot variable');
+
+      html = replaceRequired(html,
+        `\ngetDocs(\n  collection(\n    db,\n    TICKET_COLLECTION\n  )\n),\n\ngetDocs(\n  collection(\n    db,\n    EMPLOYEE_COLLECTION\n  )\n),`,
+        `\ngetDocs(\n  collection(\n    db,\n    EMPLOYEE_COLLECTION\n  )\n),`,
+        'remove full ticket collection read');
+
+      html = replaceRequired(html,
+        `\n\ngrainTickets =\n  snapshotToArray(\n    ticketSnapshot\n  );\n`,
+        `\n\ngrainTickets = [];\n`,
+        'remove full ticket history assignment');
+
+      html = replaceRequired(html,
+        `  const employee =\n    await loadFarmVistaData();`,
+        `  const employee =\n    await withScannerTimeout(\n      loadFarmVistaData(),\n      25000,\n      "Loading FarmVista grain data"\n    );\n\n  processingText.textContent =\n    "Matching destination…";`,
+        'matching data timeout');
+
+      html = replaceRequired(html,
+        `  const duplicateTicket =\n    await findDuplicateGrainTicket(\n      grainTicket,\n      matching\n    );`,
+        `  const duplicateTicket =\n    await withScannerTimeout(\n      findDuplicateGrainTicket(\n        grainTicket,\n        matching\n      ),\n      15000,\n      "Checking for duplicate ticket"\n    );`,
+        'duplicate check timeout');
+
+      const landscapeRuntime = `
+<script>
+(() => {
+  const applyLandscapeTipRule = () => {
+    const tip = document.querySelector('.camera-tip');
+    if (!tip) return;
+    if (window.innerWidth > window.innerHeight) {
+      tip.style.setProperty('display','none','important');tip.style.setProperty('visibility','hidden','important');tip.style.setProperty('opacity','0','important');tip.setAttribute('aria-hidden','true');
+    } else {
+      tip.style.removeProperty('display');tip.style.removeProperty('visibility');tip.style.removeProperty('opacity');tip.removeAttribute('aria-hidden');
+    }
+  };
+  applyLandscapeTipRule();
+  window.addEventListener('resize',applyLandscapeTipRule,{passive:true});
+  window.addEventListener('orientationchange',()=>setTimeout(applyLandscapeTipRule,100),{passive:true});
+})();
+<\/script>`;
+      html = replaceRequired(html, '</body>', landscapeRuntime + '\n</body>', 'landscape helper runtime');
+
+      document.open();
+      document.write(html);
+      document.close();
+    }
+
+    boot().catch(error => {
+      console.error('[FarmVista] Grain ticket scanner could not start:', error);
+      document.body.innerHTML = '<div class="fv-loader"><strong>Grain Ticket Scanner could not start.</strong><br><br>Please close this screen and try again.</div>';
+    });
+  })();
+  </script>
+</body>
+</html>

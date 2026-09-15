@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Approve Equipment Service Requests</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <style>
+    :root{
+      --card-max: 1200px;
+      /* Match WO page so mobile footer spacing behaves the same */
+      --page-bottom-gap: 96px;
+      --accent: #2F6C3C;
+    }
+
+    html{-webkit-text-size-adjust:100%}
+    body{
+      background: var(--app-bg, var(--surface));
+      margin:0;
+      overflow-x:hidden;
+    }
+
+    /* ✅ Mobile fit hardening (same as WO page) */
+    *, *::before, *::after { box-sizing:border-box; }
+    img, svg, video, canvas { max-width:100%; height:auto; }
+    input, select, textarea, button { max-width:100%; }
+    .wrap, .hero, .body, .req-detail-panel { max-width:100%; min-width:0; }
+
+    .wrap{
+      max-width: var(--card-max);
+      margin: 0 auto;
+      padding: clamp(14px,3vw,22px);
+      padding-bottom: calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+      box-sizing:border-box;
+      display:grid;
+      gap:16px;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:visible;
+    }
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      border-bottom:1px solid var(--border);
+    }
+    .hero-head .icon{
+      width:24px;
+      height:24px;
+      color:var(--accent);
+      display:grid;
+      place-items:center;
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+    .muted{ color:var(--muted,#67706B); }
+
+    .body{ padding:16px; display:grid; gap:14px; min-width:0; }
+
+    .toolbar{
+      position:relative;
+      z-index:5;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      justify-content:space-between;
+      min-width:0;
+    }
+    .toolbar-left{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      min-width:0;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:120px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-weight:800;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      font-size:0.9rem;
+      gap:6px;
+      min-width:0;
+      max-width:100%;
+      white-space:normal;
+    }
+    .btn-quiet{ min-width:auto; padding-inline:10px; }
+
+    .btn-deny{
+  background:#b42318;
+  border-color:#b42318;
+  color:#fff !important;
+  font-weight:800;
+}
+
+.btn-deny:hover{
+  background:#912018;
+  border-color:#912018;
+}
+
+.req-detail-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+}
+
+@media (max-width:650px){
+  .req-detail-actions{
+    flex-direction:column;
+  }
+
+  .req-detail-actions .btn{
+    width:100%;
+  }
+}
+
+    .page-header-meta{ font-size:0.9rem; opacity:0.8; }
+
+    .req-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:8px;
+      min-width:0;
+    }
+
+    .req-empty{
+      padding:14px 16px;
+      border-radius:12px;
+      border:1px dashed var(--border);
+      background:var(--card-surface, var(--surface));
+      font-size:0.95rem;
+      opacity:0.9;
+      min-width:0;
+    }
+
+    .req-card{
+      position:relative;
+      border-radius:10px;
+      border:1px solid var(--card-border, var(--border));
+      background:var(--card-surface, var(--surface));
+      box-shadow:var(--shadow-soft, var(--shadow));
+      padding:12px 14px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      cursor:pointer;
+      transition:transform .06s, box-shadow .12s, border-color .12s, background .12s;
+      min-width:0;
+      max-width:100%;
+    }
+    .req-card:active{
+      transform:scale(.995);
+      box-shadow:var(--shadow);
+    }
+
+    .req-row-top{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+
+    .req-main{ flex:1 1 auto; min-width:0; }
+
+    .req-title{
+      font-weight:700;
+      font-size:0.98rem;
+      line-height:1.3;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .req-sub{
+      font-size:0.86rem;
+      opacity:0.9;
+      margin-top:2px;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .req-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 10px;
+      margin-top:4px;
+      font-size:0.8rem;
+      opacity:0.85;
+      min-width:0;
+      max-width:100%;
+    }
+
+    .req-meta span{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 7px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      min-width:0;
+      max-width:100%;
+    }
+
+    .req-meta-label{ font-weight:600; }
+
+    .req-toggle-wrap{
+      flex:0 0 auto;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:4px;
+      padding-left:4px;
+    }
+
+    .pill-label{
+      font-size:0.76rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.8;
+    }
+
+    .pill-toggle{
+      position:relative;
+      width:46px;
+      height:26px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--border) 70%, var(--surface) 30%);
+      border:1px solid var(--border);
+      display:inline-flex;
+      align-items:center;
+      padding:2px;
+      box-sizing:border-box;
+      transition:background .16s, border-color .16s;
+    }
+
+    .pill-toggle-thumb{
+      position:relative;
+      width:20px;
+      height:20px;
+      border-radius:10px;
+      background:var(--card-surface, #fff);
+      box-shadow:0 1px 2px rgba(0,0,0,.35);
+      transform:translateX(0);
+      transition:transform .16s;
+    }
+
+    .pill-toggle[data-on="true"]{
+      background:var(--accent, var(--green, #3B7E46));
+      border-color:var(--accent, var(--green, #3B7E46));
+    }
+    .pill-toggle[data-on="true"] .pill-toggle-thumb{ transform:translateX(18px); }
+
+    .pill-toggle-input{
+      position:absolute;
+      inset:0;
+      opacity:0;
+      cursor:pointer;
+    }
+
+    .req-detail-panel{
+      margin-top:10px;
+      border-radius:12px;
+      border:1px solid var(--card-border, var(--border));
+      background:var(--card-surface, var(--surface));
+      box-shadow:var(--shadow-soft, var(--shadow));
+      padding:14px 16px 12px;
+      display:none;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+      max-width:100%;
+      overflow:hidden;
+    }
+
+    .req-detail-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+
+    .req-detail-title{
+      font-weight:700;
+      font-size:1rem;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width:100%;
+    }
+
+    .req-detail-close{
+      border:none;
+      border-radius:999px;
+      padding:4px 9px;
+      font-size:0.8rem;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      cursor:pointer;
+      color:var(--text);
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+
+    .req-detail-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:6px 16px;
+      font-size:0.9rem;
+      margin-top:4px;
+      min-width:0;
+    }
+
+    @media (min-width:700px){
+      .req-detail-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    }
+
+    .req-detail-item-label{
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+      margin-bottom:1px;
+    }
+
+    .req-detail-item-value{
+      font-size:0.92rem;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+
+    .req-detail-notes{
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px solid var(--border);
+      font-size:0.92rem;
+      white-space:pre-wrap;
+      min-width:0;
+    }
+
+    .req-detail-notes-label{
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+      margin-bottom:2px;
+    }
+
+    .req-detail-footer{
+      margin-top:8px;
+      font-size:0.8rem;
+      opacity:0.85;
+      min-width:0;
+    }
+
+    .req-detail-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 8px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      font-size:0.8rem;
+      margin-left:6px;
+      max-width:100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    [hidden]{ display:none !important; }
+
+    /* MOBILE (match WO back button behavior/fit) */
+    @media (max-width:650px){
+      .toolbar-left{ width:100%; }
+      #btnBack{ width:100%; justify-content:center; }
+
+      .req-detail-header{ flex-direction:column; align-items:stretch; }
+      .req-detail-close{ align-self:flex-end; }
+
+      .req-title, .req-sub{ white-space:normal; overflow:visible; text-overflow:unset; }
+    }
+
+    /* kill Safari blue */
+    button, input, select, textarea{ color:var(--text) !important; }
+    a, a:visited{ color:var(--text) !important; text-decoration:none; }
+    button:focus, input:focus, select:focus, textarea:focus,
+    a:focus{
+      outline:none !important;
+      border-color:var(--border) !important;
+      box-shadow:none !important;
+    }
+  </style>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script type="module">
+    import * as FB from '/js/core/firebase/firebase-init.js';
+    import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+const CONFIG_REQUESTS = {
+  COLLECTION_PATH: 'equipmentServiceRequests',
+  STATUS_FIELD:    'status',
+  NEEDS_APPROVAL_STATUS: 'needs approved',
+  PENDING_STATUS:       'pending',
+  DENIED_STATUS:        'denied'
+};
+
+    const CONFIG_WO = {
+      COLLECTION_PATH: 'equipmentWorkOrders',
+      STATUS_FIELD: 'status',
+      STATUS_PENDING: 'pending',
+      STATUS_INPROG: 'in_progress'
+    };
+
+    const STATE = {
+      db: null,
+      items: [],
+      selectedId: null
+    };
+
+    const $  = (sel, root=document) => root.querySelector(sel);
+
+    const norm = (v) => String(v ?? '').trim();
+    const normLc = (v) => norm(v).toLowerCase();
+
+    function getTime(ts){
+      if(!ts) return 0;
+      try{
+        if(ts.toMillis) return ts.toMillis();
+        if(ts.toDate)   return ts.toDate().getTime();
+        if(ts instanceof Date) return ts.getTime();
+        return new Date(ts).getTime() || 0;
+      }catch{ return 0; }
+    }
+
+    function formatDate(ts){
+      try{
+        if(!ts) return '';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        if(Number.isNaN(d.getTime())) return '';
+        return d.toLocaleDateString([], { year:'numeric', month:'short', day:'2-digit' });
+      }catch{ return ''; }
+    }
+
+    function mapTopic(code, other){
+      if(code === 'other' && other) return other;
+      switch(code){
+        case 'engine': return 'Engine / Powertrain';
+        case 'hydraulics': return 'Hydraulics';
+        case 'electrical': return 'Electrical / Wiring';
+        case 'driveline': return 'Driveline / Transmission';
+        case 'tires_tracks': return 'Tires / Tracks / Undercarriage';
+        case 'precision': return 'Precision / GPS / StarFire';
+        case 'cab_controls': return 'Cab Controls / Displays';
+        case 'leaks': return 'Leaks / Fluids';
+        case 'scheduled_service': return 'Scheduled Service / Oil Change';
+        case 'inspection': return 'Pre-Season Inspection';
+        default: return code || 'Service Request';
+      }
+    }
+
+    async function loadRequests(){
+      const db  = STATE.db;
+      const ref = FB.collection(db, CONFIG_REQUESTS.COLLECTION_PATH);
+
+      try{
+        const qRef = FB.query(ref, FB.where(CONFIG_REQUESTS.STATUS_FIELD, '==', CONFIG_REQUESTS.NEEDS_APPROVAL_STATUS));
+        const snap = await FB.getDocs(qRef);
+
+        const items = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+        items.sort((a,b)=> getTime(b.data.createdAt) - getTime(a.data.createdAt));
+
+        STATE.items = items;
+        renderList();
+      }catch(err){
+        console.error('Error loading service requests needing approval:', err);
+        const emptyEl = $('.req-empty');
+        if(emptyEl){
+          emptyEl.textContent = 'Error loading service requests. Check console.';
+          emptyEl.style.display = 'block';
+        }
+        const countEl = $('#reqCount');
+        if(countEl) countEl.textContent = 'Error';
+      }
+    }
+
+    function renderList(){
+      const listEl  = $('.req-list');
+      const emptyEl = $('.req-empty');
+      const countEl = $('#reqCount');
+
+      listEl.innerHTML = '';
+
+      if(!STATE.items.length){
+        if(emptyEl){
+          emptyEl.style.display = 'block';
+          emptyEl.textContent = 'No service requests currently have status “needs approved”. New requests that require your approval will appear here automatically.';
+        }
+        if(countEl) countEl.textContent = '0 needing approval';
+        clearDetails();
+        return;
+      }
+
+      if(emptyEl) emptyEl.style.display = 'block';
+      emptyEl.textContent = 'Slide the toggle to approve each request (status will become Pending). A Work Order will be created or updated automatically.';
+
+      STATE.items.forEach(item=>{
+        const d  = item.data;
+        const id = item.id;
+
+        const equipName = d.equipmentName || 'Equipment (unknown)';
+        const typeLabel = d.equipmentType ? String(d.equipmentType).charAt(0).toUpperCase() + String(d.equipmentType).slice(1) : '';
+        const serial6   = d.equipmentSerialLast6 ? `SN …${d.equipmentSerialLast6}` : '';
+
+        const topic       = mapTopic(d.serviceTopic, d.serviceTopicOther);
+        const requested   = d.requestedDate || formatDate(d.createdAt);
+        const submittedBy = (d.submittedBy && d.submittedBy.name) || '';
+
+        const card = document.createElement('article');
+        card.className = 'req-card';
+        card.dataset.id = id;
+
+        card.innerHTML = `
+          <div class="req-row-top">
+            <div class="req-main">
+              <div class="req-title">${equipName}</div>
+              <div class="req-sub">${typeLabel} ${serial6 ? `• ${serial6}` : ''}</div>
+              <div class="req-meta">
+                <span><span class="req-meta-label">Topic</span> ${topic}</span>
+                ${requested ? `<span><span class="req-meta-label">Requested</span> ${requested}</span>` : ''}
+                ${submittedBy ? `<span><span class="req-meta-label">By</span> ${submittedBy}</span>` : ''}
+              </div>
+            </div>
+            <div class="req-toggle-wrap">
+              <div class="pill-label">Approve</div>
+              <div class="pill-toggle" data-on="false">
+                <div class="pill-toggle-thumb"></div>
+                <input class="pill-toggle-input" type="checkbox" aria-label="Approve request (set to pending)" />
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', (ev)=>{
+          if(ev.target.closest('.pill-toggle')) return;
+          STATE.selectedId = id;
+          renderDetails();
+        });
+
+        const input  = card.querySelector('.pill-toggle-input');
+        const toggle = card.querySelector('.pill-toggle');
+
+        input.addEventListener('click', ev => ev.stopPropagation());
+        input.addEventListener('change', async (ev)=>{
+          ev.stopPropagation();
+          const checked = input.checked;
+
+          if(!checked){
+            toggle.dataset.on = 'false';
+            return;
+          }
+
+          toggle.dataset.on = 'true';
+          input.disabled = true;
+
+          try{
+            await approveRequestClientOnly(item);
+
+            STATE.items = STATE.items.filter(x => x.id !== id);
+            if(STATE.selectedId === id){
+              STATE.selectedId = null;
+              clearDetails();
+            }
+            renderList();
+          }catch(err){
+            console.error('Error approving request:', err);
+            alert('Failed to approve / create work order. Check console.');
+            input.checked = false;
+            toggle.dataset.on = 'false';
+          }finally{
+            input.disabled = false;
+          }
+        });
+
+        listEl.appendChild(card);
+      });
+
+      if(countEl) countEl.textContent = `${STATE.items.length} needing approval`;
+    }
+
+    function clearDetails(){
+      const panel = $('.req-detail-panel');
+      if(!panel) return;
+      panel.style.display = 'none';
+      panel.dataset.id = '';
+      const grid = $('.req-detail-grid', panel);
+      if(grid) grid.innerHTML = '';
+      const notesBody = $('.req-detail-notes-body', panel);
+      if(notesBody) notesBody.textContent = '';
+      const footer = $('.req-detail-footer', panel);
+      if(footer) footer.innerHTML = '';
+    }
+
+    function renderDetails(){
+      const panel = $('.req-detail-panel');
+      if(!panel) return;
+
+      const item = STATE.items.find(x => x.id === STATE.selectedId);
+      if(!item){
+        clearDetails();
+        return;
+      }
+
+      const d = item.data;
+      panel.dataset.id = item.id;
+
+      const titleEl = $('.req-detail-title', panel);
+      if(titleEl) titleEl.textContent = d.equipmentName || 'Service Request Details';
+
+      const grid = $('.req-detail-grid', panel);
+      if(grid){
+        const topic       = mapTopic(d.serviceTopic, d.serviceTopicOther);
+        const requested   = d.requestedDate || formatDate(d.createdAt);
+        const submittedBy = (d.submittedBy && d.submittedBy.name) || '';
+        grid.innerHTML = `
+          <div>
+            <div class="req-detail-item-label">Equipment</div>
+            <div class="req-detail-item-value">${d.equipmentName || ''}</div>
+          </div>
+          <div>
+            <div class="req-detail-item-label">Topic</div>
+            <div class="req-detail-item-value">${topic}</div>
+          </div>
+          <div>
+            <div class="req-detail-item-label">Requested</div>
+            <div class="req-detail-item-value">${requested || ''}</div>
+          </div>
+          <div>
+            <div class="req-detail-item-label">Submitted By</div>
+            <div class="req-detail-item-value">${submittedBy || ''}</div>
+          </div>
+        `;
+      }
+
+      const notesBody = $('.req-detail-notes-body', panel);
+      if(notesBody) notesBody.textContent = d.notes || 'No additional notes recorded.';
+
+      const footer = $('.req-detail-footer', panel);
+      if(footer){
+        footer.innerHTML = `
+          Current status:
+          <span class="req-detail-pill">${d[CONFIG_REQUESTS.STATUS_FIELD] || CONFIG_REQUESTS.NEEDS_APPROVAL_STATUS}</span>
+        `;
+      }
+
+      panel.style.display = 'flex';
+    }
+
+    async function createWorkOrderDoc(db, payload){
+      // Try addDoc first
+      if(typeof FB.addDoc === 'function'){
+        const colRef = FB.collection(db, CONFIG_WO.COLLECTION_PATH);
+        const docRef = await FB.addDoc(colRef, payload);
+        return docRef.id;
+      }
+      // Then try setDoc with a generated doc ref
+      if(typeof FB.setDoc === 'function'){
+        const colRef = FB.collection(db, CONFIG_WO.COLLECTION_PATH);
+        const docRef = FB.doc(colRef);
+        await FB.setDoc(docRef, payload);
+        return docRef.id;
+      }
+      throw new Error('Missing Firestore writer: addDoc/setDoc not available from firebase-init.js');
+    }
+
+   async function denyRequest(item){
+  if(!item) return;
+
+  const reqId = item.id;
+  const d = item.data || {};
+
+  const equipmentName = norm(d.equipmentName) || 'this equipment';
+
+  const confirmed = confirm(
+    `Deny this service request for ${equipmentName}?\n\n` +
+    `This will remove it from the approval list and no work order will be created.`
+  );
+
+  if(!confirmed) return;
+
+  const reqRef = FB.doc(
+    STATE.db,
+    CONFIG_REQUESTS.COLLECTION_PATH,
+    reqId
+  );
+
+  await FB.updateDoc(reqRef, {
+    [CONFIG_REQUESTS.STATUS_FIELD]: CONFIG_REQUESTS.DENIED_STATUS,
+    deniedAt: FB.serverTimestamp(),
+    updatedAt: FB.serverTimestamp()
+  });
+
+  STATE.items = STATE.items.filter(x => x.id !== reqId);
+
+  if(STATE.selectedId === reqId){
+    STATE.selectedId = null;
+    clearDetails();
+  }
+
+  renderList();
+} 
+
+    async function approveRequestClientOnly(item){
+      const db = STATE.db;
+      const reqId = item.id;
+      const d = item.data || {};
+
+      const equipmentId =
+        norm(d.equipmentId) ||
+        norm(d.equipmentDocId) ||
+        norm(d.equipment_id) ||
+        '';
+
+      const equipmentName = norm(d.equipmentName) || 'Equipment (unknown)';
+      const equipmentType = normLc(d.equipmentType) || 'other';
+
+      const submittedByName =
+        norm(d?.submittedBy?.name) ||
+        norm(d?.submittedByName) ||
+        '';
+
+      const lineItem = {
+        serviceRequestId: reqId,
+        origin: 'request',
+        serviceTopic: norm(d.serviceTopic) || null,
+        serviceTopicOther: norm(d.serviceTopicOther) || null,
+        notes: norm(d.notes) || '',
+        partsNeeded: (d.partsNeeded === null || d.partsNeeded === undefined) ? null : norm(d.partsNeeded),
+        submittedByName: submittedByName || null,
+        completed: false,
+        completedByEmployeeId: null,
+        completedByEmployeeName: null,
+        completedAt: null
+      };
+
+      // Find an existing open WO (no limit() dependency)
+      const woCol = FB.collection(db, CONFIG_WO.COLLECTION_PATH);
+      let q;
+
+      if(equipmentId){
+        q = FB.query(
+          woCol,
+          FB.where('equipmentId', '==', equipmentId),
+          FB.where(CONFIG_WO.STATUS_FIELD, 'in', [CONFIG_WO.STATUS_PENDING, CONFIG_WO.STATUS_INPROG])
+        );
+      }else{
+        q = FB.query(
+          woCol,
+          FB.where('equipmentName', '==', equipmentName),
+          FB.where(CONFIG_WO.STATUS_FIELD, 'in', [CONFIG_WO.STATUS_PENDING, CONFIG_WO.STATUS_INPROG])
+        );
+      }
+
+      const snap = await FB.getDocs(q);
+      const first = snap.docs && snap.docs.length ? snap.docs[0] : null;
+
+      // Prefer writeBatch if available
+      const canBatch = (typeof FB.writeBatch === 'function');
+
+      let linkedWorkOrderId = null;
+
+      if(first){
+        const woDoc = first;
+        linkedWorkOrderId = woDoc.id;
+
+        const woData = woDoc.data() || {};
+        const oldLines = Array.isArray(woData.lineItems) ? woData.lineItems : [];
+        const already = oldLines.some(li => String(li?.serviceRequestId || '') === String(reqId));
+        const newLines = already ? oldLines : [...oldLines, lineItem];
+
+        if(canBatch){
+          const batch = FB.writeBatch(db);
+          batch.update(woDoc.ref, {
+            lineItems: newLines,
+            [CONFIG_WO.STATUS_FIELD]: CONFIG_WO.STATUS_PENDING,
+            updatedAt: FB.serverTimestamp()
+          });
+
+          const reqRef = FB.doc(db, CONFIG_REQUESTS.COLLECTION_PATH, reqId);
+          batch.update(reqRef, {
+            [CONFIG_REQUESTS.STATUS_FIELD]: CONFIG_REQUESTS.PENDING_STATUS,
+            approvedAt: FB.serverTimestamp(),
+            updatedAt: FB.serverTimestamp(),
+            linkedWorkOrderId: linkedWorkOrderId || null
+          });
+
+          await batch.commit();
+          return;
+        }
+
+        // Non-batch fallback
+        await FB.updateDoc(woDoc.ref, {
+          lineItems: newLines,
+          [CONFIG_WO.STATUS_FIELD]: CONFIG_WO.STATUS_PENDING,
+          updatedAt: FB.serverTimestamp()
+        });
+
+        const reqRef = FB.doc(db, CONFIG_REQUESTS.COLLECTION_PATH, reqId);
+        await FB.updateDoc(reqRef, {
+          [CONFIG_REQUESTS.STATUS_FIELD]: CONFIG_REQUESTS.PENDING_STATUS,
+          approvedAt: FB.serverTimestamp(),
+          updatedAt: FB.serverTimestamp(),
+          linkedWorkOrderId: linkedWorkOrderId || null
+        });
+
+        return;
+      }
+
+      // No open WO -> create one
+      const woPayload = {
+        equipmentId: equipmentId || null,
+        equipmentName,
+        equipmentType,
+        equipmentSerialLast6: norm(d.equipmentSerialLast6) || null,
+
+        [CONFIG_WO.STATUS_FIELD]: CONFIG_WO.STATUS_PENDING,
+        lineItems: [lineItem],
+
+        createdAt: FB.serverTimestamp(),
+        updatedAt: FB.serverTimestamp(),
+        createdFromServiceRequestId: reqId
+      };
+
+      linkedWorkOrderId = await createWorkOrderDoc(db, woPayload);
+
+      const reqRef = FB.doc(db, CONFIG_REQUESTS.COLLECTION_PATH, reqId);
+      await FB.updateDoc(reqRef, {
+        [CONFIG_REQUESTS.STATUS_FIELD]: CONFIG_REQUESTS.PENDING_STATUS,
+        approvedAt: FB.serverTimestamp(),
+        updatedAt: FB.serverTimestamp(),
+        linkedWorkOrderId: linkedWorkOrderId || null
+      });
+    }
+
+    (async function boot(){
+      // ✅ Works whether ready is a Promise or a function
+      await (typeof FB.ready === 'function' ? FB.ready() : FB.ready);
+
+      STATE.db = FB.getFirestore();
+
+      const shell = document.querySelector('fv-shell');
+      if(shell) shell.nav = NAV_MENU;
+
+      // Smart back: use history if it makes sense; otherwise let the link work
+      const backEl = document.getElementById('btnBack');
+      if(backEl){
+        backEl.addEventListener('click', (ev) => {
+          try{
+            const hasHistory = (window.history && typeof window.history.length === 'number' && window.history.length > 1);
+            const hasRef = !!(document.referrer && document.referrer !== window.location.href);
+            if(hasHistory && hasRef){
+              ev.preventDefault();
+              history.back();
+            }
+          }catch{}
+        });
+      }
+
+const closeDetailBtn = $('#reqDetailClose');
+if(closeDetailBtn){
+  closeDetailBtn.addEventListener('click', ()=>{
+    STATE.selectedId = null;
+    clearDetails();
+  });
+}
+
+const denyBtn = $('#btnDenyRequest');
+if(denyBtn){
+  denyBtn.addEventListener('click', async ()=>{
+    const item = STATE.items.find(x => x.id === STATE.selectedId);
+
+    if(!item) return;
+
+    denyBtn.disabled = true;
+
+    try{
+      await denyRequest(item);
+    }catch(err){
+      console.error('Error denying service request:', err);
+      alert('Failed to deny request. Check console.');
+    }finally{
+      denyBtn.disabled = false;
+    }
+  });
+}
+
+await loadRequests();
+    })();
+  </script>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🧰</div>
+          <div>
+            <h1>Approve Equipment Service Requests</h1>
+            <p class="muted">
+              Review service requests saved with status “needs approved”. Slide the toggle to mark each as
+              <strong>Pending</strong>. A Work Order will be created or updated automatically after approval.
+            </p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <!-- Real link fallback so Back ALWAYS works -->
+              <a id="btnBack" class="btn btn-quiet" href="/pages/equipment/maintenance-index.html">
+                ← Back to Equipment Maintenance
+              </a>
+            </div>
+            <div class="page-header-meta" id="reqCount">0 needing approval</div>
+          </div>
+
+          <section aria-label="Service requests needing approval">
+            <div class="req-empty">
+              No service requests currently have status “needs approved”.
+              New requests that require your approval will appear here automatically.
+            </div>
+            <div class="req-list"></div>
+          </section>
+
+          <section class="req-detail-panel" aria-label="Service request details">
+            <div class="req-detail-header">
+              <div class="req-detail-title">Service Request Details</div>
+              <button type="button" id="reqDetailClose" class="req-detail-close">Close</button>
+            </div>
+
+            <div class="req-detail-grid"></div>
+
+            <div class="req-detail-notes">
+              <div class="req-detail-notes-label">Notes</div>
+              <div class="req-detail-notes-body"></div>
+            </div>
+
+            <div class="req-detail-footer"></div>
+
+<div class="req-detail-actions">
+  <button type="button" id="btnDenyRequest" class="btn btn-deny">
+    Deny Request
+  </button>
+</div>
+          </section>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+</body>
+</html>

@@ -1,0 +1,1090 @@
+<!doctype html><html lang="en"><head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Combine Grain Loss (Corn/Soybeans)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Standard includes -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <style>
+    :root{ --accent:#2F6C3C; --card-max:1100px; --ring: rgba(47,108,60,.20); }
+    body{ background: var(--app-bg, var(--surface)); }
+    .page{max-width:var(--card-max); margin:0 auto; padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;}
+    .muted{ color:var(--muted,#67706B); }
+
+    .hero{border:1px solid var(--border); border-radius:14px; background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08)); overflow:hidden;}
+    .hero-head{display:flex; gap:12px; align-items:flex-start; padding:14px 16px;
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      border-bottom:1px solid var(--border);}
+    .hero-head .icon{width:28px;height:28px;color:var(--accent);margin-top:2px;}
+    .hero-head h1{margin:0;font-size:clamp(20px,3.2vw,26px);line-height:1.2;}
+    .body{padding:16px; display:grid; gap:14px;}
+
+    .row{display:grid; gap:10px; grid-template-columns:1fr 1fr;}
+    .row-3{display:grid; gap:10px; grid-template-columns:1fr 1fr 1fr;}
+    @media (max-width:880px){ .row,.row-3{ grid-template-columns:1fr; } }
+
+    .field label{display:block; font-weight:800; margin:0 0 6px 0;}
+    .input,.select,.textarea{width:100%; font:inherit; font-size:16px; color:var(--text);
+      background:var(--card-surface,var(--surface)); border:1px solid var(--border);
+      border-radius:10px; padding:12px; outline:none;}
+    .input:focus,.select:focus,.textarea:focus{
+      border-color: rgba(47,108,60,.42);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+    .input[readonly]{
+      opacity:.92;
+      background: color-mix(in srgb, var(--card-surface,var(--surface)) 92%, #000 8%);
+    }
+
+    .radio-row{display:flex; gap:12px; flex-wrap:wrap;}
+    .hint{font-size:13px; color:var(--muted,#67706B)}
+    .error{ color:#b00020; font-weight:800; }
+
+    .card{border:1px solid var(--border); border-radius:12px; background:var(--card-surface,var(--surface)); padding:12px;}
+    .card h3{margin:0 0 8px 0; font-size:16px;}
+    .card .small{font-size:13px; color:var(--muted,#67706B);}
+
+    .actions{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:6px;}
+    .btn{display:inline-flex; align-items:center; justify-content:center; min-width:148px; padding:12px 16px;
+      border-radius:12px; border:1px solid var(--border); background:var(--card-surface,var(--surface));
+      font-weight:800; color:var(--text); cursor:pointer;}
+    .btn-primary{border-color:transparent; background:#2F6C3C; color:#fff;}
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+    .summary{border:1px solid var(--border); border-radius:12px; padding:14px;
+      background:linear-gradient(180deg, rgba(47,108,60,.06), transparent);}
+
+    .hist-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-top:1px solid var(--border);}
+    .hist-title{font-size:clamp(18px, 2.6vw, 22px); font-weight:800;}
+    .hist-clear{border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; color:var(--text) !important;}
+    .hist{padding:14px 16px; display:grid; gap:12px;}
+    .hist-item{border:1px solid var(--border); border-radius:12px; padding:12px; background:var(--card-surface,var(--surface));
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+    .hist-item .view{border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; color:var(--text) !important;}
+
+    .modal{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.42);
+      z-index:9999; transition:opacity .15s; opacity:0; }
+    .modal[open]{ display:grid; opacity:1; }
+    .dialog{ width:min(760px,92vw); max-height:85vh; display:flex; flex-direction:column; background:var(--surface); color:var(--text);
+      border-radius:14px; border:1px solid var(--border); box-shadow:0 16px 36px rgba(0,0,0,.28); }
+    .dialog-head{ padding:12px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    .dialog-body{ padding:14px; overflow:auto; flex:1 1 auto; min-height:0; -webkit-overflow-scrolling:touch; }
+    .closex{border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:700; color:var(--text) !important;}
+    .kv{ display:grid; grid-template-columns:1fr auto; gap:8px 12px; align-items:baseline; }
+    .kv .val{ font-weight:800; }
+
+    /* Context card */
+    .ctx{
+      border:1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+      background:linear-gradient(180deg, rgba(47,108,60,.08), transparent);
+    }
+
+    /* === DEV-STYLE INLINE COMBOS (Farm / Field) === */
+    :root{
+      --combo-gap:4px;
+      --combo-radius:12px;
+      --combo-btn-radius:10px;
+      --combo-shadow:0 12px 26px rgba(0,0,0,.18);
+      --combo-item-pad:10px 8px;
+      --combo-max-h:50vh;
+    }
+    .buttonish{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:var(--combo-btn-radius);
+      padding:12px;
+      padding-right:42px;
+      outline:none;
+      text-align:left;
+      cursor:pointer;
+      position:relative;
+    }
+    .buttonish.has-caret::after{
+      content:"";
+      position:absolute;
+      right:14px;
+      top:50%;
+      width:0;
+      height:0;
+      border-left:6px solid transparent;
+      border-right:6px solid transparent;
+      border-top:7px solid var(--muted,#67706B);
+      transform:translateY(-50%);
+      pointer-events:none;
+    }
+    .combo{ position:relative; }
+    .combo .combo-anchor{
+      position:relative;
+      display:inline-block;
+      width:100%;
+    }
+    .combo-panel{
+      position:absolute;
+      left:0; right:0;
+      top:calc(100% + var(--combo-gap));
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--combo-radius);
+      box-shadow:var(--combo-shadow);
+      padding:8px;
+      display:none;
+      z-index:9999;
+    }
+    .combo-panel.show{ display:block; }
+    .combo-panel .search{
+      padding:4px 2px 8px;
+    }
+    .combo-panel .search input{
+      width:100%;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:var(--combo-btn-radius);
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+    }
+    .combo-panel .list{
+      max-height:var(--combo-max-h);
+      overflow:auto;
+      border-top:1px solid var(--border);
+    }
+    .combo-item{
+      padding:var(--combo-item-pad);
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+    }
+    .combo-item:hover{ background:rgba(0,0,0,.04); }
+    .combo-item:last-child{ border-bottom:none; }
+    .combo-empty{
+      padding:var(--combo-item-pad);
+      color:#67706B;
+    }
+  </style>
+
+  <script>(function(){
+    if(!customElements.get('fv-shell')){
+      const s=document.createElement('script'); s.src='/js/core/shell/fv-shell.js'; s.defer=true; document.head.appendChild(s);
+    }
+  })();</script>
+</head><body>
+  <fv-shell>
+    <div class="page container">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🌾</div>
+          <div>
+            <h1>Combine Grain Loss</h1>
+            <p class="muted">Estimate loss for <strong>Corn</strong> or <strong>Soybeans</strong> using either kernel count (2×2 ft plot) or hula-hoop weight. Enter your field’s average yield to see % loss.</p>
+          </div>
+        </header>
+
+        <div class="body" id="form">
+
+          <div id="ctxCard" class="card ctx">
+
+            <div class="row">
+              <div class="field combo">
+                <label for="farmBtn">Farm</label>
+                <div class="combo-anchor">
+                  <button id="farmBtn" class="buttonish has-caret" type="button">Select farm…</button>
+                  <div class="combo-panel" id="farmPanel" role="listbox" aria-label="Farm list">
+                    <div class="search"><input id="farmSearch" type="search" placeholder="Search farms…"></div>
+                    <div class="list" id="farmList"></div>
+                  </div>
+                </div>
+                <input id="farmId" type="hidden" value="">
+              </div>
+
+              <div class="field combo">
+                <label for="fieldBtn">Field</label>
+                <div class="combo-anchor">
+                  <button id="fieldBtn" class="buttonish has-caret" type="button">Select field…</button>
+                  <div class="combo-panel" id="fieldPanel" role="listbox" aria-label="Field list">
+                    <div class="search"><input id="fieldSearch" type="search" placeholder="Search fields…"></div>
+                    <div class="list" id="fieldList"></div>
+                  </div>
+                </div>
+                <input id="fieldId" type="hidden" value="">
+              </div>
+            </div>
+
+            <!-- Combine row moved UNDER farm/field; only exists if hub -->
+            <div id="combineRow" class="row" hidden>
+              <div class="field">
+                <label for="combineName">Combine</label>
+                <input id="combineName" class="input" readonly value="—">
+              </div>
+              <div class="field"></div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="submittedBy">Submitted by</label>
+                <input id="submittedBy" class="input" readonly value="">
+              </div>
+              <div class="field">
+                <label for="submittedAt">Date</label>
+                <input id="submittedAt" class="input" type="datetime-local" value="">
+              </div>
+            </div>
+
+            <div id="ctxErr" class="error" hidden></div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="crop">Crop</label>
+              <select id="crop" class="select">
+                <option value="corn">Corn</option>
+                <option value="soy">Soybeans</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Method</label>
+              <div class="radio-row">
+                <label><input type="radio" name="method" value="count" checked> Kernel count (2×2 ft)</label>
+                <label><input type="radio" name="method" value="weight"> Weight (hula-hoop)</label>
+              </div>
+              <div class="hint">Rules of thumb: Corn ~ <strong>2 kernels/ft² = 1 bu/ac</strong>; Soybeans ~ <strong>4 beans/ft² = 1 bu/ac</strong>.</div>
+            </div>
+          </div>
+
+          <div id="card-count" class="card">
+            <h3>Kernel count method</h3>
+            <div class="small">Count loose kernels inside a 2×2 ft square (total area = 4 ft²).</div>
+            <div class="row">
+              <div class="field">
+                <label for="kernels">Kernels/Beans counted (in 4 ft²)</label>
+                <input id="kernels" class="input" inputmode="decimal" placeholder="e.g., 12">
+              </div>
+              <div class="field">
+                <label for="avgYield1">Average field yield (bu/ac)</label>
+                <input id="avgYield1" class="input" inputmode="decimal" placeholder="optional, e.g., 220">
+              </div>
+            </div>
+          </div>
+
+          <div id="card-weight" class="card" hidden>
+            <h3>Weight method (hula-hoop)</h3>
+            <div class="small">Toss a hoop, gather all loose kernels/beans inside, <em>weigh</em> them, and note grain moisture. We’ll compute area from the hoop diameter.</div>
+            <div class="row-3">
+              <div class="field">
+                <label for="hoopDia">Hoop diameter (inches)</label>
+                <input id="hoopDia" class="input" inputmode="decimal" placeholder="e.g., 30">
+              </div>
+              <div class="field">
+                <label for="wAmount">Weight</label>
+                <div style="display:flex;gap:8px">
+                  <input id="wAmount" class="input" inputmode="decimal" placeholder="e.g., 120">
+                  <select id="wUnit" class="select" style="max-width:140px">
+                    <option value="g">g</option>
+                    <option value="oz">oz</option>
+                    <option value="lb">lb</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="moist">Grain moisture (%)</label>
+                <input id="moist" class="input" inputmode="decimal" placeholder="e.g., 18">
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="avgYield2">Average field yield (bu/ac)</label>
+                <input id="avgYield2" class="input" inputmode="decimal" placeholder="optional">
+              </div>
+              <div class="field">
+                <label>Computed hoop area</label>
+                <input id="areaOut" class="input" disabled value="—">
+              </div>
+            </div>
+            <div class="hint">Corn normalized to 15.5% moisture (56 lb/bu). Soybeans normalized to 13% moisture (60 lb/bu).</div>
+          </div>
+
+          <div class="actions">
+            <button id="clear" class="btn" type="button">Clear</button>
+            <button id="run" class="btn btn-primary" type="button">Calculate</button>
+          </div>
+
+          <div id="summary" class="summary" hidden></div>
+        </div>
+
+        <div class="hist-head">
+          <div class="hist-title">Previous Calculations</div>
+          <button id="clearHist" class="hist-clear" type="button">Clear History</button>
+        </div>
+        <div id="history" class="hist">
+          <div class="muted">No previous calculations.</div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
+      <div class="dialog-head">
+        <h3 id="mdTitle">Details</h3>
+        <button class="closex" id="mdClose" type="button">Back</button>
+      </div>
+      <div class="dialog-body" id="mdBody"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection, doc, getDoc, getDocs,
+      query, orderBy,
+      addDoc,
+      serverTimestamp,
+      getAuth,
+      onAuthStateChanged
+    } from '/js/core/firebase/firebase-init.js';
+
+    (function(){
+      "use strict";
+      const $=id=>document.getElementById(id);
+      const round=(n,d=2)=> (isFinite(n)? Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}):"—");
+      const toNum = v => { const n = Number(String(v||"").replace(/[^0-9.]/g,"")); return isFinite(n)?n:NaN; };
+
+      const qs = new URLSearchParams(location.search);
+
+      const RAW_COMBINE_ID =
+        (qs.get('combineId') || qs.get('combine') || qs.get('equipmentId') || qs.get('equipId') || qs.get('eqId') || '').trim() || "";
+
+      const IS_HUB =
+        /^[A-Za-z0-9_-]{12,}$/.test(RAW_COMBINE_ID);
+
+      const HUB_COMBINE_ID = IS_HUB ? RAW_COMBINE_ID : null;
+
+      const HUB_FARM_ID = (qs.get('farmId') || qs.get('farm') || '').trim() || '';
+      const HUB_FIELD_ID = (qs.get('fieldId') || qs.get('field') || '').trim() || '';
+
+      const ctxErr = $("ctxErr");
+      const combineRow = $("combineRow");
+      const combineNameEl = $("combineName");
+
+      const submittedByEl = $("submittedBy");
+      const submittedAtEl = $("submittedAt");
+
+      const farmBtn = $("farmBtn");
+      const farmPanel = $("farmPanel");
+      const farmList = $("farmList");
+      const farmSearch = $("farmSearch");
+      const fieldBtn = $("fieldBtn");
+      const fieldPanel = $("fieldPanel");
+      const fieldList = $("fieldList");
+      const fieldSearch = $("fieldSearch");
+      const farmIdEl = $("farmId");
+      const fieldIdEl = $("fieldId");
+
+      const state = {
+        farms: [],
+        fields: [],
+        farm: null,
+        field: null
+      };
+
+      function showCtxErr(msg){
+        if(!ctxErr) return;
+        if(msg){
+          ctxErr.textContent = msg;
+          ctxErr.hidden = false;
+        }else{
+          ctxErr.textContent = "";
+          ctxErr.hidden = true;
+        }
+      }
+
+      function toLocalDTInputValue(d){
+        try{
+          const dt = (d instanceof Date) ? d : new Date(d);
+          if(!isFinite(dt.getTime())) return "";
+          const pad = (n)=>String(n).padStart(2,'0');
+          const yyyy = dt.getFullYear();
+          const mm = pad(dt.getMonth()+1);
+          const dd = pad(dt.getDate());
+          const hh = pad(dt.getHours());
+          const mi = pad(dt.getMinutes());
+          return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+        }catch{ return ""; }
+      }
+
+      function normalizeSerial(s){ return String(s||'').trim().toUpperCase(); }
+      function serialLast6(serial){
+        const s = normalizeSerial(serial || '');
+        if(!s) return '';
+        return s.length <= 6 ? s : s.slice(-6);
+      }
+
+      let __db = null;
+      let __auth = null;
+      let __combine = { id: null, name: null };
+
+      function closeAllCombos(exceptPanel=null){
+        document.querySelectorAll('.combo-panel.show').forEach(p=>{
+          if(p!==exceptPanel) p.classList.remove('show');
+        });
+      }
+      document.addEventListener('click', ()=> closeAllCombos());
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAllCombos(); });
+
+      function esc(s){
+        return String(s ?? "").replace(/[&<>"']/g, m =>
+          ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])
+        );
+      }
+
+      function pickName(data){
+        return data.name || data.farmName || data.fieldName || data.label || data.title || "Unnamed";
+      }
+
+      function refToId(v){
+        try{
+          if(!v) return null;
+          if(typeof v === 'string') return v.trim() || null;
+          if(typeof v.id === 'string') return v.id.trim() || null;
+          if(typeof v.path === 'string'){
+            const p = v.path.trim();
+            if(!p) return null;
+            const parts = p.split('/').filter(Boolean);
+            return parts.length ? parts[parts.length-1] : null;
+          }
+          return null;
+        }catch{ return null; }
+      }
+
+      function makeCombo({ btn, panel, list, searchInput, items=[], formatter, onPick }){
+        if(!btn || !panel || !list) return null;
+
+        panel.addEventListener('click', e=> e.stopPropagation());
+        panel.addEventListener('mousedown', e=> e.stopPropagation());
+
+        let DATA = items || [];
+
+        function render(q=""){
+          const qq = (q||"").toLowerCase();
+          const rows = (DATA||[]).filter(x=>{
+            const label = String(formatter(x)||"").toLowerCase();
+            return !qq || label.includes(qq);
+          });
+
+          if(rows.length){
+            list.innerHTML = rows.map(x=>`<div class="combo-item" data-id="${esc(String(x.id))}">${esc(formatter(x))}</div>`).join('');
+          }else{
+            list.innerHTML = `<div class="combo-empty">(no matches)</div>`;
+          }
+        }
+
+        function open(){
+          closeAllCombos(panel);
+          panel.classList.add('show');
+          render("");
+          if(searchInput){
+            searchInput.value = "";
+            searchInput.focus();
+          }
+        }
+        function close(){ panel.classList.remove('show'); }
+
+        btn.addEventListener('click', e=>{
+          e.stopPropagation();
+          panel.classList.contains('show') ? close() : open();
+        });
+
+        list.addEventListener('mousedown', e=>{
+          const row = e.target.closest('.combo-item');
+          if(!row) return;
+          const id = row.dataset.id;
+          const it = (DATA||[]).find(x=>String(x.id)===String(id));
+          if(!it) return;
+          onPick && onPick(it);
+          close();
+        });
+
+        if(searchInput){
+          searchInput.addEventListener('input', e=> render(e.target.value));
+        }
+
+        return {
+          setItems(arr){
+            DATA = arr || [];
+            render(searchInput ? searchInput.value : "");
+          }
+        };
+      }
+
+      let farmCombo = null;
+      let fieldCombo = null;
+
+      function refreshFieldComboForFarm(farmId){
+        let list = state.fields;
+        if(farmId){
+          list = list.filter(f=>String(f.farmId||"") === String(farmId));
+        }
+        if(fieldCombo) fieldCombo.setItems(list);
+
+        if(state.field && farmId && String(state.field.farmId||"") !== String(farmId)){
+          state.field = null;
+          if(fieldBtn) fieldBtn.textContent = "Select field…";
+          if(fieldIdEl) fieldIdEl.value = "";
+        }
+      }
+
+      function selectFarmById(farmId){
+        if(!farmId) return;
+        const farm = state.farms.find(f=>String(f.id)===String(farmId));
+        if(!farm) return;
+        state.farm = farm;
+        if(farmBtn) farmBtn.textContent = farm.name;
+        if(farmIdEl) farmIdEl.value = farm.id;
+      }
+
+      async function loadFarms(){
+        const snap = await getDocs(query(collection(__db,"farms"), orderBy("name")));
+        state.farms = snap.docs.map(ds=>{
+          const d = ds.data() || {};
+          if(!!d.archived) return null;
+          return { id: ds.id, name: pickName(d) };
+        }).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+        if(farmCombo) farmCombo.setItems(state.farms);
+      }
+
+      async function loadFields(){
+        const snap = await getDocs(query(collection(__db,"fields"), orderBy("name")));
+        state.fields = snap.docs.map(ds=>{
+          const d = ds.data() || {};
+          if(!!d.archived) return null;
+
+          const farmId =
+            refToId(d.farmId) ||
+            refToId(d.farm) ||
+            refToId(d.farmRef) ||
+            refToId(d.farmDocId) ||
+            refToId(d.farmRefId) ||
+            refToId(d.farm_id) ||
+            null;
+
+          return { id: ds.id, name: pickName(d), farmId };
+        }).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+
+        refreshFieldComboForFarm(state.farm ? state.farm.id : null);
+      }
+
+      async function loadCombineIfHub(){
+        if(!HUB_COMBINE_ID) return;
+        try{
+          const snap = await getDoc(doc(__db,'equipment',HUB_COMBINE_ID));
+          if(snap.exists()){
+            const d = snap.data() || {};
+            const mk = String(d.makeName || '').trim();
+            const md = String(d.modelName || '').trim();
+            const s6 = serialLast6(d.serial || '');
+            const mm = [mk, md].filter(Boolean).join(' ').trim();
+            const name = mm ? (s6 ? `${mm} — #${s6}` : mm) : (s6 ? `Combine — #${s6}` : `Combine (${HUB_COMBINE_ID.slice(-6)})`);
+            __combine = { id: HUB_COMBINE_ID, name };
+            if(combineNameEl) combineNameEl.value = name;
+          }else{
+            __combine = { id: HUB_COMBINE_ID, name: `Combine (${HUB_COMBINE_ID.slice(-6)})` };
+            if(combineNameEl) combineNameEl.value = __combine.name;
+          }
+        }catch{
+          __combine = { id: HUB_COMBINE_ID, name: `Combine (${HUB_COMBINE_ID.slice(-6)})` };
+          if(combineNameEl) combineNameEl.value = __combine.name;
+        }
+      }
+
+      function initHubUI(){
+        if(!IS_HUB){
+          try{ combineRow.remove(); }catch{}
+          __combine = { id:null, name:null };
+          return;
+        }
+        combineRow.hidden = false;
+        combineNameEl.value = "Loading…";
+      }
+
+function initUserDefaults(){
+  submittedByEl.value = "";
+  submittedAtEl.value = toLocalDTInputValue(new Date());
+
+  onAuthStateChanged(__auth, async (u)=>{
+    if(!u){
+      submittedByEl.value = "";
+      return;
+    }
+
+    let displayName = "";
+
+    try{
+      // First try employee document keyed by Firebase Auth UID
+      const employeeSnap = await getDoc(doc(__db, "employees", u.uid));
+
+      if(employeeSnap.exists()){
+        const d = employeeSnap.data() || {};
+
+        displayName =
+          String(d.displayName || "").trim() ||
+          [d.firstName, d.lastName].filter(Boolean).join(" ").trim() ||
+          String(d.name || "").trim();
+      }
+    }catch(e){
+      console.warn("Could not load employee by UID:", e);
+    }
+
+    // If employee docs are not keyed by UID,
+    // match the logged-in user's email against employees.
+    if(!displayName && u.email){
+      try{
+        const employeeSnap = await getDocs(collection(__db, "employees"));
+        const loginEmail = String(u.email || "").trim().toLowerCase();
+
+        for(const ds of employeeSnap.docs){
+          const d = ds.data() || {};
+          const employeeEmail = String(d.email || "").trim().toLowerCase();
+
+          if(employeeEmail && employeeEmail === loginEmail){
+            displayName =
+              String(d.displayName || "").trim() ||
+              [d.firstName, d.lastName].filter(Boolean).join(" ").trim() ||
+              String(d.name || "").trim();
+
+            if(displayName) break;
+          }
+        }
+      }catch(e){
+        console.warn("Could not match employee by email:", e);
+      }
+    }
+
+    // Final Firebase Auth fallback
+    if(!displayName){
+      displayName =
+        String(u.displayName || "").trim() ||
+        String(u.email || "").trim();
+    }
+
+    submittedByEl.value = displayName;
+  });
+}
+
+      function restrict2(el){
+        if(!el) return;
+        el.addEventListener("input", ()=>{
+          let s = String(el.value||"");
+          s = s.replace(/[^\d.]/g,"");
+          let parts = s.split(".");
+          if(parts.length>2){
+            s = parts.shift() + "." + parts.join("");
+            parts = s.split(".");
+          }
+          if(parts.length===2){
+            parts[1] = parts[1].slice(0,2);
+            s = parts[0] + "." + parts[1];
+          }
+          el.value = s;
+        });
+        el.addEventListener("blur", ()=>{
+          const n = toNum(el.value);
+          if(!isFinite(n)){ el.value=""; return; }
+          el.value = Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+        });
+      }
+      ["kernels","avgYield1","hoopDia","wAmount","moist","avgYield2"].forEach(id=>restrict2($(id)));
+
+      const COUNT_CONST = { corn: 2, soy: 4 };
+      const STD = { corn: { mc: 15.5, tw: 56 }, soy: { mc: 13.0, tw: 60 } };
+      const SQFT_PER_AC = 43560;
+
+      const methodRadios = Array.from(document.querySelectorAll('input[name="method"]'));
+      function syncMethod(){
+        const m = methodRadios.find(r=>r.checked)?.value || "count";
+        $("card-count").hidden = (m!=="count");
+        $("card-weight").hidden = (m!=="weight");
+      }
+      methodRadios.forEach(r=> r.addEventListener("change", syncMethod));
+      syncMethod();
+
+      function hoopAreaFt2(diaIn){
+        if(!isFinite(diaIn) || diaIn<=0) return NaN;
+        const r_ft = (diaIn/2)/12;
+        return Math.PI * r_ft * r_ft;
+      }
+      $("hoopDia").addEventListener("input", ()=>{
+        const a = hoopAreaFt2(toNum($("hoopDia").value));
+        $("areaOut").value = isFinite(a) ? round(a,3)+" ft²" : "—";
+      });
+
+      const LS_KEY = "fv_calc_combine_loss_v1";
+      const MAX_HIST = 10;
+
+      function loadHist(){
+        try{ const arr = JSON.parse(localStorage.getItem(LS_KEY)||"[]"); return Array.isArray(arr)?arr:[]; }
+        catch(e){ return []; }
+      }
+      function saveHist(arr){
+        localStorage.setItem(LS_KEY, JSON.stringify(arr.slice(0,MAX_HIST)));
+      }
+      function renderHist(){
+        const box = $("history");
+        const h = loadHist();
+        if(!h.length){ box.innerHTML = '<div class="muted">No previous calculations.</div>'; return; }
+        box.innerHTML = "";
+        h.forEach(it=>{
+          const div = document.createElement("div");
+          div.className = "hist-item";
+          const line = `${it.crop==="corn"?"Corn":"Soy"} • ${it.method==="count"?"Count":"Weight"} • ${round(it.loss_bu_ac,2)} bu/ac${isFinite(it.loss_pct)?` • ${round(it.loss_pct,2)}%`:''}`;
+          div.innerHTML = `<div class="hline">${line}</div>
+                           <button class="view" type="button">View</button>`;
+          div.querySelector(".view").addEventListener("click", ()=> openDetail(it));
+          box.appendChild(div);
+        });
+      }
+
+      const modal=$("modal"), mdBody=$("mdBody"), mdClose=$("mdClose");
+      let lastFocus=null;
+      function openDetail(it){
+        $("mdTitle").textContent = "Calculation Details";
+        const rows = [
+          ...(it.combine_name ? [["Combine", it.combine_name]] : []),
+          ...(it.farm_name ? [["Farm", it.farm_name]] : []),
+          ...(it.field_name ? [["Field", it.field_name]] : []),
+          ...(it.submitted_by ? [["Submitted by", it.submitted_by]] : []),
+          ...(it.submitted_at ? [["Date", it.submitted_at]] : []),
+          ["Crop", it.crop==="corn"?"Corn":"Soybeans"],
+          ["Method", it.method==="count"?"Kernel count (4 ft²)":"Weight (hoop)"],
+          ...(it.method==="count" ? [
+            ["Kernels/beans (4 ft²)", it.kernels],
+            ["Rule of thumb", `${COUNT_CONST[it.crop]} per ft² = 1 bu/ac`]
+          ]:[
+            ["Hoop diameter (in)", it.hoop_dia_in],
+            ["Hoop area (ft²)", round(it.area_ft2,3)],
+            ["Weight (wet, lb)", round(it.wet_lb,3)],
+            ["Moisture (%)", round(it.moist,2)],
+            ["Adj. to std moisture", `${STD[it.crop].mc}%`]
+          ]),
+          ["Loss (bu/ac)", round(it.loss_bu_ac,2)],
+          ["Avg field yield (bu/ac)", isFinite(it.avg_yield)?round(it.avg_yield,2):"—"],
+          ["Loss (% of yield)", isFinite(it.loss_pct)?round(it.loss_pct,2)+"%":"—"],
+          ["Timestamp", new Date(it.t).toLocaleString()]
+        ];
+        mdBody.innerHTML = `<div class="kv">${rows.map(r=>`<div>${r[0]}</div><div class="val">${r[1]}</div>`).join("")}</div>`;
+        modal.setAttribute("open",""); modal.setAttribute("aria-hidden","false");
+        document.documentElement.classList.add("no-scroll"); document.body.classList.add("no-scroll");
+        lastFocus=document.activeElement; mdClose.focus();
+      }
+      function closeModal(){
+        modal.removeAttribute("open"); modal.setAttribute("aria-hidden","true");
+        document.documentElement.classList.remove("no-scroll"); document.body.classList.remove("no-scroll");
+        if(lastFocus && lastFocus.focus) lastFocus.focus();
+      }
+      mdClose.addEventListener("click", closeModal);
+      modal.addEventListener("click", e=>{ if(e.target===modal) closeModal(); });
+      document.addEventListener("keydown", e=>{ if(e.key==="Escape" && modal.hasAttribute("open")) closeModal(); });
+
+      function fromCount(crop, kernelsIn4ft2){
+        const perFt2 = COUNT_CONST[crop];
+        if(!isFinite(kernelsIn4ft2) || kernelsIn4ft2<0) return NaN;
+        return kernelsIn4ft2 / (perFt2 * 4);
+      }
+
+      function toPounds(w, unit){
+        if(!isFinite(w) || w<0) return NaN;
+        if(unit==="lb") return w;
+        if(unit==="oz") return w/16;
+        if(unit==="g")  return w*0.00220462262185;
+        return NaN;
+      }
+
+      function adjustToStdMoist(wet_lb, measured_mc, std_mc){
+        if(!isFinite(wet_lb)||!isFinite(measured_mc)) return NaN;
+        const DM = 1 - (measured_mc/100);
+        const DMstd = 1 - (std_mc/100);
+        if(DM<=0 || DMstd<=0) return NaN;
+        return wet_lb * (DM/DMstd);
+      }
+
+      function fromWeight(crop, hoopDiaIn, wetWeight, unit, moisturePct){
+        const area = hoopAreaFt2(hoopDiaIn);
+        if(!isFinite(area) || area<=0) return { bu_ac: NaN, area_ft2: NaN, wet_lb: NaN, adj_lb: NaN };
+        const wet_lb = toPounds(wetWeight, unit);
+        const adj_lb = adjustToStdMoist(wet_lb, moisturePct, STD[crop].mc);
+        if(!isFinite(adj_lb)) return { bu_ac: NaN, area_ft2: area, wet_lb, adj_lb: NaN };
+        const lb_per_sqft = adj_lb / area;
+        const lb_per_ac = lb_per_sqft * SQFT_PER_AC;
+        const bu_ac = lb_per_ac / STD[crop].tw;
+        return { bu_ac, area_ft2: area, wet_lb, adj_lb };
+      }
+
+      let saving = false;
+
+      function ctxValidate(){
+        showCtxErr("");
+        const by = String(submittedByEl?.value || "").trim();
+        const at = String(submittedAtEl?.value || "").trim();
+        const farmId = String(farmIdEl?.value || "").trim();
+        const fieldId = String(fieldIdEl?.value || "").trim();
+
+        if(!by) return { ok:false, msg:"Submitted by is required (login missing?)." };
+        if(!at) return { ok:false, msg:"Date is required." };
+        if(!farmId) return { ok:false, msg:"Farm is required." };
+        if(!fieldId) return { ok:false, msg:"Field is required." };
+        return { ok:true, by, at, farmId, fieldId };
+      }
+
+      function farmNameById(id){
+        const f = state.farms.find(x=>String(x.id)===String(id));
+        return f ? f.name : '';
+      }
+      function fieldNameById(id){
+        const f = state.fields.find(x=>String(x.id)===String(id));
+        return f ? f.name : '';
+      }
+
+      async function saveToFirestore(it){
+        if(!__db) return;
+        const v = ctxValidate();
+        if(!v.ok){
+          showCtxErr(v.msg);
+          throw new Error("CTX_INVALID");
+        }
+
+        const payload = {
+          type: "combine_grain_loss",
+          crop: it.crop,
+          method: it.method,
+
+          combineId: __combine.id || null,
+          combineName: __combine.name || null,
+          farmId: v.farmId,
+          farmName: farmNameById(v.farmId) || null,
+          fieldId: v.fieldId,
+          fieldName: fieldNameById(v.fieldId) || null,
+          submittedBy: v.by,
+          submittedAtLocal: v.at,
+
+          lossBuAc: isFinite(it.loss_bu_ac) ? Number(it.loss_bu_ac) : null,
+          lossPct: isFinite(it.loss_pct) ? Number(it.loss_pct) : null,
+          avgYield: isFinite(it.avg_yield) ? Number(it.avg_yield) : null,
+
+          kernels: (it.method==="count" && isFinite(it.kernels)) ? Number(it.kernels) : null,
+          hoopDiaIn: (it.method==="weight" && isFinite(it.hoop_dia_in)) ? Number(it.hoop_dia_in) : null,
+          areaFt2: (it.method==="weight" && isFinite(it.area_ft2)) ? Number(it.area_ft2) : null,
+          wetLb: (it.method==="weight" && isFinite(it.wet_lb)) ? Number(it.wet_lb) : null,
+          moistPct: (it.method==="weight" && isFinite(it.moist)) ? Number(it.moist) : null,
+
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        await addDoc(collection(__db, 'combine_grain_loss'), payload);
+      }
+
+      async function runCalc(){
+        showCtxErr("");
+
+        const crop = $("crop").value;
+        const method = methodRadios.find(r=>r.checked)?.value || "count";
+
+        let loss_bu_ac = NaN, avg_yield = NaN, extra={};
+
+        if(method==="count"){
+          const k = toNum($("kernels").value);
+          loss_bu_ac = fromCount(crop, k);
+          avg_yield = toNum($("avgYield1").value);
+          extra = { kernels:k };
+        }else{
+          const dia = toNum($("hoopDia").value);
+          const w = toNum($("wAmount").value);
+          const unit = $("wUnit").value;
+          const m = toNum($("moist").value);
+          const out = fromWeight(crop, dia, w, unit, m);
+          loss_bu_ac = out.bu_ac;
+          avg_yield = toNum($("avgYield2").value);
+          extra = { hoop_dia_in:dia, area_ft2:out.area_ft2, wet_lb:out.wet_lb, moist:m };
+          $("areaOut").value = isFinite(out.area_ft2) ? round(out.area_ft2,3)+" ft²" : "—";
+        }
+
+        const loss_pct = isFinite(avg_yield) && avg_yield>0 && isFinite(loss_bu_ac) ? (loss_bu_ac/avg_yield*100) : NaN;
+
+        const cropLabel = crop==="corn"?"Corn":"Soybeans";
+        const methodLabel = method==="count"?"Kernel count (4 ft²)":"Weight (hoop)";
+        const sum = `<strong>Result:</strong> ${cropLabel} • ${methodLabel} → <strong>${round(loss_bu_ac,2)} bu/ac</strong>${isFinite(loss_pct)?` • ${round(loss_pct,2)}% of yield`:''}`;
+        $("summary").innerHTML = sum;
+        $("summary").hidden = false;
+
+        const it = {
+          t: Date.now(),
+          crop, method,
+          loss_bu_ac, loss_pct, avg_yield,
+          ...extra,
+          combine_id: __combine.id || null,
+          combine_name: __combine.name || null,
+          farm_id: String(farmIdEl?.value || "").trim() || null,
+          farm_name: farmNameById(String(farmIdEl?.value || "").trim()) || null,
+          field_id: String(fieldIdEl?.value || "").trim() || null,
+          field_name: fieldNameById(String(fieldIdEl?.value || "").trim()) || null,
+          submitted_by: String(submittedByEl?.value || "").trim() || null,
+          submitted_at: String(submittedAtEl?.value || "").trim() || null
+        };
+
+        const h = loadHist(); h.unshift(it); saveHist(h); renderHist();
+        window.scrollTo({top:0, behavior:"smooth"});
+
+        if(saving) return;
+        saving = true;
+        $("run").disabled = true;
+        try{
+          await saveToFirestore(it);
+        }catch(e){
+          if(e && e.message === "CTX_INVALID"){
+          }else{
+            console.error(e);
+            showCtxErr("Save failed. Check console / Firestore rules.");
+          }
+        }finally{
+          saving = false;
+          $("run").disabled = false;
+        }
+      }
+
+      $("run").addEventListener("click", runCalc);
+
+      $("clear").addEventListener("click", ()=>{
+        ["kernels","avgYield1","hoopDia","wAmount","moist","avgYield2"].forEach(id=>{ const el=$(id); if(el) el.value=""; });
+        $("areaOut").value="—";
+        $("summary").hidden = true;
+        showCtxErr("");
+      });
+
+      $("clearHist").addEventListener("click", ()=>{
+        if(!confirm("Clear previous calculations?")) return;
+        saveHist([]); renderHist();
+      });
+
+function initFarmFieldCombos(){
+  // IMPORTANT:
+  // Assign these to the OUTER farmCombo / fieldCombo variables.
+  // Do not redeclare them with const here.
+  // loadFarms() and loadFields() update these after Firestore loads.
+
+  farmCombo = makeCombo({
+    btn: farmBtn,
+    panel: farmPanel,
+    list: farmList,
+    searchInput: farmSearch,
+    items: [],
+    formatter: x => x.name,
+    onPick: it=>{
+      state.farm = it;
+
+      farmBtn.textContent = it.name;
+      farmIdEl.value = it.id;
+
+      // Reset field when changing farms
+      state.field = null;
+      fieldBtn.textContent = "Select field…";
+      fieldIdEl.value = "";
+
+      refreshFieldComboForFarm(it.id);
+      showCtxErr("");
+    }
+  });
+
+  fieldCombo = makeCombo({
+    btn: fieldBtn,
+    panel: fieldPanel,
+    list: fieldList,
+    searchInput: fieldSearch,
+    items: [],
+    formatter: x => x.name,
+    onPick: it=>{
+      state.field = it;
+      fieldBtn.textContent = it.name;
+      fieldIdEl.value = it.id;
+
+      // A field knows its farm, so automatically sync Farm.
+      if(it.farmId){
+        selectFarmById(it.farmId);
+        farmIdEl.value = it.farmId;
+
+        refreshFieldComboForFarm(it.farmId);
+
+        // Preserve selected field after refreshing list
+        state.field = it;
+        fieldBtn.textContent = it.name;
+        fieldIdEl.value = it.id;
+      }
+
+      showCtxErr("");
+    }
+  });
+}
+
+      function applyHubDefaultsAfterLoad(){
+        if(HUB_FARM_ID){
+          const farm = state.farms.find(f=>String(f.id)===String(HUB_FARM_ID));
+          if(farm){
+            state.farm = farm;
+            farmBtn.textContent = farm.name;
+            farmIdEl.value = farm.id;
+            refreshFieldComboForFarm(farm.id);
+          }
+        }
+
+        if(HUB_FIELD_ID){
+          const field = state.fields.find(f=>String(f.id)===String(HUB_FIELD_ID));
+          if(field){
+            state.field = field;
+            fieldBtn.textContent = field.name;
+            fieldIdEl.value = field.id;
+
+            if(field.farmId){
+              selectFarmById(field.farmId);
+              farmIdEl.value = field.farmId;
+              refreshFieldComboForFarm(field.farmId);
+              fieldBtn.textContent = field.name;
+              fieldIdEl.value = field.id;
+            }
+          }
+        }
+      }
+
+      (async()=>{
+        await ready;
+        __db = getFirestore();
+        __auth = getAuth();
+
+        initHubUI();
+        initUserDefaults();
+
+        initFarmFieldCombos();
+
+        await Promise.all([loadFarms(), loadFields()]);
+        refreshFieldComboForFarm(state.farm ? state.farm.id : null);
+
+        applyHubDefaultsAfterLoad();
+
+        await loadCombineIfHub();
+
+        $("hoopDia").value = 30;
+        $("areaOut").value = (Math.PI*(1.25**2)).toFixed(3)+" ft²";
+        renderHist();
+      })();
+    })();
+  </script>
+</body></html>

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Equipment Maintenance Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <style>
+    .form-tiles {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(10px, 2.5vw, 16px);
+    }
+    /* ===============================
+   FIX: fv-form-button label overflow on desktop
+   =============================== */
+
+/* Let the button grow vertically */
+fv-form-button{
+  height: auto;
+  min-height: 120px; /* keeps tiles consistent */
+}
+
+/* Fix internal label wrapping */
+fv-form-button::part(label),
+fv-form-button .label,
+fv-form-button span{
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* Ensure content is vertically centered */
+fv-form-button::part(button),
+fv-form-button .btn,
+fv-form-button button{
+  align-items: center;
+  justify-content: center;
+}
+
+    @media (min-width:900px) {
+      .form-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+      if(!customElements.get('fv-form-button')){
+        const s=document.createElement('script');
+        s.src='/js/shared/ui/fv-form-button.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script type="module">
+  import * as FVInit from '/js/core/firebase/firebase-init.js';
+  import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+  // Accept multiple firebase-init patterns without crashing:
+  //  - export function ready() {}
+  //  - export default function ready() {}
+  //  - window.FV_READY = Promise
+  //  - side-effect only (no explicit ready)
+  const readyFn =
+    (typeof FVInit.ready === 'function' && FVInit.ready) ||
+    (typeof FVInit.default === 'function' && FVInit.default) ||
+    (window.FV && typeof window.FV.ready === 'function' && window.FV.ready) ||
+    (window.FV && typeof window.FV.whenReady === 'function' && window.FV.whenReady) ||
+    null;
+
+  const readyPromise =
+    readyFn ? Promise.resolve().then(() => readyFn()) :
+    (window.FV_READY && typeof window.FV_READY.then === 'function') ? window.FV_READY :
+    (window.FV && window.FV.readyPromise && typeof window.FV.readyPromise.then === 'function') ? window.FV.readyPromise :
+    Promise.resolve();
+
+  // Wait for shell element registration + firebase init (best-effort)
+  try { await customElements.whenDefined('fv-shell'); } catch(e) {}
+  try { await readyPromise; } catch(e) {}
+
+  const shell = document.querySelector('fv-shell');
+  if (shell) shell.nav = NAV_MENU;
+</script>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="page container">
+
+      <h1 class="page-title">Equipment Maintenance Portal</h1>
+
+      <p class="page-sub">
+        Track and manage service work across your equipment fleet.
+        Use <strong>Approve Service Request</strong> to review and approve
+        new requests, and <strong>Equipment Service Work Orders</strong> to
+        work active jobs through to completion.
+      </p>
+
+      <!-- Portal visibility controlled by eq-maint-workorders.view -->
+      <section class="form-tiles" aria-label="Equipment maintenance actions" data-perm="eq-maint-workorders:view">
+
+        <!-- Approvals → eq-maint-workorders.edit -->
+        <fv-form-button 
+          label="Approve Service Request"
+          icon-svg="approve"
+          href="/pages/equipment/actions/service-approve.html"
+          data-perm="eq-maint-workorders:edit">
+        </fv-form-button>
+
+        <!-- Work orders (everyone can add/progress work) → eq-maint-workorders.add -->
+        <fv-form-button
+          label="Equipment Service Work Orders"
+          icon-svg="done"
+          href="/pages/equipment/actions/service-workorders.html"
+          data-perm="eq-maint-workorders:add">
+        </fv-form-button>
+
+      </section>
+
+    </div>
+  </fv-shell>
+</body>
+</html>

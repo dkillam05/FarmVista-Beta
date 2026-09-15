@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FarmVista - Grain Shrink</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#3B7E46">
+
+  <script defer src="../../js/core/theme/theme-boot.js"></script>
+  
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="stylesheet" href="../../assets/css/theme.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+  <script defer src="../../js/core/shell/fv-shell.js"></script>
+  <style>
+    :root{
+      --page-bottom-gap: 96px;
+      --card-max: 940px;
+      --accent: #2F6C3C;
+      --ring: rgba(47,108,60,.20);
+    }
+    html{-webkit-text-size-adjust:100%}
+    body{ background: var(--app-bg, var(--surface)); }
+
+    .wrap{
+      max-width: var(--card-max);
+      margin: 0 auto;
+      padding: clamp(14px,3vw,22px);
+      padding-bottom: calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+    }
+
+    .calc-card{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+      margin-bottom: var(--page-bottom-gap);
+    }
+
+    .card-head{
+      display:flex; align-items:center; gap:12px; padding:14px 16px;
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      border-bottom:1px solid var(--border);
+    }
+    .card-head .icon{ width:28px; height:28px; color:var(--accent); }
+    .card-head h1{ margin:0; font-size:clamp(20px,3.2vw,26px); line-height:1.2; }
+    .muted{ color:var(--muted,#67706B); }
+
+    form{ padding:16px; display:grid; gap:14px; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:760px){ .grid{ grid-template-columns:1fr; } }
+
+    label{ display:block; font-weight:600; margin-bottom:6px; }
+
+    .ctrl{
+      display:flex; align-items:center; gap:8px;
+      border:1px solid var(--border); background:var(--card-surface,var(--surface));
+      border-radius:10px; padding:10px 12px;
+    }
+    input,select,button{ font-size:16px; } /* prevent iOS zoom */
+    .ctrl input{ width:100%; border:0; outline:0; background:transparent; color:var(--text); }
+    .unit{ font-size:12px; color:var(--muted); white-space:nowrap; }
+
+    .select-box{
+      width:100%;
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 42px 10px 12px;
+      background: var(--card-surface,var(--surface));
+      color: var(--text);
+      outline:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%2367706B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 12px center;
+      background-size:18px 18px;
+    }
+    .select-box:focus{
+      border-color: rgba(47,108,60,.42);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+
+    .label-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .label-row label{ margin:0; font-weight:600; }
+    .help-btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--surface);
+      border-radius:999px;
+      width:26px;
+      height:26px;
+      display:inline-grid;
+      place-items:center;
+      cursor:pointer;
+      color: var(--text) !important;
+      padding:0;
+    }
+    .help-btn:focus{
+      outline:none;
+      border-color: rgba(47,108,60,.42);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+    .help-btn svg{ width:16px; height:16px; }
+
+    .actions{ display:flex; gap:10px; justify-content:flex-end; padding:0 16px 16px; }
+    .btn{
+      appearance:none; border:1px solid var(--border); background:var(--surface);
+      padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;
+      color: var(--text) !important;
+    }
+    .btn-primary{ background:var(--accent); color:#fff !important; border-color:var(--accent); }
+    .btn-link{
+      background:none; border:0; padding:0; text-decoration:underline; cursor:pointer;
+      color: var(--text) !important;
+    }
+
+    .results{ padding:0 16px 16px; }
+    .tile{
+      border:1px solid var(--border); border-radius:12px; padding:12px;
+      background: linear-gradient(180deg, rgba(47,108,60,.06), transparent 55%);
+    }
+    .tile h3{ margin:0 0 8px; font-size:16px; }
+    .kv{ display:grid; grid-template-columns:1fr auto; gap:6px 12px; align-items:baseline; }
+    .kv .val{ font-weight:800; }
+
+    .result-grid{ display:grid reminded: grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:760px){ .result-grid{ grid-template-columns:1fr; } }
+
+    .hist{ padding:16px; border-top:1px dashed var(--border); }
+    .hlist{ display:grid; gap:8px; }
+    .hitem{ display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--card-surface,var(--surface)); }
+    .hsummary{ font-weight:700; }
+    .muted-line{ font-size:12px; color:var(--muted); }
+
+    .modal{ position:fixed; inset:0; display:none; place-items:center; background:rgba(0,0,0,.42);
+      z-index:9999; transition:opacity .15s; opacity:0; }
+    .modal[open]{ display:grid; opacity:1; }
+    .dialog{ width:min(760px,92vw); max-height:85vh; display:flex; flex-direction:column; background:var(--surface); color:var(--text);
+      border-radius:14px; border:1px solid var(--border); box-shadow:0 16px 36px rgba(0,0,0,.28); }
+    .dialog-head{ padding:12px 14px; border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .dialog-body{ padding:14px; overflow:auto; flex:1 1 auto; min-height:0; -webkit-overflow-scrolling:touch; }
+    .closex{
+      border:1px solid var(--border); background:var(--surface); border-radius:10px;
+      padding:8px 12px; cursor:pointer; font-weight:700; color: var(--text) !important;
+    }
+    html.no-scroll, body.no-scroll{ overflow:hidden; }
+
+    .help-note{
+      margin:0 0 10px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+    .bul{ margin:8px 0 0; padding-left:18px; }
+    .bul li{ margin:8px 0; line-height:1.35; }
+    .k{
+      display:inline-block;
+      padding:1px 8px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:var(--card-surface,var(--surface));
+      font-weight:700;
+      font-size:12px;
+      color:var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <div class="calc-card">
+        <div class="card-head">
+          <div class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 20h10M6 6l6-1 6 1M12 3v17"/>
+              <path d="M9 12L6 6 3 12a3 3 0 0 0 6 0"/>
+              <path d="M21 12l-3-6-3 6a3 3 0 0 0 6 0"/>
+            </svg>
+          </div>
+          <div>
+            <h1>Grain Shrink</h1>
+            <div class="muted">Choose crop, enter wet weight and start moisture, then Calculate. Last 10 runs are saved.</div>
+          </div>
+        </div>
+
+        <form id="frm" novalidate autocomplete="off">
+          <div class="grid">
+            <div>
+              <label for="crop">Crop</label>
+              <select id="crop" class="select-box">
+                <option value="corn" selected>Corn (Std 15.5%, TW 56)</option>
+                <option value="soy">Soybeans (Std 13.0%, TW 60)</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="label-row">
+                <label for="mode">Shrink Mode</label>
+                <button class="help-btn" id="modeHelp" type="button" aria-label="Help: Shrink Mode" title="What is Shrink Mode?">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                </button>
+              </div>
+              <select id="mode" class="select-box">
+                <option value="both">Compare Both</option>
+                <option value="true">True Only</option>
+                <option value="elev">Elevator Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="wt">Wet Weight</label>
+              <div class="ctrl">
+                <input id="wt" type="text" inputmode="decimal" placeholder="e.g. 20,000">
+                <span class="unit">lb</span>
+              </div>
+            </div>
+
+            <div>
+              <label for="moist">Start Moisture</label>
+              <div class="ctrl">
+                <input id="moist" type="text" inputmode="decimal" placeholder="e.g. 25.6">
+                <span class="unit">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn" id="clearInputs">Clear</button>
+            <button type="submit" class="btn btn-primary">Calculate</button>
+          </div>
+        </form>
+
+        <div class="results" id="results" hidden>
+          <div class="result-grid">
+            <div class="tile" id="trueTile">
+              <h3>True Shrink</h3>
+              <div class="kv">
+                <div>Dry Weight</div>  <div class="val" id="trueW">— lb</div>
+                <div>Shrink</div>      <div class="val" id="trueS">— %</div>
+                <div>Bushels</div>     <div class="val" id="trueB">— bu</div>
+              </div>
+            </div>
+            <div class="tile" id="elevTile">
+              <h3>Elevator Shrink</h3>
+              <div class="kv">
+                <div>Weight</div>      <div class="val" id="elevW">— lb</div>
+                <div>Shrink</div>      <div class="val" id="elevS">— %</div>
+                <div>Bushels</div>     <div class="val" id="elevB">— bu</div>
+              </div>
+            </div>
+          </div>
+          <div class="muted" style="margin-top:8px">Elevator (corn): linear from 15.5% to 29% = 21% shrink (≈1.5556%/pt), capped at 40% moisture.</div>
+        </div>
+
+        <section class="hist">
+          <div style="display:flex;align-items:center;gap:10px">
+            <h2 style="flex:1">Previous Calculations</h2>
+            <button class="btn-link" id="clearHist" type="button">Clear History</button>
+          </div>
+          <div class="hlist" id="hlist"></div>
+          <div class="muted-line" id="nohist">No previous shrink calculations.</div>
+        </section>
+      </div>
+    </div>
+  </fv-shell>
+
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
+      <div class="dialog-head">
+        <h3 id="mdTitle">Calculation Details</h3>
+        <button class="closex" id="mdClose" type="button">Back</button>
+      </div>
+      <div class="dialog-body" id="mdBody"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="helpModal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="dialog-head">
+        <h3 id="helpTitle">Shrink Mode — What it does</h3>
+        <button class="closex" id="helpClose" type="button">Back</button>
+      </div>
+      <div class="dialog-body" id="helpBody">
+        <p class="help-note">
+          Shrink Mode only changes what you <strong>see</strong>. The calculator always computes both methods.
+        </p>
+
+        <h4 style="margin:0 0 6px">Modes</h4>
+        <ul class="bul">
+          <li><strong>Compare Both</strong> — shows True Shrink and Elevator Shrink side-by-side.</li>
+          <li><strong>True Only</strong> — shows only the True Shrink tile.</li>
+          <li><strong>Elevator Only</strong> — shows only the Elevator Shrink tile.</li>
+        </ul>
+
+        <h4 style="margin:14px 0 6px">Rules used in this calculator</h4>
+        <ul class="bul" id="rulesList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    "use strict";
+    if(window.__FV_SHRINK_V6__) return; window.__FV_SHRINK_V6__=true;
+
+    var CORN_STD=15.5, CORN_TW=56, CORN_SLOPE=(21/(29-15.5)), CORN_CAP_M=40;
+    var SOY_STD =13.0, SOY_TW =60;
+    var SOY_ELEV_PER_PT = 1.5;
+
+    function $(id){ return document.getElementById(id); }
+    function fmt(n,d){ if(d===void 0) d=2; return Number(n).toLocaleString(undefined,{maximumFractionDigits:d}); }
+    function nraw(s){ return parseFloat(String(s||"").replace(/,/g,"")); }
+
+    var cropEl=$("crop"), modeEl=$("mode"), wtEl=$("wt"), moistEl=$("moist");
+    var results=$("results"),
+        trueTile=$("trueTile"), elevTile=$("elevTile"),
+        trueW=$("trueW"), trueS=$("trueS"), trueB=$("trueB"),
+        elevW=$("elevW"), elevS=$("elevS"), elevB=$("elevB");
+
+    /* ✅ Only numbers + max 2 decimals */
+    function restrict2(el, opts){
+      opts = opts || {};
+      var allowComma = !!opts.allowComma;
+
+      el.addEventListener("input", function(){
+        var s = String(el.value || "");
+        if(allowComma) s = s.replace(/,/g,"");
+        s = s.replace(/[^\d.]/g,"");
+
+        var parts = s.split(".");
+        if(parts.length > 2){
+          s = parts.shift() + "." + parts.join("");
+          parts = s.split(".");
+        }
+        if(parts.length === 2){
+          parts[1] = parts[1].slice(0,2);
+          s = parts[0] + "." + parts[1];
+        }
+        el.value = s;
+      });
+
+      el.addEventListener("blur", function(){
+        var v = nraw(el.value);
+        if(!isFinite(v)){ el.value=""; return; }
+        el.value = fmt(v, 2);
+      });
+    }
+
+    // Wet weight: numbers only, allow commas visually, max 2 decimals
+    restrict2(wtEl, { allowComma:true });
+    // Moisture: numbers only, max 2 decimals
+    restrict2(moistEl, { allowComma:false });
+
+    /* --- help modal wiring (unchanged) --- */
+    var helpModal=$("helpModal"), helpClose=$("helpClose"), helpBtn=$("modeHelp");
+    var rulesList=$("rulesList");
+    var modal=$("modal"), mdBody=$("mdBody"), mdClose=$("mdClose");
+    var lastOpener=null, trapHandler=null;
+
+    function trapFocus(root){
+      var focusables=[].slice.call(root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'))
+        .filter(function(el){ return !el.disabled && el.offsetParent!==null; });
+      if(!focusables.length) return;
+      var first=focusables[0], last=focusables[focusables.length-1];
+      trapHandler=function(e){
+        if(e.key!=="Tab") return;
+        if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+      };
+      root.addEventListener("keydown", trapHandler);
+    }
+    function releaseFocus(root){
+      if(trapHandler){
+        root.removeEventListener("keydown", trapHandler);
+        trapHandler=null;
+      }
+    }
+    function openAnyModal(root, focusEl){
+      root.setAttribute("open","");
+      root.setAttribute("aria-hidden","false");
+      document.documentElement.classList.add("no-scroll");
+      document.body.classList.add("no-scroll");
+      if(focusEl) focusEl.focus();
+      trapFocus(root);
+    }
+    function closeAnyModal(root){
+      root.removeAttribute("open");
+      root.setAttribute("aria-hidden","true");
+      document.documentElement.classList.remove("no-scroll");
+      document.body.classList.remove("no-scroll");
+      releaseFocus(root);
+      if(lastOpener) lastOpener.focus();
+    }
+
+    function buildRules(){
+      var crop = cropEl.value;
+      var std = (crop==="corn") ? CORN_STD : SOY_STD;
+      var truePerPt = 100/(100-std);
+
+      rulesList.innerHTML = "";
+
+      if(crop==="corn"){
+        var li1=document.createElement("li");
+        li1.innerHTML = "<strong>Corn elevator shrink:</strong> linear from <span class='k'>15.5%</span> to <span class='k'>29%</span> equals <span class='k'>21%</span> shrink ⇒ <span class='k'>"+fmt(CORN_SLOPE,4)+"% per point</span>. Capped at <span class='k'>40%</span> moisture.";
+        rulesList.appendChild(li1);
+      } else {
+        var li2=document.createElement("li");
+        li2.innerHTML = "<strong>Soybean elevator shrink:</strong> simple per-point rule from <span class='k'>13.0%</span> standard at <span class='k'>"+fmt(SOY_ELEV_PER_PT,2)+"% per point</span> above standard.";
+        rulesList.appendChild(li2);
+      }
+
+      var li3=document.createElement("li");
+      li3.innerHTML =
+        "<strong>True shrink:</strong> ratio-based. Effective rate (given standard): <span class='k'>"+fmt(truePerPt,4)+"% per point</span> above standard.";
+      rulesList.appendChild(li3);
+    }
+
+    function openHelp(){
+      lastOpener = helpBtn;
+      buildRules();
+      openAnyModal(helpModal, helpClose);
+    }
+    function closeHelp(){ closeAnyModal(helpModal); }
+
+    helpBtn.addEventListener("click", openHelp);
+    helpClose.addEventListener("click", closeHelp);
+    helpModal.addEventListener("click", function(e){ if(e.target===helpModal) closeHelp(); });
+
+    document.addEventListener("keydown", function(e){
+      if(helpModal.hasAttribute("open") && e.key==="Escape") closeHelp();
+      if(modal.hasAttribute("open") && e.key==="Escape") closeDetails();
+    });
+
+    cropEl.addEventListener("change", function(){
+      if(helpModal.hasAttribute("open")) buildRules();
+    });
+
+    function cropStdTW(crop){
+      return (crop==="corn") ? {std:CORN_STD, tw:CORN_TW} : {std:SOY_STD, tw:SOY_TW};
+    }
+    function elevPct(crop, m){
+      if(crop!=="corn"){
+        return m<=SOY_STD ? 0 : Math.max(0, (m - SOY_STD) * SOY_ELEV_PER_PT);
+      }
+      if(m<=CORN_STD) return 0;
+      var used = Math.min(m, CORN_CAP_M);
+      return Math.min(CORN_SLOPE * (used - CORN_STD), CORN_SLOPE * (CORN_CAP_M - CORN_STD));
+    }
+
+    function calc(){
+      var crop=cropEl.value, m=nraw(moistEl.value), w=nraw(wtEl.value);
+      if(!(w>0)){ alert("Enter wet weight."); return null; }
+      if(!(m>0)){ alert("Enter start moisture."); return null; }
+
+      var K=cropStdTW(crop);
+      var trueWeight = w * ((100 - m)/(100 - K.std));
+      var trueShrink = 100 * (1 - trueWeight/w);
+      var trueBushels = trueWeight / K.tw;
+
+      var ePct = elevPct(crop, m);
+      var eWeight = w * (1 - ePct/100);
+      var eBushels = eWeight / K.tw;
+
+      return { t:Date.now(), crop:crop, w:w, m:m, std:K.std, tw:K.tw,
+               trueW:trueWeight, trueS:trueShrink, trueB:trueBushels,
+               elevW:eWeight, elevS:ePct, elevB:eBushels,
+               mode:modeEl.value };
+    }
+
+    function show(o){
+      if(!o){ results.hidden=true; return; }
+
+      trueW.textContent = fmt(o.trueW,0)+" lb";
+      trueS.textContent = fmt(o.trueS,2)+" %";
+      trueB.textContent = fmt(o.trueB,2)+" bu";
+
+      elevW.textContent = fmt(o.elevW,0)+" lb";
+      elevS.textContent = fmt(o.elevS,2)+" %";
+      elevB.textContent = fmt(o.elevB,2)+" bu";
+
+      trueTile.style.display = (o.mode==="true") ? "block" : (o.mode==="elev" ? "none" : "block");
+      elevTile.style.display = (o.mode==="elev") ? "block" : (o.mode==="true" ? "none" : "block");
+
+      results.hidden=false;
+    }
+
+    var LS_KEY="fv_calc_shrink_history_v2", hlist=$("hlist"), nohist=$("nohist");
+    function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"[]"); }catch(e){ return []; } }
+    function save(a){ localStorage.setItem(LS_KEY, JSON.stringify(a.slice(0,10))); }
+
+    function oneLine(o){
+      var cropTxt = (o.crop==="corn"?"Corn":"Soy");
+      return cropTxt+" — "+fmt(o.w,0)+" lb @ "+fmt(o.m,2)+"% → "
+           + "T "+fmt(o.trueS,2)+"% / E "+fmt(o.elevS,2)+"%";
+    }
+
+    function renderHist(){
+      var h=load(); hlist.innerHTML=""; if(!h.length){ nohist.hidden=false; return; } nohist.hidden=true;
+      h.forEach(function(it,idx){
+        var row=document.createElement("div"); row.className="hitem";
+        row.innerHTML='<div class="hsummary">'+oneLine(it)+'</div><button class="btn-link" data-idx="'+idx+'" type="button">View</button>';
+        hlist.appendChild(row);
+      });
+      hlist.querySelectorAll("button[data-idx]").forEach(function(b){
+        b.addEventListener("click", function(){ var i=parseInt(b.getAttribute("data-idx"),10); openModal(load()[i], b); });
+      });
+    }
+
+    function openModal(o, opener){
+      lastOpener=opener||null;
+      var cropTxt = (o.crop==="corn"?"Corn":"Soybeans");
+      mdBody.innerHTML =
+        '<div class="kv">'
+        + '<div>When</div><div>'+new Date(o.t).toLocaleString()+'</div>'
+        + '<div>Crop</div><div>'+cropTxt+'</div>'
+        + '<div>Wet Weight</div><div>'+fmt(o.w,2)+' lb</div>'
+        + '<div>Start Moisture</div><div>'+fmt(o.m,2)+'%</div>'
+        + '<div>Standard Moisture</div><div>'+fmt(o.std,1)+'%</div>'
+        + '<div>Test Weight</div><div>'+o.tw+' lb/bu</div>'
+        + '<div>Mode</div><div>'+ (o.mode==="both"?"BOTH":o.mode.toUpperCase()) +'</div>'
+        + '</div>'
+        + '<hr style="margin:12px 0;border:0;border-top:1px solid var(--border)">'
+        + '<div class="kv">'
+        +   '<div><strong>True Dry Weight</strong></div><div class="val">'+fmt(o.trueW,2)+' lb</div>'
+        +   '<div><strong>True Shrink</strong></div><div class="val">'+fmt(o.trueS,2)+'%</div>'
+        +   '<div><strong>True Bushels</strong></div><div class="val">'+fmt(o.trueB,2)+' bu</div>'
+        +   '<div><strong>Elevator Weight</strong></div><div class="val">'+fmt(o.elevW,2)+' lb</div>'
+        +   '<div><strong>Elevator Shrink</strong></div><div class="val">'+fmt(o.elevS,2)+'%</div>'
+        +   '<div><strong>Elevator Bushels</strong></div><div class="val">'+fmt(o.elevB,2)+' bu</div>'
+        + '</div>';
+
+      lastOpener = opener || null;
+      openAnyModal(modal, mdClose);
+    }
+
+    function closeDetails(){ closeAnyModal(modal); }
+
+    mdClose.addEventListener("click", closeDetails);
+    modal.addEventListener("click", function(e){ if(e.target===modal) closeDetails(); });
+
+    $("frm").addEventListener("submit", function(ev){
+      ev.preventDefault();
+      var out=calc(); show(out);
+      if(out){ var h=load(); h.unshift(out); save(h); renderHist(); }
+    });
+
+    $("clearInputs").addEventListener("click", function(){
+      wtEl.value=""; moistEl.value=""; results.hidden=true;
+    });
+    $("clearHist").addEventListener("click", function(){
+      localStorage.removeItem(LS_KEY); renderHist();
+    });
+
+    renderHist();
+  })();
+  </script>
+</body>
+</html>

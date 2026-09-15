@@ -1,0 +1,1833 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Field Boundary Fix Requests</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <style>
+    :root{
+      --card-max: 1200px;
+      --page-bottom-gap: 72px;
+      --accent: #2F6C3C;
+    }
+
+    body{ background: var(--app-bg, var(--surface)); }
+
+    .wrap{
+      max-width: var(--card-max);
+      margin: 0 auto;
+      padding: clamp(14px,3vw,22px);
+      padding-bottom: calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+      box-sizing:border-box;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:visible;
+    }
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      border-bottom:1px solid var(--border);
+    }
+    .hero-head .icon{
+      width:24px;
+      height:24px;
+      color:var(--accent);
+      display:grid;
+      place-items:center;
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+    .muted{ color:var(--muted,#67706B); }
+
+    .body{ padding:16px; display:grid; gap:14px; }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    .toolbar-left{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:120px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-weight:800;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      color:var(--text) !important;
+      background:var(--card-surface,var(--surface));
+      font-size:0.9rem;
+      gap:6px;
+    }
+    .btn-quiet{ min-width:auto; padding-inline:10px; }
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff !important;
+    }
+    .btn-small{ min-width:auto; padding:8px 12px; font-size:0.85rem; }
+
+    .page-header-meta{ font-size:0.9rem; opacity:0.8; }
+
+    /* Filters */
+    .filters{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:flex-end;
+      margin-top:4px;
+    }
+    .filter-field{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:150px;
+      flex:1 1 160px;
+      font-size:0.8rem;
+    }
+    .filter-label{
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      opacity:0.78;
+    }
+    .filter-select{
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:6px 10px;
+      font-size:0.9rem;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      min-height:32px;
+    }
+    /* ✅ Farm dropdown: show ~8 items + scroll when opened (desktop/tablet) */
+.filter-select.farm-open{
+  border-radius:14px;
+  padding:8px 10px;
+  min-height:auto;
+}
+.filter-select.farm-open option{
+  padding:6px 8px;
+}
+
+
+    /* List cards */
+    .wo-list{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+
+    .wo-empty{
+      padding:14px 16px;
+      border-radius:12px;
+      border:1px dashed var(--border);
+      background:var(--card-surface, var(--surface));
+      font-size:0.95rem;
+      opacity:0.9;
+    }
+
+    .wo-card{
+      position:relative;
+      border-radius:10px;
+      border:1px solid var(--card-border, var(--border));
+      background:var(--card-surface, var(--surface));
+      box-shadow:var(--shadow-soft, var(--shadow));
+      padding:12px 14px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      cursor:pointer;
+      transition:transform .06s, box-shadow .12s, border-color .12s, background .12s;
+    }
+    .wo-card:active{
+      transform:scale(.995);
+      box-shadow:var(--shadow);
+    }
+
+    .wo-row-top{ display:flex; align-items:flex-start; gap:10px; }
+    .wo-main{ flex:1 1 auto; min-width:0; }
+
+    .wo-title{
+      font-weight:700;
+      font-size:0.98rem;
+      line-height:1.3;
+    }
+
+    .wo-sub{
+      font-size:0.86rem;
+      opacity:0.9;
+      margin-top:2px;
+    }
+
+    .wo-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 10px;
+      margin-top:4px;
+      font-size:0.8rem;
+      opacity:0.9;
+    }
+
+    .wo-meta span{
+      display:inline-flex;
+      align-items:flex-start;
+      gap:6px;
+      padding:2px 7px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      max-width:100%;
+    }
+    .wo-meta span > span.wo-meta-label{
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      font-size:0.72rem;
+      opacity:0.85;
+      margin-top:1px;
+    }
+    .wo-meta .wo-meta-val{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:48ch;
+    }
+    @media (max-width:520px){
+      .wo-meta .wo-meta-val{ max-width:28ch; }
+    }
+
+    /* ✅ RTK “boxed” mini-block (grouped together, NOT bold) */
+    .rtk-block{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      line-height:1.15;
+      max-width:min(62ch, 100%);
+    }
+    .rtk-block .rtk-name{
+      font-weight:600;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+    .rtk-block .rtk-sub{
+      font-weight:600;
+      opacity:0.88;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
+
+    /* Detail panel */
+    .wo-detail-panel{
+      margin-top:10px;
+      border-radius:10px;
+      border:1px solid var(--card-border, var(--border));
+      background:var(--card-surface, var(--surface));
+      box-shadow:var(--shadow-soft, var(--shadow));
+      padding:14px 16px 12px;
+      display:none;
+      flex-direction:column;
+      gap:8px;
+
+      /* ✅ Auto-scroll offset so panel doesn't hide under header */
+      scroll-margin-top: 90px;
+    }
+
+    .wo-detail-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .wo-detail-title{ font-weight:700; font-size:1rem; }
+
+    .wo-detail-close{
+      border:none;
+      outline:none;
+      border-radius:999px;
+      padding:4px 9px;
+      font-size:0.8rem;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      cursor:pointer;
+    }
+
+    .wo-detail-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:8px 16px;
+      font-size:0.9rem;
+      margin-top:4px;
+    }
+    @media (min-width:700px){
+      .wo-detail-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    }
+
+    .wo-detail-item-label{
+      font-size:0.78rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+      margin-bottom:1px;
+    }
+    .wo-detail-item-value{ font-size:0.94rem; }
+
+    .wo-detail-notes{
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px solid var(--border);
+      font-size:0.92rem;
+      white-space:pre-wrap;
+    }
+    .wo-detail-notes-label{
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+      margin-bottom:2px;
+    }
+    .wo-detail-notes-body{ margin-top:2px; }
+
+    /* ✅ Photos in details (large) */
+    .wo-detail-photos{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid var(--border);
+      display:none;
+      flex-direction:column;
+      gap:8px;
+    }
+    .wo-detail-photos.show{ display:flex; }
+    .wo-detail-photos-label{
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+    }
+    .wo-photo-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width:520px){
+      .wo-photo-grid{ grid-template-columns:1fr; }
+    }
+    .wo-photo{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      box-shadow:var(--shadow-soft, var(--shadow));
+      cursor:pointer;
+    }
+    .wo-photo img{
+      width:100%;
+      height:auto;
+      display:block;
+      max-height:520px;
+      object-fit:cover;
+    }
+
+    .wo-detail-footer{
+      margin-top:10px;
+      font-size:0.82rem;
+      opacity:0.85;
+    }
+    .wo-detail-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 8px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      font-size:0.8rem;
+      margin-left:6px;
+    }
+
+    .wo-detail-actions{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .wo-detail-actions-left{ display:flex; align-items:center; gap:8px; }
+    .wo-detail-actions-right{ display:flex; align-items:center; gap:4px; }
+
+    .btn-mark-completed[disabled]{ opacity:0.6; cursor:default; }
+
+    .trash-btn{
+      border:none;
+      background:transparent;
+      padding:6px;
+      border-radius:999px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .trash-btn svg{
+      width:18px;
+      height:18px;
+      stroke:#B91C1C;
+      fill:none;
+    }
+    .trash-btn:hover{ background:rgba(185,28,28,0.08); }
+
+    .bottom-actions{ margin-top:16px; display:flex; justify-content:flex-end; }
+
+    #fv-print-frame{
+      position:fixed;
+      right:0;
+      bottom:0;
+      width:0;
+      height:0;
+      border:0;
+      visibility:hidden;
+    }
+
+    /* Photo viewer modal */
+    .photo-modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:100000;
+      padding:16px;
+    }
+    .photo-modal.show{ display:flex; }
+    .photo-backdrop{
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,.65);
+    }
+    .photo-sheet{
+      position:relative;
+      max-width:min(1000px, 95vw);
+      max-height:90vh;
+      background:var(--surface);
+      border-radius:14px;
+      border:1px solid var(--border);
+      box-shadow:0 20px 40px rgba(0,0,0,.45);
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      z-index:1;
+      overflow:hidden;
+    }
+    .photo-close-row{
+      display:flex;
+      justify-content:flex-end;
+    }
+    .photo-close-btn{
+      border:none;
+      border-radius:999px;
+      padding:6px 12px;
+      font-size:0.85rem;
+      cursor:pointer;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      color:var(--text);
+    }
+    .photo-img-wrap{
+      border-radius:12px;
+      overflow:hidden;
+      background:#000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      max-height:calc(90vh - 70px);
+    }
+    .photo-img-wrap img{
+      max-width:100%;
+      max-height:100%;
+      display:block;
+    }
+  </style>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection, getDocs,
+      doc, getDoc,
+      updateDoc, deleteDoc,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+    const CONFIG = {
+      COLLECTION_PATH: 'boundary_requests',
+      COMPANY_DOC_PATH: ['company','main'],
+      TOWER_COLLECTIONS: ['rtkTowers','rtk_towers']
+    };
+
+    const $  = (sel, root=document) => root.querySelector(sel);
+
+    const STATE = {
+      items: [],
+      filteredItems: null,
+      selectedId: null,
+      db: null,
+      company: null,
+      farmMap: new Map(),
+      towersById: new Map()
+    };
+
+    function normalizeStatus(s){
+      return String(s || '').trim().replace(/\.+$/,'').toLowerCase();
+    }
+
+    function formatDate(d){
+      if(!d) return '';
+      try{ return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+      catch{ return ''; }
+    }
+    function formatDateTime(d){
+      if(!d) return '';
+      try{ return d.toLocaleString(); }
+      catch{ return ''; }
+    }
+    function fmtDrivenPill(d){
+  const st = normalizeStatus(d?.status);
+  if(st !== 'in progress') return '';
+
+  const by = (d?.drivenBy || '').trim();
+  const dt = d?.drivenAt?.toDate ? d.drivenAt.toDate() : (d?.drivenAt ? new Date(d.drivenAt) : null);
+  const dtStr = dt ? formatDate(dt) : '';
+
+  if(!by && !dtStr) return '';
+  const who = by || '—';
+  const when = dtStr ? ` • ${dtStr}` : '';
+  return `<span><span class="wo-meta-label">Driven</span> <span class="wo-meta-val">${escapeHtml(who + when)}</span></span>`;
+}
+
+    function formatAgeMs(ms){
+      if(!Number.isFinite(ms) || ms <= 0) return '';
+      const days = Math.floor(ms / (1000*60*60*24));
+      if(days <= 0) return 'Today';
+      if(days === 1) return '1 day';
+      if(days < 30) return `${days} days`;
+      const months = Math.floor(days/30);
+      if(months === 1) return '1 month';
+      return `${months} months`;
+    }
+
+    function getWorkingItems(){
+  return (STATE.filteredItems !== null && STATE.filteredItems !== undefined)
+    ? STATE.filteredItems
+    : STATE.items;
+}
+
+    function escapeHtml(str){
+      return String(str || '').replace(/[&<>"']/g, m => (
+        { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]
+      ));
+    }
+
+    /* ===========================
+       RTK join (getDoc per tower id)
+       =========================== */
+
+    function coerceStr(v){
+      if(v == null) return '';
+      return String(v).trim();
+    }
+
+    function fmtFreqMHz(freq){
+      const s = coerceStr(freq);
+      if(!s) return '';
+      return `${s} MHz`;
+    }
+
+    function getTowerIdFromRequest(d){
+      return coerceStr(d?.rtkTowerId || d?.towerId || d?.rtkId || '');
+    }
+
+    async function fetchTowerFromAnyCollection(towerId){
+      for (const colName of CONFIG.TOWER_COLLECTIONS){
+        try{
+          const snap = await getDoc(doc(STATE.db, colName, towerId));
+          if(snap.exists()){
+            const d = snap.data() || {};
+            return {
+              id: towerId,
+              name: coerceStr(d.name),
+              networkId: coerceStr(d.networkId),
+              frequencyMHz: coerceStr(d.frequencyMHz)
+            };
+          }
+        }catch(_){}
+      }
+      return { id:towerId, name:'', networkId:'', frequencyMHz:'' };
+    }
+
+    async function loadRtkTowersForItems(items){
+      const want = new Set();
+      (items || []).forEach(it => {
+        const id = getTowerIdFromRequest(it.data);
+        if(id) want.add(id);
+      });
+
+      const missing = Array.from(want).filter(id => !STATE.towersById.has(id));
+      if(!missing.length) return;
+
+      await Promise.allSettled(missing.map(async (towerId) => {
+        const t = await fetchTowerFromAnyCollection(towerId);
+        STATE.towersById.set(towerId, t);
+      }));
+    }
+
+    function getRtkForRequest(d){
+      if(d && typeof d === 'object' && d.rtk && typeof d.rtk === 'object'){
+        const name = coerceStr(d.rtk.name);
+        const networkId = coerceStr(d.rtk.networkId);
+        const frequencyMHz = coerceStr(d.rtk.frequencyMHz);
+        if(name || networkId || frequencyMHz){
+          return { name, networkId, frequencyMHz, towerId: getTowerIdFromRequest(d) };
+        }
+      }
+
+      const towerId = getTowerIdFromRequest(d);
+      if(towerId && STATE.towersById.has(towerId)){
+        const t = STATE.towersById.get(towerId);
+        return {
+          name: coerceStr(t?.name),
+          networkId: coerceStr(t?.networkId),
+          frequencyMHz: coerceStr(t?.frequencyMHz),
+          towerId
+        };
+      }
+
+      return { name:'', networkId:'', frequencyMHz:'', towerId };
+    }
+
+    function rtkLines(rtk){
+      const name = coerceStr(rtk?.name);
+      const net  = coerceStr(rtk?.networkId);
+      const freq = coerceStr(rtk?.frequencyMHz);
+
+      const nameLine = name || (rtk?.towerId ? `Tower ${rtk.towerId}` : '');
+      const subBits = [];
+      if(net) subBits.push(`Net ${net}`);
+      if(freq) subBits.push(fmtFreqMHz(freq));
+      const subLine = subBits.join(' • ');
+
+      return { nameLine, subLine };
+    }
+
+    function rtkHtmlBox(rtk){
+      const { nameLine, subLine } = rtkLines(rtk);
+      if(!nameLine && !subLine) return '';
+      return `
+        <span class="rtk-block">
+          <span class="rtk-name">${escapeHtml(nameLine || '')}</span>
+          ${subLine ? `<span class="rtk-sub">${escapeHtml(subLine)}</span>` : ``}
+        </span>
+      `;
+    }
+
+    function getPhotosFromRequest(d){
+      const arr = Array.isArray(d?.photos) ? d.photos : [];
+      const out = [];
+      arr.forEach((p)=>{
+        if(!p) return;
+        const url = String(p.url || p.path || '').trim();
+        if(!url) return;
+        out.push({
+          url,
+          name: String(p.name || '').trim()
+        });
+      });
+      return out;
+    }
+
+    /* ===========================
+       Rendering (screen)
+       =========================== */
+
+    function renderList(){
+      const listEl  = $('.wo-list');
+      const emptyEl = $('.wo-empty');
+      const countEl = $('#brCount');
+
+      listEl.innerHTML = '';
+      const items = getWorkingItems();
+
+      if(!items.length){
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'No boundary fix requests have been submitted yet.';
+        if(countEl) countEl.textContent = '0 requests';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+
+      const openItems = items.filter(it => normalizeStatus(it.data.status) === 'open');
+      const inProgressItems = items.filter(it => normalizeStatus(it.data.status) === 'in progress');
+      const completedItems = items.filter(it => normalizeStatus(it.data.status) === 'completed');
+
+      const farmIds = new Set(items.map(it => it.data.farmId || it.data.farm).filter(Boolean));
+
+      const statusSel = $('#filterStatus');
+      const statusFilter = (statusSel?.value || 'open').toLowerCase();
+
+      if(countEl){
+  if(statusFilter === 'open'){
+    const farmCountOpen = new Set(openItems.map(it => it.data.farmId || it.data.farm).filter(Boolean)).size;
+    countEl.textContent = `${openItems.length} open on ${farmCountOpen || 0} farm${farmCountOpen === 1 ? '' : 's'}`;
+  }else if(statusFilter === 'inprogress'){
+    const farmCountIP = new Set(inProgressItems.map(it => it.data.farmId || it.data.farm).filter(Boolean)).size;
+    countEl.textContent = `${inProgressItems.length} in progress on ${farmCountIP || 0} farm${farmCountIP === 1 ? '' : 's'}`;
+  }else if(statusFilter === 'completed'){
+    const farmCountComp = new Set(completedItems.map(it => it.data.farmId || it.data.farm).filter(Boolean)).size;
+    countEl.textContent = `${completedItems.length} completed on ${farmCountComp || 0} farm${farmCountComp === 1 ? '' : 's'}`;
+  }else{
+    countEl.textContent = `${openItems.length} open / ${inProgressItems.length} in progress / ${completedItems.length} completed on ${farmIds.size || 0} farm${farmIds.size === 1 ? '' : 's'}`;
+  }
+}
+
+
+      for(const item of items){
+        const d = item.data;
+
+        const field = d.field || 'Field not set';
+        const farm  = d.farm  || '';
+        const scope = d.scope || '';
+        const bType = d.boundaryType || '';
+        const status = d.status || '';
+        const createdBy = d.submittedBy || '';
+        const createdAt = d._createdAtDate || null;
+        const whenStr   = formatDate(createdAt);
+
+        const rtk = getRtkForRequest(d);
+        const rtkBox = rtkHtmlBox(rtk);
+
+        const card = document.createElement('article');
+        card.className = 'wo-card';
+        card.dataset.id = item.id;
+
+        card.innerHTML = `
+          <div class="wo-row-top">
+            <div class="wo-main">
+              <div class="wo-title">
+                ${escapeHtml(field)}${farm ? ` · <span>${escapeHtml(farm)}</span>` : ''}
+              </div>
+              <div class="wo-sub">
+                ${escapeHtml(scope || 'Boundary correction requested')}
+              </div>
+              <div class="wo-meta">
+                ${bType ? `<span><span class="wo-meta-label">Type</span> <span class="wo-meta-val">${escapeHtml(bType)}</span></span>` : ''}
+                ${status ? `<span><span class="wo-meta-label">Status</span> <span class="wo-meta-val">${escapeHtml(status)}</span></span>` : ''}
+                ${fmtDrivenPill(d)}
+                ${createdBy ? `<span><span class="wo-meta-label">By</span> <span class="wo-meta-val">${escapeHtml(createdBy)}</span></span>` : ''}
+                ${whenStr ? `<span><span class="wo-meta-label">Submitted</span> <span class="wo-meta-val">${escapeHtml(whenStr)}</span></span>` : ''}
+                ${rtkBox ? `<span><span class="wo-meta-label">RTK</span> ${rtkBox}</span>` : (d.rtkTowerId ? `<span><span class="wo-meta-label">RTK</span> <span class="wo-meta-val">${escapeHtml(d.rtkTowerId)}</span></span>` : '')}
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          STATE.selectedId = item.id;
+          renderDetails();
+
+          // ✅ Auto-scroll to the details panel (after render)
+          const panel = document.querySelector('.wo-detail-panel');
+          if (panel) {
+            panel.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+
+        listEl.appendChild(card);
+      }
+    }
+
+    function clearDetails(){
+  const panel = $('.wo-detail-panel');
+  panel.style.display = 'none';
+  panel.dataset.id = '';
+  $('.wo-detail-title', panel).textContent = 'Boundary Request Details';
+  $('.wo-detail-grid', panel).innerHTML = '';
+  $('.wo-detail-notes-body', panel).textContent = '';
+  $('.wo-detail-footer', panel).innerHTML = '';
+
+  const photosWrap = $('#woDetailPhotos');
+  const photosGrid = $('#woDetailPhotoGrid');
+  if(photosWrap) photosWrap.classList.remove('show');
+  if(photosGrid) photosGrid.innerHTML = '';
+
+  const markBtn = $('#btnMarkCompleted');
+  if (markBtn){
+    markBtn.disabled = true;
+    markBtn.textContent = 'Mark completed';
+  }
+} // ✅ IMPORTANT: close clearDetails()
+
+
+// photo viewer state
+let photoModal=null, photoModalImg=null, photoModalBackdrop=null, photoModalCloseBtn=null;
+
+function openPhotoViewer(url){
+  if(!photoModal || !photoModalImg || !url) return;
+  photoModalImg.src = url;
+  photoModal.classList.add('show');
+}
+function closePhotoViewer(){
+  if(!photoModal) return;
+  photoModal.classList.remove('show');
+  if(photoModalImg) photoModalImg.src = '';
+}
+
+function renderDetails(){
+  const panel = $('.wo-detail-panel');
+  const item = STATE.items.find(x => x.id === STATE.selectedId);
+  if(!item){
+    clearDetails();
+    return;
+  }
+
+  const d = item.data;
+  const field = d.field || 'Field not set';
+  const farm  = d.farm  || '';
+  const scope = d.scope || '';
+  const bType = d.boundaryType || '';
+  const status = d.status || '';
+  const submittedBy = d.submittedBy || '';
+  const submittedByEmail = d.submittedByEmail || '';
+  const createdAt = d._createdAtDate || null;
+  const createdStr = formatDateTime(createdAt);
+  const notes = d.notes || '';
+
+  const rtk = getRtkForRequest(d);
+  const { nameLine, subLine } = rtkLines(rtk);
+
+  const photos = getPhotosFromRequest(d);
+
+  panel.dataset.id = item.id;
+  $('.wo-detail-title', panel).textContent = farm ? `${field} · ${farm}` : field;
+
+  const grid = $('.wo-detail-grid', panel);
+  grid.innerHTML = `
+    <div>
+      <div class="wo-detail-item-label">Scope</div>
+      <div class="wo-detail-item-value">${escapeHtml(scope || 'Not specified')}</div>
+    </div>
+    <div>
+      <div class="wo-detail-item-label">Boundary Type</div>
+      <div class="wo-detail-item-value">${escapeHtml(bType || 'Not specified')}</div>
+    </div>
+
+    <div style="grid-column:1 / -1;">
+      <div class="wo-detail-item-label">RTK</div>
+      <div class="wo-detail-item-value">
+        <span class="rtk-block">
+          <span class="rtk-name">${escapeHtml(nameLine || (d.rtkTowerId ? ('Tower ' + d.rtkTowerId) : 'Not set'))}</span>
+          ${subLine ? `<span class="rtk-sub">${escapeHtml(subLine)}</span>` : ``}
+        </span>
+      </div>
+    </div>
+
+    <div>
+      <div class="wo-detail-item-label">Submitted By</div>
+      <div class="wo-detail-item-value">
+        ${escapeHtml(submittedBy || 'Unknown')}
+        ${submittedByEmail ? `<br><span style="opacity:.8">${escapeHtml(submittedByEmail)}</span>` : ''}
+      </div>
+    </div>
+    <div>
+      <div class="wo-detail-item-label">Submitted</div>
+      <div class="wo-detail-item-value">${escapeHtml(createdStr || 'Unknown')}</div>
+    </div>
+
+    <div>
+      <div class="wo-detail-item-label">Photos</div>
+      <div class="wo-detail-item-value">${escapeHtml(String(photos.length))}</div>
+    </div>
+  `;
+
+  $('.wo-detail-notes-body', panel).textContent = notes || 'No notes recorded for this request.';
+
+  const footer = $('.wo-detail-footer', panel);
+  footer.innerHTML = `
+    Current status:
+    <span class="wo-detail-pill">${escapeHtml(status || 'unknown')}</span>
+  `;
+
+  // ✅ Allow Mark completed for Open OR In Progress
+  const markBtn = $('#btnMarkCompleted');
+  if (markBtn){
+    const st = normalizeStatus(status);
+    const canComplete = (st === 'open' || st === 'in progress');
+    markBtn.disabled = !canComplete;
+    markBtn.textContent = canComplete ? 'Mark completed' : (status ? `Status: ${status}` : 'Mark completed');
+  }
+
+  // big photos
+  const photosWrap = $('#woDetailPhotos');
+  const photosGrid = $('#woDetailPhotoGrid');
+  if(photosWrap && photosGrid){
+    photosGrid.innerHTML = '';
+    if(photos.length){
+      photosWrap.classList.add('show');
+      photos.forEach((p) => {
+        const box = document.createElement('div');
+        box.className = 'wo-photo';
+        box.innerHTML = `<img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.name || 'Boundary request photo')}" loading="lazy" decoding="async">`;
+        box.addEventListener('click', () => openPhotoViewer(p.url));
+        photosGrid.appendChild(box);
+      });
+    }else{
+      photosWrap.classList.remove('show');
+    }
+  }
+
+  panel.style.display = 'flex';
+}
+
+
+    /* ===========================
+       Loading
+       =========================== */
+
+    async function loadBoundaryRequests(){
+      const ref = collection(STATE.db, CONFIG.COLLECTION_PATH);
+
+      try{
+        const snap = await getDocs(ref);
+        const items = snap.docs.map(docSnap => {
+          const data = docSnap.data() || {};
+          let createdIso = null;
+
+          if (data.timestampISO){
+            createdIso = data.timestampISO;
+          } else if (data.createdAt){
+            if (data.createdAt.toDate) createdIso = data.createdAt.toDate().toISOString();
+            else createdIso = data.createdAt;
+          } else if (data.t != null){
+            if (typeof data.t === 'number') createdIso = new Date(data.t).toISOString();
+            else if (data.t && data.t.seconds) createdIso = new Date(data.t.seconds*1000).toISOString();
+          }
+
+          const createdDate = createdIso ? new Date(createdIso) : null;
+          return { id: docSnap.id, data: { ...data, _createdAtDate: createdDate } };
+        });
+
+        items.sort((a,b) => {
+          const ta = a.data._createdAtDate ? a.data._createdAtDate.getTime() : 0;
+          const tb = b.data._createdAtDate ? b.data._createdAtDate.getTime() : 0;
+          return tb - ta;
+        });
+
+        STATE.items = items;
+
+        STATE.farmMap = new Map();
+        items.forEach(it=>{
+          const d = it.data;
+          if(!d.farm) return;
+          const key = d.farmId || d.farm;
+          if(!key) return;
+          if(!STATE.farmMap.has(key)) STATE.farmMap.set(key, d.farm);
+        });
+      }catch(err){
+        console.error('Error loading boundary_requests:', err);
+        const emptyEl = $('.wo-empty');
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Error loading boundary requests. Check console or Firestore rules.';
+        const countEl = $('#brCount');
+        if(countEl) countEl.textContent = 'Error loading requests';
+      }
+    }
+
+    async function applyFilters(){
+  const statusSel = $('#filterStatus');
+  const farmSel   = $('#filterFarm');
+
+  const statusFilter = (statusSel?.value || 'open').toLowerCase();
+  const farmFilter   = farmSel?.value || 'all';
+
+  const filtered = STATE.items.filter(it => {
+    const d = it.data;
+    const st = normalizeStatus(d.status);
+
+    if(statusFilter === 'open' && st !== 'open') return false;
+    if(statusFilter === 'inprogress' && st !== 'in progress') return false;
+    if(statusFilter === 'completed' && st !== 'completed') return false;
+
+    if(farmFilter !== 'all'){
+      const id = (d.farmId || d.farm || '').toString();
+      if(id !== farmFilter) return false;
+    }
+    return true;
+  });
+
+  STATE.filteredItems = filtered;
+
+  await loadRtkTowersForItems(filtered);
+
+  renderList();
+  if(STATE.selectedId) renderDetails();
+}
+
+
+    function populateFarmFilterFromItems(){
+      const farmSelEl = $('#filterFarm');
+      if (!farmSelEl) return;
+      farmSelEl.innerHTML = '<option value="all">All farms</option>';
+      Array.from(STATE.farmMap.entries())
+        .sort((a,b)=> (a[1] || '').localeCompare(b[1] || ''))
+        .forEach(([id,label])=>{
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = label;
+          farmSelEl.appendChild(opt);
+        });
+    }
+
+    async function loadCompanyHeader(){
+      if (STATE.company) return STATE.company;
+      try{
+        const [col,id] = CONFIG.COMPANY_DOC_PATH;
+        const ref = doc(STATE.db, col, id);
+        const snap = await getDoc(ref);
+        const d = snap.exists() ? (snap.data() || {}) : {};
+        const name = d.name || '';
+        const address = [
+          d.addressStreet || '',
+          [d.addressCity, d.addressState].filter(Boolean).join(', '),
+          d.addressZip || ''
+        ].filter(Boolean).join(' · ');
+        const phone = d.phone || '';
+        const email = d.email || '';
+        const logoUrl = (d.logo && d.logo.url) ? d.logo.url : '';
+        STATE.company = { name, address, phone, email, logoUrl };
+      }catch(e){
+        console.warn('[boundary-report] failed to load company header', e);
+        STATE.company = { name:'', address:'', phone:'', email:'', logoUrl:'' };
+      }
+      return STATE.company;
+    }
+
+    /* ===========================
+       Print / PDF
+       =========================== */
+
+    function extractFieldNumber(field){
+      const m = String(field || '').match(/^(\d+)/);
+      if (!m) return Number.MAX_SAFE_INTEGER;
+      const n = parseInt(m[1], 10);
+      return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
+    }
+
+    function groupForPdf(items){
+      const map = new Map();
+      items.forEach(it=>{
+        const d = it.data;
+        const farm = d.farm || 'Unknown farm';
+        if(!map.has(farm)) map.set(farm, []);
+        map.get(farm).push(it);
+      });
+
+      const farms = Array.from(map.entries()).sort((a,b)=> a[0].localeCompare(b[0]));
+      farms.forEach(([_, arr]) => {
+        arr.sort((a,b)=>{
+          const fa = a.data.field || '';
+          const fb = b.data.field || '';
+          const na = extractFieldNumber(fa);
+          const nb = extractFieldNumber(fb);
+          if (na !== nb) return na - nb;
+          return fa.localeCompare(fb);
+        });
+      });
+
+      return farms;
+    }
+
+    function summarizeFilters(){
+      const statusSel = $('#filterStatus');
+      const farmSel   = $('#filterFarm');
+
+      const v = (statusSel?.value || 'open').toLowerCase();
+      const statusLabel = (v === 'open') ? 'Status: Open' : (v === 'completed') ? 'Status: Completed' : 'Status: All';
+
+      let farmLabel = 'All farms';
+      if (farmSel && farmSel.value !== 'all'){
+        const id = farmSel.value;
+        farmLabel = STATE.farmMap.get(id) || 'Selected farm';
+      }
+
+      return `${statusLabel} • ${farmLabel}`;
+    }
+
+    function computeDateRange(items){
+      if (!items.length) return '';
+      let min = Infinity;
+      let max = -Infinity;
+      items.forEach(it=>{
+        const d = it.data._createdAtDate;
+        if(!d) return;
+        const t = d.getTime();
+        if(t < min) min = t;
+        if(t > max) max = t;
+      });
+      if(!Number.isFinite(min) || !Number.isFinite(max)) return '';
+      const dMin = new Date(min);
+      const dMax = new Date(max);
+      if (dMin.toDateString() === dMax.toDateString()) return formatDate(dMin);
+      return `${formatDate(dMin)} – ${formatDate(dMax)}`;
+    }
+
+    async function handlePrintClick(){
+      const items = getWorkingItems();
+      if (!items.length){
+        alert('No boundary requests match the current filters to print.');
+        return;
+      }
+
+      await loadRtkTowersForItems(items);
+
+      const company = await loadCompanyHeader();
+      const grouped = groupForPdf(items);
+
+      const now = new Date();
+      const runStr = formatDateTime(now);
+      const runDateOnly = formatDate(now);
+
+      const openItems = items.filter(it => normalizeStatus(it.data.status) === 'open');
+      const openCount = openItems.length;
+      const farmCount = new Set(openItems.map(it => it.data.farmId || it.data.farm).filter(Boolean)).size;
+
+      let oldestOpenAge = '';
+      if (openItems.length){
+        const nowMs = Date.now();
+        const oldestMs = openItems.reduce((min,it)=>{
+          const d = it.data._createdAtDate;
+          const t = d ? d.getTime() : nowMs;
+          return t < min ? t : min;
+        }, nowMs);
+        oldestOpenAge = formatAgeMs(nowMs - oldestMs);
+      }
+
+      const dateRange = computeDateRange(items);
+      const filterSummary = summarizeFilters();
+      const totalRecords = items.length;
+
+      const html = buildPrintHtml({
+        company,
+        runStr,
+        runDateOnly,
+        dateRange,
+        filterSummary,
+        totalRecords,
+        openCount,
+        farmCount,
+        oldestOpenAge,
+        grouped
+      });
+
+      let iframe = document.getElementById('fv-print-frame');
+      if (!iframe){
+        iframe = document.createElement('iframe');
+        iframe.id = 'fv-print-frame';
+        document.body.appendChild(iframe);
+      }
+
+      const win = iframe.contentWindow || iframe.contentDocument;
+      const docu = iframe.contentDocument || iframe.contentWindow.document;
+
+      docu.open();
+      docu.write(html);
+      docu.close();
+
+      setTimeout(() => {
+        try{ win.focus(); win.print(); }
+        catch(err){
+          console.warn('[boundary-report] iframe print failed, falling back to window.print()', err);
+          window.print();
+        }
+      }, 400);
+    }
+
+    function buildPrintHtml({ company, runStr, runDateOnly, dateRange, filterSummary, totalRecords, openCount, farmCount, oldestOpenAge, grouped }){
+      const logoUrl = company?.logoUrl ? String(company.logoUrl) : '';
+
+      return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Field Boundary Fix Requests</title>
+  <style>
+    :root{
+      --fv-green:#3B7E46;
+      --fv-border:#D1D5DB;
+      --fv-text:#111827;
+      --fv-muted:#6B7280;
+      --fv-bg:#F3F4F6;
+    }
+    *{box-sizing:border-box;}
+    html,body{ margin:0; padding:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--fv-text); background:var(--fv-bg); }
+    body{ display:flex; justify-content:center; padding:22px 12px; }
+    .page{ width:100%; max-width:920px; background:#fff; border-radius:14px; box-shadow:0 10px 30px rgba(15,23,42,0.12); padding:20px 22px 22px; }
+
+    .hdr{ display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; border-bottom:2px solid var(--fv-green); padding-bottom:12px; margin-bottom:14px; }
+
+    .logo{
+      width:60px;height:60px;border-radius:16px;
+      border:1px solid var(--fv-border);
+      background:#fff;
+      display:flex;align-items:center;justify-content:center;
+      overflow:hidden;
+    }
+    .logo img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .logo span{ font-size:22px; font-weight:950; color:#111827; letter-spacing:0.04em; }
+
+    .co-name{font-size:16px;font-weight:900;margin:0 0 2px;}
+    .co-line{font-size:11px;color:var(--fv-muted);margin:0;line-height:1.35;}
+    .meta{ text-align:right; font-size:11px; color:var(--fv-muted); line-height:1.35; white-space:nowrap; }
+    .meta strong{color:var(--fv-text);}
+
+    .title{ margin:0; font-size:18px; font-weight:950; letter-spacing:0.06em; text-transform:uppercase; }
+    .subtitle{ margin:4px 0 0; font-size:12px; color:var(--fv-muted); line-height:1.35; }
+
+    .summary{ margin-top:10px; padding:8px 10px; border-radius:12px; background:linear-gradient(90deg, rgba(59,126,70,0.10), transparent); border:1px solid rgba(59,126,70,0.22); display:flex; flex-wrap:wrap; gap:6px 14px; font-size:11px; }
+    .pill{display:inline-flex; gap:6px; align-items:baseline; white-space:nowrap;}
+    .k{font-size:10px; text-transform:uppercase; letter-spacing:0.10em; color:var(--fv-muted); font-weight:700;}
+    .v{font-weight:800; color:var(--fv-text);}
+
+    /* Compact centered single-row KPI blocks (paper saver) */
+    .kpis{
+      margin-top:10px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:nowrap;
+    }
+    .kpi{
+      border:1px solid var(--fv-border);
+      border-radius:10px;
+      padding:7px 10px;
+      background:#fff;
+      min-width:150px;
+      max-width:190px;
+    }
+    .kpi .lab{
+      font-size:9.5px;
+      text-transform:uppercase;
+      letter-spacing:0.10em;
+      color:var(--fv-muted);
+      font-weight:900;
+      line-height:1.1;
+    }
+    .kpi .val{
+      font-size:16px;
+      font-weight:950;
+      margin-top:2px;
+      line-height:1.1;
+    }
+    .kpi .note{
+      font-size:9px;
+      color:var(--fv-muted);
+      margin-top:2px;
+      line-height:1.15;
+    }
+
+    .section{ margin-top:14px; border-top:1px solid #EEF2F7; padding-top:12px; }
+    .farm-title{ font-size:12px; font-weight:950; letter-spacing:0.10em; text-transform:uppercase; color:#1F2937; margin:0 0 6px; display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+    .farm-sub{ font-size:11px; color:var(--fv-muted); margin:0 0 10px; }
+
+    .req-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+    .req{ border:1px solid var(--fv-border); border-radius:12px; padding:10px 10px 9px; break-inside:avoid; page-break-inside:avoid; }
+    .req-top{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; padding-bottom:7px; border-bottom:1px solid #EEF2F7; margin-bottom:8px; }
+    .req-field{ font-weight:950; font-size:13px; line-height:1.25; }
+    .req-farm{ font-size:10.5px; color:var(--fv-muted); margin-top:2px; }
+
+    .badge{
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(59,126,70,0.28);
+      background:rgba(59,126,70,0.07);
+      color:#0F172A;
+      white-space:nowrap;
+    }
+
+    .req-meta{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 10px; font-size:11px; }
+    .pair .kk{font-size:10px;text-transform:uppercase;letter-spacing:0.10em;color:var(--fv-muted);font-weight:900;margin-bottom:2px;}
+    .pair .vv{font-weight:650; color:#111827; line-height:1.25; word-break:break-word;}
+    .rtkbox{grid-column:1 / -1;}
+    .rtkname{font-weight:650;}
+    .rtksub{font-weight:650;color:#111827;opacity:.88;margin-top:2px;}
+    .notes{ grid-column:1 / -1; margin-top:2px; padding-top:8px; border-top:1px dashed #E5E7EB; }
+    .notes .vv{ font-weight:650; white-space:pre-wrap; line-height:1.28; }
+
+    /* Photo Appendix styles */
+    .pagebreak{ height:0; page-break-before:always; break-before:page; }
+    .appendix-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+      margin-bottom:10px;
+      break-after:avoid;
+      page-break-after:avoid;
+    }
+    .appendix-title{
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:0.10em;
+      text-transform:uppercase;
+      color:#1F2937;
+      margin:0;
+    }
+    .appendix-sub{
+      font-size:11px;
+      color:var(--fv-muted);
+      font-weight:900;
+      margin:0;
+      letter-spacing:0.06em;
+      text-transform:none;
+      white-space:nowrap;
+    }
+
+    .appendix-card{
+      border:1px solid var(--fv-border);
+      border-radius:12px;
+      padding:10px;
+      margin:10px 0;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    /* Keep header with the first card (prevents orphan "PHOTO APPENDIX" line) */
+    .appendix-card.first{
+      break-before:avoid;
+      page-break-before:avoid;
+    }
+
+    .photo-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+    .photo{
+      border:1px solid #E5E7EB;
+      border-radius:12px;
+      overflow:hidden;
+      background:#F8FAFC;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    .photo img{ width:100%; height:auto; display:block; max-height:520px; object-fit:cover; }
+    .photo-cap{ font-size:10px; color:var(--fv-muted); padding:6px 8px; border-top:1px solid #EEF2F7; }
+
+    .footer{ margin-top:16px; padding-top:10px; border-top:1px solid var(--fv-border); display:flex; justify-content:space-between; gap:12px; font-size:10px; color:var(--fv-muted); line-height:1.3; }
+    .footer .l{max-width:65%;}
+    .footer .r{text-align:right;}
+
+    @media (max-width:860px){
+      .req-grid{grid-template-columns:1fr;}
+      .meta{white-space:normal;}
+      .photo-grid{grid-template-columns:1fr;}
+    }
+
+    @media print{
+      html,body{background:#fff;padding:0;}
+      body{box-shadow:none;}
+      .page{ max-width:none; border-radius:0; box-shadow:none; padding:9mm 10mm; }
+      .hdr{ margin-bottom:10px; padding-bottom:10px; }
+      .summary{ margin-top:8px; }
+      .kpis{ margin-top:8px; }
+      .section{ margin-top:12px; padding-top:12px; }
+      img{ break-inside:avoid; page-break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hdr">
+      <div class="logo">
+        ${logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(company.name || 'Company logo')}" />` : `<span>DF</span>`}
+      </div>
+      <div>
+        <p class="co-name">${escapeHtml(company.name || '')}</p>
+        <p class="co-line">
+          ${company.address ? escapeHtml(company.address) + '<br>' : ''}
+          ${company.phone ? 'Phone: ' + escapeHtml(company.phone) : ''}${company.phone && company.email ? ' · ' : ''}
+          ${company.email ? 'Email: ' + escapeHtml(company.email) : ''}
+        </p>
+      </div>
+      <div class="meta">
+        <div><strong>Field Boundary Fix Requests</strong></div>
+        <div>Generated: ${escapeHtml(runStr)}</div>
+        <div>Prepared by: ${escapeHtml(company.name || 'FarmVista')}</div>
+      </div>
+    </header>
+
+    <h1 class="title">Field Boundary Fix Requests</h1>
+    <p class="subtitle">Boundary correction requests grouped by farm and field, including RTK tower details (Name • Network ID • Frequency).</p>
+
+    <div class="summary">
+      <div class="pill"><span class="k">Date range</span><span class="v">${escapeHtml(dateRange || 'All dates')}</span></div>
+      <div class="pill"><span class="k">Filters</span><span class="v">${escapeHtml(filterSummary)}</span></div>
+      <div class="pill"><span class="k">Records</span><span class="v">${totalRecords}</span></div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="lab">Open Requests</div>
+        <div class="val">${openCount}</div>
+        <div class="note">Total open boundary fix requests</div>
+      </div>
+      <div class="kpi">
+        <div class="lab">Farms With Open</div>
+        <div class="val">${farmCount}</div>
+        <div class="note">Unique farms with an open request</div>
+      </div>
+      <div class="kpi">
+        <div class="lab">Oldest Open Age</div>
+        <div class="val">${escapeHtml(oldestOpenAge || 'N/A')}</div>
+        <div class="note">Age of the oldest open request</div>
+      </div>
+    </div>
+
+    ${grouped.map(([farmName, arr]) => {
+      const openHere = arr.filter(it => normalizeStatus(it.data.status) === 'open').length;
+      const totalHere = arr.length;
+
+      return `
+      <section class="section">
+        <div class="farm-title">
+          <span>${escapeHtml(farmName)}</span>
+          <span style="font-size:11px;color:var(--fv-muted);letter-spacing:0.06em;text-transform:none;font-weight:900;">${openHere} open / ${totalHere} total</span>
+        </div>
+        <p class="farm-sub">Each card includes scope/type, submitter, and RTK (Name • Network ID • Frequency). Photos are in the Photo Appendix.</p>
+
+        <div class="req-grid">
+          ${arr.map(it => {
+            const d = it.data;
+            const created = d._createdAtDate || null;
+
+            const rtk = getRtkForRequest(d);
+            const lines = rtkLines(rtk);
+
+            const submitLine = (d.submittedBy || '') + (d.submittedByEmail ? ' · ' + d.submittedByEmail : '');
+            const status = d.status || '';
+            const field = d.field || '';
+
+            return `
+              <article class="req">
+                <div class="req-top">
+                  <div>
+                    <div class="req-field">${escapeHtml(field)}</div>
+                    <div class="req-farm">${escapeHtml(farmName)}</div>
+                  </div>
+                  <div class="badge">${escapeHtml(status || 'unknown')}</div>
+                </div>
+
+                <div class="req-meta">
+                  <div class="pair">
+                    <div class="kk">Scope</div>
+                    <div class="vv">${escapeHtml(d.scope || '—')}</div>
+                  </div>
+                  <div class="pair">
+                    <div class="kk">Type</div>
+                    <div class="vv">${escapeHtml(d.boundaryType || '—')}</div>
+                  </div>
+
+                  <div class="pair">
+                    <div class="kk">Submitted</div>
+                    <div class="vv">${escapeHtml(created ? formatDate(created) : '—')}</div>
+                  </div>
+                  <div class="pair">
+                    <div class="kk">Submitted By</div>
+                    <div class="vv">${escapeHtml(submitLine || '—')}</div>
+                  </div>
+
+                  <div class="pair rtkbox">
+                    <div class="kk">RTK</div>
+                    <div class="vv">
+                      <div class="rtkname">${escapeHtml(lines.nameLine || (d.rtkTowerId ? ('Tower ' + d.rtkTowerId) : 'Not set'))}</div>
+                      ${lines.subLine ? `<div class="rtksub">${escapeHtml(lines.subLine)}</div>` : ``}
+                    </div>
+                  </div>
+
+                  <div class="pair notes">
+                    <div class="kk">Notes</div>
+                    <div class="vv">${escapeHtml(d.notes || '')}</div>
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join('')}
+        </div>
+      </section>
+      `;
+    }).join('')}
+
+    ${(() => {
+      // Photo Appendix (grouped by request)
+      const flat = [];
+      grouped.forEach(([farmName, arr]) => {
+        arr.forEach(it => {
+          const d = it.data || {};
+          const photos = getPhotosFromRequest(d);
+          if(!photos.length) return;
+
+          const created = d._createdAtDate ? formatDate(d._createdAtDate) : '—';
+          flat.push({
+            farmName,
+            fieldName: d.field || 'Field not set',
+            scope: d.scope || 'Boundary correction requested',
+            status: d.status || '',
+            when: created,
+            photos
+          });
+        });
+      });
+
+      if(!flat.length) return '';
+
+      return `
+      <div class="pagebreak"></div>
+      <section class="section" style="border-top:none;padding-top:0;">
+        <div class="appendix-head">
+          <h2 class="appendix-title">Photo Appendix</h2>
+          <p class="appendix-sub">Photos grouped by request</p>
+        </div>
+
+        ${flat.map((p, idx) => `
+          <div class="appendix-card ${idx===0 ? 'first' : ''}">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:8px;">
+              <div>
+                <div style="font-weight:950; font-size:13px; line-height:1.25;">${escapeHtml(p.fieldName)}</div>
+                <div style="font-size:11px; color:var(--fv-muted); margin-top:2px;">
+                  ${escapeHtml(p.farmName)} · ${escapeHtml(p.when)} · ${escapeHtml(p.scope)}
+                </div>
+              </div>
+              <div class="badge">${escapeHtml(p.status || '—')}</div>
+            </div>
+
+            <div class="photo-grid">
+              ${p.photos.map((ph, i) => `
+                <div class="photo">
+                  <img src="${escapeHtml(ph.url)}" alt="${escapeHtml(ph.name || 'Boundary request photo')}">
+                  <div class="photo-cap">${escapeHtml(ph.name || ('Photo ' + (i+1)))}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </section>
+      `;
+    })()}
+
+    <footer class="footer">
+      <div class="l">Internal use only. Please verify boundary fixes in your GIS system before finalizing changes.</div>
+      <div class="r">${escapeHtml(company.name || '')} • ${escapeHtml(runDateOnly || '')}</div>
+    </footer>
+  </div>
+</body>
+</html>`;
+    }
+
+    async function handleMarkCompleted(){
+  if(!STATE.selectedId){
+    alert('Select a boundary fix request first.');
+    return;
+  }
+
+  const item = STATE.items.find(it => it.id === STATE.selectedId);
+  if(!item){
+    alert('Could not find this request in memory.');
+    return;
+  }
+
+  const currentStatus = item.data.status || '';
+  const st = normalizeStatus(currentStatus);
+  if (!(st === 'open' || st === 'in progress')) return;
+
+  try{
+    const ref = doc(STATE.db, CONFIG.COLLECTION_PATH, STATE.selectedId);
+    await updateDoc(ref, {
+      status: 'Completed',
+      completedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    item.data.status = 'Completed';
+    await applyFilters();
+    renderDetails();
+  }catch(err){
+    console.error('Error marking boundary request completed:', err);
+    alert('Could not mark this request as completed. Check console for details.');
+  }
+}
+
+    async function handleDeleteRequest(){
+      if(!STATE.selectedId){
+        alert('Select a boundary fix request first.');
+        return;
+      }
+      const confirmDelete = confirm('Delete this boundary fix request? This cannot be undone.');
+      if(!confirmDelete) return;
+
+      try{
+        const ref = doc(STATE.db, CONFIG.COLLECTION_PATH, STATE.selectedId);
+        await deleteDoc(ref);
+        STATE.items = STATE.items.filter(it => it.id !== STATE.selectedId);
+        STATE.selectedId = null;
+        clearDetails();
+        await applyFilters();
+      }catch(err){
+        console.error('Error deleting boundary request:', err);
+        alert('Could not delete this request. Check console for details.');
+      }
+    }
+    (async function boot(){
+      await ready;
+      STATE.db = getFirestore();
+
+      const shell = document.querySelector('fv-shell');
+      if (shell) shell.nav = NAV_MENU;
+
+      const backBtn = document.getElementById('btnBack');
+      if(backBtn){
+        backBtn.addEventListener('click', () => {
+          location.href = '/pages/reports/reports-predefined.html';
+        });
+      }
+
+      $('#woDetailClose').addEventListener('click', () => {
+        STATE.selectedId = null;
+        clearDetails();
+      });
+
+      const markBtn = $('#btnMarkCompleted');
+      if (markBtn) markBtn.addEventListener('click', handleMarkCompleted);
+
+      const deleteBtn = $('#btnDeleteRequest');
+      if (deleteBtn) deleteBtn.addEventListener('click', handleDeleteRequest);
+
+      // Photo viewer wiring
+      photoModal = $('#photoModal');
+      photoModalImg = $('#photoModalImg');
+      photoModalBackdrop = $('#photoModalBackdrop');
+      photoModalCloseBtn = $('#photoModalClose');
+      if(photoModalBackdrop) photoModalBackdrop.addEventListener('click', closePhotoViewer);
+      if(photoModalCloseBtn) photoModalCloseBtn.addEventListener('click', closePhotoViewer);
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closePhotoViewer(); });
+
+      await loadBoundaryRequests();
+      populateFarmFilterFromItems();
+            // ✅ Farm dropdown: open as an 8-row scroll list (desktop/tablet)
+      (function wireFarmDropdown(){
+        const farmSel = document.getElementById('filterFarm');
+        if(!farmSel) return;
+
+        const isDesktopLike = () =>
+          window.matchMedia && window.matchMedia('(min-width: 760px)').matches;
+
+        const openList = () => {
+          if(!isDesktopLike()) return;   // keep native picker on phones
+          farmSel.size = 8;              // ~8 farms visible
+          farmSel.classList.add('farm-open');
+        };
+
+        const closeList = () => {
+          farmSel.size = 1;
+          farmSel.classList.remove('farm-open');
+        };
+
+        // Default closed
+        closeList();
+
+        // Open on click/focus (desktop)
+        farmSel.addEventListener('mousedown', openList);
+        farmSel.addEventListener('focus', openList);
+
+        // Close after selection or leaving control
+        farmSel.addEventListener('change', closeList);
+        farmSel.addEventListener('blur', closeList);
+
+        // Safety: if screen becomes small, never stay "open"
+        window.addEventListener('resize', () => {
+          if(!isDesktopLike()) closeList();
+        }, { passive:true });
+      })();
+
+
+      const statusSel = $('#filterStatus');
+      const farmSel   = $('#filterFarm');
+
+      if(statusSel) statusSel.addEventListener('change', () => applyFilters());
+      if(farmSel)   farmSel.addEventListener('change', () => applyFilters());
+
+      await applyFilters();
+
+      const printTop = $('#btnPrint');
+      const printBottom = $('#btnPrintBottom');
+      if (printTop)    printTop.addEventListener('click', handlePrintClick);
+      if (printBottom) printBottom.addEventListener('click', handlePrintClick);
+    })();
+  </script>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">📐</div>
+          <div>
+            <h1>Field Boundary Fix Requests</h1>
+            <p class="muted">
+              Review boundary correction requests by farm and field. Tap a card to see full notes
+              so GIS can fix maps correctly.
+            </p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <button id="btnBack" type="button" class="btn btn-quiet">← Back to Reports</button>
+              <button id="btnPrint" type="button" class="btn btn-primary">Print / Save PDF</button>
+            </div>
+            <div class="page-header-meta" id="brCount">0 requests</div>
+          </div>
+
+          <div class="filters">
+            <div class="filter-field">
+              <label class="filter-label" for="filterStatus">Status</label>
+              <select id="filterStatus" class="filter-select">
+                <option value="open">Open</option>
+                <option value="inprogress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+
+            <div class="filter-field">
+              <label class="filter-label" for="filterFarm">Farm</label>
+              <select id="filterFarm" class="filter-select">
+                <option value="all">All farms</option>
+              </select>
+            </div>
+          </div>
+
+          <section aria-label="Boundary fix requests">
+            <div class="wo-empty">Loading boundary requests…</div>
+            <div class="wo-list"></div>
+          </section>
+
+          <section class="wo-detail-panel" aria-label="Boundary request details">
+            <div class="wo-detail-header">
+              <div class="wo-detail-title">Boundary Request Details</div>
+              <button type="button" id="woDetailClose" class="wo-detail-close">Close</button>
+            </div>
+
+            <div class="wo-detail-grid"></div>
+
+            <div class="wo-detail-notes">
+              <div class="wo-detail-notes-label">Notes</div>
+              <div class="wo-detail-notes-body"></div>
+            </div>
+
+            <div id="woDetailPhotos" class="wo-detail-photos" aria-label="Boundary request photos">
+              <div class="wo-detail-photos-label">Photos</div>
+              <div id="woDetailPhotoGrid" class="wo-photo-grid"></div>
+            </div>
+
+            <div class="wo-detail-footer"></div>
+
+            <div class="wo-detail-actions">
+              <div class="wo-detail-actions-left">
+                <button type="button" id="btnMarkCompleted" class="btn btn-primary btn-small btn-mark-completed">
+                  Mark completed
+                </button>
+              </div>
+              <div class="wo-detail-actions-right">
+                <button type="button" id="btnDeleteRequest" class="trash-btn" aria-label="Delete boundary request" title="Delete boundary request">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M10 4h4a1 1 0 0 1 1 1v2H9V5a1 1 0 0 1 1-1Z" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M9 11v6" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M15 11v6" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M6 7h12v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7Z" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div class="bottom-actions">
+            <button id="btnPrintBottom" type="button" class="btn btn-primary">Print / Save PDF</button>
+          </div>
+        </div>
+      </section>
+
+      <iframe id="fv-print-frame"></iframe>
+    </div>
+  </fv-shell>
+
+  <div id="photoModal" class="photo-modal" role="dialog" aria-modal="true" aria-label="Boundary request photo">
+    <div id="photoModalBackdrop" class="photo-backdrop"></div>
+    <div class="photo-sheet">
+      <div class="photo-close-row">
+        <button id="photoModalClose" type="button" class="photo-close-btn">Close</button>
+      </div>
+      <div class="photo-img-wrap">
+        <img id="photoModalImg" src="" alt="Boundary request photo"/>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

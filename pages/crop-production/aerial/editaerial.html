@@ -1,0 +1,2877 @@
+<!-- =====================================================================
+/pages/crop-production/aerial/editaerial.html  (FULL FILE)
+Rev: 2026-06-30 FARM-GROUPED
+Base: Rev 2025-12-19g working file
+Update:
+✅ Jobs still auto-load the same way
+✅ Filters/search/date picker/edit/delete/details remain
+✅ Main list now renders by Farm → Crop → Field
+✅ Farm crop headers show acres sprayed by crop
+✅ Field rows show Field Name, Acres, Trial indicator, Job # last
+✅ Search still works by job number, farm, field, crop, crop year, and trial name
+===================================================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Aerial Applications (View/Edit)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <script src="/js/core/firebase/firebase-config.js"></script>
+  <script src="/js/shared/ui/fv-date-range-picker.js"></script>
+
+<style>
+  :root{
+    --card-max: 1200px;
+    --page-bottom-gap: 96px;
+    --accent: #2F6C3C;
+    --danger: #C53030;
+  }
+
+  html{-webkit-text-size-adjust:100%}
+  body{ background: var(--app-bg, var(--surface)); overflow-x:hidden; }
+
+  .wrap{
+    max-width: var(--card-max);
+    margin: 0 auto;
+    padding: clamp(14px,3vw,22px);
+    padding-bottom: calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+    box-sizing:border-box;
+    display:grid;
+    gap:12px;
+  }
+
+  .hero{
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--surface);
+    box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+    overflow:visible;
+  }
+
+  .hero-head{
+    display:grid;
+    grid-template-columns:36px 1fr;
+    gap:12px;
+    align-items:center;
+    padding:14px 16px;
+    background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    border-bottom:1px solid var(--border);
+  }
+
+  .hero-head .icon{
+    width:24px;
+    height:24px;
+    color:var(--accent);
+    display:grid;
+    place-items:center;
+  }
+
+  .hero-head h1{
+    margin:0;
+    font-size:clamp(20px,3.2vw,26px);
+    line-height:1.2;
+  }
+
+  .muted{ color:var(--muted,#67706B); }
+  .body{ padding:16px; display:grid; gap:12px; }
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .toolbar-left,
+  .toolbar-right{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+
+  .toolbar-right{
+    font-size:0.9rem;
+    opacity:0.9;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:120px;
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    font-weight:900;
+    text-decoration:none;
+    cursor:pointer;
+    user-select:none;
+    color:var(--text) !important;
+    background:var(--card-surface,var(--surface));
+    font-size:0.9rem;
+    gap:6px;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .btn-quiet{ min-width:auto; padding-inline:10px; }
+
+  .btn-primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff !important;
+  }
+
+  .btn-primary[disabled]{opacity:.6; cursor:not-allowed;}
+
+  .input, .select{
+    width:100%;
+    font:inherit;
+    font-size:16px;
+    color:var(--text);
+    background:var(--card-surface,var(--surface));
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+    outline:none;
+    box-sizing:border-box;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .select{
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--muted,#67706B) 50%),
+      linear-gradient(135deg, var(--muted,#67706B) 50%, transparent 50%);
+    background-position:
+      calc(100% - 16px) 50%,
+      calc(100% - 11px) 50%;
+    background-size:5px 5px, 5px 5px;
+    background-repeat:no-repeat;
+  }
+
+  .filters-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:flex-end;
+    margin-top:4px;
+    position:relative;
+    z-index:10;
+  }
+
+  .filter-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    font-size:0.85rem;
+    max-width:320px;
+    position:relative;
+    z-index:50;
+    flex:1 1 220px;
+    min-width:220px;
+  }
+
+  .filter-label{
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    opacity:0.7;
+  }
+
+  .filters-actions{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .aerial-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-top:4px;
+  }
+
+  .aerial-empty{
+    padding:14px 16px;
+    border-radius:12px;
+    border:1px dashed var(--border);
+    background:var(--card-surface, var(--surface));
+    font-size:0.95rem;
+    opacity:0.9;
+    cursor:pointer;
+  }
+
+  .farm-card{
+    border-radius:14px;
+    border:1px solid var(--card-border, var(--border));
+    background:var(--card-surface, var(--surface));
+    box-shadow:var(--shadow-soft, var(--shadow));
+    overflow:hidden;
+  }
+
+  .farm-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px 14px;
+    background:linear-gradient(90deg, rgba(47,108,60,.14), transparent);
+    border-bottom:1px solid var(--border);
+  }
+
+  .farm-toggle,
+  .crop-toggle{
+    cursor:pointer;
+    user-select:none;
+  }
+
+  .farm-toggle:hover,
+  .crop-toggle:hover{
+    background:color-mix(in srgb, var(--surface) 72%, var(--border) 28%);
+  }
+
+  .farm-toggle:active,
+  .crop-toggle:active{
+    transform:scale(.998);
+  }
+
+  .chev{
+    width:8px;
+    height:8px;
+    border-right:2px solid currentColor;
+    border-bottom:2px solid currentColor;
+    display:inline-block;
+    transform:rotate(-45deg);
+    transition:transform .15s ease;
+    opacity:.55;
+    margin-right:8px;
+    margin-bottom:1px;
+    flex:0 0 auto;
+  }
+
+  .chev.open{
+    transform:rotate(45deg);
+  }
+
+  .farm-name,
+  .crop-name{
+    display:flex;
+    align-items:center;
+    min-width:0;
+  }
+
+  .farm-name{
+    font-weight:950;
+    font-size:1.08rem;
+    line-height:1.2;
+  }
+
+  .farm-summary{
+    margin-top:4px;
+    font-size:0.82rem;
+    opacity:0.82;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 10px;
+  }
+
+  .farm-total{
+    text-align:right;
+    white-space:nowrap;
+    color:var(--accent);
+    font-weight:950;
+    font-size:1.05rem;
+  }
+
+  .farm-total small{
+    display:block;
+    color:var(--muted,#67706B);
+    font-size:0.72rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    font-weight:900;
+  }
+
+  .crop-group{
+    border-top:1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  }
+
+  .crop-group:first-of-type{ border-top:none; }
+
+  .crop-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:7px 14px;
+    background:color-mix(in srgb, var(--surface) 78%, var(--border) 22%);
+    font-weight:950;
+  }
+
+  .crop-name{
+    font-size:0.92rem;
+  }
+
+  .crop-acres{
+    color:var(--accent);
+    white-space:nowrap;
+    font-weight:950;
+  }
+
+  .field-history-block{
+    border-top:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    padding:8px 14px 9px;
+  }
+
+  .field-history-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:5px;
+  }
+
+  .field-main{
+    min-width:0;
+  }
+
+  .field-name-app{
+    font-weight:950;
+    font-size:0.9rem;
+    line-height:1.15;
+  }
+
+  .field-sub-app{
+    margin-top:1px;
+    font-size:0.72rem;
+    opacity:0.72;
+  }
+
+  .field-acres-app{
+    font-weight:950;
+    white-space:nowrap;
+    color:var(--text);
+    font-size:0.78rem;
+  }
+
+  .field-row-app{
+    cursor:pointer;
+    transition:background .12s, transform .06s;
+  }
+
+  .field-row-app:hover{
+    background:color-mix(in srgb, var(--surface) 76%, var(--border) 24%);
+  }
+
+  .field-row-app:active{
+    transform:scale(.997);
+  }
+
+  .job-history-row{
+    display:grid;
+    grid-template-columns:86px 116px 78px minmax(0,1fr);
+    gap:8px;
+    align-items:center;
+    margin-top:4px;
+    padding:6px 8px;
+    border-radius:9px;
+    border-top:none;
+    background:color-mix(in srgb, var(--surface) 84%, var(--border) 16%);
+    font-size:0.76rem;
+  }
+
+  .job-history-row .job-ref{
+    text-align:left;
+    font-size:0.76rem;
+    opacity:0.85;
+  }
+
+  .job-history-row .field-sub-app{
+    font-size:0.72rem;
+    opacity:0.78;
+    white-space:nowrap;
+  }
+
+  .job-history-row .field-acres-app{
+    font-size:0.78rem;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .trial-pill{
+    display:inline-flex;
+    max-width:100%;
+    align-items:center;
+    gap:5px;
+    padding:2px 7px;
+    border-radius:999px;
+    font-size:0.72rem;
+    font-weight:950;
+    color:var(--accent);
+    background:rgba(47,108,60,.13);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .trial-none{
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:0.72rem;
+    opacity:0.48;
+    font-weight:800;
+  }
+
+  .job-ref{
+    text-align:right;
+    font-size:0.78rem;
+    opacity:0.72;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .detail-panel{
+    margin-top:10px;
+    border-radius:14px;
+    border:1px solid var(--card-border, var(--border));
+    background:var(--card-surface, var(--surface));
+    box-shadow:var(--shadow-soft, var(--shadow));
+    padding:14px 16px 12px;
+    display:none;
+    flex-direction:column;
+    gap:10px;
+    position:relative;
+  }
+
+  .detail-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+
+  .detail-title-area{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    flex:1 1 auto;
+    min-width:0;
+  }
+
+  .detail-title{ font-weight:900; font-size:1.05rem; cursor:text; }
+
+  .detail-title-input{
+    display:none;
+    font-size:1.05rem;
+    font-weight:900;
+    padding:4px 6px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--surface-strong, var(--surface));
+    color:var(--text);
+    max-width:100%;
+  }
+
+  .detail-edit-hint{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    opacity:0.6;
+  }
+
+  .detail-close{
+    border:none;
+    outline:none;
+    background:transparent;
+    padding:0;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:28px;
+    height:28px;
+    border-radius:999px;
+    color:var(--muted,#67706B);
+    flex-shrink:0;
+  }
+
+  .detail-close:hover{
+    background:color-mix(in srgb, var(--surface) 60%, var(--border) 40%);
+    color:var(--text);
+  }
+
+  .detail-close svg{ width:16px; height:16px; display:block; }
+
+  .visually-hidden{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  .detail-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:8px 16px;
+    align-items:start;
+  }
+
+  @media (min-width:700px){
+    .detail-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  }
+
+  .detail-item-label{
+    font-size:0.8rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    opacity:0.7;
+    margin-bottom:1px;
+  }
+
+  .detail-item-value{ font-size:0.94rem; }
+
+  .created-actions-row{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    padding-top:2px;
+  }
+
+  .created-actions-left{ min-width:0; }
+
+  .created-actions-right{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+
+  #editBtn.edit-inline,
+  #saveBtn.edit-inline,
+  #cancelBtn.edit-inline{
+    min-width:auto;
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:0.82rem;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .trash-fab{
+    position:absolute;
+    right:14px;
+    bottom:14px;
+    width:38px;
+    height:38px;
+    border-radius:999px;
+    border:1px solid var(--danger);
+    background:transparent;
+    color:var(--danger);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    -webkit-appearance:none;
+    appearance:none;
+    box-shadow:0 6px 16px rgba(0,0,0,.10);
+  }
+
+  .trash-fab svg{ width:16px; height:16px; display:block; fill: currentColor; }
+
+  .trash-fab:hover{ background: rgba(197,48,48,0.08); }
+
+  .trash-fab:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+    border-color: color-mix(in srgb, var(--border) 70%, var(--danger) 30%);
+    color: color-mix(in srgb, var(--muted,#67706B) 75%, var(--danger) 25%);
+    background:transparent;
+    box-shadow:none;
+  }
+
+  .trash-fab:disabled:hover{ background:transparent; }
+
+  .detail-panel.has-trash{
+    padding-bottom: 64px;
+  }
+
+  .detail-notes,
+  .attachments,
+  .fields-block{
+    margin-top:2px;
+    padding-top:10px;
+    border-top:1px solid var(--border);
+    font-size:0.9rem;
+  }
+
+  .detail-notes{
+    white-space:pre-wrap;
+  }
+
+  .detail-notes-label,
+  .attachments-label,
+  .fields-label{
+    font-size:0.8rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    opacity:0.7;
+    margin-bottom:4px;
+  }
+
+  .attachments-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+
+  .attachment-thumb{
+    width:64px;
+    height:64px;
+    border-radius:10px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.8rem;
+    cursor:pointer;
+    padding:0;
+  }
+
+  .attachment-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .attachment-empty{ font-size:0.86rem; opacity:0.8; }
+
+  .fields-list{ display:flex; flex-direction:column; gap:4px; }
+
+  .field-row{
+    padding:6px 8px;
+    border-radius:8px;
+    background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+  }
+
+  .field-name{ font-weight:900; font-size:0.92rem; }
+
+  .field-meta{ font-size:0.82rem; opacity:0.85; margin-top:1px; }
+
+  .trial-block{
+    grid-column: 1 / -1;
+    border-top:1px solid var(--border);
+    padding-top:10px;
+    margin-top:2px;
+  }
+
+  .trial-name{
+    font-weight:900;
+    font-size:0.98rem;
+    margin-top:2px;
+  }
+
+  .trial-field-line{
+    padding:6px 8px;
+    border-radius:8px;
+    background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+    font-size:0.88rem;
+    font-weight:800;
+    margin-top:6px;
+  }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
+    transform:translateX(-50%);
+    background:#2F6C3C;
+    color:#fff;
+    padding:10px 14px;
+    border-radius:10px;
+    box-shadow:0 6px 20px rgba(0,0,0,.25);
+    z-index:99999;
+    display:none;
+  }
+
+  .toast.show{ display:block; animation:fadeout 5s forwards; }
+
+  @keyframes fadeout{ 0%{opacity:1} 85%{opacity:1} 100%{opacity:0} }
+
+  .file-modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100000;
+  }
+
+  .file-modal.show{ display:flex; }
+
+  .file-backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.6);
+  }
+
+  .file-sheet{
+    position:relative;
+    max-width:90vw;
+    max-height:90vh;
+    background:var(--surface);
+    border-radius:14px;
+    border:1px solid var(--border);
+    box-shadow:0 20px 40px rgba(0,0,0,.4);
+    padding:8px 10px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    z-index:1;
+  }
+
+  .file-close-row{ display:flex; justify-content:flex-end; margin-bottom:4px; }
+
+  .file-close-btn{
+    border:none;
+    border-radius:999px;
+    padding:4px 10px;
+    font-size:0.85rem;
+    cursor:pointer;
+    background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+    color:var(--text);
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .file-content-wrap{
+    border-radius:12px;
+    overflow:hidden;
+    background:#000;
+    max-width:calc(90vw - 20px);
+    max-height:calc(80vh - 40px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .file-content-wrap img{ max-width:100%; max-height:100%; display:block; }
+
+  .file-content-wrap iframe{
+    border:0;
+    width:calc(90vw - 20px);
+    height:calc(80vh - 40px);
+    background:#fff;
+  }
+
+  .cal-pop{
+    position:absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: min(360px, 92vw);
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    box-shadow:0 18px 38px rgba(0,0,0,.22);
+    padding:10px 10px 10px;
+    display:none;
+    z-index:25;
+  }
+
+  .cal-pop-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .cal-pop-head .row{ display:flex; gap:8px; align-items:center; flex:1 1 auto; min-width:0; }
+
+  .cal-pop select{
+    flex:1 1 auto;
+    min-width:0;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--card-surface,var(--surface));
+    color:var(--text);
+    font:inherit;
+    font-size:14px;
+  }
+
+  .cal-close{
+    width:32px;
+    height:32px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+  }
+
+  .cal-close:hover{ background:color-mix(in srgb, var(--surface) 65%, var(--border) 35%); }
+
+  .cal-dow{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+    margin:6px 2px 6px;
+    font-size:12px;
+    opacity:.75;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  .cal-dow div{ text-align:center; }
+
+  #calDays{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:6px;
+    padding:2px;
+  }
+
+  .cal-day{
+    height:38px;
+    border-radius:10px;
+    border:1px solid color-mix(in srgb, var(--border) 65%, transparent);
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+    user-select:none;
+    background:color-mix(in srgb, var(--surface) 75%, var(--border) 25%);
+    color:var(--text);
+    font-weight:900;
+    font-size:13px;
+  }
+
+  .cal-day.other-month{ opacity:.45; font-weight:800; }
+
+  .cal-day:hover{ background:color-mix(in srgb, var(--surface) 60%, var(--border) 40%); }
+
+  .cal-day.start-selected,
+  .cal-day.range-start,
+  .cal-day.range-end,
+  .cal-day.single-day{
+    background: var(--accent);
+    border-color: var(--accent);
+    color:#fff;
+  }
+
+  .cal-day.in-range{
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface) 82%);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border) 60%);
+  }
+
+  .cal-pop-foot{
+    margin-top:10px;
+    border-top:1px solid var(--border);
+    padding-top:10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  #rangeSummary{ font-size:13px; opacity:.9; min-width:0; }
+
+  .cal-btns{ display:flex; gap:8px; align-items:center; flex-shrink:0; }
+
+  .cal-btn{
+    min-width:auto;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--card-surface,var(--surface));
+    color:var(--text);
+    font-weight:900;
+    cursor:pointer;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+
+  .cal-btn.apply{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff !important;
+  }
+
+  .modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100001;
+  }
+
+  .modal.show{ display:flex; }
+
+  .modal .backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.6);
+  }
+
+  .modal .sheet{
+    position:relative;
+    width:min(460px, 92vw);
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:var(--surface);
+    box-shadow:0 22px 46px rgba(0,0,0,.45);
+    padding:10px 12px 12px;
+    z-index:1;
+  }
+
+  .modal .head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:6px;
+  }
+
+  .modal .title{
+    font-weight:900;
+    font-size:1.05rem;
+    line-height:1.2;
+    color:var(--danger);
+  }
+
+  .modal .hint{
+    font-size:.92rem;
+    line-height:1.35;
+    color:var(--muted,#67706B);
+  }
+
+  .modal .row-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:12px;
+  }
+
+  @media (max-width: 700px){
+    .farm-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .farm-total{
+      text-align:left;
+    }
+
+    .field-history-block{
+      padding:8px 14px;
+    }
+
+    .job-history-row{
+      grid-template-columns:76px 1fr 72px;
+      grid-template-areas:
+        "job date acres"
+        "trial trial trial";
+      gap:3px 8px;
+    }
+
+    .job-history-row .job-ref{
+      grid-area:job;
+    }
+
+    .job-history-row .field-sub-app{
+      grid-area:date;
+      white-space:nowrap;
+    }
+
+    .job-history-row .field-acres-app{
+      grid-area:acres;
+      text-align:right;
+    }
+
+    .job-history-row > div:last-child{
+      grid-area:trial;
+      min-width:0;
+    }
+
+    .trial-pill,
+    .trial-none{
+      width:100%;
+      max-width:100%;
+    }
+  }
+
+  @media (max-width: 600px){
+    .filter-wrap{ min-width: 180px; }
+  }
+</style>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc,
+      updateDoc,
+      deleteDoc,
+      query,
+      orderBy,
+      limit,
+      where
+    } from '/js/core/firebase/firebase-init.js';
+
+    import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+    const CONFIG = {
+      COLLECTION_AERIAL: 'aerial_applications',
+      COLLECTION_TRIALS: 'fieldTrials',
+      BACK_URL: '/pages/crop-production/crop-aerial.html',
+      DEFAULT_LIMIT: 50
+    };
+
+    const STORAGE_KEYS = {
+      SEARCH: 'fv_aerialView_search',
+      RANGE:  'fv_aerialView_rangeText',
+      CROP:   'fv_aerialView_crop',
+      YEAR:   'fv_aerialView_year'
+    };
+
+const STATE = {
+  db: null,
+  loaded: false,
+  isLoading: false,
+  allItems: [],
+  items: [],
+  selectedId: null,
+  search: '',
+  fromYmd: '',
+  toYmd: '',
+  crop: 'all',
+  cropYear: 'all',
+  isEditing: false,
+  isEditingTitle: false,
+  trialCache: {},
+  expandedFarms: new Set(),
+  expandedCrops: new Set()
+};
+
+    const UI = {
+      editBtn: null,
+      saveBtn: null,
+      cancelBtn: null,
+      trashBtn: null,
+      canDelete: false
+    };
+
+    async function safeReady(){
+      if(typeof ready === 'function') return await ready();
+      return await ready;
+    }
+
+    function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+    async function withRetry(fn, label='op', tries=2){
+      let lastErr = null;
+      for(let i=1;i<=tries;i++){
+        try{ return await fn(i); }
+        catch(err){
+          lastErr = err;
+          console.warn('[AerialView]', `${label}.retry`, { attempt:i, code: err?.code, message: err?.message });
+          await sleep(350 * i);
+        }
+      }
+      throw lastErr;
+    }
+
+    async function getDocsServerFirst(ref){
+      try{ return await getDocs(ref, { source: 'server' }); }
+      catch{ return await getDocs(ref); }
+    }
+
+    function escapeHtml(str){
+      if(str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+
+    function fmtNumber(value, decimals){
+      const n = Number(value);
+      if(!isFinite(n)) return null;
+      return n.toFixed(decimals);
+    }
+
+    function showToast(message){
+      const el = document.getElementById('toast');
+      if(!el) return;
+      el.textContent = message || 'Saved.';
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+    }
+
+    function ymdFromDate(date){
+      if(!(date instanceof Date) || isNaN(date.getTime())) return '';
+      const y = date.getFullYear();
+      const m = String(date.getMonth()+1).padStart(2,'0');
+      const d = String(date.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseYmdToTime(ymd){
+      if(!ymd || typeof ymd !== 'string') return 0;
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim());
+      if(!m) return 0;
+      const y = Number(m[1]), mo = Number(m[2])-1, d = Number(m[3]);
+      return new Date(y, mo, d, 12, 0, 0, 0).getTime();
+    }
+
+    function getReleaseTime(d){
+      return parseYmdToTime(d?.releaseDate || '') || 0;
+    }
+
+    function getFallbackTime(d){
+      const ts = d?.updatedAt || d?.createdAt || null;
+      try{
+        if(ts?.toMillis) return ts.toMillis();
+        if(ts?.toDate) return ts.toDate().getTime();
+      }catch{}
+      const t = Number(d?.t);
+      if(isFinite(t) && t > 0) return t;
+      const iso = d?.timestampISO;
+      if(iso) return new Date(iso).getTime() || 0;
+      return 0;
+    }
+
+    function getFieldName(f){
+      return String(f?.field || f?.fieldName || f?.name || 'Unnamed Field');
+    }
+
+    function getFarmName(f, d){
+      return String(f?.farm || f?.farmName || d?.farm || d?.farmName || 'No Farm Listed');
+    }
+
+    function getCropName(d){
+      return String(d?.crop || 'Crop Not Listed');
+    }
+
+    function getFieldAcres(f){
+      const options = [
+        f?.sprayedAcres,
+        f?.releaseAcres,
+        f?.acres,
+        f?.tillableAcres,
+        f?.totalTillableAcres
+      ];
+
+      for(const v of options){
+        const n = Number(v);
+        if(isFinite(n)) return n;
+      }
+
+      return null;
+    }
+
+    function isFieldInTrial(d, f){
+      const tl = d?.trialLink || null;
+      if(!tl?.enabled || !tl?.trialId) return false;
+
+      const assignments = Array.isArray(tl.assignments) ? tl.assignments : [];
+      if(!assignments.length) return false;
+
+      const fieldId = String(f?.fieldId || f?.id || '').trim();
+      const fieldName = getFieldName(f).trim().toLowerCase();
+
+      return assignments.some(a=>{
+        const aFieldId = String(a?.fieldId || '').trim();
+        const aFieldName = String(a?.fieldName || a?.field || '').trim().toLowerCase();
+
+        if(fieldId && aFieldId && fieldId === aFieldId) return true;
+        if(fieldName && aFieldName && fieldName === aFieldName) return true;
+
+        return false;
+      });
+    }
+
+    function getTrialNameFromJob(d){
+      const tl = d?.trialLink || null;
+      if(!tl?.enabled || !tl?.trialId) return '';
+      const cached = STATE.trialCache[tl.trialId]?.trialName || '';
+      return tl.trialName || cached || 'Field Trial';
+    }
+
+    function buildSearchBlob(d){
+      const job = d?.jobNumber != null ? String(d.jobNumber) : '';
+      const crop = d?.crop || '';
+      const year = d?.cropYear != null ? String(d.cropYear) : (d?.year != null ? String(d.year) : '');
+      const farm = d?.farm || d?.farmName || '';
+      const trialName = getTrialNameFromJob(d);
+      const fieldsArr = Array.isArray(d?.fields) ? d.fields : [];
+      const fieldNames = fieldsArr.map(f => {
+        const inTrial = isFieldInTrial(d, f) ? trialName : '';
+        return `${getFarmName(f, d)} ${getFieldName(f)} ${inTrial}`.trim();
+      }).join(' ');
+
+      return `${job} ${crop} ${year} ${farm} ${trialName} ${fieldNames}`.toLowerCase();
+    }
+
+    function parseLooseDate(str){
+      const d = new Date(str);
+      if(isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function deriveRangeFromPickerText(){
+      const jobInput = document.getElementById('jobRangeInput');
+      if(!jobInput) return;
+
+      const raw = (jobInput.value || '').trim();
+      if(!raw){
+        STATE.fromYmd = '';
+        STATE.toYmd = '';
+        return;
+      }
+
+      if(raw.includes('–')){
+        const parts = raw.split('–').map(s=>s.trim());
+        const a = parseLooseDate(parts[0]);
+        const b = parseLooseDate(parts[1]);
+        STATE.fromYmd = a ? ymdFromDate(a) : '';
+        STATE.toYmd = b ? ymdFromDate(b) : '';
+      }else if(raw.toLowerCase().startsWith('start:')){
+        const s = raw.replace(/^\s*start:\s*/i,'').trim();
+        const a = parseLooseDate(s);
+        STATE.fromYmd = a ? ymdFromDate(a) : '';
+        STATE.toYmd = '';
+      }else{
+        const a = parseLooseDate(raw);
+        STATE.fromYmd = a ? ymdFromDate(a) : '';
+        STATE.toYmd = '';
+      }
+    }
+
+    function loadPrefs(){
+      try{
+        STATE.search = (localStorage.getItem(STORAGE_KEYS.SEARCH) || '').toString();
+        STATE.crop = (localStorage.getItem(STORAGE_KEYS.CROP) || 'all').toString();
+        STATE.cropYear = (localStorage.getItem(STORAGE_KEYS.YEAR) || 'all').toString();
+
+        const rangeText = (localStorage.getItem(STORAGE_KEYS.RANGE) || '').toString();
+        const jobInput = document.getElementById('jobRangeInput');
+        if(jobInput) jobInput.value = rangeText;
+
+        deriveRangeFromPickerText();
+      }catch{
+        STATE.search = '';
+        STATE.crop = 'all';
+        STATE.cropYear = 'all';
+      }
+    }
+
+    function savePrefs(){
+      try{
+        localStorage.setItem(STORAGE_KEYS.SEARCH, STATE.search || '');
+        localStorage.setItem(STORAGE_KEYS.CROP, STATE.crop || 'all');
+        localStorage.setItem(STORAGE_KEYS.YEAR, STATE.cropYear || 'all');
+        const jobInput = document.getElementById('jobRangeInput');
+        localStorage.setItem(STORAGE_KEYS.RANGE, (jobInput?.value || '').toString());
+      }catch{}
+    }
+
+    function hasServerFilters(){
+      return !!(
+        (STATE.fromYmd && (STATE.toYmd || !STATE.toYmd)) ||
+        (STATE.crop && STATE.crop !== 'all') ||
+        (STATE.cropYear && STATE.cropYear !== 'all')
+      );
+    }
+
+    function wireDateRangePickerEvents(){
+      const applyBtn = document.getElementById('applyRangeBtn');
+      const clearBtn = document.getElementById('clearRangeBtn');
+
+      const afterChange = async () => {
+        deriveRangeFromPickerText();
+        savePrefs();
+        await loadAll();
+      };
+
+      if(applyBtn) applyBtn.addEventListener('click', () => setTimeout(afterChange, 0));
+      if(clearBtn) clearBtn.addEventListener('click', () => setTimeout(afterChange, 0));
+    }
+
+    function sortItems(items){
+      items.sort((a,b)=>{
+        const ra = getReleaseTime(a.data) || getFallbackTime(a.data);
+        const rb = getReleaseTime(b.data) || getFallbackTime(b.data);
+        if(ra !== rb) return rb - ra;
+
+        const ja = Number(a.data?.jobNumber) || 0;
+        const jb = Number(b.data?.jobNumber) || 0;
+        if(ja !== jb) return jb - ja;
+
+        return getFallbackTime(b.data) - getFallbackTime(a.data);
+      });
+      return items;
+    }
+
+    async function fetchTrialName(trialId){
+      if(!trialId) return '';
+      if(STATE.trialCache[trialId]?.trialName) return STATE.trialCache[trialId].trialName;
+
+      try{
+        const snap = await getDoc(doc(STATE.db, CONFIG.COLLECTION_TRIALS, trialId));
+        const d = snap.exists() ? (snap.data() || {}) : {};
+        const name = (d.trialName || 'Field Trial').toString();
+        STATE.trialCache[trialId] = { trialName: name };
+        return name;
+      }catch{
+        STATE.trialCache[trialId] = { trialName: '' };
+        return '';
+      }
+    }
+
+    async function hydrateTrialNames(items){
+      const ids = new Set();
+
+      for(const item of items){
+        const tl = item?.data?.trialLink || null;
+        const assignments = Array.isArray(tl?.assignments) ? tl.assignments : [];
+        if(tl?.enabled && tl?.trialId && assignments.length){
+          ids.add(tl.trialId);
+        }
+      }
+
+      await Promise.all([...ids].map(id => fetchTrialName(id)));
+
+      for(const item of items){
+        item.searchBlob = buildSearchBlob(item.data);
+      }
+    }
+
+async function loadAll(){
+  const db = STATE.db;
+  if(!db || STATE.isLoading) return;
+  STATE.isLoading = true;
+
+  const emptyEl = document.getElementById('listEmpty');
+  const countEl = document.getElementById('listCount');
+  const listEl  = document.getElementById('list');
+
+  if(listEl && !STATE.allItems.length) listEl.innerHTML = '';
+  if(emptyEl){
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = STATE.allItems.length ? 'Refreshing jobs…' : 'Loading jobs…';
+  }
+  if(countEl) countEl.textContent = 'Loading…';
+
+  try{
+    const colRef = collection(db, CONFIG.COLLECTION_AERIAL);
+
+    // Safer: always load jobs the same way, then filter client-side.
+    // This avoids Firestore composite index errors when crop/year dropdowns change.
+    const qRef = query(colRef, orderBy('jobNumber','desc'), limit(1000));
+
+    const snap = await withRetry(async ()=> await getDocsServerFirst(qRef), 'loadAll', 2);
+
+    const items = snap.docs.map(s=>{
+      const data = s.data() || {};
+      return { id: s.id, data, searchBlob: buildSearchBlob(data) };
+    });
+
+    sortItems(items);
+    await hydrateTrialNames(items);
+
+    STATE.allItems = items;
+    STATE.loaded = true;
+
+    applyFilters();
+  }catch(err){
+    console.error(err);
+    if(emptyEl){
+      emptyEl.style.display = 'block';
+      emptyEl.textContent = 'Error loading jobs. Tap to retry.';
+    }
+    if(countEl) countEl.textContent = 'Error';
+    clearDetails();
+  }finally{
+    STATE.isLoading = false;
+  }
+}
+
+function applyFilters(){
+  const emptyEl = document.getElementById('listEmpty');
+  const countEl = document.getElementById('listCount');
+
+  if(!STATE.loaded){
+    if(emptyEl){
+      emptyEl.style.display='block';
+      emptyEl.textContent='Loading jobs…';
+    }
+    if(countEl) countEl.textContent='Loading…';
+    clearDetails();
+    return;
+  }
+
+  const q = (STATE.search || '').trim().toLowerCase();
+  let filtered = STATE.allItems.slice();
+
+  if(STATE.crop && STATE.crop !== 'all'){
+    const selectedCrop = String(STATE.crop || '').trim().toLowerCase();
+
+    filtered = filtered.filter(it => {
+      const crop = String(it.data?.crop || '').trim().toLowerCase();
+
+      if(selectedCrop === 'soybeans'){
+        return crop === 'soybeans' || crop === 'soybean' || crop === 'beans' || crop === 'bean';
+      }
+
+      return crop === selectedCrop;
+    });
+  }
+
+  if(STATE.cropYear && STATE.cropYear !== 'all'){
+    filtered = filtered.filter(it => {
+      const y = String(it.data?.cropYear ?? it.data?.year ?? '').trim();
+      return y === String(STATE.cropYear);
+    });
+  }
+
+  if(STATE.fromYmd){
+    filtered = filtered.filter(it => {
+      const rd = String(it.data?.releaseDate || '').trim();
+      if(!rd) return false;
+      if(STATE.toYmd) return rd >= STATE.fromYmd && rd <= STATE.toYmd;
+      return rd >= STATE.fromYmd;
+    });
+  }
+
+  if(q){
+    filtered = filtered.filter(it => (it.searchBlob || '').includes(q));
+  }
+
+  STATE.items = filtered;
+  clearDetails();
+  renderList();
+}
+
+function fieldKeyForAcres(f){
+  return String(f?.fieldId || f?.id || getFieldName(f)).trim();
+}
+
+function getTrialAcresForField(d, f){
+  const tl = d?.trialLink || null;
+  const assignments = Array.isArray(tl?.assignments) ? tl.assignments : [];
+  if(!assignments.length) return null;
+
+  const fieldId = String(f?.fieldId || f?.id || '').trim();
+  const fieldName = getFieldName(f).trim().toLowerCase();
+
+  for(const a of assignments){
+    const aFieldId = String(a?.fieldId || '').trim();
+    const aFieldName = String(a?.fieldName || a?.field || '').trim().toLowerCase();
+
+    const matches =
+      (fieldId && aFieldId && fieldId === aFieldId) ||
+      (fieldName && aFieldName && fieldName === aFieldName);
+
+    if(!matches) continue;
+
+    const options = [
+      a?.trialAcres,
+      a?.releaseAcres,
+      a?.releasedAcres,
+      a?.sprayedAcres,
+      a?.appliedAcres,
+      a?.acres
+    ];
+
+    for(const v of options){
+      const n = Number(v);
+      if(isFinite(n) && n > 0) return n;
+    }
+  }
+
+  return null;
+}
+
+function buildReleasedAcresByField(d, fields){
+  const releasedTotal = Number(d?.releaseAcres);
+  const map = new Map();
+
+  if(!Array.isArray(fields) || !fields.length) return map;
+
+  if(!isFinite(releasedTotal) || releasedTotal <= 0){
+    fields.forEach(f => map.set(fieldKeyForAcres(f), getFieldAcres(f)));
+    return map;
+  }
+
+  let knownReleased = 0;
+  let remainingTillable = 0;
+  const remaining = [];
+
+  fields.forEach(f => {
+    const key = fieldKeyForAcres(f);
+    const trialAcres = getTrialAcresForField(d, f);
+
+    if(isFinite(Number(trialAcres)) && Number(trialAcres) > 0){
+      map.set(key, Number(trialAcres));
+      knownReleased += Number(trialAcres);
+      return;
+    }
+
+    const till = Number(getFieldAcres(f));
+    if(isFinite(till) && till > 0){
+      remainingTillable += till;
+      remaining.push({ key, till });
+    }else{
+      remaining.push({ key, till: null });
+    }
+  });
+
+  const remainingReleased = Math.max(0, releasedTotal - knownReleased);
+
+  if(remainingTillable > 0){
+    remaining.forEach(r => {
+      if(isFinite(Number(r.till)) && Number(r.till) > 0){
+        map.set(r.key, remainingReleased * (Number(r.till) / remainingTillable));
+      }else{
+        map.set(r.key, null);
+      }
+    });
+  }else if(remaining.length){
+    const each = remainingReleased / remaining.length;
+    remaining.forEach(r => map.set(r.key, each));
+  }
+
+  return map;
+}
+
+function buildFarmGroups(items){
+  const farms = new Map();
+
+  for(const item of items){
+    const d = item.data || {};
+    const fields = Array.isArray(d.fields) ? d.fields : [];
+    const job = d.jobNumber != null ? d.jobNumber : '—';
+    const crop = getCropName(d);
+    const cropYear = d.cropYear ?? d.year ?? '';
+    const releaseDate = d.releaseDate || '';
+    const trialName = getTrialNameFromJob(d);
+    const releasedByField = buildReleasedAcresByField(d, fields);
+
+    for(const f of fields){
+      const farmName = getFarmName(f, d);
+      const fieldName = getFieldName(f);
+      const fieldKey = fieldKeyForAcres(f);
+      const acres = releasedByField.get(fieldKey);
+      const inTrial = isFieldInTrial(d, f);
+
+      addFarmRow(farms, farmName, crop, cropYear, fieldName, {
+        itemId: item.id,
+        job,
+        releaseDate,
+        acres,
+        trialName: inTrial ? trialName : '',
+        crop,
+        cropYear,
+        field: fieldName
+      });
+    }
+  }
+
+  const farmGroups = [...farms.values()];
+
+  for(const farm of farmGroups){
+    farm.cropGroups = [...farm.crops.values()];
+
+    for(const cropGroup of farm.cropGroups){
+      cropGroup.yearGroups = [...cropGroup.years.values()];
+
+      for(const yearGroup of cropGroup.yearGroups){
+        yearGroup.fields = [...yearGroup.fieldsMap.values()];
+
+        for(const field of yearGroup.fields){
+          field.jobs.sort((a,b)=>{
+            const da = parseYmdToTime(a.releaseDate || '');
+            const db = parseYmdToTime(b.releaseDate || '');
+            if(da !== db) return da - db;
+            return Number(a.job) - Number(b.job);
+          });
+
+          field.totalApplications = field.jobs.length;
+          field.totalAcres = field.jobs.reduce((sum,j)=>{
+            const n = Number(j.acres);
+            return sum + (isFinite(n) ? n : 0);
+          }, 0);
+
+          field.hasTrial = field.jobs.some(j=>j.trialName);
+        }
+
+        yearGroup.fields.sort((a,b)=>String(a.field).localeCompare(String(b.field)));
+      }
+
+      cropGroup.yearGroups.sort((a,b)=>String(a.cropYear).localeCompare(String(b.cropYear)));
+    }
+
+    farm.cropGroups.sort((a,b)=>String(a.crop).localeCompare(String(b.crop)));
+
+    farm.fieldCount = farm.cropGroups.reduce((sum,c)=>
+      sum + c.yearGroups.reduce((ys,y)=>ys + y.fields.length,0),0
+    );
+
+    farm.trialCount = farm.cropGroups.reduce((sum,c)=>
+      sum + c.yearGroups.reduce((ys,y)=>
+        ys + y.fields.filter(f=>f.hasTrial).length,0),0
+    );
+
+    farm.jobCount = new Set(
+      farm.cropGroups.flatMap(c =>
+        c.yearGroups.flatMap(y =>
+          y.fields.flatMap(f =>
+            f.jobs.map(j => String(j.job))
+          )
+        )
+      )
+    ).size;
+  }
+
+  farmGroups.sort((a,b)=>String(a.farm).localeCompare(String(b.farm)));
+  return farmGroups;
+}
+
+function addFarmRow(farms, farmName, cropName, cropYear, fieldName, jobRow){
+  const farmKey = String(farmName || 'No Farm Listed').trim() || 'No Farm Listed';
+  const cropKey = String(cropName || 'Crop Not Listed').trim() || 'Crop Not Listed';
+  const yearKey = String(cropYear || 'Year Not Listed').trim() || 'Year Not Listed';
+  const fieldKey = String(fieldName || 'Unnamed Field').trim() || 'Unnamed Field';
+
+  if(!farms.has(farmKey)){
+    farms.set(farmKey, {
+      farm: farmKey,
+      totalAcres: 0,
+      crops: new Map()
+    });
+  }
+
+  const farm = farms.get(farmKey);
+
+  if(!farm.crops.has(cropKey)){
+    farm.crops.set(cropKey, {
+      crop: cropKey,
+      totalAcres: 0,
+      years: new Map()
+    });
+  }
+
+  const crop = farm.crops.get(cropKey);
+
+  if(!crop.years.has(yearKey)){
+    crop.years.set(yearKey, {
+      cropYear: yearKey,
+      totalAcres: 0,
+      fieldsMap: new Map()
+    });
+  }
+
+  const year = crop.years.get(yearKey);
+
+  if(!year.fieldsMap.has(fieldKey)){
+    year.fieldsMap.set(fieldKey, {
+      field: fieldKey,
+      totalAcres: 0,
+      jobs: []
+    });
+  }
+
+  const field = year.fieldsMap.get(fieldKey);
+  const acres = Number(jobRow.acres);
+
+  if(isFinite(acres)){
+    field.totalAcres += acres;
+    year.totalAcres += acres;
+    crop.totalAcres += acres;
+    farm.totalAcres += acres;
+  }
+
+  field.jobs.push(jobRow);
+}
+
+function renderList(){
+  const listEl  = document.getElementById('list');
+  const emptyEl = document.getElementById('listEmpty');
+  const countEl = document.getElementById('listCount');
+  if(!listEl) return;
+
+  listEl.innerHTML = '';
+
+  const usingFilters = !!((STATE.search||'').trim() || hasServerFilters());
+
+  if(!STATE.items.length){
+    if(emptyEl){
+      emptyEl.style.display='block';
+      emptyEl.textContent = usingFilters ? 'No jobs match your filters.' : 'No jobs yet.';
+    }
+    if(countEl) countEl.textContent = '0 jobs';
+    return;
+  }
+
+  if(emptyEl) emptyEl.style.display = 'none';
+
+  const farmGroups = buildFarmGroups(STATE.items);
+  let totalFields = 0;
+  let totalAcres = 0;
+
+  for(const farm of farmGroups){
+    totalFields += farm.fieldCount;
+    totalAcres += farm.totalAcres;
+
+    const farmKey = farm.farm;
+    const farmOpen = STATE.expandedFarms.has(farmKey);
+
+    const card = document.createElement('article');
+    card.className = 'farm-card';
+
+    const cropSummary = farm.cropGroups
+      .map(c => `${c.crop}: ${fmtNumber(c.totalAcres, 1) || '0.0'} ac`)
+      .join(' • ');
+
+    card.innerHTML = `
+      <div class="farm-head farm-toggle" data-farm-key="${escapeHtml(encodeURIComponent(farmKey))}">
+        <div>
+          <div class="farm-name"><span class="chev ${farmOpen ? 'open' : ''}"></span>📍 ${escapeHtml(farm.farm)}</div>
+          <div class="farm-summary">
+            <span>${farm.fieldCount} field${farm.fieldCount===1?'':'s'}</span>
+            <span>${farm.jobCount} job${farm.jobCount===1?'':'s'}</span>
+            <span>${farm.trialCount} trial field${farm.trialCount===1?'':'s'}</span>
+          </div>
+        </div>
+        <div class="farm-total">
+          ${escapeHtml(fmtNumber(farm.totalAcres, 1) || '0.0')} ac
+          <small>sprayed</small>
+        </div>
+      </div>
+
+${farmOpen && cropSummary ? `<div class="farm-summary" style="padding:8px 14px;border-bottom:1px solid var(--border);">${escapeHtml(cropSummary)}</div>` : ''}
+
+${!farmOpen ? '' : farm.cropGroups.map(cropGroup => {
+        const cropKey = `${farm.farm}||${cropGroup.crop}`;
+        const cropOpen = STATE.expandedCrops.has(cropKey);
+
+        return `
+          <div class="crop-group">
+            <div class="crop-head crop-toggle" data-crop-key="${escapeHtml(encodeURIComponent(cropKey))}">
+              <div class="crop-name"><span class="chev ${cropOpen ? 'open' : ''}"></span>${escapeHtml(cropGroup.crop)}</div>
+              <div class="crop-acres">${escapeHtml(fmtNumber(cropGroup.totalAcres, 1) || '0.0')} ac</div>
+            </div>
+
+            ${!cropOpen ? '' : cropGroup.yearGroups.map(yearGroup => `
+              <div class="crop-head" style="font-size:0.84rem;opacity:.82;">
+                <div>${escapeHtml(yearGroup.cropYear)}</div>
+                <div>${escapeHtml(fmtNumber(yearGroup.totalAcres, 1) || '0.0')} ac</div>
+              </div>
+
+              ${yearGroup.fields.map(field => `
+                <div class="field-history-block">
+                  <div class="field-history-head">
+                    <div>
+                      <div class="field-name-app">${escapeHtml(field.field)}</div>
+                      <div class="field-sub-app">
+                        ${field.totalApplications} application${field.totalApplications===1?'':'s'} • ${escapeHtml(fmtNumber(field.totalAcres, 1) || '0.0')} released ac
+                      </div>
+                    </div>
+                  </div>
+
+                  ${field.jobs.map(job => {
+                    const acresText = isFinite(Number(job.acres)) ? `${fmtNumber(job.acres, 1)} ac` : '—';
+                    const trialHtml = job.trialName
+                      ? `<span class="trial-pill">🌱 ${escapeHtml(job.trialName)}</span>`
+                      : `<span class="trial-none">Full field / no trial</span>`;
+
+                    return `
+                      <div class="field-row-app job-history-row" data-id="${escapeHtml(job.itemId)}">
+                        <div class="job-ref">#${escapeHtml(job.job)}</div>
+                        <div class="field-sub-app">${job.releaseDate ? `Release ${escapeHtml(job.releaseDate)}` : 'No release date'}</div>
+                        <div class="field-acres-app">${escapeHtml(acresText)}</div>
+                        <div>${trialHtml}</div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `).join('')}
+            `).join('')}
+          </div>
+        `;
+      }).join('')}
+    `;
+
+card.querySelectorAll('.farm-toggle[data-farm-key]').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const key = decodeURIComponent(el.dataset.farmKey || '');
+
+    if(STATE.expandedFarms.has(key)){
+      STATE.expandedFarms.delete(key);
+    }else{
+      STATE.expandedFarms.add(key);
+
+      // when a farm opens, keep all its crops collapsed
+      [...STATE.expandedCrops].forEach(cropKey=>{
+        if(cropKey.startsWith(key + '||')){
+          STATE.expandedCrops.delete(cropKey);
+        }
+      });
+    }
+
+    renderList();
+  });
+});
+
+card.querySelectorAll('.crop-toggle[data-crop-key]').forEach(el=>{
+  el.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    const key = decodeURIComponent(el.dataset.cropKey || '');
+
+    if(STATE.expandedCrops.has(key)){
+      STATE.expandedCrops.delete(key);
+    }else{
+      STATE.expandedCrops.add(key);
+    }
+
+    renderList();
+  });
+});
+
+    card.querySelectorAll('.job-history-row[data-id]').forEach(rowEl => {
+      rowEl.addEventListener('click', () => {
+        const id = rowEl.dataset.id;
+        STATE.selectedId = id;
+        STATE.isEditing = false;
+        renderDetails();
+      });
+    });
+
+    listEl.appendChild(card);
+  }
+
+  if(countEl){
+    const farmCount = farmGroups.length;
+    const acresText = fmtNumber(totalAcres, 1) || '0.0';
+    countEl.textContent = `${farmCount} farm${farmCount===1?'':'s'} • ${totalFields} field${totalFields===1?'':'s'} • ${acresText} ac`;
+  }
+}
+
+    function clearDetails(){
+      const panel = document.getElementById('detailPanel');
+      if(panel){
+        panel.style.display = 'none';
+        panel.classList.remove('has-trash');
+      }
+
+      const grid = document.getElementById('detailGrid');
+      if(grid) grid.innerHTML = '';
+
+      const notesBody = document.getElementById('detailNotesBody');
+      if(notesBody) notesBody.textContent = '';
+
+      const attGrid = document.getElementById('detailAttachments');
+      if(attGrid) attGrid.innerHTML = '';
+
+      const fieldsList = document.getElementById('detailFieldsList');
+      if(fieldsList) fieldsList.innerHTML = '';
+
+      const titleText = document.getElementById('detailTitleText');
+      const titleInput = document.getElementById('detailTitleInput');
+      if(titleText){
+        titleText.textContent = 'Aerial Job Details';
+        titleText.style.display = 'block';
+      }
+      if(titleInput){
+        titleInput.value = '';
+        titleInput.style.display = 'none';
+      }
+
+      if(UI.trashBtn) UI.trashBtn.style.display = 'none';
+
+      STATE.isEditing = false;
+      STATE.isEditingTitle = false;
+    }
+
+    function setTitleView(title){
+      const textEl  = document.getElementById('detailTitleText');
+      const inputEl = document.getElementById('detailTitleInput');
+      if(!textEl || !inputEl) return;
+      STATE.isEditingTitle = false;
+      textEl.textContent = title || 'Aerial Job';
+      textEl.style.display = 'block';
+      inputEl.style.display = 'none';
+    }
+
+    function beginEditTitle(){
+      if(!STATE.selectedId || !STATE.db) return;
+      if(STATE.isEditing) return;
+
+      const textEl  = document.getElementById('detailTitleText');
+      const inputEl = document.getElementById('detailTitleInput');
+      if(!textEl || !inputEl) return;
+
+      STATE.isEditingTitle = true;
+      inputEl.value = (textEl.textContent || '').trim();
+      textEl.style.display = 'none';
+      inputEl.style.display = 'inline-block';
+      inputEl.focus();
+      inputEl.select();
+    }
+
+    function cancelEditTitle(){
+      const id = STATE.selectedId;
+      const item = STATE.items.find(x => x.id === id);
+      const job = item?.data?.jobNumber != null ? item.data.jobNumber : '';
+      setTitleView(job ? `Job #${job}` : 'Aerial Job');
+    }
+
+    async function commitEditTitle(){
+      const id = STATE.selectedId;
+      const db = STATE.db;
+      if(!id || !db){ cancelEditTitle(); return; }
+
+      const inputEl = document.getElementById('detailTitleInput');
+      if(!inputEl){ cancelEditTitle(); return; }
+
+      const raw = (inputEl.value || '').trim();
+      const m = raw.match(/(\d+)/);
+      const jobNum = m ? Number(m[1]) : NaN;
+
+      const itemAll = STATE.allItems.find(x => x.id === id);
+      const old = Number(itemAll?.data?.jobNumber);
+
+      if(!isFinite(jobNum) || jobNum <= 0){
+        showToast('Enter a valid job number.');
+        cancelEditTitle();
+        return;
+      }
+      if(isFinite(old) && old === jobNum){
+        setTitleView(`Job #${jobNum}`);
+        return;
+      }
+
+      inputEl.disabled = true;
+      try{
+        await updateDoc(doc(db, CONFIG.COLLECTION_AERIAL, id), { jobNumber: jobNum });
+
+        const itemAll2 = STATE.allItems.find(x => x.id === id);
+        const itemFiltered = STATE.items.find(x => x.id === id);
+        [itemAll2, itemFiltered].filter(Boolean).forEach(t=>{
+          t.data.jobNumber = jobNum;
+          t.searchBlob = buildSearchBlob(t.data);
+        });
+
+        setTitleView(`Job #${jobNum}`);
+        showToast('Job number updated.');
+        applyFilters();
+        STATE.selectedId = id;
+        await renderDetails();
+      }catch(err){
+        console.error(err);
+        showToast('Error updating job number.');
+        cancelEditTitle();
+      }finally{
+        inputEl.disabled = false;
+      }
+    }
+
+    function computeDeletePermission(){
+      try{
+        if(window.FV && typeof window.FV.can === 'function'){
+          return !!window.FV.can('crop-aerial:delete');
+        }
+      }catch{}
+      return false;
+    }
+
+    function slotControls(mode){
+      const slot = document.getElementById('detailRightSlot');
+      if(!slot) return;
+      slot.innerHTML = '';
+
+      if(mode === 'edit'){
+        if(UI.saveBtn){
+          UI.saveBtn.classList.add('edit-inline');
+          UI.saveBtn.style.display = 'inline-flex';
+          slot.appendChild(UI.saveBtn);
+        }
+        if(UI.cancelBtn){
+          UI.cancelBtn.classList.add('edit-inline');
+          UI.cancelBtn.style.display = 'inline-flex';
+          slot.appendChild(UI.cancelBtn);
+        }
+      }else{
+        if(UI.editBtn){
+          UI.editBtn.classList.add('edit-inline');
+          UI.editBtn.style.display = 'inline-flex';
+          slot.appendChild(UI.editBtn);
+        }
+      }
+    }
+
+    async function renderDetails(){
+      const panel = document.getElementById('detailPanel');
+      if(!panel) return;
+
+      const item = STATE.items.find(x => x.id === STATE.selectedId);
+      if(!item){ clearDetails(); return; }
+
+      const d = item.data || {};
+      const job = d.jobNumber != null ? d.jobNumber : '';
+      setTitleView(job ? `Job #${job}` : 'Aerial Job');
+
+      const cropYear = d.cropYear ?? d.year ?? null;
+      const crop = d.crop || '';
+      const releaseDate = d.releaseDate || '';
+      const releaseAcres = d.releaseAcres;
+      const totalTill = d.totalTillableAcres;
+      const submittedBy = d.submittedBy || d.submittedByEmail || '';
+      const notes = d.notes || '';
+      const createdAt = d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : null);
+
+      const tl = d.trialLink || null;
+      const showTrial = !!(tl?.enabled && tl?.trialId && Array.isArray(tl?.assignments) && tl.assignments.length);
+
+      let trialName = '';
+      let trialFieldNames = [];
+      if(showTrial){
+        trialName = await fetchTrialName(tl.trialId);
+
+        const jobFields = Array.isArray(d.fields) ? d.fields : [];
+        const fieldNameById = new Map(jobFields.map(f => [
+          f.fieldId,
+          `${f.farm || ''}${f.farm && f.field ? ' • ' : ''}${f.field || ''}`.trim()
+        ]));
+
+        trialFieldNames = tl.assignments
+          .map(a => fieldNameById.get(a?.fieldId) || a?.fieldId || '')
+          .filter(Boolean);
+      }
+
+      const grid = document.getElementById('detailGrid');
+      if(grid){
+        let html = '';
+
+        html += `
+          <div>
+            <div class="detail-item-label">Crop Year / Crop</div>
+            <div class="detail-item-value">${cropYear != null ? escapeHtml(cropYear) : ''}${cropYear && crop ? ' • ' : ''}${escapeHtml(crop)}</div>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Release Date</div>
+            <div class="detail-item-value">${escapeHtml(releaseDate || '—')}</div>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Release Acres</div>
+            <div class="detail-item-value">${isFinite(Number(releaseAcres)) ? escapeHtml(fmtNumber(releaseAcres, 2)) + ' ac' : '—'}</div>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Total Tillable Acres</div>
+            <div class="detail-item-value">${isFinite(Number(totalTill)) ? escapeHtml(fmtNumber(totalTill, 2)) + ' ac' : '—'}</div>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Submitted By</div>
+            <div class="detail-item-value">${escapeHtml(submittedBy || '—')}</div>
+          </div>
+        `;
+
+        const createdText = createdAt ? createdAt.toLocaleString() : '';
+        html += `
+          <div class="created-actions-row">
+            <div class="created-actions-left">
+              <div class="detail-item-label">Created</div>
+              <div class="detail-item-value">${escapeHtml(createdText || '—')}</div>
+            </div>
+
+            <div class="created-actions-right">
+              <div id="detailRightSlot" class="detail-right-slot"></div>
+            </div>
+          </div>
+        `;
+
+        if(showTrial){
+          html += `
+            <div class="trial-block">
+              <div class="detail-item-label">Trial</div>
+              <div class="detail-item-value">
+                <div class="trial-name">${escapeHtml(trialName || 'Field Trial')}</div>
+                <div class="detail-item-label" style="margin-top:10px;">Fields in this trial</div>
+                ${trialFieldNames.map(n => `<div class="trial-field-line">${escapeHtml(n)}</div>`).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        grid.innerHTML = html;
+      }
+
+      const notesBody = document.getElementById('detailNotesBody');
+      if(notesBody) notesBody.textContent = notes || 'No notes recorded.';
+
+      renderAttachments(d);
+      renderFieldsList(d);
+
+      panel.style.display = 'flex';
+      slotControls('view');
+
+      UI.trashBtn.style.display = 'inline-flex';
+      UI.trashBtn.disabled = !(UI.canDelete && STATE.selectedId && !STATE.isEditing);
+      panel.classList.add('has-trash');
+    }
+
+    function enterEdit(){
+      const id = STATE.selectedId;
+      if(!id || !STATE.db) return;
+
+      const item = STATE.items.find(x => x.id === id);
+      if(!item) return;
+
+      const d = item.data || {};
+      STATE.isEditing = true;
+
+      const cropYear = d.cropYear ?? d.year ?? '';
+      const crop = d.crop || '';
+      const releaseDate = d.releaseDate || '';
+      const releaseAcres = d.releaseAcres ?? '';
+      const notes = d.notes || '';
+      const createdAt = d.createdAt?.toDate ? d.createdAt.toDate() : (d.createdAt ? new Date(d.createdAt) : null);
+
+      const thisYear = new Date().getFullYear();
+      const baseYears = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
+      const baseCrops = ['Corn','Soybeans','Wheat'];
+
+      const yearList = Array.from(new Set([...baseYears, cropYear].filter(v=>v!=='' && v!=null))).sort((a,b)=>Number(a)-Number(b));
+      const cropList = Array.from(new Set([...baseCrops, crop].filter(v=>String(v||'').trim()!==''))).sort((a,b)=>String(a).localeCompare(String(b)));
+
+      const grid = document.getElementById('detailGrid');
+      if(grid){
+        const createdText = createdAt ? createdAt.toLocaleString() : '';
+        grid.innerHTML = `
+          <div>
+            <div class="detail-item-label">Crop Year</div>
+            <select id="editCropYear" class="select">
+              <option value=""></option>
+              ${yearList.map(y=>{
+                const val = String(y);
+                const sel = String(cropYear)===val ? ' selected' : '';
+                return `<option value="${escapeHtml(val)}"${sel}>${escapeHtml(val)}</option>`;
+              }).join('')}
+            </select>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Crop</div>
+            <select id="editCrop" class="select">
+              <option value=""></option>
+              ${cropList.map(c=>{
+                const val = String(c);
+                const sel = String(crop)===val ? ' selected' : '';
+                return `<option value="${escapeHtml(val)}"${sel}>${escapeHtml(val)}</option>`;
+              }).join('')}
+            </select>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Release Date</div>
+            <input id="editReleaseDate" type="text" class="input" value="${escapeHtml(releaseDate)}" placeholder="YYYY-MM-DD"/>
+          </div>
+
+          <div>
+            <div class="detail-item-label">Release Acres</div>
+            <input id="editReleaseAcres" type="number" step="0.01" class="input" value="${escapeHtml(releaseAcres)}" placeholder="0.00"/>
+          </div>
+
+          <div class="created-actions-row">
+            <div class="created-actions-left">
+              <div class="detail-item-label">Created</div>
+              <div class="detail-item-value">${escapeHtml(createdText || '—')}</div>
+            </div>
+
+            <div class="created-actions-right">
+              <div id="detailRightSlot" class="detail-right-slot"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      const notesBody = document.getElementById('detailNotesBody');
+      if(notesBody){
+        notesBody.innerHTML = '';
+        const ta = document.createElement('textarea');
+        ta.id = 'editNotes';
+        ta.className = 'input';
+        ta.style.minHeight = '90px';
+        ta.style.resize = 'vertical';
+        ta.value = notes;
+        notesBody.appendChild(ta);
+      }
+
+      slotControls('edit');
+      UI.trashBtn.disabled = true;
+    }
+
+    async function saveEdit(){
+      const id = STATE.selectedId;
+      const db = STATE.db;
+      if(!id || !db) return;
+
+      const cropYearEl   = document.getElementById('editCropYear');
+      const cropEl       = document.getElementById('editCrop');
+      const releaseDateEl= document.getElementById('editReleaseDate');
+      const releaseAcresEl=document.getElementById('editReleaseAcres');
+      const notesEl      = document.getElementById('editNotes');
+
+      if(!cropYearEl || !cropEl || !releaseDateEl || !releaseAcresEl || !notesEl){
+        STATE.isEditing = false;
+        await renderDetails();
+        return;
+      }
+
+      if(UI.saveBtn){ UI.saveBtn.disabled = true; UI.saveBtn.textContent = 'Saving...'; }
+      if(UI.cancelBtn) UI.cancelBtn.disabled = true;
+
+      const cropYearRaw = (cropYearEl.value || '').trim();
+      const cropRaw = (cropEl.value || '').trim();
+      const releaseDateRaw = (releaseDateEl.value || '').trim();
+      const releaseAcresRaw = (releaseAcresEl.value || '').trim();
+      const notesRaw = notesEl.value || '';
+
+      const updates = {};
+      if(cropYearRaw){
+        const n = Number(cropYearRaw);
+        updates.cropYear = isFinite(n) ? n : null;
+        updates.year = isFinite(n) ? n : null;
+      }else{
+        updates.cropYear = null;
+        updates.year = null;
+      }
+
+      updates.crop = cropRaw || '';
+      updates.releaseDate = releaseDateRaw || '';
+
+      if(releaseAcresRaw === ''){
+        updates.releaseAcres = null;
+      }else{
+        const n = Number(releaseAcresRaw);
+        updates.releaseAcres = isFinite(n) ? n : null;
+      }
+
+      updates.notes = notesRaw;
+
+      try{
+        await updateDoc(doc(db, CONFIG.COLLECTION_AERIAL, id), updates);
+
+        const itemAll = STATE.allItems.find(x => x.id === id);
+        const itemFiltered = STATE.items.find(x => x.id === id);
+        [itemAll, itemFiltered].filter(Boolean).forEach(t=>{
+          t.data.cropYear = updates.cropYear;
+          t.data.year = updates.year;
+          t.data.crop = updates.crop;
+          t.data.releaseDate = updates.releaseDate;
+          t.data.releaseAcres = updates.releaseAcres;
+          t.data.notes = updates.notes;
+          t.searchBlob = buildSearchBlob(t.data);
+        });
+
+        STATE.isEditing = false;
+        showToast('Job updated.');
+        applyFilters();
+        STATE.selectedId = id;
+        await renderDetails();
+      }catch(err){
+        console.error(err);
+        showToast('Error saving job.');
+        STATE.isEditing = false;
+        await renderDetails();
+      }finally{
+        if(UI.saveBtn){ UI.saveBtn.disabled = false; UI.saveBtn.textContent = 'Save'; }
+        if(UI.cancelBtn) UI.cancelBtn.disabled = false;
+      }
+    }
+
+    async function cancelEdit(){
+      STATE.isEditing = false;
+      await renderDetails();
+    }
+
+    function openDeleteModal(){
+      if(!UI.canDelete || !STATE.selectedId) return;
+
+      const modal = document.getElementById('deleteModal');
+      const inputEl = document.getElementById('deleteConfirmInput');
+      const confirmBtn = document.getElementById('deleteConfirmBtn');
+      const cancelBtn = document.getElementById('deleteCancelBtn');
+      const backdrop = document.getElementById('deleteBackdrop');
+
+      if(!modal || !inputEl || !confirmBtn || !cancelBtn) return;
+
+      inputEl.value = '';
+      confirmBtn.disabled = true;
+
+      const onInput = () => { confirmBtn.disabled = (inputEl.value||'').trim().toUpperCase() !== 'YES'; };
+
+      const cleanup = () => {
+        try{ inputEl.removeEventListener('input', onInput); }catch{}
+        try{ cancelBtn.removeEventListener('click', onCancel); }catch{}
+        try{ confirmBtn.removeEventListener('click', onConfirm); }catch{}
+        try{ backdrop && backdrop.removeEventListener('click', onCancel); }catch{}
+        try{ document.removeEventListener('keydown', onKey, true); }catch{}
+      };
+
+      const close = () => {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+      };
+
+      const onCancel = () => { cleanup(); close(); };
+
+      const onConfirm = async () => {
+        if(!UI.canDelete) { cleanup(); close(); return; }
+        confirmBtn.disabled = true;
+        cleanup();
+        close();
+        await doDeleteSelected();
+      };
+
+      const onKey = (e) => {
+        if(e.key === 'Escape'){ e.preventDefault(); onCancel(); }
+        else if(e.key === 'Enter' && !confirmBtn.disabled){ e.preventDefault(); confirmBtn.click(); }
+      };
+
+      inputEl.addEventListener('input', onInput);
+      cancelBtn.addEventListener('click', onCancel);
+      confirmBtn.addEventListener('click', onConfirm);
+      if(backdrop) backdrop.addEventListener('click', onCancel);
+      document.addEventListener('keydown', onKey, true);
+
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      setTimeout(()=>{ try{ inputEl.focus(); }catch{} }, 0);
+    }
+
+    async function doDeleteSelected(){
+      const id = STATE.selectedId;
+      if(!id || !STATE.db || !UI.canDelete) return;
+
+      try{
+        await deleteDoc(doc(STATE.db, CONFIG.COLLECTION_AERIAL, id));
+
+        STATE.allItems = STATE.allItems.filter(x => x.id !== id);
+        STATE.items = STATE.items.filter(x => x.id !== id);
+        STATE.selectedId = null;
+
+        applyFilters();
+        clearDetails();
+        showToast('Job deleted.');
+      }catch(err){
+        console.error(err);
+        showToast('Error deleting job.');
+      }
+    }
+
+    function isImageUrl(url){
+      if(!url || typeof url !== 'string') return false;
+      const u = url.split('?')[0].toLowerCase();
+      return u.endsWith('.jpg') || u.endsWith('.jpeg') || u.endsWith('.png') ||
+             u.endsWith('.gif') || u.endsWith('.webp') || u.endsWith('.heic');
+    }
+
+    let fileModal, fileBackdrop, fileCloseBtn, fileContentWrap;
+
+    function openFileViewer(att){
+      if(!fileModal || !fileContentWrap || !att || !att.url) return;
+      fileContentWrap.innerHTML = '';
+      if(isImageUrl(att.url)){
+        const img = document.createElement('img');
+        img.src = att.url;
+        img.alt = att.name || 'Attachment';
+        fileContentWrap.appendChild(img);
+      }else{
+        const iframe = document.createElement('iframe');
+        iframe.src = att.url;
+        fileContentWrap.appendChild(iframe);
+      }
+      fileModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeFileViewer(){
+      if(!fileModal) return;
+      fileModal.classList.remove('show');
+      if(fileContentWrap) fileContentWrap.innerHTML = '';
+      document.body.style.overflow = '';
+    }
+
+    function renderAttachments(d){
+      const grid = document.getElementById('detailAttachments');
+      if(!grid) return;
+      grid.innerHTML = '';
+
+      const files = Array.isArray(d.files) ? d.files : [];
+      if(!files.length){
+        const empty = document.createElement('div');
+        empty.className = 'attachment-empty';
+        empty.textContent = 'No files or photos attached.';
+        grid.appendChild(empty);
+        return;
+      }
+
+      files.forEach(raw=>{
+        if(!raw || !raw.url) return;
+        const att = { url: raw.url, name: raw.name || raw.path || 'Attachment' };
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'attachment-thumb';
+        btn.title = att.name;
+
+        if(isImageUrl(att.url)){
+          const img = document.createElement('img');
+          img.src = att.url;
+          img.alt = att.name;
+          btn.appendChild(img);
+        }else{
+          btn.textContent = 'FILE';
+        }
+
+        btn.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          openFileViewer(att);
+        });
+
+        grid.appendChild(btn);
+      });
+    }
+
+    function renderFieldsList(d){
+      const listEl = document.getElementById('detailFieldsList');
+      if(!listEl) return;
+      listEl.innerHTML = '';
+
+      const fields = Array.isArray(d.fields) ? d.fields : [];
+      if(!fields.length){
+        const empty = document.createElement('div');
+        empty.className = 'attachment-empty';
+        empty.textContent = 'No fields attached.';
+        listEl.appendChild(empty);
+        return;
+      }
+
+      fields.forEach(f=>{
+        const row = document.createElement('div');
+        row.className = 'field-row';
+
+        const farm = getFarmName(f, d);
+        const field = getFieldName(f);
+        const acres = getFieldAcres(f);
+        const crop = getCropName(d);
+        const trialName = isFieldInTrial(d, f) ? getTrialNameFromJob(d) : '';
+
+        const metaParts = [];
+        if(isFinite(Number(acres))) metaParts.push(`${fmtNumber(acres, 2)} ac`);
+        if(crop) metaParts.push(crop);
+        if(trialName) metaParts.push(`Trial: ${trialName}`);
+
+        row.innerHTML = `
+          <div class="field-name">${escapeHtml(farm)}${farm && field ? ' • ' : ''}${escapeHtml(field)}</div>
+          <div class="field-meta">${escapeHtml(metaParts.join(' • '))}</div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    let _resumeTimer = null;
+    function resume(){
+      if(_resumeTimer) return;
+      _resumeTimer = setTimeout(async ()=>{
+        _resumeTimer = null;
+        if(!STATE.db) return;
+        if(STATE.isLoading) return;
+        try{ await loadAll(); }catch{}
+      }, 300);
+    }
+
+    (async function boot(){
+      await safeReady();
+
+      STATE.db = getFirestore();
+
+      const shell = document.querySelector('fv-shell');
+      if(shell) shell.nav = NAV_MENU;
+
+      UI.editBtn = document.getElementById('editBtn');
+      UI.saveBtn = document.getElementById('saveBtn');
+      UI.cancelBtn = document.getElementById('cancelBtn');
+      UI.trashBtn = document.getElementById('trashBtn');
+
+      UI.canDelete = computeDeletePermission();
+      if(UI.trashBtn){
+        UI.trashBtn.disabled = !UI.canDelete;
+        UI.trashBtn.title = UI.canDelete ? 'Delete job' : 'No permission to delete';
+        UI.trashBtn.style.display = 'none';
+      }
+
+      const backBtn = document.getElementById('btnBack');
+      if(backBtn){
+        backBtn.addEventListener('click', () => {
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+          location.href = CONFIG.BACK_URL || '/pages/crop-production/';
+        });
+      }
+
+      loadPrefs();
+
+      const searchEl = document.getElementById('filterSearch');
+      const cropEl   = document.getElementById('filterCrop');
+      const yearEl   = document.getElementById('filterYear');
+
+      if(searchEl){
+        searchEl.value = STATE.search || '';
+        searchEl.addEventListener('input', ()=>{
+          STATE.search = searchEl.value || '';
+          savePrefs();
+          applyFilters();
+        });
+      }
+
+      if(cropEl){
+        cropEl.value = STATE.crop || 'all';
+        cropEl.addEventListener('change', async ()=>{
+          STATE.crop = cropEl.value || 'all';
+          savePrefs();
+          await loadAll();
+        });
+      }
+
+      if(yearEl){
+        yearEl.value = STATE.cropYear || 'all';
+        yearEl.addEventListener('change', async ()=>{
+          STATE.cropYear = yearEl.value || 'all';
+          savePrefs();
+          await loadAll();
+        });
+      }
+
+      wireDateRangePickerEvents();
+
+      const clearBtn = document.getElementById('btnClearFilters');
+      if(clearBtn){
+        clearBtn.addEventListener('click', async ()=>{
+          STATE.search = '';
+          STATE.fromYmd = '';
+          STATE.toYmd = '';
+          STATE.crop = 'all';
+          STATE.cropYear = 'all';
+
+          if(searchEl) searchEl.value = '';
+          if(cropEl) cropEl.value = 'all';
+          if(yearEl) yearEl.value = 'all';
+
+          const jobInput = document.getElementById('jobRangeInput');
+          if(jobInput) jobInput.value = '';
+
+          savePrefs();
+          await loadAll();
+        });
+      }
+
+      const emptyEl = document.getElementById('listEmpty');
+      if(emptyEl){
+        emptyEl.addEventListener('click', ()=>{
+          if(!STATE.db || STATE.isLoading) return;
+          loadAll();
+        });
+      }
+
+      const closeBtn = document.getElementById('detailClose');
+      if(closeBtn){
+        closeBtn.addEventListener('click', ()=>{
+          STATE.selectedId = null;
+          clearDetails();
+        });
+      }
+
+      if(UI.editBtn) UI.editBtn.addEventListener('click', ()=> { if(STATE.selectedId) enterEdit(); });
+      if(UI.saveBtn) UI.saveBtn.addEventListener('click', ()=> { if(STATE.selectedId) saveEdit(); });
+      if(UI.cancelBtn) UI.cancelBtn.addEventListener('click', ()=> { if(STATE.selectedId) cancelEdit(); });
+
+      if(UI.trashBtn){
+        UI.trashBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(!UI.canDelete) return;
+          if(!STATE.selectedId) return;
+          if(STATE.isEditing) return;
+          openDeleteModal();
+        });
+      }
+
+      const titleTextEl = document.getElementById('detailTitleText');
+      const titleInputEl = document.getElementById('detailTitleInput');
+      if(titleTextEl && titleInputEl){
+        titleTextEl.addEventListener('click', ()=>{
+          if(!STATE.selectedId) return;
+          beginEditTitle();
+        });
+
+        titleInputEl.addEventListener('blur', ()=>{
+          if(!STATE.isEditingTitle) return;
+          commitEditTitle();
+        });
+
+        titleInputEl.addEventListener('keydown', (ev)=>{
+          if(ev.key === 'Enter'){ ev.preventDefault(); titleInputEl.blur(); }
+          else if(ev.key === 'Escape'){ ev.preventDefault(); cancelEditTitle(); }
+        });
+      }
+
+      fileModal = document.getElementById('fileModal');
+      fileBackdrop = document.getElementById('fileBackdrop');
+      fileCloseBtn = document.getElementById('fileModalClose');
+      fileContentWrap = document.getElementById('fileContentWrap');
+      if(fileBackdrop) fileBackdrop.addEventListener('click', closeFileViewer);
+      if(fileCloseBtn) fileCloseBtn.addEventListener('click', closeFileViewer);
+
+      await loadAll();
+      setTimeout(() => {
+        if(!STATE.loaded && !STATE.isLoading){
+          loadAll();
+        }
+      }, 700);
+    })();
+
+    window.addEventListener('focus', () => resume());
+    window.addEventListener('pageshow', () => resume());
+    document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') resume(); });
+  </script>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🚁</div>
+          <div>
+            <h1>Aerial Applications</h1>
+            <p class="muted">Grouped by farm and crop. Shows fields, sprayed acres, trial status, and job reference.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <button id="btnBack" type="button" class="btn btn-quiet">← Back to Aerial</button>
+            </div>
+            <div class="toolbar-right">
+              <span id="listCount">Loading…</span>
+            </div>
+          </div>
+
+          <div class="filters-row">
+            <div class="filter-wrap" style="flex:2 1 320px; min-width:260px;">
+              <label class="filter-label" for="filterSearch">Search</label>
+              <input id="filterSearch" class="input" type="search" placeholder="Search fields, farms, trial, crop, job #..." autocomplete="off"/>
+            </div>
+
+            <div class="filter-wrap" style="max-width:220px; min-width:200px;">
+              <label class="filter-label" for="filterCrop">Crop</label>
+              <select id="filterCrop" class="select">
+                <option value="all">All crops</option>
+                <option value="Corn">Corn</option>
+                <option value="Soybeans">Soybeans</option>
+                <option value="Wheat">Wheat</option>
+              </select>
+            </div>
+
+            <div class="filter-wrap" style="max-width:180px; min-width:160px;">
+              <label class="filter-label" for="filterYear">Crop Year</label>
+              <select id="filterYear" class="select">
+                <option value="all">All years</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+            </div>
+
+            <div class="filter-wrap" style="max-width:360px; min-width:260px;">
+              <label class="filter-label" for="jobRangeInput">Release Date Range</label>
+              <div style="position:relative;">
+                <input id="jobRangeInput" class="input" type="text" readonly placeholder="Pick a date range…"/>
+
+                <div id="calendarPopover" class="cal-pop" role="dialog" aria-label="Date range picker">
+                  <div class="cal-pop-head">
+                    <div class="row">
+                      <select id="monthSelect" aria-label="Month"></select>
+                      <select id="yearSelect" aria-label="Year"></select>
+                    </div>
+                    <button id="closeCalBtn" class="cal-close" type="button" aria-label="Close">✕</button>
+                  </div>
+
+                  <div class="cal-dow" aria-hidden="true">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                  </div>
+
+                  <div id="calDays" aria-label="Calendar days"></div>
+
+                  <div class="cal-pop-foot">
+                    <span id="rangeSummary">No dates selected</span>
+                    <div class="cal-btns">
+                      <button id="clearRangeBtn" class="cal-btn" type="button">Clear</button>
+                      <button id="applyRangeBtn" class="cal-btn apply" type="button">Apply</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="filters-actions">
+              <button id="btnClearFilters" type="button" class="btn btn-quiet">Clear</button>
+            </div>
+          </div>
+
+          <section aria-label="Aerial jobs">
+            <div id="listEmpty" class="aerial-empty">Loading jobs…</div>
+            <div id="list" class="aerial-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="detailPanel" class="detail-panel" aria-label="Aerial job details">
+        <div class="detail-header">
+          <div class="detail-title-area">
+            <div class="detail-title" id="detailTitleText">Aerial Job Details</div>
+            <input type="text" id="detailTitleInput" class="detail-title-input" maxlength="80" autocomplete="off"/>
+            <div class="detail-edit-hint">Tap title to edit job #</div>
+          </div>
+
+          <button type="button" id="detailClose" class="detail-close">
+            <span class="visually-hidden">Close</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6.225 4.811 4.81 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586 6.225 4.811Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="detailGrid" class="detail-grid"></div>
+
+        <div class="detail-notes">
+          <div class="detail-notes-label">Notes</div>
+          <div id="detailNotesBody"></div>
+        </div>
+
+        <div class="attachments">
+          <div class="attachments-label">Files &amp; Photos</div>
+          <div id="detailAttachments" class="attachments-grid"></div>
+        </div>
+
+        <div class="fields-block">
+          <div class="fields-label">Fields in this job</div>
+          <div id="detailFieldsList" class="fields-list"></div>
+        </div>
+
+        <button type="button" id="editBtn" class="btn btn-quiet" style="display:none;">Edit</button>
+        <button type="button" id="saveBtn" class="btn btn-quiet" style="display:none;">Save</button>
+        <button type="button" id="cancelBtn" class="btn btn-quiet" style="display:none;">Cancel</button>
+
+        <button type="button" id="trashBtn" class="trash-fab" aria-label="Delete job" title="Delete job">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 3a1 1 0 0 0-.894.553L7.382 5H5a1 1 0 1 0 0 2h.293l.853 11.093A2 2 0 0 0 8.14 20h7.72a2 2 0 0 0 1.994-1.907L18.707 7H19a1 1 0 1 0 0-2h-2.382l-.724-1.447A1 1 0 0 0 15 3H9Zm1.118 4a1 1 0 0 0-.996 1.09l.5 8a1 1 0 1 0 1.996-.124l-.5-8A1 1 0 0 0 10.118 7Zm3.764 0a1 1 0 0 0-.882 1.09l.5 8a1 1 0 0 0 1.996-.124l-.5-8A1 1 0 0 0 13.882 7Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <div id="fileModal" class="file-modal" role="dialog" aria-modal="true" aria-label="Aerial attachment">
+    <div id="fileBackdrop" class="file-backdrop"></div>
+    <div class="file-sheet">
+      <div class="file-close-row">
+        <button id="fileModalClose" type="button" class="file-close-btn">Close</button>
+      </div>
+      <div id="fileContentWrap" class="file-content-wrap"></div>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal" role="dialog" aria-modal="true" aria-label="Delete job confirmation">
+    <div id="deleteBackdrop" class="backdrop"></div>
+    <div class="sheet">
+      <div class="head">
+        <div class="title">Delete Job</div>
+      </div>
+
+      <div class="body">
+        <div class="hint">
+          This will permanently delete this aerial job.<br/>
+          <b>Type YES</b> to confirm.
+        </div>
+
+        <input
+          id="deleteConfirmInput"
+          type="text"
+          class="input"
+          placeholder="Type YES"
+          autocomplete="off"
+          spellcheck="false"
+          style="margin-top:10px"
+        />
+
+        <div class="row-actions">
+          <button type="button" id="deleteCancelBtn" class="btn btn-quiet">Cancel</button>
+          <button type="button" id="deleteConfirmBtn" class="btn btn-primary" disabled>Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

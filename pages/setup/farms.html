@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Setup → Farms</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Standard includes -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <!-- ✅ Permission UI controller -->
+  <script src="/js/shared/permissions/perm-ui.js"></script>
+
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <style>
+    .page{
+      max-width:1100px;margin:0 auto;padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
+    }
+    .page-title{margin:0 0 8px 0;}
+    .page-sub{margin:0 0 14px 0;color:var(--muted,#67706B);}
+
+    .alert{
+      display:none;margin:0 0 12px 0;border:1px solid #c62828;background:#fdecea;color:#8a1c1c;
+      border-radius:12px;padding:12px 14px;font-weight:700
+    }
+    .alert.show{display:block}
+
+    .section{
+      border:1px solid var(--border);border-radius:14px;background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));overflow:hidden;
+    }
+    .section-head{
+      display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:center;
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    }
+    .section-head .icon{width:24px;height:24px;color:#2F6C3C;display:grid;place-items:center;}
+    .section-body{padding:16px;display:grid;gap:14px;}
+
+    /* ✅ Add Farm row alignment */
+    .row{display:grid;gap:10px;grid-template-columns:1fr auto;align-items:stretch;}
+    @media(max-width:720px){.row{grid-template-columns:1fr}}
+
+    .field label{display:block;font-weight:800;margin:0 0 6px 0;}
+    .input{
+      width:100%;
+      font:inherit;font-size:16px;color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      height:48px;              /* ✅ match buttons */
+      padding:0 12px;           /* ✅ vertical centered */
+      outline:none;
+      display:flex;align-items:center;
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:stretch;      /* ✅ buttons same height as input */
+      align-self:end;           /* ✅ sit on same baseline as input */
+    }
+
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:148px;
+      height:48px;              /* ✅ consistent height */
+      padding:0 16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:800;
+      color:var(--text);
+      cursor:pointer;
+      line-height:1;
+    }
+    .btn-primary{border-color:transparent;background:#2F6C3C;color:#fff;}
+    .btn-danger{border-color:#b3261e;color:#b3261e;background:var(--surface);}
+    .btn-quiet{min-width:auto;height:auto;padding:8px 12px}
+
+    /* ==========================================================
+       ✅ ANY GREEN BUTTON MUST HAVE WHITE TEXT (hard override)
+       ========================================================== */
+    .btn-primary{ color:#fff !important; }
+    button[style*="background:#2F6C3C"], button[style*="background: #2F6C3C"],
+    button[style*="background:#3B7E46"], button[style*="background: #3B7E46"],
+    .btn[style*="background:#2F6C3C"], .btn[style*="background: #2F6C3C"],
+    .btn[style*="background:#3B7E46"], .btn[style*="background: #3B7E46"]{
+      color:#fff !important;
+      -webkit-text-fill-color:#fff !important;
+    }
+
+    /* Disabled button styling (for locked Archive/Delete) */
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none !important;
+    }
+
+    /* ==========================================================
+       ✅ FORCE: Archive + Delete identical (shape + color)
+       Beats perm-ui / inline differences with higher specificity
+       ========================================================== */
+    .left-btns .btn.btn-modal-action,
+    #mdArchive.btn.btn-modal-action,
+    #mdDelete.btn.btn-modal-action{
+      min-width:auto !important;
+      height:auto !important;
+      padding:8px 12px !important;
+      border-radius:12px !important;
+
+      border:1px solid var(--border) !important;
+      background:var(--card-surface,var(--surface)) !important;
+      color:var(--text) !important;
+
+      font-weight:800 !important;
+      line-height:1 !important;
+      opacity:1 !important;
+      filter:none !important;
+      box-shadow:none !important;
+      text-decoration:none !important;
+    }
+    #mdArchive.btn.btn-modal-action:disabled,
+    #mdDelete.btn.btn-modal-action:disabled{
+      opacity:.55 !important;
+      cursor:not-allowed !important;
+    }
+
+    /* List */
+    .list-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 16px;border-top:1px solid var(--border);
+    }
+    .list-title{font-size:clamp(18px,2.6vw,22px);font-weight:800;}
+    .list{padding:14px 16px;display:grid;gap:12px;}
+    .item{
+      border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--card-surface,var(--surface));
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+    .name{font-weight:800}
+    .pill{
+      font-size:12px;border:1px solid var(--border);padding:4px 8px;border-radius:999px;
+      color:var(--muted,#67706B);background:var(--surface)
+    }
+    .view{
+      border:1px solid var(--border);background:var(--surface);
+      border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;color:var(--text) !important;
+    }
+
+    /* Modal */
+    .modal{
+      position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.42);
+      z-index:9999;transition:opacity .15s;opacity:0;
+    }
+    .modal[open]{display:grid;opacity:1;}
+    .dialog{
+      width:min(560px,92vw);max-height:85vh;display:flex;flex-direction:column;
+      background:var(--surface);color:var(--text);
+      border-radius:14px;border:1px solid var(--border);
+      box-shadow:0 16px 36px rgba(0,0,0,.28);
+    }
+    .dialog-head{
+      padding:12px 14px;border-bottom:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .dialog-body{padding:14px;display:grid;gap:12px;}
+    .dialog-footer{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      padding:12px 14px;border-top:1px solid var(--border)
+    }
+    .left-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .closex{
+      border:1px solid var(--border);background:var(--surface);border-radius:10px;
+      padding:8px 12px;cursor:pointer;font-weight:700;color:var(--text) !important;
+      height:auto;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
+      transform:translateX(-50%);
+      background:#2F6C3C;color:#fff;padding:10px 14px;border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:99999;display:none;
+    }
+    .toast.show{display:block;animation:fadeout 2.8s forwards;}
+    @keyframes fadeout{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+  </style>
+
+  <!-- Ensure fv-shell -->
+  <script>(function(){
+    if(!customElements.get('fv-shell')){
+      const s=document.createElement('script');s.src='/js/core/shell/fv-shell.js';s.defer=true;document.head.appendChild(s);
+    }
+  })();</script>
+
+  <!-- Firebase config -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+</head>
+
+<body>
+  <fv-shell>
+    <!-- Page visibility -->
+    <div class="page container" data-perm="setup-farms:view">
+      <h1 class="page-title">Farms</h1>
+      <p class="page-sub">Simple farm categories for organizing your operation.</p>
+
+      <div id="alert" class="alert" role="alert"></div>
+
+      <section class="section">
+        <header class="section-head">
+          <div class="icon" aria-hidden="true">🏷️</div>
+          <div><strong>Add Farm</strong></div>
+        </header>
+
+        <!-- Add form is add-gated -->
+        <div class="section-body" data-perm="setup-farms:add">
+          <div class="row">
+            <div class="field">
+              <label for="farmName">Farm Name</label>
+              <input id="farmName" class="input" placeholder="e.g., Home Farm">
+            </div>
+            <div class="actions">
+              <button id="clear" class="btn" type="button">Clear</button>
+              <button id="save" class="btn btn-primary" type="button">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-head">
+          <div class="list-title">Farms</div>
+          <!-- ✅ Reload removed -->
+        </div>
+        <div id="list" class="list">
+          <div class="muted">No farms yet.</div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Successfully saved.</div>
+
+  <!-- Modal: View/Edit -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
+      <div class="dialog-head">
+        <h3 id="mdTitle">View / Edit Farm</h3>
+        <button id="mdClose" class="closex" type="button">Back</button>
+      </div>
+
+      <!-- Modal fields are edit-gated -->
+      <div class="dialog-body" data-perm="setup-farms:edit">
+        <div class="field">
+          <label for="editName">Farm Name</label>
+          <input id="editName" class="input" placeholder="Farm name">
+        </div>
+        <div class="field" id="statusRow">
+          <span class="pill" id="statusPill">Active</span>
+          <span class="pill" id="usedPill" style="display:none">Has Fields</span>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <div class="left-btns">
+          <!-- ✅ BOTH NOW HARD-FORCED IDENTICAL -->
+          <button id="mdArchive" class="btn btn-modal-action" type="button" data-perm="setup-farms:edit">Archive</button>
+          <button id="mdDelete"  class="btn btn-modal-action" type="button" title="Delete is disabled if this farm has any fields/history." data-perm="setup-farms:delete">Delete</button>
+        </div>
+        <button id="mdSave" class="btn btn-primary" type="button" data-perm="setup-farms:edit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      getDoc,
+      setDoc,
+      deleteDoc,
+      doc,
+      query,
+      where,
+      limit,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    const canNow = (k)=> (window.FV && typeof window.FV.can === 'function') ? window.FV.can(k) : true;
+
+    const $ = id => document.getElementById(id);
+    const toast = $("toast");
+    const alertBox = $("alert");
+
+    const showToast = (msg="Successfully saved.")=>{
+      toast.textContent = msg;
+      toast.classList.remove("show");
+      toast.style.display = 'block';
+      void toast.offsetWidth;
+      toast.classList.add("show");
+      setTimeout(()=>{ toast.classList.remove("show"); toast.style.display='none'; }, 2800);
+    };
+
+    const showAlert = (msg)=>{
+      alertBox.textContent = msg;
+      alertBox.classList.add('show');
+      clearTimeout(showAlert._t);
+      showAlert._t = setTimeout(()=> alertBox.classList.remove('show'), 8000);
+    };
+
+    const escapeHTML = s => String(s||"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+
+    const FARMS_COLL = 'farms';
+    const FIELDS_COLL = 'fields';
+
+    let db = null;
+    let rows = [];
+    let editId = null;
+
+    const farmsRef = ()=> collection(db, FARMS_COLL);
+    const fieldsRef = ()=> collection(db, FIELDS_COLL);
+
+    async function loadFarms(){
+      try{
+        const snap = await getDocs(farmsRef());
+        const out = [];
+        snap.forEach(d=>{
+          const v = d.data()||{};
+          out.push({
+            id: d.id,
+            name: String(v.name||'').trim(),
+            status: v.status==='archived' ? 'archived' : 'active',
+            used: !!v.used,
+            createdAt: v.createdAt,
+            updatedAt: v.updatedAt
+          });
+        });
+        rows = out;
+        render();
+      }catch(err){
+        console.error('Farms read failed:', err);
+        showAlert((err && err.message) ? err.message : 'Unable to load farms.');
+        rows = [];
+        render();
+      }
+    }
+
+    async function addFarm(name){
+      if(!canNow('setup-farms:add')) throw new Error("no-permission:add");
+      const payload = {
+        name: String(name||'').trim(),
+        status: 'active',
+        used: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      await addDoc(farmsRef(), payload);
+    }
+
+    async function updateFarm(id, patch){
+      if(!canNow('setup-farms:edit')) throw new Error("no-permission:edit");
+      if(!id) return;
+      await setDoc(doc(db, FARMS_COLL, id), { ...patch, updatedAt: serverTimestamp() }, { merge:true });
+    }
+
+    async function farmHasAnyFields(farmId){
+      const qs = await getDocs(query(fieldsRef(), where('farmId','==', farmId), limit(1)));
+      return !qs.empty;
+    }
+    async function farmHasActiveFields(farmId){
+      const qs = await getDocs(query(fieldsRef(), where('farmId','==', farmId), where('status','==','active'), limit(1)));
+      return !qs.empty;
+    }
+
+    function setDeleteLocked(locked, reason){
+      $("usedPill").style.display = locked ? 'inline-block' : 'none';
+      mdDelete.disabled = !!locked;
+      mdDelete.title = locked ? (reason || "This farm has fields/history and cannot be deleted.") : "Delete this farm";
+    }
+
+    function setArchiveLocked(locked, reason){
+      mdArchive.disabled = !!locked;
+      mdArchive.title = locked ? (reason || "Cannot archive while any active fields are assigned.") : "Archive / Unarchive";
+    }
+
+    async function applyFarmLocks(farmId){
+      setDeleteLocked(false, "");
+      setArchiveLocked(false, "");
+
+      const token = farmId + "::" + Date.now();
+      applyFarmLocks._token = token;
+
+      try{
+        const anyFields = await farmHasAnyFields(farmId);
+        if(applyFarmLocks._token !== token) return;
+
+        if(anyFields){
+          setDeleteLocked(true, "Cannot delete: this farm has fields/history. Only farms with zero history can be deleted.");
+        }else{
+          setDeleteLocked(false, "");
+        }
+
+        const anyActive = await farmHasActiveFields(farmId);
+        if(applyFarmLocks._token !== token) return;
+
+        const it = rows.find(r=>r.id===farmId);
+        const isArchived = it && it.status === 'archived';
+
+        if(!isArchived && anyActive){
+          setArchiveLocked(true, "Cannot archive: this farm has active fields. Archive all fields under it first.");
+        }else{
+          setArchiveLocked(false, "");
+        }
+
+        $("usedPill").style.display = anyFields ? 'inline-block' : 'none';
+      }catch(err){
+        console.warn("Farm lock check failed:", err);
+        setDeleteLocked(true, "Cannot verify field history right now. Delete is locked.");
+        const it = rows.find(r=>r.id===farmId);
+        const isArchived = it && it.status === 'archived';
+        if(!isArchived){
+          setArchiveLocked(true, "Cannot verify assigned fields right now. Archive is locked.");
+        }
+      }
+    }
+
+    async function removeFarm(id){
+      if(!canNow('setup-farms:delete')) throw new Error("no-permission:delete");
+      if(!id) return;
+
+      if(await farmHasAnyFields(id)){
+        throw new Error("has-fields");
+      }
+
+      const snap = await getDoc(doc(db, FARMS_COLL, id));
+      if(snap.exists() && snap.data()?.used){
+        throw new Error("in-use");
+      }
+
+      await deleteDoc(doc(db, FARMS_COLL, id));
+    }
+
+    const listBox = $("list");
+
+    function render(){
+      if(!rows.length){
+        listBox.innerHTML = '<div class="muted">No farms yet.</div>';
+        return;
+      }
+
+      const arr = rows.slice().sort((a,b)=> (a.name||"").localeCompare(b.name||"", undefined, { sensitivity:'base' }));
+      listBox.innerHTML = '';
+
+      arr.forEach(it=>{
+        const div = document.createElement('div');
+        div.className = 'item';
+
+        const status = it.status==='archived' ? '<span class="pill">Archived</span>' : '';
+
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="name">${escapeHTML(it.name)}</div>
+            ${status}
+          </div>
+          <button class="view" type="button" data-perm="setup-farms:view">View / Edit</button>
+        `;
+
+        div.querySelector('.view').addEventListener('click', ()=> openEdit(it.id));
+        listBox.appendChild(div);
+      });
+    }
+
+    const modal = $("modal"), mdClose = $("mdClose"), mdSave = $("mdSave"), mdArchive = $("mdArchive"), mdDelete = $("mdDelete");
+
+    function openModal(){
+      modal.setAttribute('open','');
+      modal.setAttribute('aria-hidden','false');
+      $("editName").focus();
+    }
+    function closeModal(){
+      modal.removeAttribute('open');
+      modal.setAttribute('aria-hidden','true');
+      editId = null;
+      applyFarmLocks._token = null;
+    }
+
+    function openEdit(id){
+      const it = rows.find(r=>r.id===id);
+      if(!it) return;
+
+      editId = id;
+      $("editName").value = it.name || '';
+      $("statusPill").textContent = it.status==='archived' ? 'Archived' : 'Active';
+
+      mdArchive.textContent = it.status==='archived' ? 'Unarchive' : 'Archive';
+
+      $("usedPill").style.display = 'none';
+      mdDelete.disabled = true;
+      mdDelete.title = "Checking farm history…";
+      mdArchive.disabled = false;
+      mdArchive.title = "Archive / Unarchive";
+
+      openModal();
+      applyFarmLocks(id);
+    }
+
+    mdClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modal.hasAttribute('open')) closeModal(); });
+
+    $("save").addEventListener("click", async ()=>{
+      try{
+        const name = $("farmName").value.trim();
+        if(!name){ alert("Please enter a farm name."); return; }
+        await addFarm(name);
+        $("farmName").value = "";
+        showToast("Successfully saved.");
+        await loadFarms();
+        window.scrollTo({top:0,behavior:"smooth"});
+      }catch(err){
+        console.error(err);
+        if(String(err?.message||err).includes('no-permission:add')) alert("You don't have permission to add farms.");
+        else showAlert("Save failed: " + (err?.message||err));
+      }
+    });
+
+    $("clear").addEventListener("click", ()=>{ $("farmName").value=""; });
+
+    mdSave.addEventListener("click", async ()=>{
+      try{
+        const name = $("editName").value.trim();
+        if(!name){ alert("Please enter a farm name."); return; }
+        await updateFarm(editId, { name });
+        showToast("Changes saved.");
+        await loadFarms();
+        closeModal();
+      }catch(err){
+        console.error(err);
+        if(String(err?.message||err).includes('no-permission:edit')) alert("You don't have permission to edit farms.");
+        else showAlert("Update failed: " + (err?.message||err));
+      }
+    });
+
+    mdArchive.addEventListener("click", async ()=>{
+      try{
+        const it = rows.find(r=>r.id===editId);
+        if(!it) return;
+
+        if(it.status === 'archived'){
+          await updateFarm(editId, { status: 'active' });
+          showToast("Farm unarchived.");
+          await loadFarms();
+          closeModal();
+          return;
+        }
+
+        const anyActive = await farmHasActiveFields(editId);
+        if(anyActive){
+          setArchiveLocked(true, "Cannot archive: this farm has active fields. Archive all fields under it first.");
+          alert("Cannot archive: this farm has active fields. Archive all fields under it first.");
+          return;
+        }
+
+        await updateFarm(editId, { status: 'archived' });
+        showToast("Farm archived.");
+        await loadFarms();
+        closeModal();
+      }catch(err){
+        console.error(err);
+        if(String(err?.message||err).includes('no-permission:edit')) alert("You don't have permission to archive/unarchive farms.");
+        else showAlert("Archive toggle failed: " + (err?.message||err));
+      }
+    });
+
+    mdDelete.addEventListener("click", async ()=>{
+      try{
+        const it = rows.find(r=>r.id===editId);
+        if(!it) return;
+
+        const anyFields = await farmHasAnyFields(editId);
+        if(anyFields){
+          setDeleteLocked(true, "Cannot delete: this farm has fields/history. Only farms with zero history can be deleted.");
+          alert("Cannot delete: this farm has fields/history. Only farms with zero history can be deleted.");
+          return;
+        }
+
+        if(it.used){
+          alert("This farm is in use and cannot be deleted.");
+          return;
+        }
+
+        if(!confirm(`Delete farm "${it.name}"? This cannot be undone.`)) return;
+
+        await removeFarm(editId);
+
+        showToast("Farm deleted.");
+        await loadFarms();
+        closeModal();
+      }catch(err){
+        console.error(err);
+        if(String(err?.message||err).includes('no-permission:delete')) alert("You don't have permission to delete farms.");
+        else if(String(err?.message||err).includes('has-fields')) alert("Cannot delete: this farm has fields/history.");
+        else if(String(err?.message||err).includes('in-use')) alert("This farm is in use and cannot be deleted.");
+        else showAlert("Delete failed: " + (err?.message||err));
+      }
+    });
+
+    (async function boot(){
+      try{
+        await ready;
+        db = getFirestore();
+      }catch(e){
+        console.warn('Firebase not ready:', e);
+      }
+      await loadFarms();
+    })();
+  </script>
+
+  <script nomodule>(function(){ /* no-op */ })();</script>
+</body>
+</html>

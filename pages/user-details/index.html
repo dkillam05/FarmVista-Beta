@@ -1,0 +1,3770 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+
+  <title>
+    FarmVista • User Details
+  </title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+
+  <meta
+    name="theme-color"
+    content="#3B7E46"
+  />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <link
+    rel="manifest"
+    href="/manifest.webmanifest"
+  />
+
+  <link
+    rel="apple-touch-icon"
+    href="/assets/icons/apple-touch-icon.png"
+  />
+
+  <link
+    rel="icon"
+    href="/assets/icons/icon-192.png"
+  />
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/theme.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/app.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/dashboard.css"
+  />
+
+  <style>
+
+    .form {
+      display:grid;
+      gap:14px;
+      max-width:720px;
+    }
+
+    .field {
+      display:grid;
+      gap:6px;
+    }
+
+    .field label {
+      font-weight:700;
+      font-size:14px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      padding:12px;
+      border-radius:10px;
+      border:1px solid var(--border,#d9ddd9);
+      background:var(--surface,#fff);
+      color:var(--text,#111);
+      font:inherit;
+    }
+
+    .row2 {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    @media (max-width:720px) {
+      .row2 {
+        grid-template-columns:1fr;
+      }
+    }
+
+    .actions {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+
+    .btn {
+      appearance:none;
+      border:none;
+      border-radius:10px;
+      padding:12px 16px;
+      font-weight:800;
+      cursor:pointer;
+      font:inherit;
+    }
+
+    .btn.primary {
+      background:var(--green,#3B7E46);
+      color:#fff;
+    }
+
+    .btn.ghost {
+      background:transparent;
+      border:1px solid var(--border,#d9ddd9);
+      color:var(--text,#111) !important;
+    }
+
+    .btn:disabled {
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .muted-small {
+      color:var(--muted,#87908a);
+      font-size:13px;
+    }
+
+    .card + .card {
+      margin-top:18px;
+    }
+
+    .setting {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      padding:14px 12px;
+      border-top:1px solid var(--border,#e2e5e5);
+      background:var(--surface,#fff);
+      color:var(--text,#111);
+    }
+
+    .setting:first-of-type {
+      border-top:0;
+    }
+
+    .setting .left {
+      min-width:0;
+      flex:1;
+    }
+
+    .setting .left .txt {
+      font-size:16px;
+      font-weight:800;
+    }
+
+    .setting .left .sub {
+      font-size:13px;
+      opacity:.8;
+      margin-top:2px;
+    }
+
+    .switch {
+      position:relative;
+      width:50px;
+      height:28px;
+      display:inline-block;
+      flex:0 0 auto;
+    }
+
+    .switch input {
+      opacity:0;
+      width:0;
+      height:0;
+    }
+
+    .slider {
+      position:absolute;
+      inset:0;
+      cursor:pointer;
+      background:#e5e8e4;
+      border:1px solid var(--border,#e2e5e5);
+      border-radius:999px;
+      transition:.22s ease;
+    }
+
+    .slider::before {
+      content:"";
+      position:absolute;
+      width:24px;
+      height:24px;
+      left:1px;
+      top:1px;
+      background:#fff;
+      border-radius:50%;
+      box-shadow:0 1px 2px rgba(0,0,0,.25);
+      transition:.22s ease;
+    }
+
+    .switch input:checked + .slider {
+      background:var(--green,#3B7E46);
+      border-color:var(--green,#3B7E46);
+    }
+
+    .switch input:checked + .slider::before {
+      transform:translateX(22px);
+    }
+
+    .switch input:disabled + .slider {
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .notify-status {
+      display:flex;
+      align-items:flex-start;
+      gap:9px;
+      margin:0 12px 14px;
+      padding:11px 12px;
+      border-radius:10px;
+      border:1px solid var(--border,#d9ddd9);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .notify-status-dot {
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      margin-top:5px;
+      flex:0 0 auto;
+      background:#999;
+    }
+
+    .notify-status.on {
+      border-color:rgba(59,126,70,.45);
+      background:rgba(59,126,70,.08);
+    }
+
+    .notify-status.on .notify-status-dot {
+      background:#3B7E46;
+    }
+
+    .notify-status.off .notify-status-dot {
+      background:#999;
+    }
+
+    .notify-status.error {
+      border-color:rgba(180,60,60,.45);
+      background:rgba(180,60,60,.07);
+    }
+
+    .notify-status.error .notify-status-dot {
+      background:#b43c3c;
+    }
+
+        .sms-number {
+      margin:0 12px 14px;
+      padding:12px 14px;
+      border:1px solid var(--border,#d9ddd9);
+      border-radius:10px;
+      background:var(--surface,#fff);
+      color:var(--text,#111);
+    }
+
+    .sms-number-label {
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted,#87908a);
+      margin-bottom:3px;
+    }
+
+    .sms-number-value {
+      font-size:17px;
+      font-weight:800;
+      letter-spacing:.01em;
+    }
+
+    .sms-number-note {
+      margin-top:3px;
+      font-size:12px;
+      color:var(--muted,#87908a);
+    }
+
+    .sms-disclosure {
+      margin:0 12px 14px;
+      padding:12px;
+      border:1px solid var(--border,#d9ddd9);
+      border-radius:10px;
+      background:var(--surface,#fff);
+      color:var(--text,#111);
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .sms-disclosure a {
+      color:var(--green,#3B7E46);
+      font-weight:700;
+      text-decoration:underline;
+      text-underline-offset:2px;
+    }
+
+    .legal-links {
+      display:grid;
+      gap:10px;
+      padding-top:4px;
+    }
+
+    .legal-link {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--border,#d9ddd9);
+      border-radius:12px;
+      background:var(--surface,#fff);
+      color:var(--text,#111);
+      text-decoration:none;
+      transition:
+        border-color .15s ease,
+        transform .15s ease,
+        box-shadow .15s ease;
+    }
+
+    .legal-link:hover {
+      border-color:var(--green,#3B7E46);
+      transform:translateY(-1px);
+      box-shadow:0 4px 12px rgba(0,0,0,.06);
+    }
+
+    .legal-link-main {
+      min-width:0;
+    }
+
+    .legal-link-title {
+      display:block;
+      font-size:15px;
+      font-weight:800;
+    }
+
+    .legal-link-sub {
+      display:block;
+      margin-top:2px;
+      color:var(--muted,#87908a);
+      font-size:13px;
+    }
+
+    .legal-link-arrow {
+      flex:0 0 auto;
+      font-size:20px;
+      font-weight:800;
+      color:var(--green,#3B7E46);
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <fv-shell>
+
+    <div class="page container">
+
+      <h1 class="page-title">
+        User Details
+      </h1>
+
+      <p
+        class="muted"
+        style="
+          margin:0 0 18px 0;
+          color:var(--muted,#87908a);
+        "
+      >
+        Update your profile so your name and contact info are
+        consistent across FarmVista.
+      </p>
+
+
+      <!-- PROFILE -->
+
+      <div
+        class="card"
+        style="
+          max-width:780px;
+          margin:0 auto 18px;
+        "
+      >
+
+        <h2 class="card-title">
+          Profile
+        </h2>
+
+        <form
+          id="user-details-form"
+          class="form"
+        >
+
+          <div class="row2">
+
+            <div class="field">
+
+              <label for="ud-name">
+                Full Name
+              </label>
+
+              <input
+                id="ud-name"
+                type="text"
+                autocomplete="name"
+                placeholder="First Last"
+              />
+
+            </div>
+
+            <div class="field">
+
+              <label for="ud-role">
+                Role
+              </label>
+
+              <input
+                id="ud-role"
+                type="text"
+                placeholder="Operator, Agronomy, Office…"
+              />
+
+            </div>
+
+          </div>
+
+
+          <div class="row2">
+
+            <div class="field">
+
+              <label for="ud-email">
+                Email
+              </label>
+
+              <input
+                id="ud-email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@farm.com"
+              />
+
+            </div>
+
+            <div class="field">
+
+              <label for="ud-phone">
+                Mobile
+              </label>
+
+              <input
+                id="ud-phone"
+                type="tel"
+                autocomplete="tel"
+                placeholder="(555) 555-5555"
+              />
+
+            </div>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="ud-notes">
+              Notes (optional)
+            </label>
+
+            <textarea
+              id="ud-notes"
+              rows="3"
+              placeholder="Certifications, endorsements, PTO notes, etc."
+            ></textarea>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="ud-theme">
+              Preferred Theme
+            </label>
+
+            <select id="ud-theme">
+
+              <option value="system">
+                System
+              </option>
+
+              <option value="light">
+                Light
+              </option>
+
+              <option value="dark">
+                Dark
+              </option>
+
+            </select>
+
+            <div class="muted-small">
+              Tip: You can also toggle theme from the top drawer.
+            </div>
+
+          </div>
+
+
+          <div class="actions">
+
+            <button
+              id="save-profile-btn"
+              class="btn primary"
+              type="submit"
+            >
+              Save Changes
+            </button>
+
+            <button
+              class="btn ghost"
+              type="button"
+              onclick="history.back()"
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+
+      <!-- NOTIFICATIONS -->
+
+      <div
+        id="fv-notify-card"
+        class="card"
+        style="
+          max-width:780px;
+          margin:0 auto 18px;
+        "
+      >
+
+        <h2 class="card-title">
+          Notifications
+        </h2>
+
+        <div
+          class="setting"
+          id="fv-notify-setting"
+        >
+
+          <div class="left">
+
+            <div class="txt">
+              FarmVista Notifications
+            </div>
+
+            <div class="sub">
+              Receive FarmVista alerts on this device
+            </div>
+
+          </div>
+
+          <label class="switch">
+
+            <input
+              type="checkbox"
+              id="fv-toggle-push"
+              disabled
+            />
+
+            <span class="slider"></span>
+
+          </label>
+
+        </div>
+
+
+        <div
+          id="fv-notify-status"
+          class="notify-status off"
+        >
+
+          <span
+            class="notify-status-dot"
+            aria-hidden="true"
+          ></span>
+
+          <span id="fv-notify-status-text">
+            Checking notification status…
+          </span>
+
+        </div>
+
+
+        <div
+          class="muted-small"
+          style="
+            padding:0 12px 14px;
+          "
+        >
+          When enabled, this device stays registered for FarmVista
+          push notifications. Your FarmVista permissions still
+          determine which alerts you receive.
+        </div>
+
+      </div>
+
+
+      <!-- SMS MESSAGING CONSENT -->
+
+      <div
+        id="fv-sms-card"
+        class="card"
+        style="
+          max-width:780px;
+          margin:0 auto 18px;
+        "
+      >
+
+        <h2 class="card-title">
+          SMS Messaging
+        </h2>
+
+
+        <div
+          id="fv-sms-number"
+          class="sms-number"
+        >
+
+          <div class="sms-number-label">
+            Mobile number receiving FarmVista text messages
+          </div>
+
+          <div
+            id="fv-sms-number-value"
+            class="sms-number-value"
+          >
+            No mobile number on file
+          </div>
+
+          <div class="sms-number-note">
+            This is the mobile number currently saved to your
+            FarmVista profile.
+          </div>
+
+        </div>
+
+
+        <div
+          class="setting"
+          id="fv-sms-setting"
+        >
+
+          <div class="left">
+
+            <div class="txt">
+              FarmVista Text Messages
+            </div>
+
+            <div class="sub">
+              Receive work-related SMS messages at the mobile
+              number shown above
+            </div>
+
+          </div>
+
+          <label class="switch">
+
+            <input
+              type="checkbox"
+              id="fv-toggle-sms"
+              disabled
+              aria-describedby="fv-sms-disclosure fv-sms-status-text"
+            />
+
+            <span class="slider"></span>
+
+          </label>
+
+        </div>
+
+
+        <div
+          id="fv-sms-status"
+          class="notify-status off"
+        >
+
+          <span
+            class="notify-status-dot"
+            aria-hidden="true"
+          ></span>
+
+          <span id="fv-sms-status-text">
+            Checking SMS consent status…
+          </span>
+
+        </div>
+
+
+        <div
+          id="fv-sms-disclosure"
+          class="sms-disclosure"
+        >
+          By turning this on, I agree to receive work-related SMS
+          messages from FarmVista at the mobile number shown above,
+          including grain load dispatch notifications, grain ticket
+          scan links, and authentication messages. Message frequency
+          varies. Message and data rates may apply. Reply STOP to
+          opt out or HELP for help. Consent is not a condition of
+          purchasing goods or services. See the
+          <a href="/pages/user-details/terms-and-conditions.html">
+            Terms and Conditions
+          </a>
+          and
+          <a href="/pages/user-details/privacy-policy.html">
+            Privacy Policy
+          </a>.
+        </div>
+
+      </div>
+
+
+      <!-- PRIVACY + LEGAL -->
+
+      <div
+        class="card"
+        style="
+          max-width:780px;
+          margin:0 auto 18px;
+        "
+      >
+
+        <h2 class="card-title">
+          Privacy &amp; Legal
+        </h2>
+
+        <div class="legal-links">
+
+          <a
+            class="legal-link"
+            href="/pages/user-details/privacy-policy.html"
+          >
+
+            <span class="legal-link-main">
+
+              <span class="legal-link-title">
+                Privacy Policy
+              </span>
+
+              <span class="legal-link-sub">
+                Learn how FarmVista collects, uses, and protects
+                your information.
+              </span>
+
+            </span>
+
+            <span
+              class="legal-link-arrow"
+              aria-hidden="true"
+            >
+              ›
+            </span>
+
+          </a>
+
+
+          <a
+            class="legal-link"
+            href="/pages/user-details/terms-and-conditions.html"
+          >
+
+            <span class="legal-link-main">
+
+              <span class="legal-link-title">
+                Terms and Conditions
+              </span>
+
+              <span class="legal-link-sub">
+                Review the terms for using FarmVista and FarmVista
+                messaging services.
+              </span>
+
+            </span>
+
+            <span
+              class="legal-link-arrow"
+              aria-hidden="true"
+            >
+              ›
+            </span>
+
+          </a>
+
+
+          <a
+            class="legal-link"
+            href="/pages/user-details/sms-messaging.html"
+          >
+
+            <span class="legal-link-main">
+
+              <span class="legal-link-title">
+                SMS Messaging &amp; Consent
+              </span>
+
+              <span class="legal-link-sub">
+                Review how FarmVista text messaging works, including
+                consent, message frequency, opt-out, and privacy.
+              </span>
+
+            </span>
+
+            <span
+              class="legal-link-arrow"
+              aria-hidden="true"
+            >
+              ›
+            </span>
+
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </fv-shell>
+
+
+  <!-- FARMVISTA CORE -->
+
+  <script>
+
+    (function(){
+
+      const REV =
+        String(
+          Date.now()
+        );
+
+      const files = [
+
+        '/js/core/version/version.js',
+
+        '/js/core/core.js',
+
+        '/js/core/shell/fv-shell.js'
+
+      ];
+
+      (async()=>{
+
+        for(
+          const src of files
+        ){
+
+          await new Promise(
+            (
+              resolve,
+              reject
+            )=>{
+
+              const script =
+                document.createElement(
+                  'script'
+                );
+
+              script.src =
+                src +
+                '?rev=' +
+                REV;
+
+              script.async =
+                false;
+
+              script.onload =
+                resolve;
+
+              script.onerror =
+                reject;
+
+              document.body.appendChild(
+                script
+              );
+
+            }
+          );
+
+        }
+
+
+        try {
+
+          const sel =
+            document.getElementById(
+              'ud-theme'
+            );
+
+          if(
+            sel &&
+            window.App &&
+            App.setTheme &&
+            App.getTheme
+          ){
+
+            sel.value =
+              App.getTheme();
+
+            sel.addEventListener(
+              'change',
+              () => {
+
+                App.setTheme(
+                  sel.value
+                );
+
+              }
+            );
+
+          }
+
+        }
+        catch(
+          err
+        ){
+
+          console.warn(
+            '[FV] Theme setup failed:',
+            err
+          );
+
+        }
+
+      })();
+
+    })();
+
+  </script>
+
+
+  <!-- USER DETAILS + PUSH NOTIFICATIONS + SMS CONSENT -->
+
+  <script type="module">
+
+    import {
+
+      ready,
+
+      getAuth,
+
+      onAuthStateChanged,
+
+      getFirestore,
+
+      doc,
+
+      getDoc,
+
+      setDoc,
+
+      serverTimestamp
+
+    } from '/js/core/firebase/firebase-init.js';
+
+
+    const VAPID_PUBLIC_KEY =
+      "BAWo6Rtrmew1Z5B5MYluhTxKa8-NufKpjKiQP7BHMM1As1hpsR_VFPTGYEXwkW6n-VnDZWgRvENWYeGiQHRWANA";
+
+
+    const LEGACY_DEVICE_KEY =
+      'fv:device:id';
+
+
+    let CURRENT_USER =
+      null;
+
+
+    let CURRENT_EMPLOYEE =
+      null;
+
+
+    let NOTIFICATION_BUSY =
+      false;
+
+
+    let SMS_BUSY =
+      false;
+
+
+    const SMS_CONSENT_VERSION =
+      '2026-08-19';
+
+
+    const $ =
+      id =>
+        document.getElementById(
+          id
+        );
+
+
+    const clean =
+      value =>
+        String(
+          value ?? ''
+        )
+          .trim();
+
+
+    const emailKey =
+      value =>
+        clean(
+          value
+        )
+          .toLowerCase();
+
+
+    const digitsOnly =
+      value =>
+        clean(
+          value
+        )
+          .replace(
+            /\D+/g,
+            ''
+          );
+
+
+    function formatUSPhone(
+      raw
+    ){
+
+      const digits =
+        digitsOnly(
+          raw
+        );
+
+
+      const core =
+        (
+          digits.length === 11 &&
+          digits.startsWith('1')
+        )
+          ? digits.slice(1)
+          : digits;
+
+
+      if(
+        core.length !== 10
+      ){
+
+        return raw || '';
+
+      }
+
+
+      return (
+        `(${core.slice(0,3)}) ` +
+        `${core.slice(3,6)}-` +
+        `${core.slice(6)}`
+      );
+
+    }
+
+
+    function normalizeUSPhone(
+      raw
+    ){
+
+      const digits =
+        digitsOnly(
+          raw
+        );
+
+
+      if(
+        digits.length === 10
+      ){
+
+        return `+1${digits}`;
+
+      }
+
+
+      if(
+        digits.length === 11 &&
+        digits.startsWith('1')
+      ){
+
+        return `+${digits}`;
+
+      }
+
+
+      return clean(
+        raw
+      );
+
+    }
+
+
+    function setNotificationStatus(
+      type,
+      text
+    ){
+
+      const box =
+        $('fv-notify-status');
+
+
+      const label =
+        $('fv-notify-status-text');
+
+
+      if(
+        box
+      ){
+
+        box.className =
+          `notify-status ${type || 'off'}`;
+
+      }
+
+
+      if(
+        label
+      ){
+
+        label.textContent =
+          text || '';
+
+      }
+
+    }
+
+
+    function setNotificationToggle(
+      checked,
+      disabled = false
+    ){
+
+      const toggle =
+        $('fv-toggle-push');
+
+
+      if(
+        !toggle
+      ){
+
+        return;
+
+      }
+
+
+      toggle.checked =
+        checked === true;
+
+
+      toggle.disabled =
+        disabled === true;
+
+    }
+
+
+    function setSmsStatus(
+      type,
+      text
+    ){
+
+      const box =
+        $('fv-sms-status');
+
+
+      const label =
+        $('fv-sms-status-text');
+
+
+      if(
+        box
+      ){
+
+        box.className =
+          `notify-status ${type || 'off'}`;
+
+      }
+
+
+      if(
+        label
+      ){
+
+        label.textContent =
+          text || '';
+
+      }
+
+    }
+
+
+    function setSmsToggle(
+      checked,
+      disabled = false
+    ){
+
+      const toggle =
+        $('fv-toggle-sms');
+
+
+      if(
+        !toggle
+      ){
+
+        return;
+
+      }
+
+
+      toggle.checked =
+        checked === true;
+
+
+      toggle.disabled =
+        disabled === true;
+
+    }
+
+
+    /* =========================================================
+       EMPLOYEE LOOKUP
+    ========================================================== */
+
+    async function resolveEmployee(
+      user
+    ){
+
+      if(
+        !user
+      ){
+
+        return null;
+
+      }
+
+
+      try {
+
+        let ctx =
+          null;
+
+
+        if(
+          window.FVUserContext
+        ){
+
+          if(
+            typeof window.FVUserContext.get ===
+            'function'
+          ){
+
+            ctx =
+              window.FVUserContext.get();
+
+          }
+
+
+          if(
+            (
+              !ctx ||
+              !ctx.employee
+            ) &&
+            typeof window.FVUserContext.ready ===
+            'function'
+          ){
+
+            ctx =
+              await window.FVUserContext.ready();
+
+          }
+
+
+          if(
+            (
+              !ctx ||
+              !ctx.employee
+            ) &&
+            typeof window.FVUserContext.refresh ===
+            'function'
+          ){
+
+            ctx =
+              await window.FVUserContext.refresh({
+                force:true
+              });
+
+          }
+
+        }
+
+
+        if(
+          ctx &&
+          ctx.employee &&
+          ctx.employee.id
+        ){
+
+          const db =
+            getFirestore();
+
+
+          const ref =
+            doc(
+              db,
+              'employees',
+              ctx.employee.id
+            );
+
+
+          try {
+
+            const snap =
+              await getDoc(
+                ref
+              );
+
+
+            if(
+              snap.exists()
+            ){
+
+              return {
+
+                id:
+                  snap.id,
+
+                ref,
+
+                data:
+                  snap.data() || {}
+
+              };
+
+            }
+
+          }
+          catch(
+            err
+          ){
+
+            console.warn(
+              '[FV] Direct employee reload failed:',
+              err
+            );
+
+          }
+
+
+          return {
+
+            id:
+              ctx.employee.id,
+
+            ref,
+
+            data:
+              {
+                ...ctx.employee
+              }
+
+          };
+
+        }
+
+      }
+      catch(
+        err
+      ){
+
+        console.warn(
+          '[FV] UserContext employee lookup failed:',
+          err
+        );
+
+      }
+
+
+      return null;
+
+    }
+
+
+    /* =========================================================
+       PROFILE
+    ========================================================== */
+
+    function fillProfile(
+      data = {},
+      user = null
+    ){
+
+      const fullName =
+
+        data.fullName ||
+
+        data.name ||
+
+        `${data.firstName || data.first || ''} ${data.lastName || data.last || ''}`.trim() ||
+
+        user?.displayName ||
+
+        '';
+
+
+      $('ud-name').value =
+        fullName;
+
+
+      $('ud-role').value =
+
+        data.role ||
+
+        data.permissionGroup ||
+
+        '';
+
+
+      $('ud-email').value =
+
+        data.email ||
+
+        data.emailAddress ||
+
+        user?.email ||
+
+        '';
+
+
+      const savedPhone =
+        data.phone ||
+
+        data.phoneE164 ||
+
+        data.mobile ||
+
+        data.phoneNumber ||
+
+        user?.phoneNumber ||
+
+        '';
+
+
+      const formattedPhone =
+        formatUSPhone(
+          savedPhone
+        );
+
+
+      $('ud-phone').value =
+        formattedPhone;
+
+
+      const smsNumber =
+        $('fv-sms-number-value');
+
+
+      if(
+        smsNumber
+      ){
+
+        smsNumber.textContent =
+          formattedPhone ||
+          'No mobile number on file';
+
+      }
+
+
+      $('ud-notes').value =
+        data.notes ||
+        '';
+
+    }
+
+
+    async function saveProfile(){
+
+      if(
+        !CURRENT_USER ||
+        !CURRENT_EMPLOYEE
+      ){
+
+        alert(
+          'FarmVista could not find your employee record.'
+        );
+
+        return;
+
+      }
+
+
+      const button =
+        $('save-profile-btn');
+
+
+      button.disabled =
+        true;
+
+
+      const originalText =
+        button.textContent;
+
+
+      button.textContent =
+        'Saving…';
+
+
+      try {
+
+        const fullName =
+          clean(
+            $('ud-name').value
+          );
+
+
+        const nameParts =
+          fullName
+            .split(/\s+/)
+            .filter(Boolean);
+
+
+        const firstName =
+          nameParts[0] ||
+          '';
+
+
+        const lastName =
+          nameParts.length > 1
+            ? nameParts.slice(1).join(' ')
+            : '';
+
+
+        const phoneE164 =
+          normalizeUSPhone(
+            $('ud-phone').value
+          );
+
+
+        await setDoc(
+
+          CURRENT_EMPLOYEE.ref,
+
+          {
+
+            fullName,
+
+            name:
+              fullName,
+
+            firstName,
+
+            lastName,
+
+            role:
+              clean(
+                $('ud-role').value
+              ),
+
+            email:
+              emailKey(
+                $('ud-email').value
+              ),
+
+            phone:
+              phoneE164,
+
+            phoneE164:
+              phoneE164,
+
+            notes:
+              clean(
+                $('ud-notes').value
+              ),
+
+            updatedAt:
+              serverTimestamp()
+
+          },
+
+          {
+            merge:
+              true
+          }
+
+        );
+
+
+        CURRENT_EMPLOYEE.data = {
+          ...CURRENT_EMPLOYEE.data,
+          fullName,
+          name:fullName,
+          firstName,
+          lastName,
+          role:clean(
+            $('ud-role').value
+          ),
+          email:emailKey(
+            $('ud-email').value
+          ),
+          phone:phoneE164,
+          phoneE164,
+          notes:clean(
+            $('ud-notes').value
+          )
+        };
+
+
+        button.textContent =
+          'Saved ✓';
+
+
+        setTimeout(
+          () => {
+
+            button.textContent =
+              originalText;
+
+          },
+          1300
+        );
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Profile save failed:',
+          err
+        );
+
+
+        alert(
+          'FarmVista could not save your profile.'
+        );
+
+
+        button.textContent =
+          originalText;
+
+      }
+      finally {
+
+        button.disabled =
+          false;
+
+      }
+
+    }
+
+
+    function detectPlatform(){
+
+      const ua =
+        navigator.userAgent ||
+        '';
+
+
+      if(
+        /iPhone|iPad|iPod/i.test(
+          ua
+        )
+      ){
+
+        return 'ios';
+
+      }
+
+
+      if(
+        /Android/i.test(
+          ua
+        )
+      ){
+
+        return 'android';
+
+      }
+
+
+      if(
+        /Macintosh/i.test(
+          ua
+        )
+      ){
+
+        return 'mac';
+
+      }
+
+
+      if(
+        /Windows/i.test(
+          ua
+        )
+      ){
+
+        return 'windows';
+
+      }
+
+
+      return 'other';
+
+    }
+
+
+    function detectBrowser(){
+
+      const ua =
+        navigator.userAgent ||
+        '';
+
+
+      if(
+        /Edg\//i.test(
+          ua
+        )
+      ){
+
+        return 'edge';
+
+      }
+
+
+      if(
+        /Firefox/i.test(
+          ua
+        )
+      ){
+
+        return 'firefox';
+
+      }
+
+
+      if(
+        /Chrome/i.test(
+          ua
+        ) &&
+        !/Edg\//i.test(
+          ua
+        )
+      ){
+
+        return 'chrome';
+
+      }
+
+
+      if(
+        /Safari/i.test(
+          ua
+        ) &&
+        !/Chrome/i.test(
+          ua
+        )
+      ){
+
+        return 'safari';
+
+      }
+
+
+      return 'other';
+
+    }
+
+
+    function isStandalone(){
+
+      const mediaStandalone =
+        window.matchMedia &&
+        window.matchMedia(
+          '(display-mode: standalone)'
+        ).matches;
+
+
+      const iosStandalone =
+        window.navigator &&
+        window.navigator.standalone === true;
+
+
+      return (
+        mediaStandalone ||
+        iosStandalone
+      );
+
+    }
+
+
+    function isIOS(){
+
+      return (
+        /iPhone|iPad|iPod/i.test(
+          navigator.userAgent || ''
+        )
+      );
+
+    }
+
+
+    function isPushSupported(){
+
+      return (
+
+        typeof Notification !==
+          'undefined' &&
+
+        'serviceWorker' in
+          navigator &&
+
+        'PushManager' in
+          window
+
+      );
+
+    }
+
+
+    function urlBase64ToUint8Array(
+      base64String
+    ){
+
+      const padding =
+        '='.repeat(
+
+          (
+            4 -
+            (
+              base64String.length %
+              4
+            )
+          ) %
+          4
+
+        );
+
+
+      const base64 =
+        (
+          base64String +
+          padding
+        )
+          .replace(
+            /-/g,
+            '+'
+          )
+          .replace(
+            /_/g,
+            '/'
+          );
+
+
+      const rawData =
+        atob(
+          base64
+        );
+
+
+      const outputArray =
+        new Uint8Array(
+          rawData.length
+        );
+
+
+      for(
+        let i = 0;
+        i < rawData.length;
+        i++
+      ){
+
+        outputArray[i] =
+          rawData.charCodeAt(
+            i
+          );
+
+      }
+
+
+      return outputArray;
+
+    }
+
+
+    async function getSWRegistration(){
+
+      if(
+        !(
+          'serviceWorker' in
+          navigator
+        )
+      ){
+
+        return null;
+
+      }
+
+
+      try {
+
+        let reg =
+          await navigator
+            .serviceWorker
+            .getRegistration(
+              '/'
+            );
+
+
+        if(
+          !reg
+        ){
+
+          reg =
+            await navigator
+              .serviceWorker
+              .register(
+                '/serviceworker.js',
+                {
+                  scope:
+                    '/'
+                }
+              );
+
+        }
+
+
+        await navigator
+          .serviceWorker
+          .ready;
+
+
+        return reg;
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Service worker registration failed:',
+          err
+        );
+
+
+        return null;
+
+      }
+
+    }
+
+
+    async function getCurrentSubscription(){
+
+      const reg =
+        await getSWRegistration();
+
+
+      if(
+        !reg ||
+        !reg.pushManager
+      ){
+
+        return null;
+
+      }
+
+
+      try {
+
+        return await reg
+          .pushManager
+          .getSubscription();
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Could not read push subscription:',
+          err
+        );
+
+
+        return null;
+
+      }
+
+    }
+
+
+    async function createPushSubscription(){
+
+      const reg =
+        await getSWRegistration();
+
+
+      if(
+        !reg ||
+        !reg.pushManager
+      ){
+
+        throw new Error(
+          'Push Manager is unavailable.'
+        );
+
+      }
+
+
+      let sub =
+        await reg
+          .pushManager
+          .getSubscription();
+
+
+      if(
+        sub
+      ){
+
+        return sub;
+
+      }
+
+
+      const applicationServerKey =
+        urlBase64ToUint8Array(
+          VAPID_PUBLIC_KEY
+        );
+
+
+      sub =
+        await reg
+          .pushManager
+          .subscribe({
+
+            userVisibleOnly:
+              true,
+
+            applicationServerKey
+
+          });
+
+
+      return sub;
+
+    }
+
+
+    async function makeSubscriptionId(
+      subscription
+    ){
+
+      const endpoint =
+        clean(
+          subscription?.endpoint
+        );
+
+
+      if(
+        !endpoint
+      ){
+
+        throw new Error(
+          'Push subscription endpoint is missing.'
+        );
+
+      }
+
+
+      if(
+        window.crypto &&
+        crypto.subtle
+      ){
+
+        const bytes =
+          new TextEncoder()
+            .encode(
+              endpoint
+            );
+
+
+        const hashBuffer =
+          await crypto.subtle.digest(
+            'SHA-256',
+            bytes
+          );
+
+
+        const hashArray =
+          Array.from(
+            new Uint8Array(
+              hashBuffer
+            )
+          );
+
+
+        return (
+          'push-' +
+          hashArray
+            .map(
+              byte =>
+                byte
+                  .toString(16)
+                  .padStart(2,'0')
+            )
+            .join('')
+            .slice(0,40)
+        );
+
+      }
+
+
+      let hash =
+        0;
+
+
+      for(
+        let i = 0;
+        i < endpoint.length;
+        i++
+      ){
+
+        hash =
+          (
+            (
+              hash << 5
+            ) -
+            hash +
+            endpoint.charCodeAt(i)
+          ) | 0;
+
+      }
+
+
+      return (
+        'push-' +
+        Math.abs(hash)
+          .toString(36)
+      );
+
+    }
+
+
+    function getLegacyDeviceId(){
+
+      try {
+
+        let id =
+          localStorage.getItem(
+            LEGACY_DEVICE_KEY
+          );
+
+
+        if(
+          !id
+        ){
+
+          id =
+            window.crypto &&
+            crypto.randomUUID
+
+              ? crypto.randomUUID()
+
+              : (
+                  'dev-' +
+                  Math.random()
+                    .toString(36)
+                    .slice(2) +
+                  Date.now()
+                    .toString(36)
+                );
+
+
+          localStorage.setItem(
+            LEGACY_DEVICE_KEY,
+            id
+          );
+
+        }
+
+
+        return id;
+
+      }
+      catch {
+
+        return '';
+
+      }
+
+    }
+
+
+    async function saveActiveSubscription(
+      user,
+      employee,
+      subscription
+    ){
+
+      if(
+        !user ||
+        !employee ||
+        !subscription
+      ){
+
+        throw new Error(
+          'Missing notification registration information.'
+        );
+
+      }
+
+
+      const db =
+        getFirestore();
+
+
+      const subscriptionId =
+        await makeSubscriptionId(
+          subscription
+        );
+
+
+      const ref =
+        doc(
+          db,
+          'employees',
+          employee.id,
+          'push_subscriptions',
+          subscriptionId
+        );
+
+
+      const json =
+        subscription.toJSON
+          ? subscription.toJSON()
+          : {
+              endpoint:
+                subscription.endpoint
+            };
+
+
+      let oldSnap =
+        null;
+
+
+      try {
+
+        oldSnap =
+          await getDoc(
+            ref
+          );
+
+      }
+      catch(
+        err
+      ){
+
+        console.warn(
+          '[FV] Existing subscription check failed:',
+          err
+        );
+
+      }
+
+
+      const payload = {
+
+        subscriptionId,
+
+        deviceId:
+          subscriptionId,
+
+        legacyDeviceId:
+          getLegacyDeviceId() || null,
+
+        endpoint:
+          subscription.endpoint,
+
+        keys:
+          json.keys || {},
+
+        active:
+          true,
+
+        allowBoundary:
+          true,
+
+        allowMaintenance:
+          true,
+
+        platform:
+          detectPlatform(),
+
+        browser:
+          detectBrowser(),
+
+        standalone:
+          isStandalone(),
+
+        userUid:
+          user.uid || '',
+
+        userEmail:
+          emailKey(
+            user.email
+          ),
+
+        employeeId:
+          employee.id,
+
+        permission:
+          Notification.permission,
+
+        updatedAt:
+          serverTimestamp(),
+
+        lastVerifiedAt:
+          serverTimestamp()
+
+      };
+
+
+      if(
+        !oldSnap ||
+        !oldSnap.exists()
+      ){
+
+        payload.createdAt =
+          serverTimestamp();
+
+      }
+
+
+      await setDoc(
+
+        ref,
+
+        payload,
+
+        {
+          merge:
+            true
+        }
+
+      );
+
+
+      try {
+
+        await setDoc(
+
+          employee.ref,
+
+          {
+
+            notificationsEnabled:
+              true,
+
+            pushNotificationsEnabled:
+              true,
+
+            notificationsUpdatedAt:
+              serverTimestamp(),
+
+            lastPushRegisteredAt:
+              serverTimestamp()
+
+          },
+
+          {
+            merge:
+              true
+          }
+
+        );
+
+      }
+      catch(
+        err
+      ){
+
+        console.warn(
+          '[FV] Employee notification flag save failed:',
+          err
+        );
+
+      }
+
+
+      return {
+        ref,
+        subscriptionId
+      };
+
+    }
+
+
+    async function verifySubscriptionSaved(
+      employee,
+      subscription
+    ){
+
+      const db =
+        getFirestore();
+
+
+      const subscriptionId =
+        await makeSubscriptionId(
+          subscription
+        );
+
+
+      const ref =
+        doc(
+          db,
+          'employees',
+          employee.id,
+          'push_subscriptions',
+          subscriptionId
+        );
+
+
+      const snap =
+        await getDoc(
+          ref
+        );
+
+
+      if(
+        !snap.exists()
+      ){
+
+        return false;
+
+      }
+
+
+      const data =
+        snap.data() || {};
+
+
+      return (
+        data.active === true &&
+        clean(
+          data.endpoint
+        ) ===
+        clean(
+          subscription.endpoint
+        )
+      );
+
+    }
+
+
+    async function enableNotifications(){
+
+      if(
+        NOTIFICATION_BUSY
+      ){
+
+        return;
+
+      }
+
+
+      NOTIFICATION_BUSY =
+        true;
+
+
+      setNotificationToggle(
+        true,
+        true
+      );
+
+
+      setNotificationStatus(
+        'off',
+        'Registering this device for FarmVista notifications…'
+      );
+
+
+      try {
+
+        if(
+          !CURRENT_USER
+        ){
+
+          throw new Error(
+            'You must be signed in.'
+          );
+
+        }
+
+
+        if(
+          !CURRENT_EMPLOYEE
+        ){
+
+          throw new Error(
+            'FarmVista could not find your employee record.'
+          );
+
+        }
+
+
+        if(
+          !isPushSupported()
+        ){
+
+          throw new Error(
+            'Push notifications are not supported on this device or browser.'
+          );
+
+        }
+
+
+        if(
+          isIOS() &&
+          !isStandalone()
+        ){
+
+          throw new Error(
+            'On iPhone or iPad, open FarmVista from the Home Screen app to enable notifications.'
+          );
+
+        }
+
+
+        let permission =
+          Notification.permission;
+
+
+        if(
+          permission ===
+          'default'
+        ){
+
+          permission =
+            await Notification
+              .requestPermission();
+
+        }
+
+
+        if(
+          permission !==
+          'granted'
+        ){
+
+          throw new Error(
+            'Notification permission was not granted. Enable notifications for FarmVista in your device settings.'
+          );
+
+        }
+
+
+        const subscription =
+          await createPushSubscription();
+
+
+        if(
+          !subscription
+        ){
+
+          throw new Error(
+            'FarmVista could not create a push subscription.'
+          );
+
+        }
+
+
+        await saveActiveSubscription(
+
+          CURRENT_USER,
+
+          CURRENT_EMPLOYEE,
+
+          subscription
+
+        );
+
+
+        const verified =
+          await verifySubscriptionSaved(
+
+            CURRENT_EMPLOYEE,
+
+            subscription
+
+          );
+
+
+        if(
+          !verified
+        ){
+
+          throw new Error(
+            'FarmVista created the push subscription but could not verify it in Firestore.'
+          );
+
+        }
+
+
+        setNotificationToggle(
+          true,
+          false
+        );
+
+
+        setNotificationStatus(
+          'on',
+          'Notifications are ON. This device is registered and ready to receive FarmVista alerts.'
+        );
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Enable notifications failed:',
+          err
+        );
+
+
+        setNotificationToggle(
+          false,
+          false
+        );
+
+
+        setNotificationStatus(
+          'error',
+          err?.message ||
+          'FarmVista could not enable notifications.'
+        );
+
+
+        alert(
+          err?.message ||
+          'FarmVista could not enable notifications.'
+        );
+
+      }
+      finally {
+
+        NOTIFICATION_BUSY =
+          false;
+
+      }
+
+    }
+
+
+    async function disableNotifications(){
+
+      if(
+        NOTIFICATION_BUSY
+      ){
+
+        return;
+
+      }
+
+
+      NOTIFICATION_BUSY =
+        true;
+
+
+      setNotificationToggle(
+        false,
+        true
+      );
+
+
+      setNotificationStatus(
+        'off',
+        'Turning notifications off…'
+      );
+
+
+      try {
+
+        const subscription =
+          await getCurrentSubscription();
+
+
+        if(
+          subscription &&
+          CURRENT_EMPLOYEE
+        ){
+
+          const db =
+            getFirestore();
+
+
+          const subscriptionId =
+            await makeSubscriptionId(
+              subscription
+            );
+
+
+          const ref =
+            doc(
+              db,
+              'employees',
+              CURRENT_EMPLOYEE.id,
+              'push_subscriptions',
+              subscriptionId
+            );
+
+
+          try {
+
+            await setDoc(
+
+              ref,
+
+              {
+
+                active:
+                  false,
+
+                allowBoundary:
+                  false,
+
+                allowMaintenance:
+                  false,
+
+                disabledAt:
+                  serverTimestamp(),
+
+                updatedAt:
+                  serverTimestamp()
+
+              },
+
+              {
+                merge:
+                  true
+              }
+
+            );
+
+          }
+          catch(
+            err
+          ){
+
+            console.warn(
+              '[FV] Could not mark push record disabled:',
+              err
+            );
+
+          }
+
+
+          try {
+
+            await subscription
+              .unsubscribe();
+
+          }
+          catch(
+            err
+          ){
+
+            console.warn(
+              '[FV] Browser unsubscribe failed:',
+              err
+            );
+
+          }
+
+        }
+
+
+        if(
+          CURRENT_EMPLOYEE
+        ){
+
+          try {
+
+            await setDoc(
+
+              CURRENT_EMPLOYEE.ref,
+
+              {
+
+                notificationsEnabled:
+                  false,
+
+                pushNotificationsEnabled:
+                  false,
+
+                notificationsUpdatedAt:
+                  serverTimestamp()
+
+              },
+
+              {
+                merge:
+                  true
+              }
+
+            );
+
+          }
+          catch(
+            err
+          ){
+
+            console.warn(
+              '[FV] Employee notification flag update failed:',
+              err
+            );
+
+          }
+
+        }
+
+
+        setNotificationToggle(
+          false,
+          false
+        );
+
+
+        setNotificationStatus(
+          'off',
+          'Notifications are OFF on this device.'
+        );
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Disable notifications failed:',
+          err
+        );
+
+
+        setNotificationStatus(
+          'error',
+          'FarmVista could not fully disable notifications.'
+        );
+
+      }
+      finally {
+
+        NOTIFICATION_BUSY =
+          false;
+
+      }
+
+    }
+
+
+    async function restoreNotificationState(){
+
+      const toggle =
+        $('fv-toggle-push');
+
+
+      if(
+        !toggle
+      ){
+
+        return;
+
+      }
+
+
+      if(
+        !CURRENT_USER ||
+        !CURRENT_EMPLOYEE
+      ){
+
+        setNotificationToggle(
+          false,
+          true
+        );
+
+
+        setNotificationStatus(
+          'error',
+          'FarmVista could not locate your employee record.'
+        );
+
+
+        return;
+
+      }
+
+
+      if(
+        !isPushSupported()
+      ){
+
+        setNotificationToggle(
+          false,
+          true
+        );
+
+
+        setNotificationStatus(
+          'off',
+          'Push notifications are not supported on this device or browser.'
+        );
+
+
+        return;
+
+      }
+
+
+      if(
+        isIOS() &&
+        !isStandalone()
+      ){
+
+        setNotificationToggle(
+          false,
+          true
+        );
+
+
+        setNotificationStatus(
+          'off',
+          'Open the installed FarmVista Home Screen app to manage notifications on iPhone or iPad.'
+        );
+
+
+        return;
+
+      }
+
+
+      if(
+        Notification.permission ===
+        'denied'
+      ){
+
+        setNotificationToggle(
+          false,
+          true
+        );
+
+
+        setNotificationStatus(
+          'error',
+          'FarmVista notifications are blocked in your device settings.'
+        );
+
+
+        return;
+
+      }
+
+
+      try {
+
+        const subscription =
+          await getCurrentSubscription();
+
+
+        if(
+          Notification.permission ===
+            'granted' &&
+          subscription
+        ){
+
+          await saveActiveSubscription(
+
+            CURRENT_USER,
+
+            CURRENT_EMPLOYEE,
+
+            subscription
+
+          );
+
+
+          const verified =
+            await verifySubscriptionSaved(
+
+              CURRENT_EMPLOYEE,
+
+              subscription
+
+            );
+
+
+          if(
+            verified
+          ){
+
+            setNotificationToggle(
+              true,
+              false
+            );
+
+
+            setNotificationStatus(
+              'on',
+              'Notifications are ON. This device is registered and ready to receive FarmVista alerts.'
+            );
+
+
+            return;
+
+          }
+
+        }
+
+
+        setNotificationToggle(
+          false,
+          false
+        );
+
+
+        if(
+          Notification.permission ===
+          'granted'
+        ){
+
+          setNotificationStatus(
+            'off',
+            'Notifications are allowed, but this device is not currently registered. Turn the switch on to register it.'
+          );
+
+        }
+        else {
+
+          setNotificationStatus(
+            'off',
+            'Notifications are OFF. Turn the switch on to enable FarmVista alerts.'
+          );
+
+        }
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Notification restore failed:',
+          err
+        );
+
+
+        setNotificationToggle(
+          false,
+          false
+        );
+
+
+        setNotificationStatus(
+          'error',
+          'FarmVista could not verify this device notification registration.'
+        );
+
+      }
+
+    }
+
+
+    function wireNotificationToggle(){
+
+      const toggle =
+        $('fv-toggle-push');
+
+
+      if(
+        !toggle ||
+        toggle._fvWired
+      ){
+
+        return;
+
+      }
+
+
+      toggle._fvWired =
+        true;
+
+
+      toggle.addEventListener(
+        'change',
+        async () => {
+
+          if(
+            toggle.checked
+          ){
+
+            await enableNotifications();
+
+          }
+          else {
+
+            await disableNotifications();
+
+          }
+
+        }
+      );
+
+    }
+
+
+    /* =========================================================
+       SMS MESSAGING CONSENT
+    ========================================================== */
+
+    async function enableSmsConsent(){
+
+      if(
+        SMS_BUSY
+      ){
+
+        return;
+
+      }
+
+
+      SMS_BUSY =
+        true;
+
+
+      setSmsToggle(
+        true,
+        true
+      );
+
+
+      setSmsStatus(
+        'off',
+        'Saving your FarmVista SMS consent…'
+      );
+
+
+      try {
+
+        if(
+          !CURRENT_USER
+        ){
+
+          throw new Error(
+            'You must be signed in.'
+          );
+
+        }
+
+
+        if(
+          !CURRENT_EMPLOYEE
+        ){
+
+          throw new Error(
+            'FarmVista could not find your employee record.'
+          );
+
+        }
+
+
+        const phone =
+          normalizeUSPhone(
+            $('ud-phone')?.value ||
+            CURRENT_EMPLOYEE.data?.phoneE164 ||
+            CURRENT_EMPLOYEE.data?.phone ||
+            CURRENT_USER.phoneNumber ||
+            ''
+          );
+
+
+        if(
+          !/^\+1\d{10}$/.test(
+            phone
+          )
+        ){
+
+          throw new Error(
+            'Add a valid US mobile number to your profile before enabling FarmVista text messages.'
+          );
+
+        }
+
+
+        const disclosure =
+          'I agree to receive work-related SMS messages from FarmVista, including grain load dispatch notifications, grain ticket scan links, and authentication messages. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is not a condition of purchasing goods or services.';
+
+
+        await setDoc(
+
+          CURRENT_EMPLOYEE.ref,
+
+          {
+
+            smsConsent:
+              true,
+
+            smsMessagingConsent:
+              true,
+
+            smsConsentStatus:
+              'opted_in',
+
+            smsConsentPhone:
+              phone,
+
+            smsConsentSource:
+              'user_details_toggle',
+
+            smsConsentVersion:
+              SMS_CONSENT_VERSION,
+
+            smsConsentDisclosure:
+              disclosure,
+
+            smsConsentAt:
+              serverTimestamp(),
+
+            smsConsentRevokedAt:
+              null,
+
+            smsConsentUpdatedAt:
+              serverTimestamp(),
+
+            updatedAt:
+              serverTimestamp()
+
+          },
+
+          {
+            merge:
+              true
+          }
+
+        );
+
+
+        CURRENT_EMPLOYEE.data = {
+          ...CURRENT_EMPLOYEE.data,
+          smsConsent:true,
+          smsMessagingConsent:true,
+          smsConsentStatus:'opted_in',
+          smsConsentPhone:phone,
+          smsConsentSource:'user_details_toggle',
+          smsConsentVersion:SMS_CONSENT_VERSION,
+          smsConsentDisclosure:disclosure,
+          smsConsentRevokedAt:null
+        };
+
+
+        setSmsToggle(
+          true,
+          false
+        );
+
+
+        setSmsStatus(
+          'on',
+          'SMS messaging is ON. You have consented to receive work-related FarmVista text messages.'
+        );
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Enable SMS consent failed:',
+          err
+        );
+
+
+        setSmsToggle(
+          false,
+          false
+        );
+
+
+        setSmsStatus(
+          'error',
+          err?.message ||
+          'FarmVista could not save your SMS consent.'
+        );
+
+
+        alert(
+          err?.message ||
+          'FarmVista could not save your SMS consent.'
+        );
+
+      }
+      finally {
+
+        SMS_BUSY =
+          false;
+
+      }
+
+    }
+
+
+    async function disableSmsConsent(){
+
+      if(
+        SMS_BUSY
+      ){
+
+        return;
+
+      }
+
+
+      SMS_BUSY =
+        true;
+
+
+      setSmsToggle(
+        false,
+        true
+      );
+
+
+      setSmsStatus(
+        'off',
+        'Saving your SMS opt-out…'
+      );
+
+
+      try {
+
+        if(
+          !CURRENT_USER
+        ){
+
+          throw new Error(
+            'You must be signed in.'
+          );
+
+        }
+
+
+        if(
+          !CURRENT_EMPLOYEE
+        ){
+
+          throw new Error(
+            'FarmVista could not find your employee record.'
+          );
+
+        }
+
+
+        await setDoc(
+
+          CURRENT_EMPLOYEE.ref,
+
+          {
+
+            smsConsent:
+              false,
+
+            smsMessagingConsent:
+              false,
+
+            smsConsentStatus:
+              'opted_out',
+
+            smsConsentSource:
+              'user_details_toggle',
+
+            smsConsentVersion:
+              SMS_CONSENT_VERSION,
+
+            smsConsentRevokedAt:
+              serverTimestamp(),
+
+            smsConsentUpdatedAt:
+              serverTimestamp(),
+
+            updatedAt:
+              serverTimestamp()
+
+          },
+
+          {
+            merge:
+              true
+          }
+
+        );
+
+
+        CURRENT_EMPLOYEE.data = {
+          ...CURRENT_EMPLOYEE.data,
+          smsConsent:false,
+          smsMessagingConsent:false,
+          smsConsentStatus:'opted_out',
+          smsConsentSource:'user_details_toggle',
+          smsConsentVersion:SMS_CONSENT_VERSION
+        };
+
+
+        setSmsToggle(
+          false,
+          false
+        );
+
+
+        setSmsStatus(
+          'off',
+          'SMS messaging is OFF. FarmVista will not send work-related text messages to this number.'
+        );
+
+      }
+      catch(
+        err
+      ){
+
+        console.error(
+          '[FV] Disable SMS consent failed:',
+          err
+        );
+
+
+        const wasEnabled =
+          CURRENT_EMPLOYEE?.data?.smsConsent === true ||
+          CURRENT_EMPLOYEE?.data?.smsMessagingConsent === true;
+
+
+        setSmsToggle(
+          wasEnabled,
+          false
+        );
+
+
+        setSmsStatus(
+          'error',
+          err?.message ||
+          'FarmVista could not save your SMS opt-out.'
+        );
+
+
+        alert(
+          err?.message ||
+          'FarmVista could not save your SMS opt-out.'
+        );
+
+      }
+      finally {
+
+        SMS_BUSY =
+          false;
+
+      }
+
+    }
+
+
+    function restoreSmsConsentState(){
+
+      const toggle =
+        $('fv-toggle-sms');
+
+
+      if(
+        !toggle
+      ){
+
+        return;
+
+      }
+
+
+      if(
+        !CURRENT_USER ||
+        !CURRENT_EMPLOYEE
+      ){
+
+        setSmsToggle(
+          false,
+          true
+        );
+
+
+        setSmsStatus(
+          'off',
+          'Sign in to manage FarmVista SMS messaging.'
+        );
+
+
+        return;
+
+      }
+
+
+      const data =
+        CURRENT_EMPLOYEE.data ||
+        {};
+
+
+      const enabled =
+        data.smsConsent === true ||
+        data.smsMessagingConsent === true ||
+        data.smsConsentStatus === 'opted_in';
+
+
+      setSmsToggle(
+        enabled,
+        false
+      );
+
+
+      if(
+        enabled
+      ){
+
+        setSmsStatus(
+          'on',
+          'SMS messaging is ON. You have consented to receive work-related FarmVista text messages.'
+        );
+
+      }
+      else {
+
+        setSmsStatus(
+          'off',
+          'SMS messaging is OFF. Turn the switch on to consent to work-related FarmVista text messages.'
+        );
+
+      }
+
+    }
+
+
+    function wireSmsToggle(){
+
+      const toggle =
+        $('fv-toggle-sms');
+
+
+      if(
+        !toggle ||
+        toggle._fvWired
+      ){
+
+        return;
+
+      }
+
+
+      toggle._fvWired =
+        true;
+
+
+      toggle.addEventListener(
+        'change',
+        async () => {
+
+          if(
+            toggle.checked
+          ){
+
+            await enableSmsConsent();
+
+          }
+          else {
+
+            await disableSmsConsent();
+
+          }
+
+        }
+      );
+
+    }
+
+
+    const profileForm =
+      $('user-details-form');
+
+
+    if(
+      profileForm
+    ){
+
+      profileForm.addEventListener(
+        'submit',
+        async event => {
+
+          event.preventDefault();
+
+          await saveProfile();
+
+        }
+      );
+
+    }
+
+
+    async function init(){
+
+      await ready;
+
+
+      const ctxDeadline =
+        Date.now() +
+        5000;
+
+
+      while(
+        !window.FVUserContext &&
+        Date.now() <
+          ctxDeadline
+      ){
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              100
+            )
+        );
+
+      }
+
+
+      const auth =
+        getAuth();
+
+
+      wireNotificationToggle();
+
+      wireSmsToggle();
+
+
+      onAuthStateChanged(
+        auth,
+        async user => {
+
+          CURRENT_USER =
+            user || null;
+
+
+          CURRENT_EMPLOYEE =
+            null;
+
+
+          if(
+            !user
+          ){
+
+            fillProfile(
+              {}
+            );
+
+
+            setNotificationToggle(
+              false,
+              true
+            );
+
+
+            setNotificationStatus(
+              'off',
+              'Sign in to manage FarmVista notifications.'
+            );
+
+
+            setSmsToggle(
+              false,
+              true
+            );
+
+
+            setSmsStatus(
+              'off',
+              'Sign in to manage FarmVista SMS messaging.'
+            );
+
+
+            return;
+
+          }
+
+
+          const employee =
+            await resolveEmployee(
+              user
+            );
+
+
+          CURRENT_EMPLOYEE =
+            employee;
+
+
+          if(
+            employee
+          ){
+
+            fillProfile(
+              employee.data || {},
+              user
+            );
+
+          }
+          else {
+
+            fillProfile(
+              {},
+              user
+            );
+
+
+            console.warn(
+              '[FV] No employee record resolved for current user:',
+              {
+                uid:
+                  user.uid || null,
+                email:
+                  user.email || null,
+                phone:
+                  user.phoneNumber || null
+              }
+            );
+
+          }
+
+
+          await restoreNotificationState();
+
+          restoreSmsConsentState();
+
+        }
+      );
+
+    }
+
+
+    init();
+
+  </script>
+
+</body>
+</html>

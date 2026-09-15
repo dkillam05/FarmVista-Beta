@@ -1,0 +1,1841 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Edit Contractor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script defer src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Absolute app paths -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure fv-shell is defined -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <style>
+    .page{max-width:1100px;margin:0 auto;padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;}
+    .page-title{margin:0 0 8px 0;}
+    .page-sub{margin:0 0 18px 0;color:var(--muted,#87908a);}
+
+    .searchbar{position:relative;margin:0 0 10px}
+    .searchbar input{width:100%;padding:12px 44px 12px 42px;border:1px solid var(--border);
+      border-radius:12px;background:var(--surface);color:var(--text);font:inherit}
+    .searchbar .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.7}
+
+    .chips{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid var(--border);cursor:pointer;
+      background:var(--card-surface,var(--surface));font-weight:700;color:var(--text)}
+    .chip.active{background:#e7f1ea;color:#2F6C3C;border-color:#2F6C3C}
+
+    html[data-theme="dark"] .chip,
+    body[data-theme="dark"] .chip,
+    body.theme-dark .chip{
+      border-color:color-mix(in srgb,var(--text) 22%,transparent);
+      background:color-mix(in srgb,var(--surface) 82%,#ffffff 18%);
+      color:var(--text);
+    }
+
+    html[data-theme="dark"] .chip.active,
+    body[data-theme="dark"] .chip.active,
+    body.theme-dark .chip.active{
+      background:#2F6C3C;
+      color:#ffffff;
+      border-color:transparent;
+    }
+
+    @media(prefers-color-scheme:dark){
+      .chip{
+        border-color:color-mix(in srgb,var(--text) 22%,transparent);
+        background:color-mix(in srgb,var(--surface) 82%,#ffffff 18%);
+        color:var(--text);
+      }
+      .chip.active{
+        background:#2F6C3C;
+        color:#ffffff;
+        border-color:transparent;
+      }
+    }
+
+    .list{margin:0 0 16px 0;padding:0;list-style:none;border:1px solid var(--border);
+      border-radius:12px;overflow:hidden}
+    .list li{
+      display:flex;justify-content:space-between;gap:10px;align-items:center;
+      padding:12px 14px;background:var(--surface)
+    }
+    .list li:nth-child(odd){background:var(--card-surface,var(--surface))}
+
+    .list .left{
+      flex:1 1 auto;
+      min-width:0;
+    }
+
+    .list .right{
+      flex:0 0 168px;
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    .list .name{
+      font-weight:800;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .list .meta{
+      font-size:.925rem;
+      color:var(--muted,#87908a);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .empty{color:var(--muted,#87908a);padding:6px 2px}
+
+    .section{border:1px solid var(--border);border-radius:14px;background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));overflow:visible;display:none;margin-bottom:16px;}
+    .section.show{display:block}
+
+    .section-head{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:center;
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg,rgba(47,108,60,.12),transparent);}
+    .section-head .icon{width:24px;height:24px;color:#2F6C3C;display:grid;place-items:center;}
+    .section-body{padding:16px;display:grid;gap:14px;}
+
+    .grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+    @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+    .field label{display:block;font-weight:800;margin:0 0 6px 0;}
+    .field label .req{color:#C13B3B;margin-left:2px;font-weight:700;}
+    .input{width:100%;font:inherit;font-size:16px;color:var(--text);background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);border-radius:10px;padding:12px;outline:none;}
+
+    .actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:148px;padding:12px 16px;border-radius:12px;
+      border:1px solid var(--border);background:var(--card-surface,var(--surface));font-weight:800;color:var(--text);cursor:pointer;}
+    .btn[disabled]{opacity:.5;pointer-events:none}
+
+    .btn-primary{border-color:transparent;background:#2F6C3C;color:#fff;}
+    .btn-accent{border-color:#2F6C3C;background:#E7F1EA;color:#2F6C3C;width:auto;font-size:17px;font-weight:800;margin-top:0;}
+    .btn-quiet{min-width:auto;padding:8px 12px}
+
+    html[data-theme="dark"] .btn,
+    body[data-theme="dark"] .btn,
+    body.theme-dark .btn{
+      border-color:color-mix(in srgb,var(--text) 22%,transparent);
+      background:color-mix(in srgb,var(--surface) 82%,#ffffff 18%);
+    }
+
+    html[data-theme="dark"] .btn-accent,
+    body[data-theme="dark"] .btn-accent,
+    body.theme-dark .btn-accent{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#ffffff;
+    }
+
+    @media(prefers-color-scheme:dark){
+      .btn{
+        border-color:color-mix(in srgb,var(--text) 22%,transparent);
+        background:color-mix(in srgb,var(--surface) 82%,#ffffff 18%);
+      }
+      .btn-accent{
+        border-color:transparent;
+        background:#2F6C3C;
+        color:#ffffff;
+      }
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:focus,
+    textarea:-webkit-autofill,
+    select:-webkit-autofill{
+      -webkit-text-fill-color:var(--text)!important;
+      box-shadow:0 0 0 44px var(--card-surface,var(--surface)) inset!important;
+    }
+
+
+
+    /* =========================================================
+       TRUCKING SUBCONTRACTOR DRIVERS
+       ========================================================= */
+    .driver-section{display:none;border-top:1px solid var(--border);margin-top:2px;padding-top:16px;gap:12px}
+    .driver-section.show{display:grid}
+    .driver-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .driver-head-title{font-weight:900;font-size:17px}
+    .driver-head-sub{margin-top:3px;color:var(--muted,#87908a);font-size:13px}
+    .driver-add-btn{min-width:auto;background:#2F6C3C!important;color:#fff!important;border-color:transparent!important}
+    .driver-list{display:grid;gap:9px}
+    .driver-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--card-surface,var(--surface))}
+    .driver-name{font-weight:850}
+    .driver-phone{margin-top:2px;color:var(--muted,#87908a);font-size:13px}
+    .driver-row-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+    .driver-mini-btn{appearance:none;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);padding:7px 10px;font-weight:800;cursor:pointer}
+    .driver-mini-btn.archive{color:#9F2530;border-color:rgba(159,37,48,.35)}
+    .driver-empty{padding:12px;border:1px dashed var(--border);border-radius:10px;color:var(--muted,#87908a);font-size:13px}
+    .driver-editor{display:none;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--card-surface,var(--surface));gap:12px}
+    .driver-editor.show{display:grid}
+    .driver-editor-title{font-weight:900}
+    .driver-editor-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+    .driver-archive-title{margin-top:5px;font-size:13px;font-weight:850;color:var(--muted,#87908a)}
+    .driver-row.archived{opacity:.68}
+    .driver-row.archived .driver-name::after{content:" • Archived";font-size:11px;font-weight:800;color:var(--muted,#87908a)}
+    @media(max-width:620px){
+      .driver-row{grid-template-columns:1fr}
+      .driver-row-actions{justify-content:flex-start}
+      .driver-editor-actions{justify-content:stretch}
+      .driver-editor-actions .btn{flex:1 1 130px}
+    }
+
+    .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 72px);transform:translateX(-50%);
+      background:#2F6C3C;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:99999;display:none;}
+    .toast.show{display:block;animation:fadeout 2.8s forwards;}
+    @keyframes fadeout{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+    .contact-note{margin:-4px 0 0;font-size:13px;line-height:1.4;color:var(--muted,#67706B)}
+    .contact-error{display:none;margin:-4px 0 0;font-size:13px;line-height:1.4;font-weight:800;color:#b3261e}
+    .contact-error.show{display:block}
+    .invite-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.48);display:none;align-items:center;justify-content:center;padding:18px;z-index:100000}
+    .invite-modal-backdrop.show{display:flex}.invite-modal{width:min(460px,100%);background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:20px}.invite-modal h2{margin:0 0 8px}.invite-modal p{color:var(--muted,#67706B)}.invite-options{display:grid;gap:10px}.invite-option,.invite-cancel{width:100%}.invite-cancel{margin-top:12px}
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="page container">
+
+      <h1 class="page-title">Edit Contractor</h1>
+      <p class="page-sub">
+        Search your contractor directory, select a contractor to load their details, then update and save.
+      </p>
+
+      <div class="searchbar">
+        <span class="ico">🔎</span>
+        <input
+          id="q"
+          type="search"
+          placeholder="Search contractors by company, contact, email, or service…"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="chips">
+        <button class="chip active" data-status="all">All</button>
+        <button class="chip" data-status="Active">Active</button>
+        <button class="chip" data-status="On Hold">On Hold</button>
+        <button class="chip" data-status="Inactive">Inactive</button>
+      </div>
+
+      <ul id="results" class="list" aria-live="polite"></ul>
+      <div id="empty" class="empty">No matches.</div>
+
+      <!-- Contractor Details -->
+      <section id="formSection" class="section" aria-hidden="true">
+
+        <header class="section-head">
+          <div class="icon" aria-hidden="true">🧰</div>
+          <div><strong>Contractor Details</strong></div>
+        </header>
+
+        <div class="section-body">
+
+          <div class="field">
+            <label for="company">Company / Person<span class="req">*</span></label>
+            <input id="company" class="input" type="text" required />
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="contact">Primary Contact</label>
+              <input id="contact" class="input" type="text" />
+            </div>
+
+            <div class="field">
+              <label for="phone">Mobile</label>
+              <input
+                id="phone"
+                class="input"
+                type="tel"
+                autocomplete="tel"
+                placeholder="(555) 555-5555"
+              />
+            </div>
+          </div>
+
+          <div class="grid2">
+
+            <div class="field">
+              <label for="email">Email<span class="req">*</span></label>
+              <input
+                id="email"
+                class="input"
+                type="email"
+                autocomplete="email"
+               
+              />
+            </div>
+
+            <div class="field">
+              <label for="service">Service</label>
+              <select id="service" class="input">
+                <option value="">Select Service…</option>
+              </select>
+            </div>
+
+          </div>
+          <p class="contact-note">Enter at least one: Email or Mobile. An active subcontractor with a mobile number can use Phone Sign In.</p>
+          <div id="contactError" class="contact-error"></div>
+
+
+          <div class="grid2">
+
+            <div class="field">
+              <label for="status">Status</label>
+              <select id="status" class="input">
+                <option>Active</option>
+                <option>On Hold</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="perm">Permission Group</label>
+              <select id="perm" class="input">
+                <option>Loading…</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="field" style="min-width:0">
+            <label for="notes">Notes</label>
+            <textarea
+              id="notes"
+              class="input"
+              rows="3"
+              placeholder="Rates, insurance, W-9 on file…"
+            ></textarea>
+          </div>
+
+          <!-- Only shown when this contractor's Service is Trucking -->
+          <div id="driverSection" class="driver-section" aria-hidden="true">
+            <div class="driver-head">
+              <div>
+                <div class="driver-head-title">Trucking Drivers</div>
+                <div class="driver-head-sub">Manage the drivers available for Load Out / Dispatch.</div>
+              </div>
+              <button id="addDriver" class="btn driver-add-btn" type="button">+ Add Driver</button>
+            </div>
+
+            <div id="driverList" class="driver-list"></div>
+
+            <div id="driverEditor" class="driver-editor" aria-hidden="true">
+              <div id="driverEditorTitle" class="driver-editor-title">Add Driver</div>
+
+              <div class="grid2">
+                <div class="field">
+                  <label for="driverFirst">First Name / Nickname<span class="req">*</span></label>
+                  <input id="driverFirst" class="input" type="text" autocomplete="given-name" />
+                </div>
+                <div class="field">
+                  <label for="driverLast">Last Name</label>
+                  <input id="driverLast" class="input" type="text" autocomplete="family-name" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="driverCell">Phone Number<span class="req">*</span></label>
+                <input id="driverCell" class="input" type="tel" autocomplete="tel" placeholder="(555) 555-5555" />
+              </div>
+
+              <div class="driver-editor-actions">
+                <button id="cancelDriver" class="btn" type="button">Cancel</button>
+                <button id="saveDriver" class="btn btn-primary" type="button">Save Driver</button>
+              </div>
+            </div>
+
+            <div id="archivedDriversWrap" style="display:none;">
+              <div class="driver-archive-title">Archived Drivers</div>
+              <div id="archivedDriverList" class="driver-list" style="margin-top:8px;"></div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="clear" class="btn" type="button">Cancel</button>
+            <button id="save" class="btn" type="button">Save</button>
+            <button id="saveInvite" class="btn btn-accent" type="button">Save &amp; Invite</button>
+          </div>
+
+        </div>
+      </section>
+
+      <fv-perms-hero id="permsHero" style="display:none;"></fv-perms-hero>
+
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    Successfully saved.
+  </div>
+  <div id="inviteModalBackdrop" class="invite-modal-backdrop" aria-hidden="true"><div class="invite-modal" role="dialog" aria-modal="true"><h2>Send Invite</h2><p>This subcontractor has both an email address and a mobile number. Choose how to send the FarmVista invite.</p><div class="invite-options"><button id="inviteEmailOnly" class="btn btn-primary invite-option" type="button">Email Invite</button><button id="invitePhoneOnly" class="btn btn-primary invite-option" type="button">Phone Invite</button><button id="inviteBoth" class="btn btn-accent invite-option" type="button">Email &amp; Phone</button></div><button id="inviteCancel" class="btn invite-cancel" type="button">Cancel</button></div></div>
+  <script type="module">
+    import '/js/shared/permissions/fv-perms-hero.js';
+
+    import {
+      ready,
+      getFirestore,
+      collection,
+      onSnapshot,
+      doc,
+      getDoc,
+      setDoc,
+      deleteDoc,
+      serverTimestamp,
+      getDocs,
+      query,
+      orderBy,
+      where,
+      getAuth,
+      sendPasswordResetEmail
+    } from '/js/core/firebase/firebase-init.js';
+
+    import NAV_MENU from '/js/shared/navigation/menu.js';
+
+    const $ = id => document.getElementById(id);
+
+    const toast = $("toast");
+    const resultsEl = $("results");
+    const emptyEl = $("empty");
+    const formSection = $("formSection");
+    const saveInviteBtn = $("saveInvite");
+
+    let all = [];
+    let sel = null;
+    let statusFilter = "all";
+    let busy = false;
+    let lastInviteAt = 0;
+
+    let editingDriverId = null;
+    let driverBusy = false;
+
+    let rolesLoaded = false;
+    let currentRoleName = null;
+    let rolesReadyResolve = null;
+
+    const rolesReady = new Promise(resolve=>{
+      rolesReadyResolve = resolve;
+    });
+
+    let basePerms4 = {};
+    let effectivePerms4 = {};
+
+    const COLLECTION_ROLES = "accountRoles";
+
+    const SERVICES = [
+      "Aerial Application",
+      "Anhydrous Ammonia Application",
+      "Custom Harvesting",
+      "Custom Planting",
+      "Custom Spraying",
+      "Drainage / Tile",
+      "Excavation / Dirt Work",
+      "Fertilizer Application",
+      "Lime Application",
+      "Manure Application",
+      "Tillage",
+      "Trucking",
+      "Other"
+    ];
+
+    const emailKey = value =>
+      String(value || "")
+        .trim()
+        .toLowerCase();
+
+    const showToast = (message="Saved.") => {
+      toast.textContent = message;
+      toast.classList.remove("show");
+      void toast.offsetWidth;
+      toast.classList.add("show");
+    };
+
+    const setBusy = on => {
+      busy = !!on;
+
+      ["save","saveInvite","clear","perm","addDriver","saveDriver","cancelDriver"].forEach(id=>{
+        const el = $(id);
+        if(el) el.disabled = on;
+      });
+    };
+
+    const digitsOnly = value =>
+      String(value || "")
+        .replace(/\D+/g,"");
+
+    const formatUSPhone = raw => {
+      const digits = digitsOnly(raw);
+
+      const core =
+        digits.length === 11 && digits.startsWith("1")
+          ? digits.slice(1)
+          : digits;
+
+      return core.length === 10
+        ? `(${core.slice(0,3)}) ${core.slice(3,6)}-${core.slice(6)}`
+        : String(raw || "").trim();
+    };
+
+    const normalizeUSPhone=raw=>{let d=digitsOnly(raw);if(d.length===11&&d.startsWith("1"))d=d.slice(1);return d.length===10?"+1"+d:"";};
+    const phoneDocKey=p=>"phone_"+String(p||"").replace(/\D/g,"");
+    const MEMBERSHIP_SYNC_URL="https://farmvistamembershipsync-444836596195.us-central1.run.app";
+    const EMPLOYEE_INVITE_SMS_URL="https://farmvista-employee-invite-300398089669.us-central1.run.app";
+    function farmKey(){let k=String(window.FV_FARM_KEY||window.FV_FARM?.farmKey||"").trim().toLowerCase();if(!k){try{k=String(localStorage.getItem("fv:farm-key")||"").trim().toLowerCase();}catch{}}if(!k)throw new Error("FarmVista could not determine the current farm.");return k;}
+    async function syncPlatformMembership(v,p={}){const r=await fetch(MEMBERSHIP_SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({farmKey:farmKey(),previous:{email:p.email||"",phone:p.phone||""},current:{email:v.email||"",phone:v.phoneE164||"",active:v.status==="Active"}}),cache:"no-store"});const j=await r.json().catch(()=>null);if(!r.ok||j?.ok!==true)throw new Error(j?.error||"FarmVista Platform membership sync failed.");}
+    function chooseInviteMethod(){return new Promise(resolve=>{const b=$("inviteModalBackdrop"),e=$("inviteEmailOnly"),p=$("invitePhoneOnly"),both=$("inviteBoth"),x=$("inviteCancel");const done=v=>{b.classList.remove("show");b.setAttribute("aria-hidden","true");resolve(v)};e.onclick=()=>done("email");p.onclick=()=>done("phone");both.onclick=()=>done("both");x.onclick=()=>done(null);b.onclick=ev=>{if(ev.target===b)done(null)};b.classList.add("show");b.setAttribute("aria-hidden","false");});}
+    async function sendPhoneInvite(v){const u=getAuth()?.currentUser;if(!u)throw new Error("You must be signed in to send an invite.");const token=await u.getIdToken();const parts=String(v.contact||v.company||"Subcontractor").trim().split(/\s+/),firstName=parts.shift()||"Subcontractor",lastName=parts.join(" ");const r=await fetch(EMPLOYEE_INVITE_SMS_URL,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({farmKey:farmKey(),phone:v.phoneE164,firstName,lastName,appUrl:"https://farmvista.app/"}),cache:"no-store"});const j=await r.json().catch(()=>null);if(!r.ok||j?.ok!==true)throw new Error(j?.error||"Phone invite could not be sent.");}
+
+    $("phone").addEventListener("blur",event=>{
+      event.target.value =
+        formatUSPhone(event.target.value);
+    });
+
+    $("driverCell")?.addEventListener("blur",event=>{
+      event.target.value =
+        formatUSPhone(event.target.value);
+    });
+
+
+    /* =========================================================
+       TRUCKING DRIVER MANAGEMENT
+       Drivers are stored on subcontractors/{contractorId}.drivers
+       Archive is non-destructive: active:false keeps load history safe.
+       ========================================================= */
+
+    function isTruckingService(value){
+      return String(value || "")
+        .trim()
+        .toLowerCase() === "trucking";
+    }
+
+    function driverName(driver){
+      return String(
+        driver?.name ||
+        [driver?.firstName,driver?.lastName].filter(Boolean).join(" ") ||
+        ""
+      ).trim();
+    }
+
+    function currentDrivers(){
+      return Array.isArray(sel?.data?.drivers)
+        ? sel.data.drivers
+        : [];
+    }
+
+    function closeDriverEditor(){
+      editingDriverId = null;
+
+      $("driverFirst").value = "";
+      $("driverLast").value = "";
+      $("driverCell").value = "";
+
+      $("driverEditorTitle").textContent = "Add Driver";
+      $("saveDriver").textContent = "Save Driver";
+
+      $("driverEditor")
+        .classList
+        .remove("show");
+
+      $("driverEditor")
+        .setAttribute("aria-hidden","true");
+    }
+
+    function openDriverEditor(driver=null){
+      if(!sel){
+        return;
+      }
+
+      editingDriverId = driver?.id || null;
+
+      $("driverFirst").value = driver?.firstName || "";
+      $("driverLast").value = driver?.lastName || "";
+      $("driverCell").value = driver?.phone || driver?.cell || "";
+
+      $("driverEditorTitle").textContent =
+        editingDriverId
+          ? "Edit Driver"
+          : "Add Driver";
+
+      $("saveDriver").textContent =
+        editingDriverId
+          ? "Save Changes"
+          : "Save Driver";
+
+      $("driverEditor")
+        .classList
+        .add("show");
+
+      $("driverEditor")
+        .setAttribute("aria-hidden","false");
+
+      setTimeout(()=>$("driverFirst")?.focus(),0);
+    }
+
+    async function saveDriversToContractor(nextDrivers){
+      if(!sel?.id){
+        throw new Error("No contractor selected.");
+      }
+
+      await setDoc(
+        doc(
+          getFirestore(),
+          "subcontractors",
+          sel.id
+        ),
+        {
+          drivers:nextDrivers,
+          updatedAt:serverTimestamp()
+        },
+        {merge:true}
+      );
+
+      sel.data = {
+        ...(sel.data || {}),
+        drivers:nextDrivers
+      };
+
+      const found = all.find(item=>item.id === sel.id);
+      if(found){
+        found.data = {
+          ...(found.data || {}),
+          drivers:nextDrivers
+        };
+      }
+    }
+
+    async function archiveDriver(driver){
+      if(driverBusy || !sel?.id || !driver?.id){
+        return;
+      }
+
+      const name = driverName(driver) || "this driver";
+
+      if(!window.confirm(`Archive ${name}?\n\nThey will no longer appear as an available driver on Load Out / Dispatch. Previous loads will not be changed.`)){
+        return;
+      }
+
+      driverBusy = true;
+
+      try{
+        const nextDrivers = currentDrivers().map(item=>
+          item.id === driver.id
+            ? {
+                ...item,
+                active:false,
+                archivedAtISO:new Date().toISOString(),
+                updatedAtISO:new Date().toISOString()
+              }
+            : item
+        );
+
+        await saveDriversToContractor(nextDrivers);
+
+        closeDriverEditor();
+        renderDriverSection();
+        showToast(`${name} archived.`);
+
+      }catch(error){
+        console.error("Driver archive failed:",error);
+        alert(
+          "Driver could not be archived.\n\n" +
+          (error?.message || error)
+        );
+      }finally{
+        driverBusy = false;
+      }
+    }
+
+    function renderDriverRows(container,drivers,{archived=false}={}){
+      container.innerHTML = "";
+
+      if(!drivers.length){
+        if(!archived){
+          container.innerHTML = '<div class="driver-empty">No active drivers saved for this trucking subcontractor.</div>';
+        }
+        return;
+      }
+
+      drivers.forEach(driver=>{
+        const row = document.createElement("div");
+        row.className = `driver-row${archived ? " archived" : ""}`;
+
+        const info = document.createElement("div");
+        const name = document.createElement("div");
+        name.className = "driver-name";
+        name.textContent = driverName(driver) || "Unnamed Driver";
+
+        const phone = document.createElement("div");
+        phone.className = "driver-phone";
+        phone.textContent = driver.phone || driver.cell || "No cell number";
+
+        info.appendChild(name);
+        info.appendChild(phone);
+        row.appendChild(info);
+
+        if(!archived){
+          const actions = document.createElement("div");
+          actions.className = "driver-row-actions";
+
+          const edit = document.createElement("button");
+          edit.type = "button";
+          edit.className = "driver-mini-btn";
+          edit.textContent = "Edit";
+          edit.addEventListener("click",()=>openDriverEditor(driver));
+
+          const archive = document.createElement("button");
+          archive.type = "button";
+          archive.className = "driver-mini-btn archive";
+          archive.textContent = "Archive";
+          archive.addEventListener("click",()=>archiveDriver(driver));
+
+          actions.appendChild(edit);
+          actions.appendChild(archive);
+          row.appendChild(actions);
+        }
+
+        container.appendChild(row);
+      });
+    }
+
+    function renderDriverSection(){
+      const section = $("driverSection");
+      const shouldShow =
+        !!sel &&
+        isTruckingService($("service")?.value);
+
+      section.classList.toggle("show",shouldShow);
+      section.setAttribute("aria-hidden",shouldShow ? "false" : "true");
+
+      if(!shouldShow){
+        closeDriverEditor();
+        return;
+      }
+
+      const drivers = currentDrivers().slice().sort((a,b)=>
+        driverName(a).localeCompare(
+          driverName(b),
+          undefined,
+          {numeric:true,sensitivity:"base"}
+        )
+      );
+
+      const active = drivers.filter(driver=>driver.active !== false);
+      const archived = drivers.filter(driver=>driver.active === false);
+
+      renderDriverRows($("driverList"),active);
+      renderDriverRows($("archivedDriverList"),archived,{archived:true});
+
+      $("archivedDriversWrap").style.display =
+        archived.length ? "block" : "none";
+    }
+
+    async function saveDriver(){
+      if(driverBusy || !sel?.id){
+        return;
+      }
+
+      const firstName = $("driverFirst").value.trim();
+      const lastName = $("driverLast").value.trim();
+      const phone = formatUSPhone($("driverCell").value);
+      const phoneDigits = digitsOnly(phone);
+      const coreDigits =
+        phoneDigits.length === 11 && phoneDigits.startsWith("1")
+          ? phoneDigits.slice(1)
+          : phoneDigits;
+
+      if(!firstName){
+        alert("Enter the driver's first name / nickname.");
+        return;
+      }
+
+      if(coreDigits.length !== 10){
+        alert("Enter a valid 10-digit cell number.");
+        $("driverCell").focus();
+        return;
+      }
+
+      const nowISO = new Date().toISOString();
+      const id =
+        editingDriverId ||
+        globalThis.crypto?.randomUUID?.() ||
+        `${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+
+      const existing = currentDrivers().find(driver=>driver.id === id) || {};
+
+      const savedDriver = {
+        ...existing,
+        id,
+        firstName,
+        lastName,
+        name:[firstName,lastName].filter(Boolean).join(" "),
+        phone,
+        active:true,
+        createdAtISO:existing.createdAtISO || nowISO,
+        updatedAtISO:nowISO
+      };
+
+      const nextDrivers = editingDriverId
+        ? currentDrivers().map(driver=>driver.id === id ? savedDriver : driver)
+        : [...currentDrivers(),savedDriver];
+
+      driverBusy = true;
+      $("saveDriver").disabled = true;
+      $("saveDriver").textContent = "Saving…";
+
+      try{
+        await saveDriversToContractor(nextDrivers);
+        closeDriverEditor();
+        renderDriverSection();
+        showToast(
+          editingDriverId
+            ? "Driver updated."
+            : "Driver added."
+        );
+      }catch(error){
+        console.error("Driver save failed:",error);
+        alert(
+          "Driver could not be saved.\n\n" +
+          (error?.message || error)
+        );
+      }finally{
+        driverBusy = false;
+        $("saveDriver").disabled = false;
+        if(!$("driverEditor").classList.contains("show")){
+          $("saveDriver").textContent = "Save Driver";
+        }
+      }
+    }
+
+    $("addDriver")?.addEventListener("click",()=>openDriverEditor());
+    $("cancelDriver")?.addEventListener("click",closeDriverEditor);
+    $("saveDriver")?.addEventListener("click",saveDriver);
+    $("service")?.addEventListener("change",renderDriverSection);
+
+
+    /* =========================================================
+       SERVICE DROPDOWN
+       Build options FIRST, then apply saved Firestore value.
+       Same approach used for Crop Type.
+       ========================================================= */
+
+    function renderServiceOptions(savedValue=""){
+      const select = $("service");
+      const saved = String(savedValue || "").trim().toLowerCase();
+
+      select.innerHTML = "";
+
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "Select Service…";
+      select.appendChild(blank);
+
+      let matchedValue = "";
+
+      SERVICES.forEach(service=>{
+        const option = document.createElement("option");
+
+        option.value = service;
+        option.textContent = service;
+
+        if(service.toLowerCase() === saved){
+          matchedValue = service;
+        }
+
+        select.appendChild(option);
+      });
+
+      if(matchedValue){
+        select.value = matchedValue;
+      }else if(saved){
+        select.value = "Other";
+      }else{
+        select.value = "";
+      }
+    }
+
+
+    /* Build blank service list at startup */
+    renderServiceOptions("");
+
+
+    function normalizeEntry(value){
+      if(typeof value === "boolean"){
+        return {
+          view:value,
+          add:false,
+          edit:false,
+          delete:false
+        };
+      }
+
+      if(
+        value &&
+        typeof value.on === "boolean" &&
+        !("view" in value)
+      ){
+        return {
+          view:!!value.on,
+          add:false,
+          edit:false,
+          delete:false
+        };
+      }
+
+      return {
+        view:!!(value && value.view),
+        add:!!(value && value.add),
+        edit:!!(value && value.edit),
+        delete:!!(value && value.delete)
+      };
+    }
+
+    function deepClone(obj){
+      return JSON.parse(
+        JSON.stringify(obj || {})
+      );
+    }
+
+    function rebuildEffectiveFromRole(rolePermsRaw){
+      const out = {};
+
+      if(
+        !rolePermsRaw ||
+        typeof rolePermsRaw !== "object"
+      ){
+        return out;
+      }
+
+      Object.keys(rolePermsRaw).forEach(id=>{
+        if(id === "home"){
+          return;
+        }
+
+        out[id] =
+          normalizeEntry(rolePermsRaw[id]);
+      });
+
+      return out;
+    }
+
+    function applyOverridesFromContractorData(overrides){
+      if(
+        !overrides ||
+        typeof overrides !== "object"
+      ){
+        return;
+      }
+
+      Object.entries(overrides).forEach(([key,value])=>{
+        const leafId =
+          key.includes(".")
+            ? key.split(".").pop()
+            : key;
+
+        if(!effectivePerms4[leafId]){
+          effectivePerms4[leafId] =
+            normalizeEntry(false);
+        }
+
+        if(typeof value === "boolean"){
+          const entry =
+            normalizeEntry(
+              effectivePerms4[leafId]
+            );
+
+          entry.view =
+            !!value;
+
+          effectivePerms4[leafId] =
+            entry;
+
+          return;
+        }
+
+        if(
+          value &&
+          typeof value === "object"
+        ){
+          const override =
+            normalizeEntry(value);
+
+          effectivePerms4[leafId] = {
+            view:override.view,
+            add:override.add,
+            edit:override.edit,
+            delete:override.delete
+          };
+        }
+      });
+    }
+
+    function collectOverridesDelta(){
+      const overrides = {};
+
+      const base =
+        basePerms4 || {};
+
+      const effective =
+        effectivePerms4 || {};
+
+      const ids =
+        new Set([
+          ...Object.keys(base),
+          ...Object.keys(effective)
+        ]);
+
+      ids.forEach(id=>{
+        if(id === "home"){
+          return;
+        }
+
+        const b =
+          normalizeEntry(
+            base[id] || false
+          );
+
+        const e =
+          normalizeEntry(
+            effective[id] || false
+          );
+
+        if(
+          b.view !== e.view ||
+          b.add !== e.add ||
+          b.edit !== e.edit ||
+          b.delete !== e.delete
+        ){
+          overrides[id] = {
+            view:!!e.view,
+            add:!!e.add,
+            edit:!!e.edit,
+            delete:!!e.delete
+          };
+        }
+      });
+
+      return overrides;
+    }
+
+    function updateInviteButtonLabel(){
+      if(!saveInviteBtn){
+        return;
+      }
+
+      const exists =
+        !!(
+          sel &&
+          sel.data &&
+          sel.data.email
+        );
+
+      saveInviteBtn.textContent =
+        exists
+          ? "Save & Resend Invite"
+          : "Save & Invite";
+
+      saveInviteBtn.setAttribute(
+        "aria-label",
+        saveInviteBtn.textContent
+      );
+    }
+
+    function updateHero(){
+      const hero =
+        $("permsHero");
+
+      if(!hero){
+        return;
+      }
+
+      if(
+        !sel ||
+        !currentRoleName
+      ){
+        hero.style.display =
+          "none";
+
+        return;
+      }
+
+      const company =
+        $("company")?.value.trim() || "";
+
+      const contact =
+        $("contact")?.value.trim() || "";
+
+      const email =
+        $("email")?.value.trim() || "";
+
+      const name =
+        company ||
+        contact ||
+        email ||
+        "Contractor";
+
+      hero.style.display = "";
+
+      hero.config = {
+        mode:"employee",
+        name,
+        baseRoleName:currentRoleName,
+        perms:effectivePerms4,
+        navMenu:NAV_MENU,
+
+        onPermsChange:(updatedPerms)=>{
+          effectivePerms4 =
+            deepClone(
+              updatedPerms || {}
+            );
+        },
+
+        onResetOverrides:()=>{
+          effectivePerms4 =
+            deepClone(
+              basePerms4 || {}
+            );
+
+          updateHero();
+
+          showToast(
+            "Overrides reset to role defaults."
+          );
+        }
+      };
+    }
+
+    async function fetchRoleDocByName(name){
+      const db =
+        getFirestore();
+
+      const qRef =
+        query(
+          collection(
+            db,
+            COLLECTION_ROLES
+          ),
+          where(
+            "name",
+            "==",
+            name
+          )
+        );
+
+      const snapshot =
+        await getDocs(qRef);
+
+      let docData =
+        null;
+
+      snapshot.forEach(docSnap=>{
+        docData =
+          docSnap.data() || null;
+      });
+
+      return docData;
+    }
+
+
+    /* =========================================================
+       PERMISSION GROUP DROPDOWN
+       Wait for options to load, then explicitly select saved value.
+       ========================================================= */
+
+    async function selectPermissionGroup(savedValue){
+      await rolesReady;
+
+      const select =
+        $("perm");
+
+      const saved =
+        String(savedValue || "")
+          .trim();
+
+      if(!saved){
+        select.value = "";
+        return;
+      }
+
+      let matchedOption =
+        Array.from(select.options).find(
+          option =>
+            String(option.value || "")
+              .trim()
+              .toLowerCase() ===
+            saved.toLowerCase()
+        );
+
+      if(!matchedOption){
+        matchedOption =
+          document.createElement("option");
+
+        matchedOption.value =
+          saved;
+
+        matchedOption.textContent =
+          saved;
+
+        select.appendChild(
+          matchedOption
+        );
+      }
+
+      select.value =
+        matchedOption.value;
+    }
+
+
+    async function populatePermissionGroups(){
+      const select =
+        $("perm");
+
+      try{
+        const {mode} =
+          await ready;
+
+        if(mode !== "firebase"){
+          select.innerHTML =
+            '<option value="Standard">Standard</option>';
+
+          rolesLoaded =
+            true;
+
+          rolesReadyResolve?.();
+
+          return;
+        }
+
+        const db =
+          getFirestore();
+
+        const snapshot =
+          await getDocs(
+            query(
+              collection(
+                db,
+                COLLECTION_ROLES
+              ),
+              orderBy("name")
+            )
+          );
+
+        const roles = [];
+
+        snapshot.forEach(docSnap=>{
+          const name =
+            (docSnap.data()?.name || "")
+              .trim();
+
+          if(name){
+            roles.push(name);
+          }
+        });
+
+        select.innerHTML = "";
+
+        const blank =
+          document.createElement("option");
+
+        blank.value =
+          "";
+
+        blank.textContent =
+          "Select Permission Group…";
+
+        select.appendChild(blank);
+
+        if(roles.length){
+          roles.forEach(role=>{
+            const option =
+              document.createElement("option");
+
+            option.value =
+              role;
+
+            option.textContent =
+              role;
+
+            select.appendChild(option);
+          });
+        }else{
+          const option =
+            document.createElement("option");
+
+          option.value =
+            "Standard";
+
+          option.textContent =
+            "Standard";
+
+          select.appendChild(option);
+        }
+
+        rolesLoaded =
+          true;
+
+        rolesReadyResolve?.();
+
+        select.addEventListener(
+          "change",
+          async event => {
+
+            if(busy){
+              return;
+            }
+
+            const value =
+              event.target.value || "";
+
+            if(!value){
+              currentRoleName =
+                null;
+
+              basePerms4 =
+                {};
+
+              effectivePerms4 =
+                {};
+
+              updateHero();
+
+              return;
+            }
+
+            setBusy(true);
+
+            try{
+              currentRoleName =
+                value;
+
+              const roleDoc =
+                await fetchRoleDocByName(
+                  currentRoleName
+                );
+
+              const rawPerms =
+                (
+                  roleDoc &&
+                  (
+                    roleDoc.perms ||
+                    roleDoc.permissions
+                  )
+                ) ||
+                {};
+
+              basePerms4 =
+                rebuildEffectiveFromRole(
+                  rawPerms
+                );
+
+              effectivePerms4 =
+                deepClone(
+                  basePerms4
+                );
+
+              /*
+                If user manually changes the Permission Group,
+                start from that new group's defaults.
+                Do NOT reapply old contractor overrides here.
+              */
+
+              updateHero();
+
+            }catch(error){
+              console.error(
+                "Failed to load role:",
+                error
+              );
+
+              currentRoleName =
+                null;
+
+              basePerms4 =
+                {};
+
+              effectivePerms4 =
+                {};
+
+              updateHero();
+
+            }finally{
+              setBusy(false);
+            }
+          }
+        );
+
+      }catch(error){
+        console.error(
+          "Roles load failed:",
+          error
+        );
+
+        select.innerHTML =
+          '<option value="Standard">Standard</option>';
+
+        rolesLoaded =
+          true;
+
+        rolesReadyResolve?.();
+      }
+    }
+
+
+    populatePermissionGroups();
+
+
+    function renderList(){
+      const search =
+        $("q")
+          .value
+          .trim()
+          .toLowerCase();
+
+      const items =
+        all
+          .filter(item=>{
+            if(
+              statusFilter !== "all" &&
+              (item.data.status || "")
+                .toLowerCase() !==
+              statusFilter.toLowerCase()
+            ){
+              return false;
+            }
+
+            if(!search){
+              return true;
+            }
+
+            const haystack =
+              item.data.search ||
+              [
+                (item.data.company || "").toLowerCase(),
+                (item.data.contactName || "").toLowerCase(),
+                (item.data.email || "").toLowerCase(),
+                (item.data.service || "").toLowerCase()
+              ];
+
+            return haystack.some(
+              value =>
+                String(value || "")
+                  .toLowerCase()
+                  .includes(search)
+            );
+          })
+          .sort(
+            (a,b)=>
+              (a.data.company || "")
+                .localeCompare(
+                  b.data.company || ""
+                )
+          );
+
+      resultsEl.innerHTML =
+        "";
+
+      if(!items.length){
+        emptyEl.style.display =
+          "block";
+
+        return;
+      }
+
+      emptyEl.style.display =
+        "none";
+
+      for(const item of items){
+        const li =
+          document.createElement("li");
+
+        const left =
+          document.createElement("div");
+
+        left.className =
+          "left";
+
+        const metaParts =
+          [
+            item.data.contactName,
+            item.data.service,
+            item.data.email
+          ]
+            .filter(Boolean);
+
+        left.innerHTML =
+          `
+            <div class="name">
+              ${item.data.company || "(no company)"}
+            </div>
+
+            <div class="meta">
+              ${metaParts.join(" • ")}
+            </div>
+          `;
+
+        const right =
+          document.createElement("div");
+
+        right.className =
+          "right";
+
+        const button =
+          document.createElement("button");
+
+        button.className =
+          "btn";
+
+        button.textContent =
+          "Edit";
+
+        button.addEventListener(
+          "click",
+          ()=>{
+            loadIntoForm(item);
+          }
+        );
+
+        right.appendChild(button);
+
+        li.appendChild(left);
+        li.appendChild(right);
+
+        resultsEl.appendChild(li);
+      }
+    }
+
+
+    (function wireChips(){
+      document
+        .querySelectorAll(".chip")
+        .forEach(chip=>{
+          chip.addEventListener(
+            "click",
+            ()=>{
+              document
+                .querySelectorAll(".chip")
+                .forEach(
+                  item =>
+                    item.classList.remove("active")
+                );
+
+              chip.classList.add("active");
+
+              statusFilter =
+                chip.dataset.status ||
+                "all";
+
+              renderList();
+            }
+          );
+        });
+    })();
+
+
+    async function bootDirectory(){
+      await ready;
+
+      const col =
+        collection(
+          getFirestore(),
+          "subcontractors"
+        );
+
+      onSnapshot(
+        col,
+        snapshot => {
+          all =
+            snapshot.docs.map(
+              docSnap => ({
+                id:docSnap.id,
+                data:docSnap.data() || {}
+              })
+            );
+
+          renderList();
+        }
+      );
+    }
+
+
+    bootDirectory()
+      .catch(console.error);
+
+
+    function clearForm(){
+      [
+        "company",
+        "contact",
+        "email",
+        "phone",
+        "notes"
+      ]
+        .forEach(id=>{
+          const el = $(id);
+
+          if(el){
+            el.value = "";
+          }
+        });
+
+      renderServiceOptions("");
+
+      $("status").value =
+        "Active";
+
+      if(
+        $("perm").options.length
+      ){
+        $("perm").selectedIndex =
+          0;
+      }
+
+      formSection
+        .classList
+        .remove("show");
+
+      formSection
+        .setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+      sel =
+        null;
+
+      currentRoleName =
+        null;
+
+      basePerms4 =
+        {};
+
+      effectivePerms4 =
+        {};
+
+      updateHero();
+
+      closeDriverEditor();
+      renderDriverSection();
+
+      updateInviteButtonLabel();
+    }
+
+
+    function collectAndValidate(){
+      const company=$("company"),emailEl=$("email"),phoneEl=$("phone");
+      if(!company.checkValidity()){company.reportValidity();return null;} if(!emailEl.checkValidity()){emailEl.reportValidity();return null;}
+      const email=emailKey(emailEl.value),phoneE164=normalizeUSPhone(phoneEl.value),err=$("contactError");err.classList.remove("show");err.textContent="";
+      if(!email&&!phoneE164){err.textContent="Enter an email address or a valid 10-digit mobile number.";err.classList.add("show");return null;}
+      if(phoneEl.value.trim()&&!phoneE164){err.textContent="Enter a valid 10-digit U.S. mobile number.";err.classList.add("show");return null;}
+      return {company:company.value.trim(),contact:$("contact").value.trim(),email,phone:phoneE164?formatUSPhone(phoneE164):"",phoneE164,service:$("service").value.trim(),status:$("status").value,perm:$("perm").value,notes:$("notes").value.trim(),overrides:collectOverridesDelta()};
+    }
+
+    async function upsertContractor(v){
+      if(!sel?.id)throw new Error("No contractor selected."); const db=getFirestore();
+      const prev={email:emailKey(sel.data?.email||""),phone:normalizeUSPhone(sel.data?.phoneE164||sel.data?.phone||"")};
+      const newId=v.email?emailKey(v.email):phoneDocKey(v.phoneE164),oldRef=doc(db,"subcontractors",sel.id),newRef=doc(db,"subcontractors",newId);
+      const oldSnap=await getDoc(oldRef),oldData=oldSnap.exists()?oldSnap.data()||{}:{},drivers=Array.isArray(oldData.drivers)?oldData.drivers:(Array.isArray(sel.data?.drivers)?sel.data.drivers:[]);
+      const payload={company:v.company,contactName:v.contact,email:v.email,phone:v.phone,phoneE164:v.phoneE164,service:v.service,type:"Subcontractor",status:v.status,permissionGroup:v.perm||"Standard",notes:v.notes,active:v.status==="Active",overrides:v.overrides&&Object.keys(v.overrides).length?v.overrides:{},search:[v.company.toLowerCase(),v.contact.toLowerCase(),v.email.toLowerCase(),v.phone.toLowerCase(),v.phoneE164.toLowerCase(),v.service.toLowerCase()].filter(Boolean),updatedAt:serverTimestamp()};
+      await setDoc(newRef,{...oldData,...payload,createdAt:oldData.createdAt||serverTimestamp(),drivers},{merge:true}); if(newId!==sel.id&&oldSnap.exists())await deleteDoc(oldRef);
+      await syncPlatformMembership(v,prev); sel={id:newId,data:{...oldData,...payload,drivers}}; try{await window.FVUserContext?.refresh?.({force:true});}catch{} updateInviteButtonLabel(); return newId;
+    }
+
+
+    /* =========================================================
+       LOAD CONTRACTOR
+       IMPORTANT:
+       1. Read saved Firestore data.
+       2. Build Service dropdown.
+       3. Select saved Service.
+       4. Wait for Permission Groups.
+       5. Select saved Permission Group.
+       ========================================================= */
+
+    async function loadIntoForm(item){
+      sel = {
+        id:item.id,
+        data:item.data
+      };
+
+      $("company").value =
+        item.data.company || "";
+
+      $("contact").value =
+        item.data.contactName || "";
+
+      $("email").value =
+        item.data.email || "";
+
+      $("phone").value =
+        item.data.phone || "";
+
+      /*
+        BUILD SERVICE OPTIONS FIRST.
+        THEN APPLY THE FIRESTORE VALUE.
+      */
+      renderServiceOptions(
+        item.data.service || ""
+      );
+
+      $("status").value =
+        item.data.status || "Active";
+
+      $("notes").value =
+        item.data.notes || "";
+
+      const permValue =
+        item.data.permissionGroup ||
+        "Standard";
+
+      /*
+        WAIT FOR PERMISSION GROUP OPTIONS TO EXIST.
+        THEN APPLY THE FIRESTORE VALUE.
+      */
+      await selectPermissionGroup(
+        permValue
+      );
+
+formSection
+  .classList
+  .add("show");
+
+formSection
+  .setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+closeDriverEditor();
+renderDriverSection();
+
+updateInviteButtonLabel();
+
+/*
+  Immediately move the user to the Contractor Details form
+  as soon as Edit is clicked.
+*/
+requestAnimationFrame(() => {
+  formSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+});
+
+setBusy(true);
+
+      try{
+        currentRoleName =
+          permValue;
+
+        const roleDoc =
+          currentRoleName
+            ? await fetchRoleDocByName(
+                currentRoleName
+              )
+            : null;
+
+        const rawPerms =
+          (
+            roleDoc &&
+            (
+              roleDoc.perms ||
+              roleDoc.permissions
+            )
+          ) ||
+          {};
+
+        basePerms4 =
+          rebuildEffectiveFromRole(
+            rawPerms
+          );
+
+        effectivePerms4 =
+          deepClone(
+            basePerms4
+          );
+
+        applyOverridesFromContractorData(
+          item.data.overrides || {}
+        );
+
+        updateHero();
+
+      }catch(error){
+        console.error(
+          "Failed to load role/overrides:",
+          error
+        );
+
+        currentRoleName =
+          null;
+
+        basePerms4 =
+          {};
+
+        effectivePerms4 =
+          {};
+
+        updateHero();
+
+}finally{
+  setBusy(false);
+}
+    }
+
+
+    $("q")
+      .addEventListener(
+        "input",
+        renderList
+      );
+
+
+    $("clear")
+      .addEventListener(
+        "click",
+        ()=>{
+          if(busy){
+            return;
+          }
+
+          clearForm();
+        }
+      );
+
+
+    $("save").addEventListener("click",async()=>{if(busy||!sel)return;const v=collectAndValidate();if(!v)return;try{setBusy(true);await ready;await upsertContractor(v);window.location.href="/pages/office/teams-and-partners/sub_contractors.html";}catch(error){console.error(error);alert("Save failed.\n\n"+(error?.message||error));}finally{setBusy(false);}});
+    $("saveInvite").addEventListener("click",async()=>{if(busy||!sel)return;const now=Date.now();if(now-lastInviteAt<3000)return;lastInviteAt=now;const v=collectAndValidate();if(!v)return;const method=v.email&&v.phoneE164?await chooseInviteMethod():(v.email?"email":"phone");if(!method)return;try{setBusy(true);const {mode}=await ready;await upsertContractor(v);const sendEmail=method==="email"||method==="both",sendPhone=method==="phone"||method==="both";if(sendEmail){if(mode!=="firebase")throw new Error("Email not sent: Firebase is in stub mode.");await sendPasswordResetEmail(getAuth(),v.email);}if(sendPhone)await sendPhoneInvite(v);window.location.href="/pages/office/teams-and-partners/sub_contractors.html";}catch(error){console.error(error);alert("Invite failed.\n\n"+(error?.message||error));}finally{setBusy(false);}});
+
+
+    updateInviteButtonLabel();
+
+  </script>
+</body>
+</html>

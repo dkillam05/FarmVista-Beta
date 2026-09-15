@@ -1,0 +1,1667 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Purchase Inventory • Seed</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=8, user-scalable=yes"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s = document.createElement('script');
+        s.src = '/js/core/shell/fv-shell.js';
+        s.defer = true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <style>
+    :root{
+      --green:#2F6C3C;
+      --danger:#b3261e;
+      --warning:#8a5a00;
+
+      --gridline: rgba(0,0,0,.10);
+      --gridline-strong: rgba(0,0,0,.14);
+
+      --sheet-head-bg: #ffffff;
+      --sheet-cell-bg: #ffffff;
+      --sheet-text: #111827;
+      --sheet-muted: #6B7280;
+      --sheet-hover: rgba(47,108,60,.06);
+
+      --void-row-bg: rgba(179,38,30,.10);
+      --void-row-bg-hover: rgba(179,38,30,.14);
+
+      --locked-row-bg: rgba(138,90,0,.10);
+      --locked-row-bg-hover: rgba(138,90,0,.14);
+    }
+
+    html, body{
+      touch-action:auto;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+    }
+
+    .page{
+      max-width:1520px;
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 140px)!important;
+    }
+
+    .page-title{margin:0 0 6px 0;}
+    .page-sub{margin:0 0 14px 0;color:var(--muted,#67706B);font-weight:850;}
+
+    .alert{
+      display:none;
+      margin:0 0 12px 0;
+      border:1px solid #c62828;
+      background:#fdecea;
+      color:#8a1c1c;
+      border-radius:12px;
+      padding:12px 14px;
+      font-weight:950;
+    }
+    .alert.show{display:block;}
+
+    .section{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:visible;
+      position:relative;
+      z-index:1;
+      margin-bottom:16px;
+    }
+
+    .section-head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      display:grid;
+      gap:10px;
+      overflow:visible;
+      position:relative;
+      z-index:20;
+    }
+
+    .head-row1{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .icon{width:24px;height:24px;display:grid;place-items:center;color:var(--green);flex:0 0 auto;}
+    .head-title{font-weight:950;}
+
+    .section-body{
+      padding:16px;
+      position:relative;
+      z-index:1;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(6, minmax(0, 1fr));
+      gap:12px;
+    }
+    .span-1{grid-column:span 1;}
+    .span-2{grid-column:span 2;}
+    .span-3{grid-column:span 3;}
+    .span-6{grid-column:span 6;}
+
+    .field label{
+      display:block;
+      font-weight:950;
+      margin:0 0 6px 0;
+    }
+    .input,.select,.textarea{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      outline:none;
+      box-sizing:border-box;
+    }
+    .textarea{
+      min-height:96px;
+      resize:vertical;
+    }
+    .help{
+      margin-top:6px;
+      font-size:12px;
+      font-weight:850;
+      color:var(--muted,#67706B);
+    }
+    .pill-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-size:12px;
+      font-weight:900;
+      color:var(--text);
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      margin-top:6px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:950;
+      cursor:pointer;
+      font-size:14px;
+      text-decoration:none;
+      color:var(--text);
+      min-width:120px;
+    }
+    .btn-primary{
+      border-color:transparent;
+      background:var(--green);
+      color:#fff !important;
+    }
+    .btn-danger{
+      border-color:transparent;
+      background:var(--danger);
+      color:#fff !important;
+    }
+    .btn-warn{
+      border-color:transparent;
+      background:var(--warning);
+      color:#fff !important;
+    }
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .toolbar{
+      display:grid;
+      grid-template-columns:minmax(260px, 1.3fr) minmax(160px, .65fr) minmax(160px, .65fr) minmax(160px, .65fr);
+      gap:12px;
+      align-items:end;
+    }
+
+    .search{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:10px 12px;
+      min-height:42px;
+      box-sizing:border-box;
+    }
+    .search svg{opacity:.65;flex:0 0 auto;}
+    .search input{
+      flex:1 1 auto;
+      background:transparent;
+      border:0;
+      outline:none;
+      font:inherit;
+      color:var(--text);
+      min-width:0;
+      font-size:16px;
+    }
+    .search input::placeholder{color:var(--muted,#9CA3AF);}
+
+    .table-wrap{
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      background:var(--surface);
+      position:relative;
+      z-index:1;
+    }
+    .grid-viewport{
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      background:var(--sheet-cell-bg);
+      touch-action:auto;
+      width:100%;
+      max-width:100%;
+      position:relative;
+    }
+    table.grid{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width:1320px;
+      font-size:14px;
+      background:var(--sheet-cell-bg);
+      color:var(--sheet-text);
+    }
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:2;
+      background:var(--sheet-head-bg);
+      border-bottom:1px solid var(--gridline-strong);
+      border-right:1px solid var(--gridline);
+      padding:12px 10px;
+      font-size:13px;
+      color:var(--sheet-text);
+      font-weight:1000;
+      letter-spacing:.25px;
+      white-space:nowrap;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
+    }
+    thead th:last-child{border-right:none;}
+
+    tbody td{
+      border-bottom:1px solid var(--gridline);
+      border-right:1px solid var(--gridline);
+      padding:10px 10px;
+      vertical-align:middle;
+      white-space:nowrap;
+      text-align:center;
+      background:var(--sheet-cell-bg);
+      color:var(--sheet-text);
+    }
+    tbody td:last-child{border-right:none;}
+    tbody tr{cursor:pointer;}
+    tbody tr:hover td{background:var(--sheet-hover);}
+    tbody tr.activeRow{
+      outline:2px solid var(--green);
+      outline-offset:-2px;
+    }
+    tbody tr.voidRow td{
+      background:var(--void-row-bg);
+      text-decoration:line-through;
+      text-decoration-thickness:1.5px;
+    }
+    tbody tr.voidRow:hover td{
+      background:var(--void-row-bg-hover);
+    }
+    tbody tr.lockedRow:not(.voidRow) td{
+      background:var(--locked-row-bg);
+    }
+    tbody tr.lockedRow:not(.voidRow):hover td{
+      background:var(--locked-row-bg-hover);
+    }
+
+    .cell-title{font-weight:950;}
+    .muted{color:var(--sheet-muted);font-size:12px;font-weight:850;}
+    .status-active,
+    .status-void,
+    .status-locked{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:82px;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:950;
+      text-decoration:none !important;
+    }
+    .status-active{
+      background:rgba(47,108,60,.12);
+      color:#24542e;
+    }
+    .status-void{
+      background:rgba(179,38,30,.14);
+      color:#8a1c1c;
+    }
+    .status-locked{
+      background:rgba(138,90,0,.14);
+      color:#7a5100;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom,0px)+72px);
+      transform:translateX(-50%);
+      background:var(--green);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;
+      display:none;
+      font-weight:950;
+    }
+    .toast.show{display:block;animation:fadeout 2.8s forwards;}
+    @keyframes fadeout{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+
+    dialog.sheet{
+      width:min(980px, 94vw);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:0;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+    }
+    .sheet::backdrop{ background:rgba(0,0,0,.55); }
+    .sheet header{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .sheet header strong{font-weight:950;}
+    .sheet .body{
+      padding:14px 16px;
+      max-height:70vh;
+      overflow-y:auto;
+      overflow-x:hidden;
+      display:grid;
+      gap:14px;
+    }
+    .sheet footer{
+      padding:12px 16px;
+      border-top:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:12px;
+    }
+
+    .subcard{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+
+    .rule-note{
+      border:1px dashed var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:rgba(47,108,60,.04);
+      font-size:13px;
+      font-weight:850;
+      color:var(--muted,#67706B);
+    }
+
+    @media (max-width:1100px){
+      .toolbar{
+        grid-template-columns:1fr 1fr;
+      }
+      .form-grid{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+      }
+      .span-1,.span-2,.span-3,.span-6{grid-column:span 1;}
+      .span-6{grid-column:1 / -1;}
+      .mini-grid{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    @media (max-width:820px){
+      .page{
+        max-width:none;
+        margin:0;
+        padding:0;
+        padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 320px)!important;
+      }
+      .page-title, .page-sub{
+        padding-left:max(10px, env(safe-area-inset-left, 0px));
+        padding-right:max(10px, env(safe-area-inset-right, 0px));
+      }
+      .page-title{padding-top:12px;}
+      .page-sub{padding-top:4px;padding-bottom:8px;}
+      .section{
+        border-left:none;
+        border-right:none;
+        border-radius:0;
+        box-shadow:none;
+      }
+      .section-head{
+        border-left:none;
+        border-right:none;
+        border-radius:0;
+      }
+      .section-body{
+        padding:12px 10px;
+      }
+      .toolbar,
+      .form-grid,
+      .mini-grid{
+        grid-template-columns:1fr;
+      }
+      table.grid{
+        min-width:1180px;
+        font-size:13px;
+      }
+      thead th{
+        padding:10px 8px;
+      }
+      tbody td{
+        padding:8px 8px;
+      }
+    }
+
+    @media (prefers-color-scheme: dark){
+      :root{
+        --gridline: rgba(255,255,255,.10);
+        --gridline-strong: rgba(255,255,255,.16);
+        --sheet-hover: rgba(255,255,255,.05);
+        --void-row-bg: rgba(179,38,30,.20);
+        --void-row-bg-hover: rgba(179,38,30,.26);
+        --locked-row-bg: rgba(138,90,0,.20);
+        --locked-row-bg-hover: rgba(138,90,0,.26);
+      }
+      .grid-viewport{ background:var(--surface) !important; }
+      table.grid{ background:var(--surface) !important; color:var(--text) !important; }
+      thead th{
+        background:var(--surface) !important;
+        color:var(--text) !important;
+        border-bottom:1px solid var(--gridline-strong) !important;
+        border-right:1px solid var(--gridline) !important;
+      }
+      tbody td{
+        background:var(--surface) !important;
+        color:var(--text) !important;
+        border-bottom:1px solid var(--gridline) !important;
+        border-right:1px solid var(--gridline) !important;
+      }
+      tbody tr:hover td{
+        background:var(--sheet-hover) !important;
+      }
+      tbody tr.voidRow td{
+        background:var(--void-row-bg) !important;
+      }
+      tbody tr.voidRow:hover td{
+        background:var(--void-row-bg-hover) !important;
+      }
+      tbody tr.lockedRow:not(.voidRow) td{
+        background:var(--locked-row-bg) !important;
+      }
+      tbody tr.lockedRow:not(.voidRow):hover td{
+        background:var(--locked-row-bg-hover) !important;
+      }
+      .status-active{
+        background:rgba(47,108,60,.24);
+        color:#d8f0de;
+      }
+      .status-void{
+        background:rgba(179,38,30,.30);
+        color:#ffd7d2;
+      }
+      .status-locked{
+        background:rgba(138,90,0,.30);
+        color:#ffe7b8;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="page">
+      <h1 class="page-title">Purchase Inventory • Seed</h1>
+      <p class="page-sub">Purchase starts the seed record here. Later delivery and outbound can update the same line.</p>
+
+      <div id="alert" class="alert" role="alert"></div>
+
+      <section class="section">
+        <header class="section-head">
+          <div class="head-row1">
+            <div class="head-left">
+              <div class="icon" aria-hidden="true">🧾</div>
+              <div class="head-title">New Seed Purchase Line</div>
+            </div>
+          </div>
+        </header>
+
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="field span-1">
+              <label for="cropYear">Crop Year</label>
+              <select id="cropYear" class="select"></select>
+            </div>
+
+            <div class="field span-1">
+              <label for="crop">Crop</label>
+              <select id="crop" class="select">
+                <option value="">— Select Crop —</option>
+                <option value="corn">Corn</option>
+                <option value="soybean">Soybean</option>
+              </select>
+            </div>
+
+            <div class="field span-1">
+              <label for="brand">Brand</label>
+              <select id="brand" class="select">
+                <option value="">— Select Brand —</option>
+              </select>
+              <div id="brandHelp" class="help">Choose crop first.</div>
+            </div>
+
+            <div class="field span-2">
+              <label for="variety">Variety</label>
+              <select id="variety" class="select">
+                <option value="">— Select Variety —</option>
+              </select>
+              <div id="varietyHelp" class="help">Choose brand next.</div>
+            </div>
+
+            <div class="field span-1">
+              <label for="qtyPurchased">Units Purchased</label>
+              <input id="qtyPurchased" class="input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0">
+            </div>
+
+            <div class="field span-6">
+              <label for="note">Note</label>
+              <textarea id="note" class="textarea" placeholder="Optional note for this purchased line"></textarea>
+            </div>
+
+            <div class="field span-6">
+              <div class="pill-row">
+                <span id="pillCrop" class="pill">Crop: —</span>
+                <span id="pillBrand" class="pill">Brand: —</span>
+                <span id="pillVariety" class="pill">Variety: —</span>
+                <span id="pillTrait" class="pill">Trait: —</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="btnClear" class="btn" type="button">Clear</button>
+            <button id="btnSave" class="btn btn-primary" type="button">Save Purchase Line</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <header class="section-head">
+          <div class="head-row1">
+            <div class="head-left">
+              <div class="icon" aria-hidden="true">🌱</div>
+              <div class="head-title">Seed Inventory Records</div>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="field">
+              <label for="q" class="muted" style="display:block;margin:0 0 6px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;">Search</label>
+              <div class="search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <input id="q" type="search" placeholder="year, crop, brand, variety, note…" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="filterYear" class="muted" style="display:block;margin:0 0 6px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;">Crop Year</label>
+              <select id="filterYear" class="select"></select>
+            </div>
+
+            <div class="field">
+              <label for="filterCrop" class="muted" style="display:block;margin:0 0 6px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;">Crop</label>
+              <select id="filterCrop" class="select">
+                <option value="all">All Crops</option>
+                <option value="corn">Corn</option>
+                <option value="soybean">Soybean</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="filterStatus" class="muted" style="display:block;margin:0 0 6px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;">Status</label>
+              <select id="filterStatus" class="select">
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="void">Void</option>
+              </select>
+            </div>
+          </div>
+        </header>
+
+        <div class="section-body">
+          <div class="table-wrap">
+            <div id="gridViewport" class="grid-viewport">
+              <table class="grid" aria-label="Seed inventory spreadsheet">
+                <thead id="thead"></thead>
+                <tbody id="tbody">
+                  <tr><td class="muted" style="padding:12px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <dialog id="editSheet" class="sheet" aria-modal="true">
+    <header>
+      <strong id="editTitle">Edit Seed Record</strong>
+      <button id="editClose" class="btn" type="button">Close</button>
+    </header>
+
+    <div class="body">
+      <div class="subcard">
+        <div class="mini-grid">
+          <div class="field">
+            <label for="editCropYear">Crop Year</label>
+            <select id="editCropYear" class="select"></select>
+          </div>
+
+          <div class="field">
+            <label for="editCrop">Crop</label>
+            <select id="editCrop" class="select">
+              <option value="">— Select Crop —</option>
+              <option value="corn">Corn</option>
+              <option value="soybean">Soybean</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editBrand">Brand</label>
+            <select id="editBrand" class="select">
+              <option value="">— Select Brand —</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editVariety">Variety</label>
+            <select id="editVariety" class="select">
+              <option value="">— Select Variety —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="field">
+            <label for="editQtyPurchased">Units Purchased</label>
+            <input id="editQtyPurchased" class="input" type="number" min="0" step="0.01" inputmode="decimal">
+          </div>
+
+          <div class="field">
+            <label for="editQtyDelivered">Units Delivered</label>
+            <input id="editQtyDelivered" class="input" type="number" readonly>
+            <div class="help">Read only on this page.</div>
+          </div>
+
+          <div class="field">
+            <label for="editQtyShipped">Units Shipped</label>
+            <input id="editQtyShipped" class="input" type="number" readonly>
+            <div class="help">Read only on this page.</div>
+          </div>
+
+          <div class="field">
+            <label for="editQtyAvailable">Units Available</label>
+            <input id="editQtyAvailable" class="input" type="number" readonly>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="editNote">Note</label>
+          <textarea id="editNote" class="textarea" placeholder="Optional note"></textarea>
+        </div>
+
+        <div class="pill-row">
+          <span id="editPillCrop" class="pill">Crop: —</span>
+          <span id="editPillBrand" class="pill">Brand: —</span>
+          <span id="editPillVariety" class="pill">Variety: —</span>
+          <span id="editPillTrait" class="pill">Trait: —</span>
+        </div>
+
+        <div id="ruleNote" class="rule-note">
+          Once delivery has started, this line cannot be voided or deleted, and units purchased cannot be reduced below units delivered.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="btnVoid" class="btn btn-warn" type="button">Void Line</button>
+        <button id="btnDelete" class="btn btn-danger" type="button">Delete Line</button>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="editCancel" class="btn" type="button">Cancel</button>
+        <button id="btnUpdate" class="btn btn-primary" type="button">Save Changes</button>
+      </div>
+    </footer>
+  </dialog>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      getAuth,
+      collection,
+      getDocs,
+      addDoc,
+      doc,
+      updateDoc,
+      deleteDoc,
+      query,
+      orderBy,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    const $ = s => document.querySelector(s);
+    const COLLATOR = new Intl.Collator(undefined, { numeric:true, sensitivity:'base' });
+
+    const PRODUCTS_COLLECTION = 'productsSeed';
+    const SEED_COLLECTION = 'inventorySeed';
+
+    const alertBox = $('#alert');
+    const tbody = $('#tbody');
+    const thead = $('#thead');
+
+    const cropYear = $('#cropYear');
+    const crop = $('#crop');
+    const brand = $('#brand');
+    const variety = $('#variety');
+    const qtyPurchased = $('#qtyPurchased');
+    const note = $('#note');
+    const brandHelp = $('#brandHelp');
+    const varietyHelp = $('#varietyHelp');
+
+    const pillCrop = $('#pillCrop');
+    const pillBrand = $('#pillBrand');
+    const pillVariety = $('#pillVariety');
+    const pillTrait = $('#pillTrait');
+
+    const btnClear = $('#btnClear');
+    const btnSave = $('#btnSave');
+
+    const qInput = $('#q');
+    const filterYear = $('#filterYear');
+    const filterCrop = $('#filterCrop');
+    const filterStatus = $('#filterStatus');
+
+    const editSheet = $('#editSheet');
+    const editTitle = $('#editTitle');
+    const editClose = $('#editClose');
+    const editCancel = $('#editCancel');
+    const btnUpdate = $('#btnUpdate');
+    const btnVoid = $('#btnVoid');
+    const btnDelete = $('#btnDelete');
+    const ruleNote = $('#ruleNote');
+
+    const editCropYear = $('#editCropYear');
+    const editCrop = $('#editCrop');
+    const editBrand = $('#editBrand');
+    const editVariety = $('#editVariety');
+    const editQtyPurchased = $('#editQtyPurchased');
+    const editQtyDelivered = $('#editQtyDelivered');
+    const editQtyShipped = $('#editQtyShipped');
+    const editQtyAvailable = $('#editQtyAvailable');
+    const editNote = $('#editNote');
+
+    const editPillCrop = $('#editPillCrop');
+    const editPillBrand = $('#editPillBrand');
+    const editPillVariety = $('#editPillVariety');
+    const editPillTrait = $('#editPillTrait');
+
+    const state = {
+      products: [],
+      rows: [],
+      selectedId: null,
+      editingId: null,
+      sortKey: 'updatedAtMs',
+      sortDir: -1,
+      q: '',
+      filterYear: 'all',
+      filterCrop: 'all',
+      filterStatus: 'all'
+    };
+
+    const COLUMNS = [
+      { key:'cropYear', label:'Crop Year' },
+      { key:'crop', label:'Crop' },
+      { key:'brand', label:'Brand' },
+      { key:'variety', label:'Variety' },
+      { key:'traitLabel', label:'Trait' },
+      { key:'qtyPurchased', label:'Purchased' },
+      { key:'qtyDelivered', label:'Delivered' },
+      { key:'qtyShipped', label:'Shipped' },
+      { key:'qtyAvailable', label:'Available' },
+      { key:'status', label:'Status' },
+      { key:'updatedAtMs', label:'Updated' },
+      { key:'note', label:'Note' }
+    ];
+
+    function showError(msg){
+      alertBox.textContent = msg;
+      alertBox.classList.add('show');
+      clearTimeout(showError._t);
+      showError._t = setTimeout(() => alertBox.classList.remove('show'), 8000);
+    }
+
+    function toast(msg='Saved.'){
+      const el = $('#toast');
+      if(!el) return;
+      el.textContent = msg;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function esc(s){
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[c]));
+    }
+
+    function norm(v){
+      return String(v ?? '').trim().toLowerCase();
+    }
+
+    function prettyCrop(v){
+      const x = norm(v);
+      if(x === 'corn') return 'Corn';
+      if(x === 'soybean') return 'Soybean';
+      return v || '—';
+    }
+
+    function fmtQty(v){
+      const n = Number(v || 0);
+      if(Number.isNaN(n)) return '';
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: (n % 1 === 0 ? 0 : 2),
+        maximumFractionDigits: 2
+      }).format(n);
+    }
+
+    function num(v){
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function calcAvailable(delivered, shipped){
+      return Math.max(0, num(delivered) - num(shipped));
+    }
+
+    function toDateObj(v){
+      if(!v) return null;
+      if(v instanceof Date) return v;
+      if(typeof v === 'object'){
+        if(typeof v.toDate === 'function') return v.toDate();
+        if(typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+      }
+      const d = new Date(v);
+      if(Number.isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function dateMs(v){
+      const d = toDateObj(v);
+      return d ? d.getTime() : 0;
+    }
+
+    function fmtDateShort(v){
+      const d = toDateObj(v);
+      if(!d) return '—';
+      return new Intl.DateTimeFormat('en-US', {
+        year:'numeric',
+        month:'numeric',
+        day:'numeric'
+      }).format(d);
+    }
+
+    function currentUserLabel(){
+      try{
+        const auth = getAuth();
+        const u = auth.currentUser;
+        return (u?.displayName || u?.email || 'Unknown').trim();
+      }catch{
+        return 'Unknown';
+      }
+    }
+
+    function openSheet(dlg){
+      try{ dlg.showModal(); }catch{ dlg.setAttribute('open',''); }
+    }
+
+    function closeSheet(dlg){
+      try{ dlg.close(); }catch{ dlg.removeAttribute('open'); }
+    }
+
+    function buildYearOptions(target, selected){
+      const now = new Date().getFullYear();
+      const years = [];
+      for(let y = now - 2; y <= now + 3; y++) years.push(String(y));
+      target.innerHTML = years.map(y => (
+        `<option value="${esc(y)}"${String(selected) === y ? ' selected' : ''}>${esc(y)}</option>`
+      )).join('');
+    }
+
+    function buildFilterYearOptions(){
+      const yearSet = new Set();
+      const now = new Date().getFullYear();
+      for(let y = now - 2; y <= now + 3; y++) yearSet.add(String(y));
+      state.rows.forEach(r => { if(r.cropYear) yearSet.add(String(r.cropYear)); });
+
+      const years = Array.from(yearSet).sort((a,b)=> COLLATOR.compare(a,b));
+      filterYear.innerHTML = `<option value="all">All Years</option>` + years.map(y => (
+        `<option value="${esc(y)}"${state.filterYear === y ? ' selected' : ''}>${esc(y)}</option>`
+      )).join('');
+    }
+
+    function activeSeedProductsForCrop(cropValue){
+      const c = norm(cropValue);
+      return state.products.filter(p => {
+        if(norm(p.status || 'active') !== 'active') return false;
+        if(c === 'corn') return norm(p.crop) === 'corn' || p.cropCorn === true;
+        if(c === 'soybean') return norm(p.crop) === 'soybean' || p.cropSoy === true;
+        return false;
+      });
+    }
+
+    function uniqueBrandsForCrop(cropValue){
+      const brands = new Set();
+      activeSeedProductsForCrop(cropValue).forEach(p => {
+        const b = String(p.brand || '').trim();
+        if(b) brands.add(b);
+      });
+      return Array.from(brands).sort((a,b)=> COLLATOR.compare(a,b));
+    }
+
+    function varietiesForCropBrand(cropValue, brandValue){
+      const brandNorm = norm(brandValue);
+      return activeSeedProductsForCrop(cropValue)
+        .filter(p => norm(p.brand) === brandNorm)
+        .sort((a,b)=>{
+          const aa = `${a.variety || ''} ${a.traitLabel || ''}`;
+          const bb = `${b.variety || ''} ${b.traitLabel || ''}`;
+          return COLLATOR.compare(aa, bb);
+        })
+        .map(p => ({
+          id: p.id,
+          brand: String(p.brand || '').trim(),
+          variety: String(p.variety || '').trim(),
+          trait: String(p.trait || '').trim(),
+          traitLabel: String(p.traitLabel || '').trim(),
+          crop: String(p.crop || '').trim()
+        }))
+        .filter(x => !!x.variety);
+    }
+
+    function selectedMainProduct(){
+      const id = variety.value || '';
+      return state.products.find(p => p.id === id) || null;
+    }
+
+    function selectedEditProduct(){
+      const id = editVariety.value || '';
+      return state.products.find(p => p.id === id) || null;
+    }
+
+    function updateMainPills(){
+      const p = selectedMainProduct();
+      pillCrop.textContent = `Crop: ${prettyCrop(crop.value)}`;
+      pillBrand.textContent = `Brand: ${brand.value || '—'}`;
+      pillVariety.textContent = `Variety: ${p?.variety || '—'}`;
+      pillTrait.textContent = `Trait: ${p?.traitLabel || p?.trait || '—'}`;
+    }
+
+    function updateEditPills(){
+      const p = selectedEditProduct();
+      editPillCrop.textContent = `Crop: ${prettyCrop(editCrop.value)}`;
+      editPillBrand.textContent = `Brand: ${editBrand.value || '—'}`;
+      editPillVariety.textContent = `Variety: ${p?.variety || '—'}`;
+      editPillTrait.textContent = `Trait: ${p?.traitLabel || p?.trait || '—'}`;
+    }
+
+    function populateBrandSelect(target, cropValue, selectedValue='', helpEl=null){
+      const brands = uniqueBrandsForCrop(cropValue);
+      target.innerHTML = '<option value="">— Select Brand —</option>' + brands.map(b => (
+        `<option value="${esc(b)}"${selectedValue === b ? ' selected' : ''}>${esc(b)}</option>`
+      )).join('');
+
+      if(helpEl){
+        if(!cropValue){
+          helpEl.textContent = 'Choose crop first.';
+        }else{
+          helpEl.textContent = `${brands.length} brand${brands.length === 1 ? '' : 's'} available.`;
+        }
+      }
+    }
+
+    function populateVarietySelect(target, cropValue, brandValue, selectedId='', helpEl=null){
+      const list = varietiesForCropBrand(cropValue, brandValue);
+      target.innerHTML = '<option value="">— Select Variety —</option>' + list.map(v => {
+        const extra = v.traitLabel ? ` • ${v.traitLabel}` : (v.trait ? ` • ${v.trait}` : '');
+        return `<option value="${esc(v.id)}"${selectedId === v.id ? ' selected' : ''}>${esc(v.variety + extra)}</option>`;
+      }).join('');
+
+      if(helpEl){
+        if(!brandValue){
+          helpEl.textContent = 'Choose brand next.';
+        }else{
+          helpEl.textContent = `${list.length} variet${list.length === 1 ? 'y' : 'ies'} available.`;
+        }
+      }
+    }
+
+    function resetMainForm(){
+      buildYearOptions(cropYear, String(new Date().getFullYear()));
+      crop.value = '';
+      brand.innerHTML = '<option value="">— Select Brand —</option>';
+      variety.innerHTML = '<option value="">— Select Variety —</option>';
+      qtyPurchased.value = '';
+      note.value = '';
+      brandHelp.textContent = 'Choose crop first.';
+      varietyHelp.textContent = 'Choose brand next.';
+      updateMainPills();
+    }
+
+    function syncMainSelectors(){
+      populateBrandSelect(brand, crop.value, '', brandHelp);
+      populateVarietySelect(variety, crop.value, brand.value, '', varietyHelp);
+      updateMainPills();
+    }
+
+    function syncEditSelectors(keepBrand='', keepVariety=''){
+      populateBrandSelect(editBrand, editCrop.value, keepBrand);
+      populateVarietySelect(editVariety, editCrop.value, editBrand.value, keepVariety);
+      updateEditPills();
+    }
+
+    function validateMainForm(){
+      if(!cropYear.value) return 'Choose crop year.';
+      if(!crop.value) return 'Choose crop.';
+      if(!brand.value) return 'Choose brand.';
+      if(!variety.value) return 'Choose variety.';
+      if(!String(qtyPurchased.value).trim()) return 'Enter units purchased.';
+
+      const n = Number(qtyPurchased.value);
+      if(Number.isNaN(n) || n <= 0) return 'Units purchased must be greater than zero.';
+      return '';
+    }
+
+    function validateEditForm(row){
+      if(!editCropYear.value) return 'Choose crop year.';
+      if(!editCrop.value) return 'Choose crop.';
+      if(!editBrand.value) return 'Choose brand.';
+      if(!editVariety.value) return 'Choose variety.';
+      if(!String(editQtyPurchased.value).trim()) return 'Enter units purchased.';
+
+      const purchased = Number(editQtyPurchased.value);
+      const delivered = num(row.qtyDelivered);
+
+      if(Number.isNaN(purchased) || purchased <= 0) return 'Units purchased must be greater than zero.';
+      if(purchased < delivered) return `Units purchased cannot be less than delivered (${fmtQty(delivered)}).`;
+      return '';
+    }
+
+    function rowSearchText(r){
+      return [
+        r.cropYear,
+        r.crop,
+        r.brand,
+        r.variety,
+        r.trait,
+        r.traitLabel,
+        r.note,
+        r.status,
+        r.createdBy,
+        r.updatedBy
+      ].map(x => String(x || '')).join(' ').toLowerCase();
+    }
+
+    function filteredRows(){
+      let rows = state.rows.slice();
+
+      if(state.filterYear !== 'all'){
+        rows = rows.filter(r => String(r.cropYear || '') === String(state.filterYear));
+      }
+      if(state.filterCrop !== 'all'){
+        rows = rows.filter(r => norm(r.crop) === norm(state.filterCrop));
+      }
+      if(state.filterStatus !== 'all'){
+        rows = rows.filter(r => norm(r.status || 'active') === norm(state.filterStatus));
+      }
+      if(state.q){
+        const q = norm(state.q);
+        rows = rows.filter(r => rowSearchText(r).includes(q));
+      }
+
+      rows.sort((a,b)=>{
+        const av = sortValue(a, state.sortKey);
+        const bv = sortValue(b, state.sortKey);
+
+        if(typeof av === 'number' && typeof bv === 'number'){
+          if(av < bv) return -1 * state.sortDir;
+          if(av > bv) return 1 * state.sortDir;
+          return 0;
+        }
+        return COLLATOR.compare(String(av ?? ''), String(bv ?? '')) * state.sortDir;
+      });
+
+      return rows;
+    }
+
+    function sortValue(r, key){
+      switch(key){
+        case 'cropYear': return Number(r.cropYear || 0) || 0;
+        case 'crop': return prettyCrop(r.crop);
+        case 'brand': return r.brand || '';
+        case 'variety': return r.variety || '';
+        case 'traitLabel': return r.traitLabel || r.trait || '';
+        case 'qtyPurchased': return num(r.qtyPurchased);
+        case 'qtyDelivered': return num(r.qtyDelivered);
+        case 'qtyShipped': return num(r.qtyShipped);
+        case 'qtyAvailable': return num(r.qtyAvailable);
+        case 'status': return r.status || 'active';
+        case 'updatedAtMs': return num(r.updatedAtMs);
+        case 'note': return r.note || '';
+        default: return r[key] || '';
+      }
+    }
+
+    function renderHead(){
+      thead.innerHTML = `
+        <tr>
+          ${COLUMNS.map(c => {
+            const ind = state.sortKey === c.key ? (state.sortDir === 1 ? ' ▲' : ' ▼') : '';
+            return `<th data-key="${esc(c.key)}">${esc(c.label + ind)}</th>`;
+          }).join('')}
+        </tr>
+      `;
+
+      thead.querySelectorAll('th[data-key]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.getAttribute('data-key');
+          if(!key) return;
+          if(state.sortKey === key){
+            state.sortDir = state.sortDir === 1 ? -1 : 1;
+          }else{
+            state.sortKey = key;
+            state.sortDir = 1;
+          }
+          renderTable();
+        });
+      });
+    }
+
+    function renderTable(){
+      renderHead();
+      const rows = filteredRows();
+
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td class="muted" colspan="${COLUMNS.length}" style="padding:12px;">No seed records found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const status = norm(r.status || 'active');
+        const delivered = num(r.qtyDelivered);
+        const shipped = num(r.qtyShipped);
+        const available = calcAvailable(delivered, shipped);
+        const isLocked = delivered > 0;
+
+        let statusHtml = `<span class="status-active">Active</span>`;
+        if(status === 'void'){
+          statusHtml = `<span class="status-void">Void</span>`;
+        } else if(isLocked){
+          statusHtml = `<span class="status-locked">Delivered</span>`;
+        }
+
+        return `
+          <tr
+            data-id="${esc(r.id)}"
+            class="${state.selectedId === r.id ? 'activeRow ' : ''}${status === 'void' ? 'voidRow ' : ''}${isLocked ? 'lockedRow' : ''}"
+          >
+            <td><span class="cell-title">${esc(r.cropYear || '')}</span></td>
+            <td>${esc(prettyCrop(r.crop))}</td>
+            <td>${esc(r.brand || '')}</td>
+            <td><span class="cell-title">${esc(r.variety || '')}</span></td>
+            <td>${esc(r.traitLabel || r.trait || '—')}</td>
+            <td>${esc(fmtQty(r.qtyPurchased))}</td>
+            <td>${esc(fmtQty(delivered))}</td>
+            <td>${esc(fmtQty(shipped))}</td>
+            <td>${esc(fmtQty(available))}</td>
+            <td>${statusHtml}</td>
+            <td class="muted">${esc(fmtDateShort(r.updatedAt || r.createdAt))}</td>
+            <td class="muted">${esc(r.note || '')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const id = tr.getAttribute('data-id');
+          if(!id) return;
+          state.selectedId = id;
+          renderTable();
+          openEdit(id);
+        });
+      });
+    }
+
+    function openEdit(id){
+      const row = state.rows.find(x => x.id === id);
+      if(!row) return;
+
+      state.editingId = id;
+
+      buildYearOptions(editCropYear, String(row.cropYear || new Date().getFullYear()));
+      editCrop.value = row.crop || '';
+      syncEditSelectors(row.brand || '', row.productId || '');
+
+      editQtyPurchased.value = String(num(row.qtyPurchased));
+      editQtyDelivered.value = String(num(row.qtyDelivered));
+      editQtyShipped.value = String(num(row.qtyShipped));
+      editQtyAvailable.value = String(calcAvailable(row.qtyDelivered, row.qtyShipped));
+      editNote.value = row.note || '';
+
+      const delivered = num(row.qtyDelivered);
+      const isLocked = delivered > 0;
+      const isVoid = norm(row.status || 'active') === 'void';
+
+      editTitle.textContent = `Edit Seed Record • ${row.brand || ''} ${row.variety || ''}`.trim();
+      ruleNote.textContent = isLocked
+        ? `Delivery has started on this line. You cannot void or delete it, and purchased units cannot go below ${fmtQty(delivered)}.`
+        : 'No delivery has started yet. You can still edit, void, or delete this line.';
+
+      btnVoid.disabled = isLocked || isVoid;
+      btnDelete.disabled = isLocked;
+      btnUpdate.disabled = false;
+
+      updateEditPills();
+      openSheet(editSheet);
+    }
+
+    async function loadProducts(db){
+      try{
+        const snap = await getDocs(query(collection(db, PRODUCTS_COLLECTION), orderBy('brand')));
+        const out = [];
+        snap.forEach(d => out.push({ id:d.id, ...d.data() }));
+        state.products = out;
+      }catch(err){
+        console.warn('productsSeed ordered query failed, falling back:', err?.message || err);
+        const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
+        const out = [];
+        snap.forEach(d => out.push({ id:d.id, ...d.data() }));
+        out.sort((a,b)=>{
+          const aa = `${a.brand || ''} ${a.variety || ''}`;
+          const bb = `${b.brand || ''} ${b.variety || ''}`;
+          return COLLATOR.compare(aa, bb);
+        });
+        state.products = out;
+      }
+    }
+
+    async function loadRows(db){
+      try{
+        const snap = await getDocs(query(collection(db, SEED_COLLECTION), orderBy('updatedAt', 'desc')));
+        const out = [];
+        snap.forEach(d => {
+          const data = d.data() || {};
+          out.push({
+            id: d.id,
+            ...data,
+            qtyPurchased: num(data.qtyPurchased),
+            qtyDelivered: num(data.qtyDelivered),
+            qtyShipped: num(data.qtyShipped),
+            qtyAvailable: calcAvailable(data.qtyDelivered, data.qtyShipped),
+            createdAtMs: dateMs(data.createdAt),
+            updatedAtMs: dateMs(data.updatedAt)
+          });
+        });
+        state.rows = out;
+      }catch(err){
+        console.warn('inventorySeed ordered query failed, falling back:', err?.message || err);
+        const snap = await getDocs(collection(db, SEED_COLLECTION));
+        const out = [];
+        snap.forEach(d => {
+          const data = d.data() || {};
+          out.push({
+            id: d.id,
+            ...data,
+            qtyPurchased: num(data.qtyPurchased),
+            qtyDelivered: num(data.qtyDelivered),
+            qtyShipped: num(data.qtyShipped),
+            qtyAvailable: calcAvailable(data.qtyDelivered, data.qtyShipped),
+            createdAtMs: dateMs(data.createdAt),
+            updatedAtMs: dateMs(data.updatedAt)
+          });
+        });
+        out.sort((a,b)=> (b.updatedAtMs || 0) - (a.updatedAtMs || 0));
+        state.rows = out;
+      }
+    }
+
+    async function loadAll(){
+      try{
+        const db = getFirestore();
+        await Promise.all([
+          loadProducts(db),
+          loadRows(db)
+        ]);
+        buildFilterYearOptions();
+        renderTable();
+      }catch(err){
+        console.error(err);
+        showError(err?.message || 'Load failed.');
+        tbody.innerHTML = `<tr><td class="muted" colspan="${COLUMNS.length}" style="padding:12px;">Load failed.</td></tr>`;
+      }
+    }
+
+    async function saveNewRow(){
+      const err = validateMainForm();
+      if(err){
+        showError(err);
+        return;
+      }
+
+      const db = getFirestore();
+      const product = selectedMainProduct();
+      if(!product){
+        showError('Choose a valid variety.');
+        return;
+      }
+
+      btnSave.disabled = true;
+
+      try{
+        const nowUser = currentUserLabel();
+        await addDoc(collection(db, SEED_COLLECTION), {
+          cropYear: String(cropYear.value || ''),
+          crop: norm(crop.value),
+          brand: String(product.brand || '').trim(),
+          variety: String(product.variety || '').trim(),
+          trait: String(product.trait || '').trim(),
+          traitLabel: String(product.traitLabel || '').trim(),
+          productId: product.id,
+          productRef: doc(db, PRODUCTS_COLLECTION, product.id),
+
+          qtyPurchased: Number(qtyPurchased.value),
+          qtyDelivered: 0,
+          qtyShipped: 0,
+          qtyAvailable: 0,
+
+          status: 'active',
+          note: String(note.value || '').trim(),
+
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: nowUser,
+          updatedBy: nowUser
+        });
+
+        toast('Purchase line saved.');
+        resetMainForm();
+        await loadRows(db);
+        buildFilterYearOptions();
+        renderTable();
+      }catch(err2){
+        console.error(err2);
+        showError(err2?.message || 'Save failed.');
+      }finally{
+        btnSave.disabled = false;
+      }
+    }
+
+    async function updateRow(){
+      if(!state.editingId) return;
+
+      const row = state.rows.find(x => x.id === state.editingId);
+      if(!row) return;
+
+      const err = validateEditForm(row);
+      if(err){
+        showError(err);
+        return;
+      }
+
+      const db = getFirestore();
+      const product = selectedEditProduct();
+      if(!product){
+        showError('Choose a valid variety.');
+        return;
+      }
+
+      btnUpdate.disabled = true;
+      btnVoid.disabled = true;
+      btnDelete.disabled = true;
+
+      try{
+        const delivered = num(row.qtyDelivered);
+        const shipped = num(row.qtyShipped);
+        const purchased = Number(editQtyPurchased.value);
+
+        await updateDoc(doc(db, SEED_COLLECTION, row.id), {
+          cropYear: String(editCropYear.value || ''),
+          crop: norm(editCrop.value),
+          brand: String(product.brand || '').trim(),
+          variety: String(product.variety || '').trim(),
+          trait: String(product.trait || '').trim(),
+          traitLabel: String(product.traitLabel || '').trim(),
+          productId: product.id,
+          productRef: doc(db, PRODUCTS_COLLECTION, product.id),
+
+          qtyPurchased: purchased,
+          qtyDelivered: delivered,
+          qtyShipped: shipped,
+          qtyAvailable: calcAvailable(delivered, shipped),
+
+          note: String(editNote.value || '').trim(),
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUserLabel()
+        });
+
+        closeSheet(editSheet);
+        toast('Seed record updated.');
+        await loadRows(db);
+        buildFilterYearOptions();
+        renderTable();
+      }catch(err2){
+        console.error(err2);
+        showError(err2?.message || 'Update failed.');
+      }finally{
+        btnUpdate.disabled = false;
+        const delivered = num(row.qtyDelivered);
+        const isVoid = norm(row.status || 'active') === 'void';
+        btnVoid.disabled = delivered > 0 || isVoid;
+        btnDelete.disabled = delivered > 0;
+      }
+    }
+
+    async function voidRow(){
+      if(!state.editingId) return;
+
+      const row = state.rows.find(x => x.id === state.editingId);
+      if(!row) return;
+
+      if(num(row.qtyDelivered) > 0){
+        showError('Cannot void a line once delivery has started.');
+        return;
+      }
+
+      const ok = window.confirm(`Void ${row.brand || ''} ${row.variety || ''}?`);
+      if(!ok) return;
+
+      btnUpdate.disabled = true;
+      btnVoid.disabled = true;
+      btnDelete.disabled = true;
+
+      try{
+        const db = getFirestore();
+        await updateDoc(doc(db, SEED_COLLECTION, row.id), {
+          status: 'void',
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUserLabel()
+        });
+
+        closeSheet(editSheet);
+        toast('Seed record voided.');
+        await loadRows(db);
+        buildFilterYearOptions();
+        renderTable();
+      }catch(err){
+        console.error(err);
+        showError(err?.message || 'Void failed.');
+      }finally{
+        btnUpdate.disabled = false;
+      }
+    }
+
+    async function deleteRowNow(){
+      if(!state.editingId) return;
+
+      const row = state.rows.find(x => x.id === state.editingId);
+      if(!row) return;
+
+      if(num(row.qtyDelivered) > 0){
+        showError('Cannot delete a line once delivery has started.');
+        return;
+      }
+
+      const ok = window.confirm(`Delete ${row.brand || ''} ${row.variety || ''} permanently?`);
+      if(!ok) return;
+
+      btnUpdate.disabled = true;
+      btnVoid.disabled = true;
+      btnDelete.disabled = true;
+
+      try{
+        const db = getFirestore();
+        await deleteDoc(doc(db, SEED_COLLECTION, row.id));
+        closeSheet(editSheet);
+        toast('Seed record deleted.');
+        await loadRows(db);
+        buildFilterYearOptions();
+        renderTable();
+      }catch(err){
+        console.error(err);
+        showError(err?.message || 'Delete failed.');
+      }finally{
+        btnUpdate.disabled = false;
+      }
+    }
+
+    crop.addEventListener('change', () => {
+      brand.value = '';
+      variety.value = '';
+      syncMainSelectors();
+    });
+
+    brand.addEventListener('change', () => {
+      variety.value = '';
+      populateVarietySelect(variety, crop.value, brand.value, '', varietyHelp);
+      updateMainPills();
+    });
+
+    variety.addEventListener('change', updateMainPills);
+
+    editCrop.addEventListener('change', () => {
+      editBrand.value = '';
+      editVariety.value = '';
+      syncEditSelectors('', '');
+    });
+
+    editBrand.addEventListener('change', () => {
+      editVariety.value = '';
+      populateVarietySelect(editVariety, editCrop.value, editBrand.value, '');
+      updateEditPills();
+    });
+
+    editVariety.addEventListener('change', updateEditPills);
+
+    btnClear.addEventListener('click', resetMainForm);
+    btnSave.addEventListener('click', saveNewRow);
+
+    qInput.addEventListener('input', () => {
+      state.q = qInput.value || '';
+      renderTable();
+    });
+    filterYear.addEventListener('change', () => {
+      state.filterYear = filterYear.value || 'all';
+      renderTable();
+    });
+    filterCrop.addEventListener('change', () => {
+      state.filterCrop = filterCrop.value || 'all';
+      renderTable();
+    });
+    filterStatus.addEventListener('change', () => {
+      state.filterStatus = filterStatus.value || 'all';
+      renderTable();
+    });
+
+    editClose.addEventListener('click', () => closeSheet(editSheet));
+    editCancel.addEventListener('click', () => closeSheet(editSheet));
+    btnUpdate.addEventListener('click', updateRow);
+    btnVoid.addEventListener('click', voidRow);
+    btnDelete.addEventListener('click', deleteRowNow);
+
+    window.addEventListener('online', () => toast('Back online.'));
+    window.addEventListener('offline', () => toast('Offline mode.'));
+
+    (async()=>{
+      await ready;
+      getAuth();
+
+      buildYearOptions(cropYear, String(new Date().getFullYear()));
+      buildYearOptions(editCropYear, String(new Date().getFullYear()));
+      filterYear.innerHTML = `<option value="all">All Years</option>`;
+
+      resetMainForm();
+      await loadAll();
+    })();
+  </script>
+</body>
+</html>

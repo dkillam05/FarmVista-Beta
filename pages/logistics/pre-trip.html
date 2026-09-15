@@ -1,0 +1,2832 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+
+  <title>FarmVista • Pre-Trip Inspection</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link
+    rel="apple-touch-icon"
+    href="/assets/icons/apple-touch-icon.png"
+  />
+  <link
+    rel="icon"
+    href="/assets/icons/icon-192.png"
+  />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/theme.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="/assets/css/app.css"
+  />
+
+  <script src="/js/core/shell/fv-shell.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--app-bg, var(--bg));
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+.page {
+  width: min(900px, 100%);
+  margin: 0 auto;
+  padding: 14px;
+  padding-bottom:
+    calc(
+      env(safe-area-inset-bottom, 0px)
+      + var(--ftr-h, 42px)
+      + 24px
+    );
+}
+
+    .page-header {
+      margin: 6px 0 16px;
+    }
+
+    .page-header h1 {
+      margin: 0 0 5px;
+      font-size: clamp(25px, 5vw, 34px);
+      line-height: 1.1;
+    }
+
+    .page-header p {
+      margin: 0;
+      color: var(--muted, #68716c);
+      line-height: 1.4;
+    }
+
+    .message {
+      display: none;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      font-weight: 750;
+      line-height: 1.4;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      border-color: rgba(180, 35, 24, 0.45);
+      color: #b42318;
+    }
+
+    .message.success {
+      border-color: rgba(59, 126, 70, 0.5);
+      color: var(--brand-green, #3B7E46);
+    }
+
+    .card {
+      margin-bottom: 14px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow, 0 8px 22px rgba(0, 0, 0, 0.07));
+    }
+
+    .card h2 {
+      margin: 0 0 5px;
+      font-size: 19px;
+    }
+
+    .card-subtitle {
+      margin: 0 0 14px;
+      color: var(--muted, #68716c);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 13px;
+    }
+
+    @media (min-width: 700px) {
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted, #68716c);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .required::after {
+      content: " *";
+      color: #b42318;
+    }
+
+    .control {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+/* Searchable FarmVista-style equipment dropdowns */
+.combo {
+  position: relative;
+}
+
+.combo-anchor {
+  position: relative;
+  width: 100%;
+}
+
+.combo-button {
+  position: relative;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 42px 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.combo-button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid var(--muted, #68716c);
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.combo-button:focus,
+.combo-button.open {
+  border-color: var(--brand-green, #3B7E46);
+  box-shadow: 0 0 0 3px rgba(59, 126, 70, 0.14);
+}
+
+.combo-button.selected {
+  border-color: rgba(59, 126, 70, 0.55);
+  background: rgba(59, 126, 70, 0.07);
+}
+
+.combo-panel {
+  position: absolute;
+  z-index: 9999;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  display: none;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+}
+
+.combo-panel.show {
+  display: block;
+}
+
+.combo-search {
+  padding: 2px 2px 8px;
+}
+
+.combo-search input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+.combo-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.combo-item {
+  min-height: 48px;
+  padding: 12px 9px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.combo-item:last-child {
+  border-bottom: 0;
+}
+
+.combo-item:hover,
+.combo-item:active,
+.combo-item.selected {
+  background: rgba(59, 126, 70, 0.08);
+}
+
+.combo-empty {
+  padding: 14px 9px;
+  color: var(--muted, #68716c);
+  text-align: center;
+  font-weight: 700;
+}
+
+    .control:focus {
+      border-color: var(--brand-green, #3B7E46);
+      box-shadow: 0 0 0 3px rgba(59, 126, 70, 0.14);
+    }
+
+    .control[readonly] {
+      background: var(--surface-2, rgba(127, 127, 127, 0.06));
+    }
+
+    .odometer-helper {
+  min-height: 18px;
+  margin: -2px 0 6px;
+  color: var(--muted, #68716c);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+.odometer-warning {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid rgba(180, 35, 24, 0.38);
+  border-radius: 10px;
+  background: rgba(180, 35, 24, 0.06);
+}
+
+.odometer-confirm {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.4;
+}
+
+.odometer-confirm input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--brand-green, #3B7E46);
+}
+
+    textarea.control {
+      min-height: 84px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-bottom: 13px;
+    }
+
+    .button {
+      min-height: 44px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .button-good {
+      border-color: rgba(59, 126, 70, 0.35);
+      background: rgba(59, 126, 70, 0.1);
+      color: var(--brand-green, #3B7E46);
+    }
+
+    .section {
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+.section-header {
+  position: relative;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 44px 12px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2, rgba(127, 127, 127, 0.06));
+  color: var(--text);
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.section-header::after {
+  content: "▾";
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  font-size: 18px;
+  transform: translateY(-50%) rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.section[data-open="1"] .section-header::after {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+.section-body {
+  display: none;
+}
+
+.section[data-open="1"] .section-body {
+  display: block;
+}
+
+    .check-item {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .check-item:last-child {
+      border-bottom: 0;
+    }
+
+    .check-item.defect {
+      background: rgba(180, 35, 24, 0.045);
+    }
+
+    .check-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 9px;
+    }
+
+    @media (min-width: 700px) {
+      .check-row {
+        grid-template-columns: minmax(200px, 1fr) 250px;
+        align-items: center;
+      }
+    }
+
+    .check-label {
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .status-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+.status-button {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: #000;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.status-button.pass.active {
+  border-color: #3B7E46;
+  background: #3B7E46;
+  color: #fff !important;
+}
+
+.status-button.defect.active {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff !important;
+}
+
+.status-button.na.active {
+  border-color: #667085;
+  background: #667085;
+  color: #fff !important;
+}
+
+    .defect-note-wrap {
+      display: none;
+      margin-top: 9px;
+    }
+
+    .check-item.defect .defect-note-wrap {
+      display: block;
+    }
+
+    .defect-photo-wrap {
+  margin-top: 9px;
+}
+
+.defect-photo-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted, #68716c);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.defect-photo-input {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.defect-photo-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.defect-photo-link {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.defect-photo-thumbnail {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.defect-photo-file-icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2, rgba(127, 127, 127, 0.06));
+  font-size: 28px;
+}
+
+.defect-photo-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.defect-photo-remove {
+  min-width: 76px;
+  min-height: 40px;
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border: 1px solid rgba(180, 35, 24, 0.45);
+  border-radius: 9px;
+  background: rgba(180, 35, 24, 0.07);
+  color: #b42318;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .defect-photo-preview {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .defect-photo-remove {
+    width: 100%;
+  }
+}
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .summary-box {
+      padding: 10px 6px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: var(--surface-2, rgba(127, 127, 127, 0.05));
+      text-align: center;
+    }
+
+    .summary-number {
+      display: block;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .summary-label {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted, #68716c);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .certify {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 13px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2, rgba(127, 127, 127, 0.05));
+    }
+
+    .certify input {
+      width: 21px;
+      height: 21px;
+      margin: 1px 0 0;
+      accent-color: var(--brand-green, #3B7E46);
+      flex: 0 0 auto;
+    }
+
+    .certify label {
+      line-height: 1.4;
+      font-weight: 750;
+    }
+
+.submit-bar {
+  margin-top: 18px;
+}
+
+.submit-button {
+  width: 100%;
+  min-height: 54px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--brand-green, #3B7E46);
+  color: #fff !important;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.submit-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <main class="page">
+      <header class="page-header">
+        <h1>Pre-Trip Inspection</h1>
+
+        <p>
+          Select your truck and trailer, complete the checklist,
+          and submit the daily inspection.
+        </p>
+      </header>
+
+      <div
+        id="message"
+        class="message"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+      <form id="inspectionForm">
+        <section class="card">
+          <h2>Driver and Equipment</h2>
+
+          <p class="card-subtitle">
+            Driver and date are filled in automatically.
+          </p>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="driverName">Driver</label>
+
+              <input
+                id="driverName"
+                class="control"
+                type="text"
+                readonly
+              />
+            </div>
+
+            <div class="field">
+              <label for="inspectionDate" class="required">
+                Date
+              </label>
+
+              <input
+                id="inspectionDate"
+                class="control"
+                type="date"
+                required
+              />
+            </div>
+
+<div class="field combo">
+  <label for="truckComboButton" class="required">
+    Truck / Semi
+  </label>
+
+  <div class="combo-anchor">
+    <button
+      id="truckComboButton"
+      class="combo-button"
+      type="button"
+    >
+      Loading trucks…
+    </button>
+
+    <div id="truckComboPanel" class="combo-panel">
+      <div class="combo-search">
+        <input
+          id="truckComboSearch"
+          type="search"
+          placeholder="Search trucks…"
+          autocomplete="off"
+        />
+      </div>
+
+      <div id="truckComboList" class="combo-list"></div>
+    </div>
+  </div>
+
+  <select id="truckSelect" hidden>
+    <option value=""></option>
+  </select>
+</div>
+
+<div class="field combo">
+  <label for="trailerComboButton" class="required">
+    Trailer
+  </label>
+
+  <div class="combo-anchor">
+    <button
+      id="trailerComboButton"
+      class="combo-button"
+      type="button"
+    >
+      Loading trailers…
+    </button>
+
+    <div id="trailerComboPanel" class="combo-panel">
+      <div class="combo-search">
+        <input
+          id="trailerComboSearch"
+          type="search"
+          placeholder="Search trailers…"
+          autocomplete="off"
+        />
+      </div>
+
+      <div id="trailerComboList" class="combo-list"></div>
+    </div>
+  </div>
+
+  <select id="trailerSelect" hidden>
+    <option value=""></option>
+  </select>
+</div>
+
+<div class="field">
+  <label for="odometer" class="required">
+    Odometer
+  </label>
+
+  <div
+    id="previousOdometerText"
+    class="odometer-helper"
+  >
+    Select a truck to see its previous mileage.
+  </div>
+
+<input
+  id="odometer"
+  class="control"
+  type="text"
+  inputmode="numeric"
+  autocomplete="off"
+  placeholder="Enter current mileage"
+  required
+/>
+
+  <div
+    id="odometerWarning"
+    class="odometer-warning"
+    hidden
+  >
+    <label class="odometer-confirm">
+      <input
+        id="confirmOdometerJump"
+        type="checkbox"
+      />
+
+      <span id="odometerWarningText">
+        Confirm that this mileage is correct.
+      </span>
+    </label>
+  </div>
+</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Inspection Checklist</h2>
+
+          <p class="card-subtitle">
+            Tap Mark All Good, then change any problem items.
+          </p>
+
+          <div class="quick-actions">
+            <button
+              id="markAllGood"
+              class="button button-good"
+              type="button"
+            >
+              ✓ Mark All Good
+            </button>
+
+            <button
+              id="clearChecklist"
+              class="button"
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+
+          <div id="checklist"></div>
+
+          <div class="summary">
+            <div class="summary-box">
+              <span id="passCount" class="summary-number">0</span>
+              <span class="summary-label">Good</span>
+            </div>
+
+            <div class="summary-box">
+              <span id="defectCount" class="summary-number">0</span>
+              <span class="summary-label">Defects</span>
+            </div>
+
+            <div class="summary-box">
+              <span id="remainingCount" class="summary-number">0</span>
+              <span class="summary-label">Remaining</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Remarks</h2>
+
+          <p class="card-subtitle">
+            Add any additional information for the office or mechanic.
+          </p>
+
+          <textarea
+            id="remarks"
+            class="control"
+            placeholder="Optional remarks"
+          ></textarea>
+
+          <div class="certify">
+            <input
+              id="certify"
+              type="checkbox"
+            />
+
+            <label for="certify">
+              I certify that I completed this inspection and the
+              information is accurate.
+            </label>
+          </div>
+
+          <div class="submit-bar">
+            <button
+              id="submitButton"
+              class="submit-button"
+              type="submit"
+            >
+              Submit Inspection
+            </button>
+          </div>
+        </section>
+      </form>
+    </main>
+  </fv-shell>
+
+  <script type="module">
+import {
+  ready,
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+  getAuth,
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "/js/core/firebase/firebase-init.js";
+
+await ready;
+
+const db = getFirestore();
+const auth = getAuth();
+
+    const params = new URLSearchParams(window.location.search);
+
+const scannedEquipmentId =
+  params.get("equipmentId") || "";
+
+const scannedEquipmentType =
+  (params.get("type") || "")
+    .trim()
+    .toLowerCase();
+
+    const EQUIPMENT_COLLECTION = "equipment";
+    const INSPECTION_COLLECTION = "logisticsInspections";
+
+const state = {
+  user: null,
+  trucks: [],
+  trailers: [],
+  responses: new Map(),
+  defectPhotos: new Map(),
+  defectPhotoUrls: new Map(),
+
+  /* Truck and trailer sections start collapsed. */
+  openChecklistSections: new Set(),
+
+  saving: false
+};
+
+const truckItems = [
+  "Air Compressor",
+  "Air Lines",
+  "Battery",
+  "Brake Connections",
+  "Brakes",
+  "Defroster",
+  "Drive Line",
+  "Engine",
+  "Fifth Wheel",
+  "Fire Extinguisher",
+  "Front Axle",
+  "Fuel Tanks",
+  "Heater",
+  "Horn",
+  "Lights - All",
+  "Mirrors",
+  "Muffler",
+  "Oil Pressure",
+  "Radiator",
+  "Rear End",
+  "Reflectors",
+  "Springs / Air Bags",
+  "Starter",
+  "Steering",
+  "Tires",
+  "Wheels and Lug Nuts",
+  "Transmission",
+  "Windows",
+  "Windshield Wipers"
+];
+
+const trailerItems = [
+  "Brake Connections",
+  "Brakes",
+  "Coupling",
+  "King Pin",
+  "Doors",
+  "Landing Gear",
+  "Lights - All",
+  "Reflectors",
+  "Springs / Air Bags",
+  "Tarp",
+  "Tires",
+  "Wheels and Lug Nuts"
+];
+
+    const elements = {
+      form: document.getElementById("inspectionForm"),
+      message: document.getElementById("message"),
+      driverName: document.getElementById("driverName"),
+      inspectionDate: document.getElementById("inspectionDate"),
+truckSelect: document.getElementById("truckSelect"),
+trailerSelect: document.getElementById("trailerSelect"),
+
+truckComboButton:
+  document.getElementById("truckComboButton"),
+truckComboPanel:
+  document.getElementById("truckComboPanel"),
+truckComboSearch:
+  document.getElementById("truckComboSearch"),
+truckComboList:
+  document.getElementById("truckComboList"),
+
+trailerComboButton:
+  document.getElementById("trailerComboButton"),
+trailerComboPanel:
+  document.getElementById("trailerComboPanel"),
+trailerComboSearch:
+  document.getElementById("trailerComboSearch"),
+trailerComboList:
+  document.getElementById("trailerComboList"),
+
+odometer: document.getElementById("odometer"),
+
+previousOdometerText:
+  document.getElementById("previousOdometerText"),
+
+odometerWarning:
+  document.getElementById("odometerWarning"),
+
+odometerWarningText:
+  document.getElementById("odometerWarningText"),
+
+confirmOdometerJump:
+  document.getElementById("confirmOdometerJump"),
+
+checklist: document.getElementById("checklist"),
+      markAllGood: document.getElementById("markAllGood"),
+      clearChecklist: document.getElementById("clearChecklist"),
+      passCount: document.getElementById("passCount"),
+      defectCount: document.getElementById("defectCount"),
+      remainingCount: document.getElementById("remainingCount"),
+      remarks: document.getElementById("remarks"),
+      certify: document.getElementById("certify"),
+      submitButton: document.getElementById("submitButton")
+    };
+
+    function clean(value) {
+      return String(value ?? "").trim();
+    }
+
+    function normalized(value) {
+      return clean(value).toLowerCase();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(
+        /[&<>"']/g,
+        character => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#39;"
+        })[character]
+      );
+    }
+
+    function todayLocal() {
+      const now = new Date();
+
+      return [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+      ].join("-");
+    }
+
+    function showMessage(text, type = "") {
+      elements.message.textContent = text;
+      elements.message.className = `message show ${type}`;
+
+      elements.message.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+    }
+
+    function clearMessage() {
+      elements.message.textContent = "";
+      elements.message.className = "message";
+    }
+
+    function isActive(record) {
+      return normalized(record.status) === "active";
+    }
+
+    function isTruck(record) {
+      return (
+        normalized(record.type) === "truck" &&
+        normalized(record.dotRequired) === "yes" &&
+        isActive(record)
+      );
+    }
+
+    function isTrailer(record) {
+      return (
+        normalized(record.type) === "trailer" &&
+        normalized(record.trailerDotRequired) === "yes" &&
+        isActive(record)
+      );
+    }
+
+    function equipmentUnit(record) {
+      return clean(
+        record.unitId ||
+        record.unitNumber ||
+        record.number ||
+        record.extras?.unitId
+      );
+    }
+
+    function equipmentYear(record) {
+      return clean(record.year);
+    }
+
+    function equipmentMake(record) {
+      return clean(
+        record.makeName ||
+        record.make ||
+        record.manufacturer
+      );
+    }
+
+    function equipmentModel(record) {
+      return clean(
+        record.modelName ||
+        record.model
+      );
+    }
+
+    function equipmentOdometer(record) {
+  if (!record) {
+    return null;
+  }
+
+  const mileage = Number(
+    record.odometerMiles ??
+    record.extras?.odometerMiles
+  );
+
+  return (
+    Number.isFinite(mileage) &&
+    mileage >= 0
+  )
+    ? mileage
+    : null;
+}
+
+    function equipmentLabel(record) {
+      const unit = equipmentUnit(record);
+
+      const description = [
+        equipmentYear(record),
+        equipmentMake(record),
+        equipmentModel(record)
+      ].filter(Boolean).join(" ");
+
+      if (unit && description) {
+        return `${unit} • ${description}`;
+      }
+
+      return (
+        unit ||
+        description ||
+        clean(record.name) ||
+        record.id
+      );
+    }
+
+    function sortEquipment(a, b) {
+      return equipmentLabel(a).localeCompare(
+        equipmentLabel(b),
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base"
+        }
+      );
+    }
+
+function inspectionDateToLocalDate(value) {
+  const text = clean(value);
+
+  if (!text) {
+    return null;
+  }
+
+  const parts = text.split("-");
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day)
+  ) {
+    return null;
+  }
+
+  return new Date(
+    year,
+    month - 1,
+    day,
+    12,
+    0,
+    0,
+    0
+  );
+}
+
+function findDriverRecentEquipment(
+  inspectionDocuments
+) {
+  if (!state.user) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  const cutoff = new Date(today);
+  cutoff.setDate(cutoff.getDate() - 30);
+
+  const driverInspections =
+    inspectionDocuments
+      .map(documentSnapshot => ({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data()
+      }))
+      .filter(inspection => {
+        if (
+          clean(inspection.driverUid) !== state.user.uid
+        ) {
+          return false;
+        }
+
+        if (
+          normalized(inspection.inspectionType) !==
+          "pretrip"
+        ) {
+          return false;
+        }
+
+        const inspectionDate =
+          inspectionDateToLocalDate(
+            inspection.inspectionDate
+          );
+
+        if (!inspectionDate) {
+          return false;
+        }
+
+        return (
+          inspectionDate < today &&
+          inspectionDate >= cutoff
+        );
+      })
+      .sort((a, b) => {
+        const dateA =
+          inspectionDateToLocalDate(
+            a.inspectionDate
+          );
+
+        const dateB =
+          inspectionDateToLocalDate(
+            b.inspectionDate
+          );
+
+        return dateB - dateA;
+      });
+
+  return driverInspections[0] || null;
+}
+
+    
+async function loadEquipment() {
+  console.log("[Logistics] Starting equipment load");
+
+  try {
+    const today = todayLocal();
+
+    const [
+      equipmentSnapshot,
+      inspectionSnapshot
+    ] = await Promise.all([
+      getDocs(collection(db, EQUIPMENT_COLLECTION)),
+      getDocs(collection(db, INSPECTION_COLLECTION))
+    ]);
+
+    console.log(
+      "[Logistics] Equipment documents:",
+      equipmentSnapshot.size
+    );
+
+    console.log(
+      "[Logistics] Inspection documents:",
+      inspectionSnapshot.size
+    );
+
+    const records = equipmentSnapshot.docs.map(
+      documentSnapshot => ({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data()
+      })
+    );
+
+    const inspectedTruckIds = new Set();
+    const inspectedTrailerIds = new Set();
+
+inspectionSnapshot.docs.forEach(documentSnapshot => {
+  const inspection = documentSnapshot.data();
+
+  const isToday =
+    clean(inspection.inspectionDate) === today;
+
+  const isPreTrip =
+    normalized(inspection.inspectionType) === "pretrip";
+
+  if (!isToday || !isPreTrip) {
+    return;
+  }
+
+  const truckId = clean(
+    inspection.truckId ||
+    inspection.truck?.id
+  );
+
+  const trailerId = clean(
+    inspection.trailerId ||
+    inspection.trailer?.id
+  );
+
+  if (truckId) {
+    inspectedTruckIds.add(truckId);
+  }
+
+  if (trailerId) {
+    inspectedTrailerIds.add(trailerId);
+  }
+});
+
+    state.trucks = records
+      .filter(record => {
+        return (
+          isTruck(record) &&
+          !inspectedTruckIds.has(record.id)
+        );
+      })
+      .sort(sortEquipment);
+
+state.trailers = records
+  .filter(record => {
+    return (
+      isTrailer(record) &&
+      !inspectedTrailerIds.has(record.id)
+    );
+  })
+  .sort(sortEquipment);
+
+    console.log(
+      "[Logistics] Available trucks:",
+      state.trucks.length
+    );
+
+    console.log(
+      "[Logistics] Available trailers:",
+      state.trailers.length
+    );
+
+    renderEquipmentDropdowns();
+
+    const recentDriverInspection =
+  findDriverRecentEquipment(
+    inspectionSnapshot.docs
+  );
+
+if (
+  recentDriverInspection &&
+  !scannedEquipmentId
+) {
+  const previousTruckId = clean(
+    recentDriverInspection.truckId ||
+    recentDriverInspection.truck?.id
+  );
+
+  const previousTrailerId = clean(
+    recentDriverInspection.trailerId ||
+    recentDriverInspection.trailer?.id
+  );
+
+  const previousHadTrailer =
+    recentDriverInspection.trailerHookedOn === true ||
+    Boolean(previousTrailerId);
+
+  const previousTruckAvailable =
+    state.trucks.some(
+      truck => truck.id === previousTruckId
+    );
+
+  const previousTrailerAvailable =
+    state.trailers.some(
+      trailer => trailer.id === previousTrailerId
+    );
+
+  if (previousTruckAvailable) {
+    chooseTruck(previousTruckId);
+  }
+
+  if (
+    previousHadTrailer &&
+    previousTrailerAvailable
+  ) {
+    chooseTrailer(previousTrailerId);
+  } else if (!previousHadTrailer) {
+    chooseTrailer("no-trailer");
+  }
+}
+
+    if (scannedEquipmentId) {
+
+  if (scannedEquipmentType === "truck") {
+
+    const truck = state.trucks.find(
+      t => t.id === scannedEquipmentId
+    );
+
+    if (truck) {
+      chooseTruck(truck.id);
+    }
+
+  } else if (scannedEquipmentType === "trailer") {
+
+    const trailer = state.trailers.find(
+      t => t.id === scannedEquipmentId
+    );
+
+    if (trailer) {
+      chooseTrailer(trailer.id);
+    }
+  }
+
+}
+
+    if (!state.trucks.length) {
+      showMessage(
+        "All active DOT-required trucks have already completed today's pre-trip inspection.",
+        "success"
+      );
+    }
+  } catch (error) {
+    console.error(
+      "[Logistics] Equipment load failed:",
+      error
+    );
+
+    elements.truckSelect.innerHTML =
+      `<option value="">Unable to load trucks</option>`;
+
+    elements.trailerSelect.innerHTML =
+      `<option value="">Unable to load trailers</option>`;
+
+    showMessage(
+      "FarmVista could not load the equipment list.",
+      "error"
+    );
+  }
+}
+
+function renderEquipmentDropdowns() {
+  elements.truckSelect.innerHTML = [
+    `<option value=""></option>`,
+    ...state.trucks.map(record => `
+      <option value="${escapeHtml(record.id)}">
+        ${escapeHtml(equipmentLabel(record))}
+      </option>
+    `)
+  ].join("");
+
+  elements.trailerSelect.innerHTML = [
+    `<option value=""></option>`,
+    ...state.trailers.map(record => `
+      <option value="${escapeHtml(record.id)}">
+        ${escapeHtml(equipmentLabel(record))}
+      </option>
+    `),
+    `<option value="no-trailer">No Trailer Hooked On</option>`,
+    `<option value="unlisted-trailer">Unlisted Trailer</option>`
+  ].join("");
+
+  updateEquipmentComboButtons();
+  renderTruckComboList();
+  renderTrailerComboList();
+}
+
+function closeEquipmentCombos() {
+  elements.truckComboPanel.classList.remove("show");
+  elements.trailerComboPanel.classList.remove("show");
+
+  elements.truckComboButton.classList.remove("open");
+  elements.trailerComboButton.classList.remove("open");
+}
+
+function updateEquipmentComboButtons() {
+  const truck = selectedTruck();
+  const trailer = selectedTrailer();
+
+  elements.truckComboButton.textContent = truck
+    ? equipmentLabel(truck)
+    : state.trucks.length
+      ? "Select Truck…"
+      : "No trucks available";
+
+  elements.truckComboButton.classList.toggle(
+    "selected",
+    Boolean(truck)
+  );
+
+  if (elements.trailerSelect.value === "no-trailer") {
+    elements.trailerComboButton.textContent =
+      "No Trailer Hooked On";
+
+    elements.trailerComboButton.classList.add("selected");
+
+  } else if (
+    elements.trailerSelect.value === "unlisted-trailer"
+  ) {
+    elements.trailerComboButton.textContent =
+      "Unlisted Trailer";
+
+    elements.trailerComboButton.classList.add("selected");
+
+  } else {
+    elements.trailerComboButton.textContent = trailer
+      ? equipmentLabel(trailer)
+      : "Select Trailer…";
+
+    elements.trailerComboButton.classList.toggle(
+      "selected",
+      Boolean(trailer)
+    );
+  }
+}
+
+function renderTruckComboList(searchText = "") {
+  const search = normalized(searchText);
+
+  const trucks = state.trucks.filter(record => {
+    return (
+      !search ||
+      normalized(equipmentLabel(record)).includes(search)
+    );
+  });
+
+  elements.truckComboList.innerHTML = trucks.length
+    ? trucks.map(record => `
+        <div
+          class="combo-item"
+          data-equipment-id="${escapeHtml(record.id)}"
+        >
+          ${escapeHtml(equipmentLabel(record))}
+        </div>
+      `).join("")
+    : `<div class="combo-empty">No matching trucks</div>`;
+}
+
+function renderTrailerComboList(searchText = "") {
+  const search = normalized(searchText);
+
+  const trailers = state.trailers.filter(record => {
+    return (
+      !search ||
+      normalized(equipmentLabel(record)).includes(search)
+    );
+  });
+
+  const rows = trailers.map(record => `
+    <div
+      class="combo-item"
+      data-equipment-id="${escapeHtml(record.id)}"
+    >
+      ${escapeHtml(equipmentLabel(record))}
+    </div>
+  `);
+
+  if (
+    !search ||
+    normalized("No Trailer Hooked On").includes(search)
+  ) {
+    rows.push(`
+      <div
+        class="combo-item"
+        data-equipment-id="no-trailer"
+      >
+        No Trailer Hooked On
+      </div>
+    `);
+  }
+
+  if (
+    !search ||
+    normalized("Unlisted Trailer").includes(search)
+  ) {
+    rows.push(`
+      <div
+        class="combo-item"
+        data-equipment-id="unlisted-trailer"
+      >
+        Unlisted Trailer
+      </div>
+    `);
+  }
+
+  elements.trailerComboList.innerHTML = rows.length
+    ? rows.join("")
+    : `<div class="combo-empty">No matching trailers</div>`;
+}
+
+function openTruckCombo() {
+  const opening =
+    !elements.truckComboPanel.classList.contains("show");
+
+  closeEquipmentCombos();
+
+  if (!opening) {
+    return;
+  }
+
+  elements.truckComboSearch.value = "";
+  renderTruckComboList();
+
+  elements.truckComboPanel.classList.add("show");
+  elements.truckComboButton.classList.add("open");
+  elements.truckComboSearch.focus();
+}
+
+function openTrailerCombo() {
+  const opening =
+    !elements.trailerComboPanel.classList.contains("show");
+
+  closeEquipmentCombos();
+
+  if (!opening) {
+    return;
+  }
+
+  elements.trailerComboSearch.value = "";
+  renderTrailerComboList();
+
+  elements.trailerComboPanel.classList.add("show");
+  elements.trailerComboButton.classList.add("open");
+  elements.trailerComboSearch.focus();
+}
+
+ function selectedTruckPreviousOdometer() {
+  return equipmentOdometer(selectedTruck());
+}
+
+function updateOdometerDisplay() {
+  const truck = selectedTruck();
+  const previousMileage =
+    selectedTruckPreviousOdometer();
+
+  elements.odometer.value = "";
+  elements.confirmOdometerJump.checked = false;
+  elements.odometerWarning.hidden = true;
+
+  if (!truck) {
+    elements.previousOdometerText.textContent =
+      "Select a truck to see its previous mileage.";
+
+    return;
+  }
+
+  if (previousMileage === null) {
+    elements.previousOdometerText.textContent =
+      "No previous mileage is recorded for this truck.";
+
+    return;
+  }
+
+  elements.previousOdometerText.textContent =
+    `Previous mileage was ${previousMileage.toLocaleString()} miles.`;
+}
+
+function enteredOdometerValue() {
+  const digits = elements.odometer.value.replace(/\D/g, "");
+
+  return digits ? Number(digits) : NaN;
+}    
+
+function updateOdometerWarning() {
+  const previousMileage =
+    selectedTruckPreviousOdometer();
+
+    const enteredMileage =
+    enteredOdometerValue();
+
+  const hasEnteredMileage =
+    elements.odometer.value !== "" &&
+    Number.isFinite(enteredMileage);
+
+  const increase =
+    previousMileage !== null && hasEnteredMileage
+      ? enteredMileage - previousMileage
+      : 0;
+
+  const requiresConfirmation =
+    previousMileage !== null &&
+    hasEnteredMileage &&
+    increase > 1000;
+
+  elements.odometerWarning.hidden =
+    !requiresConfirmation;
+
+  if (requiresConfirmation) {
+    elements.odometerWarningText.textContent =
+      `This reading is ${increase.toLocaleString()} miles above the previous reading. I confirm the new mileage is correct.`;
+  } else {
+    elements.confirmOdometerJump.checked = false;
+  }
+}   
+    
+function chooseTruck(truckId) {
+  elements.truckSelect.value = truckId;
+
+  updateEquipmentComboButtons();
+  updateOdometerDisplay();
+  closeEquipmentCombos();
+}
+
+function chooseTrailer(trailerId) {
+  elements.trailerSelect.value = trailerId;
+
+  updateEquipmentComboButtons();
+  renderChecklist();
+  closeEquipmentCombos();
+}
+    function slug(value) {
+      return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+
+    function hasTrailerHookedOn() {
+  return (
+    Boolean(elements.trailerSelect.value) &&
+    elements.trailerSelect.value !== "no-trailer"
+  );
+}
+
+    function visibleSections() {
+      const sections = [
+        {
+          id: "truck",
+          title: "Truck / Semi",
+          items: truckItems
+        }
+      ];
+
+      if (hasTrailerHookedOn()) {
+        sections.push({
+          id: "trailer",
+          title: "Trailer",
+          items: trailerItems
+        });
+      }
+
+      return sections;
+    }
+
+    function visibleItems() {
+      return visibleSections().flatMap(section => {
+        return section.items.map(label => ({
+          id: `${section.id}-${slug(label)}`,
+          section: section.title,
+          label
+        }));
+      });
+    }
+
+    function ensureResponse(item) {
+      if (!state.responses.has(item.id)) {
+        state.responses.set(item.id, {
+          itemId: item.id,
+          section: item.section,
+          label: item.label,
+          status: "",
+          note: ""
+        });
+      }
+
+      return state.responses.get(item.id);
+    }
+
+    function renderChecklist() {
+      elements.checklist.innerHTML =
+        visibleSections().map(section => {
+          const itemsHtml = section.items.map(label => {
+            const item = {
+              id: `${section.id}-${slug(label)}`,
+              section: section.title,
+              label
+            };
+
+            const response = ensureResponse(item);
+            const defectClass =
+              response.status === "defect" ? " defect" : "";
+
+            return `
+              <div
+                class="check-item${defectClass}"
+                data-item-id="${escapeHtml(item.id)}"
+              >
+                <div class="check-row">
+                  <div class="check-label">
+                    ${escapeHtml(label)}
+                  </div>
+
+                  <div class="status-buttons">
+                    <button
+                      type="button"
+                      class="status-button pass ${
+                        response.status === "pass"
+                          ? "active"
+                          : ""
+                      }"
+                      data-item-id="${escapeHtml(item.id)}"
+                      data-status="pass"
+                    >
+                      Good
+                    </button>
+
+                    <button
+                      type="button"
+                      class="status-button defect ${
+                        response.status === "defect"
+                          ? "active"
+                          : ""
+                      }"
+                      data-item-id="${escapeHtml(item.id)}"
+                      data-status="defect"
+                    >
+                      Defect
+                    </button>
+
+                    <button
+                      type="button"
+                      class="status-button na ${
+                        response.status === "na"
+                          ? "active"
+                          : ""
+                      }"
+                      data-item-id="${escapeHtml(item.id)}"
+                      data-status="na"
+                    >
+                      N/A
+                    </button>
+                  </div>
+                </div>
+
+<div class="defect-note-wrap">
+  <textarea
+    class="control defect-note"
+    data-item-id="${escapeHtml(item.id)}"
+    placeholder="Describe the defect"
+  >${escapeHtml(response.note)}</textarea>
+
+<div class="defect-photo-wrap">
+  <label class="defect-photo-label">
+    Defect photo or file (optional)
+  </label>
+
+  <input
+    class="defect-photo-input"
+    type="file"
+    accept="image/*,application/pdf"
+    capture="environment"
+    data-item-id="${escapeHtml(item.id)}"
+  />
+
+  ${
+    state.defectPhotos.has(item.id)
+      ? `
+        <div class="defect-photo-preview">
+          <a
+            class="defect-photo-link"
+            href="${escapeHtml(
+              state.defectPhotoUrls.get(item.id) || "#"
+            )}"
+            target="_blank"
+            rel="noopener"
+          >
+            ${
+              state.defectPhotos
+                .get(item.id)
+                .type
+                .startsWith("image/")
+                ? `
+                  <img
+                    class="defect-photo-thumbnail"
+                    src="${escapeHtml(
+                      state.defectPhotoUrls.get(item.id) || ""
+                    )}"
+                    alt="Defect photo preview"
+                  />
+                `
+                : `
+                  <span class="defect-photo-file-icon">
+                    📄
+                  </span>
+                `
+            }
+
+            <span class="defect-photo-name">
+              ${escapeHtml(
+                state.defectPhotos.get(item.id).name
+              )}
+            </span>
+          </a>
+
+          <button
+            class="defect-photo-remove"
+            type="button"
+            data-item-id="${escapeHtml(item.id)}"
+          >
+            Remove
+          </button>
+        </div>
+      `
+      : `
+        <div class="defect-photo-name">
+          No photo or file selected
+        </div>
+      `
+  }
+</div>
+</div>
+              </div>
+            `;
+          }).join("");
+
+          const isOpen =
+            state.openChecklistSections.has(section.id);
+
+          return `
+            <section
+              class="section"
+              data-section-id="${escapeHtml(section.id)}"
+              data-open="${isOpen ? "1" : "0"}"
+            >
+              <button
+                class="section-header"
+                type="button"
+                data-section-toggle="${escapeHtml(section.id)}"
+                aria-expanded="${isOpen ? "true" : "false"}"
+              >
+                ${escapeHtml(section.title)}
+              </button>
+
+              <div class="section-body">
+                ${itemsHtml}
+              </div>
+            </section>
+          `;
+        }).join("");
+
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const items = visibleItems();
+      const responses = items.map(ensureResponse);
+
+      const passCount = responses.filter(
+        response => response.status === "pass"
+      ).length;
+
+      const defectCount = responses.filter(
+        response => response.status === "defect"
+      ).length;
+
+      const completedCount = responses.filter(
+        response => Boolean(response.status)
+      ).length;
+
+      elements.passCount.textContent = String(passCount);
+      elements.defectCount.textContent = String(defectCount);
+      elements.remainingCount.textContent =
+        String(items.length - completedCount);
+    }
+
+    function setStatus(itemId, status) {
+      const item = visibleItems().find(
+        currentItem => currentItem.id === itemId
+      );
+
+      if (!item) {
+        return;
+      }
+
+      const response = ensureResponse(item);
+
+      response.status = status;
+
+if (status !== "defect") {
+  response.note = "";
+
+  const oldUrl = state.defectPhotoUrls.get(itemId);
+
+  if (oldUrl) {
+    URL.revokeObjectURL(oldUrl);
+  }
+
+  state.defectPhotos.delete(itemId);
+  state.defectPhotoUrls.delete(itemId);
+}
+
+      renderChecklist();
+    }
+
+    function markAllGood() {
+      visibleItems().forEach(item => {
+        const response = ensureResponse(item);
+
+        response.status = "pass";
+        response.note = "";
+      });
+
+      state.defectPhotoUrls.forEach(url => {
+  URL.revokeObjectURL(url);
+});
+
+state.defectPhotos.clear();
+state.defectPhotoUrls.clear();
+      
+      renderChecklist();
+    }
+
+    function clearChecklist() {
+      visibleItems().forEach(item => {
+        const response = ensureResponse(item);
+
+        response.status = "";
+        response.note = "";
+      });
+
+      renderChecklist();
+    }
+
+    function selectedTruck() {
+      return state.trucks.find(
+        record => record.id === elements.truckSelect.value
+      ) || null;
+    }
+
+function selectedTrailer() {
+  if (
+    !hasTrailerHookedOn() ||
+    elements.trailerSelect.value === "unlisted-trailer"
+  ) {
+    return null;
+  }
+
+  return state.trailers.find(
+    record => record.id === elements.trailerSelect.value
+  ) || null;
+}
+
+    function equipmentSnapshot(record) {
+      if (!record) {
+        return null;
+      }
+
+      return {
+        id: record.id,
+        label: equipmentLabel(record),
+        unitId: equipmentUnit(record) || null,
+        year: equipmentYear(record) || null,
+        makeName: equipmentMake(record) || null,
+        modelName: equipmentModel(record) || null,
+serial: clean(record.serial) || null,
+type: clean(record.type) || null,
+odometerMiles: equipmentOdometer(record)
+      };
+    }
+
+    function validateInspection() {
+      clearMessage();
+
+      if (!state.user) {
+        showMessage(
+          "Your FarmVista user account is not loaded.",
+          "error"
+        );
+
+        return false;
+      }
+
+      if (!elements.inspectionDate.value) {
+        showMessage(
+          "Choose the inspection date.",
+          "error"
+        );
+
+        return false;
+      }
+
+      if (!elements.truckSelect.value) {
+        showMessage(
+          "Select the truck or semi.",
+          "error"
+        );
+
+        return false;
+      }
+
+      if (!elements.trailerSelect.value) {
+  showMessage(
+    "Select a trailer or choose No Trailer Hooked On.",
+    "error"
+  );
+
+  return false;
+}
+
+const enteredOdometer =
+  enteredOdometerValue();
+
+const previousOdometer =
+  selectedTruckPreviousOdometer();
+
+if (
+  elements.odometer.value === "" ||
+  !Number.isFinite(enteredOdometer)
+) {
+  showMessage(
+    "Enter the truck's current odometer reading.",
+    "error"
+  );
+
+  elements.odometer.focus();
+  return false;
+}
+
+if (enteredOdometer < 0) {
+  showMessage(
+    "The odometer reading cannot be negative.",
+    "error"
+  );
+
+  elements.odometer.focus();
+  return false;
+}
+
+if (
+  previousOdometer !== null &&
+  enteredOdometer <= previousOdometer
+) {
+  showMessage(
+    `The new odometer reading must be greater than the previous reading of ${previousOdometer.toLocaleString()} miles.`,
+    "error"
+  );
+
+  elements.odometer.focus();
+  return false;
+}
+
+if (
+  previousOdometer !== null &&
+  enteredOdometer > previousOdometer + 1000 &&
+  !elements.confirmOdometerJump.checked
+) {
+  showMessage(
+    "Confirm that the mileage increase of more than 1,000 miles is correct.",
+    "error"
+  );
+
+  elements.confirmOdometerJump.focus();
+  return false;
+}   
+
+      const responses = visibleItems().map(ensureResponse);
+
+      const remaining = responses.filter(
+        response => !response.status
+      );
+
+      if (remaining.length) {
+        showMessage(
+          `Complete the remaining ${remaining.length} checklist item` +
+          `${remaining.length === 1 ? "" : "s"}.`,
+          "error"
+        );
+
+        return false;
+      }
+
+      const missingNotes = responses.filter(response => {
+        return (
+          response.status === "defect" &&
+          !clean(response.note)
+        );
+      });
+
+      if (missingNotes.length) {
+        showMessage(
+          "Every defect must include a description.",
+          "error"
+        );
+
+        return false;
+      }
+
+      if (!elements.certify.checked) {
+        showMessage(
+          "Check the driver certification before submitting.",
+          "error"
+        );
+
+        return false;
+      }
+
+      return true;
+    }
+
+   async function uploadDefectPhoto(itemId, file) {
+  if (!file) {
+    return null;
+  }
+
+  if (!window.FV_HAS_STORAGE) {
+    throw new Error(
+      "Firebase Storage is not available."
+    );
+  }
+
+  const storage = getStorage();
+
+  if (!storage) {
+    throw new Error(
+      "Firebase Storage could not be loaded."
+    );
+  }
+
+  const safeName = String(file.name || "defect-photo.jpg")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-");
+
+  const safeItemId = String(itemId)
+    .replace(/[^a-zA-Z0-9_-]+/g, "-");
+
+  const storagePath = [
+    "logisticsInspections",
+    elements.inspectionDate.value,
+    state.user.uid,
+    `${Date.now()}-${safeItemId}-${safeName}`
+  ].join("/");
+
+  const photoRef = ref(storage, storagePath);
+
+  await uploadBytes(photoRef, file);
+
+  return getDownloadURL(photoRef);
+} 
+
+    async function submitInspection(event) {
+      event.preventDefault();
+
+      if (state.saving || !validateInspection()) {
+        return;
+      }
+
+      state.saving = true;
+      elements.submitButton.disabled = true;
+      elements.submitButton.textContent = "Submitting…";
+
+      const truck = selectedTruck();
+      const trailer = selectedTrailer();
+
+const responses = [];
+
+for (const item of visibleItems()) {
+  const response = ensureResponse(item);
+  const photoFile = state.defectPhotos.get(item.id) || null;
+
+  let photoUrl = null;
+
+  if (
+    response.status === "defect" &&
+    photoFile
+  ) {
+    elements.submitButton.textContent =
+      "Uploading photo…";
+
+    photoUrl = await uploadDefectPhoto(
+      item.id,
+      photoFile
+    );
+  }
+
+  responses.push({
+    itemId: response.itemId,
+    section: response.section,
+    label: response.label,
+    status: response.status,
+    note: clean(response.note) || null,
+    photoUrl
+  });
+}
+
+      const defects = responses.filter(
+        response => response.status === "defect"
+      );
+
+      const payload = {
+        inspectionDate: elements.inspectionDate.value,
+        inspectionType: "preTrip",
+
+        driverUid: state.user.uid,
+        driverName:
+          state.user.displayName ||
+          state.user.email ||
+          "FarmVista User",
+        driverEmail: state.user.email || null,
+
+        truckId: truck.id,
+        truckLabel: equipmentLabel(truck),
+        truckUnitId: equipmentUnit(truck) || null,
+        truck: equipmentSnapshot(truck),
+
+        trailerHookedOn: hasTrailerHookedOn(),
+
+        trailerId:
+          elements.trailerSelect.value === "unlisted-trailer"
+            ? "unlisted-trailer"
+            : trailer?.id || null,
+        trailerLabel:
+          elements.trailerSelect.value === "unlisted-trailer"
+            ? "Unlisted Trailer"
+            : trailer
+              ? equipmentLabel(trailer)
+              : null,
+
+        trailerUnitId:
+          elements.trailerSelect.value === "unlisted-trailer"
+            ? null
+            : trailer
+              ? equipmentUnit(trailer) || null
+              : null,
+
+        trailer:
+          elements.trailerSelect.value === "unlisted-trailer"
+            ? {
+                id: "unlisted-trailer",
+                label: "Unlisted Trailer",
+                unitId: null,
+                year: null,
+                makeName: null,
+                modelName: null,
+                serial: null,
+                type: "trailer",
+                odometerMiles: null
+              }
+            : equipmentSnapshot(trailer),
+
+previousOdometerMiles:
+  selectedTruckPreviousOdometer(),
+
+odometerMiles:
+  enteredOdometerValue(),
+        responses,
+        itemCount: responses.length,
+        passCount: responses.filter(
+          response => response.status === "pass"
+        ).length,
+        defectCount: defects.length,
+        notApplicableCount: responses.filter(
+          response => response.status === "na"
+        ).length,
+
+        hasDefects: defects.length > 0,
+        overallStatus:
+          defects.length > 0
+            ? "defectsReported"
+            : "satisfactory",
+
+        remarks: clean(elements.remarks.value) || null,
+
+        driverCertified: true,
+        reviewStatus:
+          defects.length > 0
+            ? "reviewRequired"
+            : "notRequired",
+
+        submittedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      try {
+const savedInspection = await addDoc(
+  collection(db, INSPECTION_COLLECTION),
+  payload
+);
+
+const newOdometerMiles =
+  enteredOdometerValue();
+
+await updateDoc(
+  doc(db, EQUIPMENT_COLLECTION, truck.id),
+  {
+    odometerMiles: newOdometerMiles,
+
+    odometerUpdatedAt: serverTimestamp(),
+
+    odometerUpdatedByUid:
+      state.user.uid,
+
+    odometerUpdatedByName:
+      state.user.displayName ||
+      state.user.email ||
+      "FarmVista User",
+
+    lastPreTripInspectionId:
+      savedInspection.id,
+
+    updatedAt: serverTimestamp()
+  }
+);
+
+/* Keep the page's loaded truck record current too. */
+truck.odometerMiles = newOdometerMiles;
+
+console.info(
+  "[Logistics] Inspection saved:",
+  savedInspection.id
+);
+
+console.info(
+  "[Logistics] Equipment odometer updated:",
+  truck.id,
+  newOdometerMiles
+);
+
+showMessage(
+  defects.length
+    ? "Inspection submitted with defects reported. Returning to Home…"
+    : "Inspection submitted successfully. Returning to Home…",
+  "success"
+);
+
+setTimeout(() => {
+  window.location.href = "/index.html";
+}, 1000);
+      } catch (error) {
+        console.error(
+          "[Logistics] Inspection save failed:",
+          error
+        );
+
+        showMessage(
+          "The inspection could not be saved. Your entries are still on the screen.",
+          "error"
+        );
+      } finally {
+        state.saving = false;
+        elements.submitButton.disabled = false;
+        elements.submitButton.textContent = "Submit Inspection";
+      }
+    }
+
+    function resetForm() {
+state.responses.clear();
+
+state.defectPhotoUrls.forEach(url => {
+  URL.revokeObjectURL(url);
+});
+
+state.defectPhotos.clear();
+state.defectPhotoUrls.clear();
+
+      elements.truckSelect.value = "";
+      elements.trailerSelect.value = "";
+elements.odometer.value = "";
+
+elements.previousOdometerText.textContent =
+  "Select a truck to see its previous mileage.";
+
+elements.odometerWarning.hidden = true;
+elements.confirmOdometerJump.checked = false;
+
+elements.remarks.value = "";
+      elements.certify.checked = false;
+      elements.inspectionDate.value = todayLocal();
+      updateEquipmentComboButtons();
+      renderTruckComboList();
+      renderTrailerComboList();
+      renderChecklist();
+    }
+
+async function initializeUser() {
+  elements.driverName.value =
+    "Loading driver…";
+
+  try {
+
+    /*
+      fv-shell loads user-context.js globally.
+
+      This identity works whether the employee signed in
+      with email/password OR phone authentication.
+    */
+
+    const identity =
+      await window.FVUserContext
+        .currentUserIdentity();
+
+
+    if (
+      !identity ||
+      !identity.uid
+    ) {
+
+      throw new Error(
+        "FarmVista user identity was not available."
+      );
+
+    }
+
+
+    state.user =
+      identity;
+
+
+    elements.driverName.value =
+      identity.displayName;
+
+
+    console.log(
+      "[Logistics] Driver loaded:",
+      {
+        name:
+          identity.displayName,
+
+        uid:
+          identity.uid,
+
+        employeeId:
+          identity.employeeId,
+
+        email:
+          identity.email,
+
+        phone:
+          identity.phoneNumber
+      }
+    );
+
+
+    return identity;
+
+  }
+  catch (
+    error
+  ) {
+
+    console.error(
+      "[Logistics] Driver identity load failed:",
+      error
+    );
+
+
+    state.user =
+      null;
+
+
+    elements.driverName.value =
+      "Not signed in";
+
+
+    showMessage(
+      "Your FarmVista employee account could not be loaded. Refresh the page or sign in again.",
+      "error"
+    );
+
+
+    return null;
+
+  }
+}
+
+elements.checklist.addEventListener("click", event => {
+  const sectionToggle = event.target.closest(
+    "[data-section-toggle]"
+  );
+
+  if (sectionToggle) {
+    const sectionId =
+      sectionToggle.dataset.sectionToggle;
+
+    if (
+      state.openChecklistSections.has(sectionId)
+    ) {
+      state.openChecklistSections.delete(sectionId);
+    } else {
+      state.openChecklistSections.add(sectionId);
+    }
+
+    renderChecklist();
+    return;
+  }
+
+  const removePhotoButton = event.target.closest(
+    ".defect-photo-remove"
+  );
+
+  if (removePhotoButton) {
+    const itemId = removePhotoButton.dataset.itemId;
+    const oldUrl = state.defectPhotoUrls.get(itemId);
+
+    if (oldUrl) {
+      URL.revokeObjectURL(oldUrl);
+    }
+
+    state.defectPhotos.delete(itemId);
+    state.defectPhotoUrls.delete(itemId);
+
+    renderChecklist();
+    return;
+  }
+
+  const statusButton = event.target.closest(
+    ".status-button"
+  );
+
+  if (!statusButton) {
+    return;
+  }
+
+  setStatus(
+    statusButton.dataset.itemId,
+    statusButton.dataset.status
+  );
+});
+
+    elements.checklist.addEventListener("input", event => {
+      const noteField = event.target.closest(".defect-note");
+
+      if (!noteField) {
+        return;
+      }
+
+      const response = state.responses.get(
+        noteField.dataset.itemId
+      );
+
+      if (response) {
+        response.note = noteField.value;
+      }
+    });
+
+elements.checklist.addEventListener("change", event => {
+  const photoInput = event.target.closest(
+    ".defect-photo-input"
+  );
+
+  if (!photoInput) {
+    return;
+  }
+
+  const itemId = photoInput.dataset.itemId;
+  const file = photoInput.files?.[0] || null;
+
+  const oldUrl = state.defectPhotoUrls.get(itemId);
+
+  if (oldUrl) {
+    URL.revokeObjectURL(oldUrl);
+    state.defectPhotoUrls.delete(itemId);
+  }
+
+  if (file) {
+    state.defectPhotos.set(itemId, file);
+
+    state.defectPhotoUrls.set(
+      itemId,
+      URL.createObjectURL(file)
+    );
+  } else {
+    state.defectPhotos.delete(itemId);
+  }
+
+  renderChecklist();
+}); 
+    
+elements.truckComboButton.addEventListener(
+  "click",
+  event => {
+    event.stopPropagation();
+    openTruckCombo();
+  }
+);
+
+elements.trailerComboButton.addEventListener(
+  "click",
+  event => {
+    event.stopPropagation();
+    openTrailerCombo();
+  }
+);
+
+elements.truckComboPanel.addEventListener(
+  "click",
+  event => event.stopPropagation()
+);
+
+elements.trailerComboPanel.addEventListener(
+  "click",
+  event => event.stopPropagation()
+);
+
+elements.truckComboSearch.addEventListener(
+  "input",
+  event => renderTruckComboList(event.target.value)
+);
+
+elements.trailerComboSearch.addEventListener(
+  "input",
+  event => renderTrailerComboList(event.target.value)
+);
+
+elements.truckComboList.addEventListener(
+  "mousedown",
+  event => {
+    const row = event.target.closest(".combo-item");
+
+    if (!row?.dataset.equipmentId) {
+      return;
+    }
+
+    event.preventDefault();
+    chooseTruck(row.dataset.equipmentId);
+  }
+);
+
+elements.trailerComboList.addEventListener(
+  "mousedown",
+  event => {
+    const row = event.target.closest(".combo-item");
+
+    if (!row?.dataset.equipmentId) {
+      return;
+    }
+
+    event.preventDefault();
+    chooseTrailer(row.dataset.equipmentId);
+  }
+);
+
+document.addEventListener("click", closeEquipmentCombos);
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closeEquipmentCombos();
+  }
+});
+
+    elements.markAllGood.addEventListener(
+      "click",
+      markAllGood
+    );
+
+elements.clearChecklist.addEventListener(
+  "click",
+  clearChecklist
+);
+
+elements.odometer.addEventListener("input", () => {
+  const digits = elements.odometer.value.replace(/\D/g, "");
+
+  elements.odometer.value = digits
+    ? Number(digits).toLocaleString("en-US")
+    : "";
+
+  updateOdometerWarning();
+});
+
+elements.form.addEventListener(
+  "submit",
+  submitInspection
+);
+
+async function startPage() {
+  elements.inspectionDate.value = todayLocal();
+
+  renderChecklist();
+
+  await initializeUser();
+
+  if (state.user) {
+    await loadEquipment();
+  }
+}
+
+startPage().catch(error => {
+  console.error(
+    "[Logistics] Pre-trip page startup failed:",
+    error
+  );
+
+  elements.driverName.value = "Unable to load driver";
+
+  elements.truckSelect.innerHTML =
+    `<option value="">Unable to load trucks</option>`;
+
+  elements.trailerSelect.innerHTML =
+    `<option value="">Unable to load trailers</option>`;
+
+  showMessage(
+    "The pre-trip page could not finish loading. Refresh the page and try again.",
+    "error"
+  );
+});
+  </script>
+</body>
+</html>

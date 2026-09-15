@@ -1,0 +1,2480 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Aerial Application Jobs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <style>
+    :root{
+      --card-max:1200px;
+      --page-bottom-gap:72px;
+      --accent:#2F6C3C;
+      --soft-green:rgba(47,108,60,.10);
+    }
+
+    body{background:var(--app-bg,var(--surface));}
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+      box-sizing:border-box;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+    }
+
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      background:linear-gradient(90deg,rgba(47,108,60,.12),transparent);
+      border-bottom:1px solid var(--border);
+    }
+
+    .hero-head .icon{
+      width:26px;
+      height:26px;
+      display:grid;
+      place-items:center;
+      font-size:24px;
+      color:var(--accent);
+    }
+
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+
+    .muted{
+      color:var(--muted,#67706B);
+      margin:.25rem 0 0;
+      line-height:1.35;
+    }
+
+    .body{
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .toolbar-left{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:120px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-weight:800;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      color:var(--text) !important;
+      background:var(--card-surface,var(--surface));
+      font-size:.9rem;
+      gap:6px;
+    }
+
+    .btn-quiet{min-width:auto;padding-inline:10px;}
+
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff !important;
+    }
+
+    .btn-small{
+      min-width:auto;
+      padding:8px 12px;
+      font-size:.84rem;
+    }
+
+    .btn-danger{
+      min-width:auto;
+      border-color:rgba(185,28,28,.20);
+      color:#B91C1C !important;
+      background:rgba(185,28,28,.06);
+    }
+
+    .btn[disabled]{
+      opacity:.55;
+      cursor:default;
+    }
+
+    .page-header-meta{
+      font-size:.9rem;
+      opacity:.85;
+      font-weight:750;
+    }
+
+    .src-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(59,126,70,.22);
+      background:rgba(59,126,70,.08);
+      font-size:.78rem;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--text);
+      white-space:nowrap;
+      opacity:.9;
+    }
+
+    .overview{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .overview-card{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:linear-gradient(135deg,rgba(47,108,60,.06),var(--card-surface,var(--surface)));
+      padding:12px 13px;
+      min-width:0;
+    }
+
+    .overview-label{
+      font-size:.72rem;
+      text-transform:uppercase;
+      letter-spacing:.10em;
+      opacity:.68;
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .overview-value{
+      margin-top:3px;
+      font-size:1.38rem;
+      line-height:1.05;
+      font-weight:950;
+    }
+
+    .overview-note{
+      margin-top:3px;
+      font-size:.78rem;
+      opacity:.72;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .filters{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:flex-end;
+      margin-top:2px;
+    }
+
+    .filter-field{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:150px;
+      flex:1 1 160px;
+      font-size:.8rem;
+    }
+
+    .filter-label{
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.78;
+      font-weight:850;
+    }
+
+    .filter-input,
+    .filter-select{
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:6px 10px;
+      font-size:.9rem;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      min-height:32px;
+      width:100%;
+      box-sizing:border-box;
+    }
+
+    .filter-input::placeholder{color:var(--muted,#9CA3AF);}
+
+    .report-list{
+      display:grid;
+      gap:10px;
+      margin-top:4px;
+    }
+
+    .wo-empty{
+      padding:14px 16px;
+      border-radius:12px;
+      border:1px dashed var(--border);
+      background:var(--card-surface,var(--surface));
+      font-size:.95rem;
+      opacity:.9;
+      white-space:pre-wrap;
+      line-height:1.35;
+    }
+
+    .farm-group{
+      border:1px solid var(--border);
+      border-radius:15px;
+      background:var(--card-surface,var(--surface));
+      box-shadow:var(--shadow-soft,var(--shadow));
+      overflow:hidden;
+    }
+
+    .farm-head,
+    .crop-head,
+    .job-head{
+      width:100%;
+      border:0;
+      background:transparent;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      text-align:left;
+      cursor:pointer;
+      font:inherit;
+      box-sizing:border-box;
+    }
+
+    .farm-head{
+      padding:12px 14px;
+      background:linear-gradient(90deg,rgba(47,108,60,.10),transparent);
+    }
+
+    .crop-head{
+      padding:10px 12px;
+      border-top:1px solid color-mix(in srgb,var(--border) 78%,transparent);
+      background:color-mix(in srgb,var(--surface) 92%,var(--border) 8%);
+    }
+
+    .job-head{padding:10px 12px;}
+
+    .chev{
+      width:18px;
+      flex:0 0 18px;
+      display:inline-grid;
+      place-items:center;
+      font-size:20px;
+      line-height:1;
+      opacity:.52;
+      transform:rotate(0deg);
+      transition:transform .15s ease,opacity .15s ease;
+    }
+
+    .chev.open{
+      transform:rotate(90deg);
+      opacity:.86;
+    }
+
+    .chev.small{
+      font-size:18px;
+      width:16px;
+      flex-basis:16px;
+    }
+
+    .main-text{
+      min-width:0;
+      flex:1 1 auto;
+      display:grid;
+      gap:2px;
+    }
+
+    .main-title{
+      font-weight:925;
+      line-height:1.24;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .main-sub{
+      font-size:.84rem;
+      opacity:.72;
+      line-height:1.25;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .right-metrics{
+      flex:0 0 auto;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:5px;
+      max-width:48%;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      border-radius:999px;
+      padding:2px 8px;
+      background:color-mix(in srgb,var(--surface) 65%,var(--border) 35%);
+      font-size:.78rem;
+      font-weight:800;
+      white-space:nowrap;
+      line-height:1.45;
+    }
+
+    .pill.open-status{
+      background:rgba(47,108,60,.12);
+      border:1px solid rgba(47,108,60,.16);
+    }
+
+    .pill.done-status{
+      background:rgba(107,114,128,.12);
+      border:1px solid rgba(107,114,128,.16);
+    }
+
+    .crop-list{
+      display:none;
+      border-top:1px solid color-mix(in srgb,var(--border) 78%,transparent);
+    }
+
+    .crop-group:first-child .crop-head{border-top:0;}
+
+    .job-list{
+      display:none;
+      padding:8px 10px 10px;
+      background:color-mix(in srgb,var(--surface) 97%,var(--border) 3%);
+      gap:7px;
+    }
+
+    .job-card{
+      border:1px solid var(--border);
+      border-radius:13px;
+      background:var(--surface);
+      overflow:hidden;
+    }
+
+    .job-detail{
+      display:none;
+      padding:12px;
+      border-top:1px solid color-mix(in srgb,var(--border) 78%,transparent);
+      background:color-mix(in srgb,var(--surface) 93%,var(--border) 7%);
+    }
+
+    .detail-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px 14px;
+      font-size:.9rem;
+    }
+
+    .detail-item{
+      min-width:0;
+      display:grid;
+      gap:2px;
+    }
+
+    .detail-label,
+    .block-label{
+      font-size:.72rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.66;
+      font-weight:950;
+    }
+
+    .detail-value{
+      font-weight:750;
+      line-height:1.25;
+      word-break:break-word;
+    }
+
+    .detail-value small{
+      opacity:.72;
+      font-weight:650;
+    }
+
+    .fields-block{
+      margin-top:12px;
+      padding-top:10px;
+      border-top:1px dashed color-mix(in srgb,var(--border) 70%,transparent);
+    }
+
+    .fields-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:7px;
+      margin-top:7px;
+    }
+
+    .field-chip{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:8px 10px;
+      background:linear-gradient(135deg,rgba(59,126,70,.06),transparent);
+      display:grid;
+      gap:4px;
+      min-width:0;
+    }
+
+    .field-name{
+      font-weight:850;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .field-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:5px;
+      font-size:.8rem;
+      opacity:.9;
+    }
+
+    .mini{
+      display:inline-flex;
+      gap:5px;
+      align-items:baseline;
+      padding:1px 7px;
+      border-radius:999px;
+      background:color-mix(in srgb,var(--surface) 65%,var(--border) 35%);
+      max-width:100%;
+    }
+
+    .mini .k{
+      font-size:.68rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      opacity:.85;
+      font-weight:900;
+    }
+
+    .mini .v{
+      font-weight:800;
+      font-size:.8rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:25ch;
+    }
+
+    .notes-block{
+      margin-top:12px;
+      padding-top:10px;
+      border-top:1px dashed color-mix(in srgb,var(--border) 70%,transparent);
+    }
+
+    .notes-body{
+      margin-top:4px;
+      white-space:pre-wrap;
+      font-size:.9rem;
+      line-height:1.35;
+    }
+
+    .job-actions{
+      margin-top:12px;
+      padding-top:10px;
+      border-top:1px solid color-mix(in srgb,var(--border) 78%,transparent);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .action-left,
+    .action-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .empty-small{
+      padding:12px;
+      opacity:.76;
+      font-size:.9rem;
+    }
+
+    #fv-print-frame{
+      position:fixed;
+      right:0;
+      bottom:0;
+      width:0;
+      height:0;
+      border:0;
+      visibility:hidden;
+    }
+
+    @media(max-width:760px){
+      .overview{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .right-metrics{max-width:52%;}
+      .fields-grid{grid-template-columns:1fr;}
+    }
+
+    @media(max-width:640px){
+      .hero-head{grid-template-columns:30px 1fr;padding:13px 14px;}
+      .body{padding:14px;}
+      .farm-head,
+      .crop-head,
+      .job-head{align-items:flex-start;}
+      .right-metrics{display:none;}
+      .detail-grid{grid-template-columns:1fr;}
+      .job-actions{align-items:flex-start;flex-direction:column;}
+      .action-right{align-self:flex-end;}
+    }
+
+    @media(max-width:420px){
+      .overview{grid-template-columns:1fr 1fr;}
+      .overview-card{padding:10px;}
+      .overview-value{font-size:1.16rem;}
+    }
+  </style>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection, getDocs,
+      doc, getDoc,
+      updateDoc, deleteDoc
+    } from '/js/core/firebase/firebase-init.js';
+
+    import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+    const CONFIG = {
+      JOB_COLLECTIONS: [
+        'aerial_jobs',
+        'aerialJobs',
+        'aerial_applications',
+        'aerialApplications',
+        'aerialApplicationJobs',
+        'aerial_application_jobs',
+        'cropAerialJobs'
+      ],
+      FARMS_COLLECTION: 'farms',
+      COMPANY_DOC_PATH: ['company','main']
+    };
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    const STATE = {
+      items: [],
+      filteredItems: [],
+      selectedId: null,
+      db: null,
+      company: null,
+      farmsById: new Map(),
+      sourceCollection: '',
+      openFarmKeys: new Set(),
+      openCropKeys: new Set(),
+      openJobIds: new Set()
+    };
+
+    function normalizeStatus(s){
+      return String(s || '').trim().replace(/\.+$/,'').toLowerCase();
+    }
+
+    function coerceStr(v){
+      if(v == null) return '';
+      return String(v).trim();
+    }
+
+    function toDateMaybe(v){
+      if(!v) return null;
+      try{
+        if(typeof v === 'string'){
+          const d = new Date(v);
+          return isNaN(d.getTime()) ? null : d;
+        }
+        if(typeof v === 'number'){
+          const d = new Date(v);
+          return isNaN(d.getTime()) ? null : d;
+        }
+        if(v && typeof v === 'object'){
+          if(v.__time__) return new Date(v.__time__);
+          if(v.toDate) return v.toDate();
+          if(v.seconds) return new Date(v.seconds * 1000);
+        }
+      }catch(_){}
+      return null;
+    }
+
+    function formatDate(d){
+      if(!d) return '';
+      try{
+        return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+      }catch(_){
+        return '';
+      }
+    }
+
+    function formatDateTime(d){
+      if(!d) return '';
+      try{
+        return d.toLocaleString();
+      }catch(_){
+        return '';
+      }
+    }
+
+    function formatNum(n, digits=0){
+      const x = Number(n);
+      if(!Number.isFinite(x)) return '';
+      return x.toLocaleString(undefined,{
+        maximumFractionDigits:digits,
+        minimumFractionDigits:digits
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[m]));
+    }
+
+    function primaryFarmIdFromJob(d){
+      const direct = coerceStr(d?.farmId || d?.farmIdRef || '');
+      if(direct) return direct;
+
+      const maybeFarmField = coerceStr(d?.farm || '');
+      if(maybeFarmField && STATE.farmsById.has(maybeFarmField)) return maybeFarmField;
+
+      const fields = Array.isArray(d?.fields) ? d.fields : [];
+      const fromFields = coerceStr(fields?.[0]?.farmId || fields?.[0]?.farmIdRef || '');
+      return fromFields || '';
+    }
+
+    function farmNameFromId(farmId){
+      if(!farmId) return '';
+      return STATE.farmsById.get(farmId) || '';
+    }
+
+    function farmNameFromJob(d){
+      const farmId = primaryFarmIdFromJob(d);
+      return coerceStr(d?.farmName || d?.farm) || farmNameFromId(farmId) || farmId || 'Unknown Farm';
+    }
+
+    function farmKeyFromJob(d){
+      const farmId = primaryFarmIdFromJob(d);
+      return farmId || farmNameFromJob(d) || 'unknown-farm';
+    }
+
+    function jobReleaseDate(d){
+      const rd = coerceStr(d?.releaseDate);
+      if(rd){
+        const dd = toDateMaybe(rd);
+        if(dd) return dd;
+      }
+      return d?._createdAtDate || null;
+    }
+
+    function cropYearFromJob(d){
+      const y = d?.year ?? d?.cropYear;
+      const n = Number(y);
+      return Number.isFinite(n) ? n : '';
+    }
+
+    function cropFromJob(d){
+      return coerceStr(d?.crop) || 'Unassigned Crop';
+    }
+
+    function fieldNameFromField(f){
+      return coerceStr(f?.field || f?.fieldName || f?.name || f?.id || f?.fieldId || '');
+    }
+
+    function fieldSummary(d){
+      const fields = Array.isArray(d?.fields) ? d.fields : [];
+      if(!fields.length) return 'No fields selected';
+
+      const first = fieldNameFromField(fields[0]);
+      if(fields.length === 1) return first || '1 field';
+      return `${first || 'Field'} + ${fields.length - 1} more`;
+    }
+
+    function sumTillable(fields){
+      let s = 0;
+      (fields || []).forEach(f=>{
+        const a = Number(f?.tillableAcres);
+        if(Number.isFinite(a)) s += a;
+      });
+      return s;
+    }
+
+    function sumReleaseAcres(items){
+      return (items || []).reduce((s,it)=>{
+        const a = Number(it?.data?.releaseAcres);
+        return s + (Number.isFinite(a) ? a : 0);
+      },0);
+    }
+
+    function sumTrialAcres(d){
+      const tl = d?.trialLink;
+      const assigns = Array.isArray(tl?.assignments) ? tl.assignments : [];
+      let s = 0;
+      assigns.forEach(a=>{
+        const x = Number(a?.trialAcres);
+        if(Number.isFinite(x)) s += x;
+      });
+      return s;
+    }
+
+    function jobTitleLine(d){
+      const jobNum = d?.jobNumber != null ? String(d.jobNumber) : '';
+      const crop = cropFromJob(d);
+      const year = cropYearFromJob(d);
+      const rd = jobReleaseDate(d);
+      const rdStr = rd ? formatDate(rd) : '';
+
+      const bits = [];
+      if(jobNum) bits.push(`#${jobNum}`);
+      if(crop && crop !== 'Unassigned Crop') bits.push(crop);
+      if(year) bits.push(String(year));
+      if(rdStr) bits.push(rdStr);
+
+      return bits.join(' · ') || 'Aerial Application Job';
+    }
+
+    function statusClass(status){
+      const s = normalizeStatus(status);
+      if(s === 'open') return 'open-status';
+      if(s === 'completed' || s === 'complete') return 'done-status';
+      return '';
+    }
+
+    function getWorkingItems(){
+      return Array.isArray(STATE.filteredItems) ? STATE.filteredItems : STATE.items;
+    }
+
+    function sortJobs(a,b){
+      const ta = a.data._createdAtDate ? a.data._createdAtDate.getTime() : 0;
+      const tb = b.data._createdAtDate ? b.data._createdAtDate.getTime() : 0;
+      if(tb !== ta) return tb - ta;
+
+      const ja = Number(a.data.jobNumber);
+      const jb = Number(b.data.jobNumber);
+      if(Number.isFinite(jb) && Number.isFinite(ja) && jb !== ja) return jb - ja;
+
+      return (a.id || '').localeCompare(b.id || '');
+    }
+
+    function updateSourcePill(){
+      const el = document.getElementById('sourcePill');
+      if(!el) return;
+
+      if(STATE.sourceCollection){
+        el.textContent = `Source: ${STATE.sourceCollection}`;
+        el.style.display = 'inline-flex';
+      }else{
+        el.style.display = 'none';
+        el.textContent = '';
+      }
+    }
+
+    function renderOverview(items){
+      const el = document.getElementById('overview');
+      if(!el) return;
+
+      const openItems = items.filter(it => normalizeStatus(it.data.status) === 'open');
+      const completedItems = items.filter(it => {
+        const s = normalizeStatus(it.data.status);
+        return s === 'completed' || s === 'complete';
+      });
+
+      const openAcres = sumReleaseAcres(openItems);
+      const completedAcres = sumReleaseAcres(completedItems);
+      const totalAcres = sumReleaseAcres(items);
+
+      const farms = new Set();
+      const crops = new Set();
+
+      items.forEach(it=>{
+        farms.add(farmKeyFromJob(it.data));
+        crops.add(cropFromJob(it.data));
+      });
+
+      const pct = items.length ? Math.round((completedItems.length / items.length) * 100) : 0;
+
+      el.innerHTML = `
+        <div class="overview-card">
+          <div class="overview-label">Open Jobs</div>
+          <div class="overview-value">${escapeHtml(formatNum(openItems.length,0))}</div>
+          <div class="overview-note">${escapeHtml(formatNum(openAcres,0))} open acres</div>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-label">Completed Jobs</div>
+          <div class="overview-value">${escapeHtml(formatNum(completedItems.length,0))}</div>
+          <div class="overview-note">${escapeHtml(formatNum(completedAcres,0))} completed acres</div>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-label">Total Jobs</div>
+          <div class="overview-value">${escapeHtml(formatNum(items.length,0))}</div>
+          <div class="overview-note">${escapeHtml(formatNum(totalAcres,0))} total acres</div>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-label">Completion</div>
+          <div class="overview-value">${escapeHtml(formatNum(pct,0))}%</div>
+          <div class="overview-note">${escapeHtml(formatNum(completedItems.length,0))} of ${escapeHtml(formatNum(items.length,0))} jobs done</div>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-label">Farms</div>
+          <div class="overview-value">${escapeHtml(formatNum(farms.size,0))}</div>
+          <div class="overview-note">Current filtered set</div>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-label">Crops</div>
+          <div class="overview-value">${escapeHtml(formatNum(crops.size,0))}</div>
+          <div class="overview-note">Current filtered set</div>
+        </div>
+      `;
+    }
+
+    function groupItems(items){
+      const farmMap = new Map();
+
+      items.forEach(item=>{
+        const d = item.data;
+        const farmKey = farmKeyFromJob(d);
+        const farmName = farmNameFromJob(d);
+        const crop = cropFromJob(d);
+
+        if(!farmMap.has(farmKey)){
+          farmMap.set(farmKey,{
+            farmKey,
+            farmName,
+            items:[],
+            crops:new Map()
+          });
+        }
+
+        const farm = farmMap.get(farmKey);
+        farm.items.push(item);
+
+        if(!farm.crops.has(crop)){
+          farm.crops.set(crop,{
+            cropName:crop,
+            items:[]
+          });
+        }
+
+        farm.crops.get(crop).items.push(item);
+      });
+
+      const farms = Array.from(farmMap.values()).sort((a,b)=>{
+        return a.farmName.localeCompare(b.farmName);
+      });
+
+      farms.forEach(farm=>{
+        farm.items.sort(sortJobs);
+        farm.crops = new Map(
+          Array.from(farm.crops.entries()).sort((a,b)=>a[0].localeCompare(b[0]))
+        );
+        farm.crops.forEach(crop=>crop.items.sort(sortJobs));
+      });
+
+      return farms;
+    }
+
+    function renderList(){
+      const listEl = document.getElementById('reportList');
+      const emptyEl = $('.wo-empty');
+      const countEl = document.getElementById('brCount');
+
+      if(!listEl) return;
+
+      listEl.innerHTML = '';
+
+      const items = getWorkingItems();
+      const openItems = items.filter(it => normalizeStatus(it.data.status) === 'open');
+      const completedItems = items.filter(it=>{
+        const s = normalizeStatus(it.data.status);
+        return s === 'completed' || s === 'complete';
+      });
+      const openAcres = sumReleaseAcres(openItems);
+      const completedAcres = sumReleaseAcres(completedItems);
+      const pct = items.length ? Math.round((completedItems.length / items.length) * 100) : 0;
+
+      if(countEl){
+        countEl.textContent = `${openItems.length} open · ${completedItems.length} completed · ${items.length} total · ${pct}% done`;
+      }
+
+      renderOverview(items);
+
+      if(!items.length){
+        emptyEl.style.display = 'block';
+
+        const tried = CONFIG.JOB_COLLECTIONS.map(x=>`• ${x}`).join('\n');
+        emptyEl.textContent =
+`No aerial jobs found.
+
+Tried collections:
+${tried}
+
+Most likely this report is looking at the wrong Firestore collection name, or no records match the filters.`;
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+
+      const farms = groupItems(items);
+
+      farms.forEach(farm=>{
+        const farmOpen = farm.items.filter(it => normalizeStatus(it.data.status) === 'open');
+        const farmOpenAcres = sumReleaseAcres(farmOpen);
+        const farmTotalAcres = sumReleaseAcres(farm.items);
+        const farmIsOpen = STATE.openFarmKeys.has(farm.farmKey);
+
+        const farmEl = document.createElement('section');
+        farmEl.className = 'farm-group';
+
+        farmEl.innerHTML = `
+          <button type="button" class="farm-head">
+            <span class="chev ${farmIsOpen ? 'open' : ''}">›</span>
+            <span class="main-text">
+              <span class="main-title">${escapeHtml(farm.farmName)}</span>
+              <span class="main-sub">${escapeHtml(formatNum(farmOpen.length,0))} open · ${escapeHtml(formatNum(farmOpenAcres,0))} open ac · ${escapeHtml(formatNum(farm.items.length,0))} total jobs</span>
+            </span>
+            <span class="right-metrics">
+              <span class="pill">${escapeHtml(formatNum(farmTotalAcres,0))} ac</span>
+              <span class="pill">${escapeHtml(formatNum(farm.crops.size,0))} crops</span>
+            </span>
+          </button>
+
+          <div class="crop-list" style="display:${farmIsOpen ? 'block' : 'none'};"></div>
+        `;
+
+        $('.farm-head', farmEl).addEventListener('click', ()=>{
+          if(STATE.openFarmKeys.has(farm.farmKey)) STATE.openFarmKeys.delete(farm.farmKey);
+          else STATE.openFarmKeys.add(farm.farmKey);
+          renderList();
+        });
+
+        const cropList = $('.crop-list', farmEl);
+
+        farm.crops.forEach(crop=>{
+          const cropKey = `${farm.farmKey}||${crop.cropName}`;
+          const cropIsOpen = STATE.openCropKeys.has(cropKey);
+          const cropOpen = crop.items.filter(it => normalizeStatus(it.data.status) === 'open');
+          const cropOpenAcres = sumReleaseAcres(cropOpen);
+          const cropTotalAcres = sumReleaseAcres(crop.items);
+
+          const cropEl = document.createElement('section');
+          cropEl.className = 'crop-group';
+
+          cropEl.innerHTML = `
+            <button type="button" class="crop-head">
+              <span class="chev small ${cropIsOpen ? 'open' : ''}">›</span>
+              <span class="main-text">
+                <span class="main-title">${escapeHtml(crop.cropName)}</span>
+                <span class="main-sub">${escapeHtml(formatNum(cropOpen.length,0))} open · ${escapeHtml(formatNum(cropOpenAcres,0))} open ac · ${escapeHtml(formatNum(crop.items.length,0))} jobs</span>
+              </span>
+              <span class="right-metrics">
+                <span class="pill">${escapeHtml(formatNum(cropTotalAcres,0))} ac</span>
+              </span>
+            </button>
+
+            <div class="job-list" style="display:${cropIsOpen ? 'grid' : 'none'};"></div>
+          `;
+
+          $('.crop-head', cropEl).addEventListener('click', ()=>{
+            if(STATE.openCropKeys.has(cropKey)) STATE.openCropKeys.delete(cropKey);
+            else STATE.openCropKeys.add(cropKey);
+            renderList();
+          });
+
+          const jobList = $('.job-list', cropEl);
+
+          crop.items.forEach(item=>{
+            jobList.appendChild(buildJobCard(item, farm.farmName));
+          });
+
+          cropList.appendChild(cropEl);
+        });
+
+        listEl.appendChild(farmEl);
+      });
+    }
+
+    function buildJobCard(item, farmName){
+      const d = item.data;
+      const isOpen = STATE.openJobIds.has(item.id);
+
+      const title = jobTitleLine(d);
+      const status = coerceStr(d.status);
+      const releaseAcres = Number(d.releaseAcres);
+      const releaseDate = jobReleaseDate(d);
+      const fields = Array.isArray(d.fields) ? d.fields : [];
+
+      const jobEl = document.createElement('article');
+      jobEl.className = 'job-card';
+
+      jobEl.innerHTML = `
+        <button type="button" class="job-head">
+          <span class="chev small ${isOpen ? 'open' : ''}">›</span>
+          <span class="main-text">
+            <span class="main-title">${escapeHtml(title)}</span>
+            <span class="main-sub">${escapeHtml(fieldSummary(d))}</span>
+          </span>
+          <span class="right-metrics">
+            ${status ? `<span class="pill ${statusClass(status)}">${escapeHtml(status)}</span>` : ''}
+            ${Number.isFinite(releaseAcres) ? `<span class="pill">${escapeHtml(formatNum(releaseAcres,0))} ac</span>` : ''}
+            ${releaseDate ? `<span class="pill">${escapeHtml(formatDate(releaseDate))}</span>` : ''}
+            <span class="pill">${escapeHtml(formatNum(fields.length,0))} fields</span>
+          </span>
+        </button>
+
+        <div class="job-detail" style="display:${isOpen ? 'block' : 'none'};">
+          ${buildJobDetailHtml(item, farmName)}
+        </div>
+      `;
+
+      $('.job-head', jobEl).addEventListener('click', ()=>{
+        if(STATE.openJobIds.has(item.id)) STATE.openJobIds.delete(item.id);
+        else STATE.openJobIds.add(item.id);
+        renderList();
+      });
+
+      return jobEl;
+    }
+
+    function buildJobDetailHtml(item, farmName){
+      const d = item.data;
+
+      const jobNum = d?.jobNumber != null ? String(d.jobNumber) : '';
+      const crop = cropFromJob(d);
+      const year = cropYearFromJob(d);
+      const status = coerceStr(d.status);
+      const releaseDate = jobReleaseDate(d);
+      const releaseDateStr = releaseDate ? formatDate(releaseDate) : '';
+      const releaseAcres = Number(d.releaseAcres);
+      const totalTill = Number(d.totalTillableAcres);
+      const tillableSum = sumTillable(Array.isArray(d.fields) ? d.fields : []);
+
+      const submittedBy = coerceStr(d.submittedBy || '');
+      const submittedByEmail = coerceStr(d.submittedByEmail || '');
+
+      const createdAt = d._createdAtDate || null;
+      const notes = coerceStr(d.notes || '');
+
+      const trialEnabled = !!d?.trialLink?.enabled;
+      const trialId = coerceStr(d?.trialLink?.trialId || '');
+      const trialAssignedCount = Array.isArray(d?.trialLink?.assignFieldIds) ? d.trialLink.assignFieldIds.length : 0;
+      const trialAcresSum = sumTrialAcres(d);
+
+      const isOpenStatus = normalizeStatus(status) === 'open';
+
+      return `
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Job</div>
+            <div class="detail-value">${escapeHtml(jobNum ? `#${jobNum}` : '—')}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Farm</div>
+            <div class="detail-value">${escapeHtml(farmName || farmNameFromJob(d) || '—')}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Crop</div>
+            <div class="detail-value">${escapeHtml(crop || '—')}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Year</div>
+            <div class="detail-value">${escapeHtml(year ? String(year) : '—')}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Release Date</div>
+            <div class="detail-value">${escapeHtml(releaseDateStr || '—')}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">${escapeHtml(status || '—')}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Release Acres</div>
+            <div class="detail-value">${Number.isFinite(releaseAcres) ? escapeHtml(formatNum(releaseAcres,0)) + ' ac' : '—'}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Total Tillable</div>
+            <div class="detail-value">
+              ${Number.isFinite(totalTill) ? escapeHtml(formatNum(totalTill,2)) + ' ac' : escapeHtml(formatNum(tillableSum,2)) + ' ac'}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Trial Link</div>
+            <div class="detail-value">
+              ${trialEnabled ? `Enabled${trialId ? ' · ' + escapeHtml(trialId) : ''} · ${trialAssignedCount} field(s)` : 'No'}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Trial Acres</div>
+            <div class="detail-value">${trialEnabled ? escapeHtml(formatNum(trialAcresSum,0)) + ' ac' : '—'}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Submitted By</div>
+            <div class="detail-value">
+              ${escapeHtml(submittedBy || 'Unknown')}
+              ${submittedByEmail ? `<br><small>${escapeHtml(submittedByEmail)}</small>` : ''}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Created</div>
+            <div class="detail-value">${escapeHtml(createdAt ? formatDateTime(createdAt) : 'Unknown')}</div>
+          </div>
+        </div>
+
+        ${buildFieldsHtml(d, farmName)}
+
+        <div class="notes-block">
+          <div class="block-label">Notes</div>
+          <div class="notes-body">${escapeHtml(notes || 'No notes recorded for this job.')}</div>
+        </div>
+
+        <div class="job-actions">
+          <div class="action-left">
+            <button type="button" class="btn btn-primary btn-small btn-complete" ${isOpenStatus ? '' : 'disabled'}>
+              ${isOpenStatus ? 'Mark completed' : `Status: ${escapeHtml(status || 'unknown')}`}
+            </button>
+          </div>
+
+          <div class="action-right">
+            <button type="button" class="btn btn-danger btn-small btn-delete">Delete</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindActionButtons(){
+      document.querySelectorAll('.btn-complete').forEach(btn=>{
+        btn.addEventListener('click', async ev=>{
+          ev.stopPropagation();
+          const card = ev.target.closest('.job-card');
+          const id = findJobIdFromRenderedCard(card);
+          if(id) await handleMarkCompleted(id);
+        });
+      });
+
+      document.querySelectorAll('.btn-delete').forEach(btn=>{
+        btn.addEventListener('click', async ev=>{
+          ev.stopPropagation();
+          const card = ev.target.closest('.job-card');
+          const id = findJobIdFromRenderedCard(card);
+          if(id) await handleDeleteJob(id);
+        });
+      });
+    }
+
+    function findJobIdFromRenderedCard(card){
+      if(!card) return '';
+      const title = $('.main-title', card)?.textContent || '';
+      const items = getWorkingItems();
+
+      const openIds = Array.from(STATE.openJobIds);
+      for(const id of openIds){
+        const it = items.find(x=>x.id === id);
+        if(it && title.includes(jobTitleLine(it.data).split(' · ')[0])) return id;
+      }
+
+      return '';
+    }
+
+    function buildFieldsHtml(d, resolvedFarmName){
+      const fields = Array.isArray(d?.fields) ? d.fields : [];
+      const tl = d?.trialLink || {};
+      const assigns = Array.isArray(tl?.assignments) ? tl.assignments : [];
+      const trialByField = new Map();
+
+      assigns.forEach(a=>{
+        const id = coerceStr(a?.fieldId);
+        const acres = Number(a?.trialAcres);
+        if(id) trialByField.set(id, Number.isFinite(acres) ? acres : null);
+      });
+
+      const chips = fields.map(f=>{
+        const fieldName = fieldNameFromField(f);
+        const fieldId = coerceStr(f?.fieldId || f?.id || '');
+        const farmId = coerceStr(f?.farmId || '');
+        const farmName = coerceStr(f?.farm || f?.farmName) || resolvedFarmName || farmNameFromId(farmId);
+        const till = Number(f?.tillableAcres);
+        const trialAc = trialByField.has(fieldId) ? trialByField.get(fieldId) : null;
+
+        return `
+          <div class="field-chip">
+            <div class="field-name">${escapeHtml(fieldName || (fieldId ? `Field ${fieldId}` : 'Field'))}</div>
+            <div class="field-meta">
+              ${farmName ? `<span class="mini"><span class="k">Farm</span><span class="v">${escapeHtml(farmName)}</span></span>` : ''}
+              ${Number.isFinite(till) ? `<span class="mini"><span class="k">Tillable</span><span class="v">${escapeHtml(formatNum(till,2))} ac</span></span>` : ''}
+              ${trialAc != null ? `<span class="mini"><span class="k">Trial</span><span class="v">${escapeHtml(formatNum(trialAc,0))} ac</span></span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="fields-block">
+          <div class="block-label">Fields</div>
+          <div class="fields-grid">
+            ${chips || `<div class="empty-small">No fields selected for this job.</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    async function tryLoadJobsFromCollection(colName){
+      const ref = collection(STATE.db, colName);
+      const snap = await getDocs(ref);
+
+      return snap.docs.map(docSnap=>{
+        const data = docSnap.data() || {};
+
+        let createdIso = null;
+
+        if(data.timestampISO){
+          createdIso = data.timestampISO;
+        }else if(data.createdAt){
+          const dd = toDateMaybe(data.createdAt);
+          createdIso = dd ? dd.toISOString() : null;
+        }else if(data.t != null){
+          const dd = toDateMaybe(data.t);
+          createdIso = dd ? dd.toISOString() : null;
+        }
+
+        const createdDate = createdIso ? new Date(createdIso) : (toDateMaybe(data.createdAt) || null);
+
+        return {
+          id: docSnap.id,
+          _col: colName,
+          data: {
+            ...data,
+            _createdAtDate: createdDate
+          }
+        };
+      });
+    }
+
+    async function loadAerialJobs(){
+      const emptyEl = $('.wo-empty');
+
+      if(emptyEl){
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Loading aerial application jobs…';
+      }
+
+      const results = [];
+      const errors = [];
+
+      for(const colName of CONFIG.JOB_COLLECTIONS){
+        try{
+          const items = await tryLoadJobsFromCollection(colName);
+          results.push({col:colName,count:items.length,items});
+          console.log('[aerial-report] probe', colName, '=>', items.length);
+        }catch(err){
+          errors.push({col:colName,err});
+          console.warn('[aerial-report] probe failed', colName, err);
+        }
+      }
+
+      if(!results.length){
+        console.error('Error loading aerial jobs. All collection probes failed:', errors[0]?.err || errors);
+        STATE.items = [];
+        STATE.filteredItems = [];
+        STATE.sourceCollection = '';
+        updateSourcePill();
+        return;
+      }
+
+      results.sort((a,b)=>b.count - a.count);
+
+      const chosen = results[0] || null;
+
+      STATE.items = chosen && Array.isArray(chosen.items) ? chosen.items : [];
+      STATE.filteredItems = [...STATE.items];
+      STATE.sourceCollection = chosen ? chosen.col : '';
+
+      updateSourcePill();
+    }
+
+    async function loadFarmsMap(){
+      STATE.farmsById = new Map();
+
+      try{
+        const snap = await getDocs(collection(STATE.db, CONFIG.FARMS_COLLECTION));
+        snap.forEach(ds=>{
+          const d = ds.data() || {};
+          const name = coerceStr(d.name || d.farmName || '');
+          if(name) STATE.farmsById.set(ds.id, name);
+        });
+      }catch(e){
+        console.warn('[aerial-report] failed to load farms', e);
+      }
+    }
+
+    async function applyFilters(){
+      const farmSel = $('#filterFarm');
+      const cropSel = $('#filterCrop');
+      const statusSel = $('#filterStatus');
+      const yearSel = $('#filterYear');
+      const searchEl = $('#filterSearch');
+
+      const farmFilter = farmSel?.value || 'all';
+      const cropFilter = (cropSel?.value || 'all').toLowerCase();
+      const statusFilter = (statusSel?.value || 'all').toLowerCase();
+      const yearFilter = yearSel?.value || 'all';
+      const q = (searchEl?.value || '').trim().toLowerCase();
+
+      const filtered = STATE.items.filter(it=>{
+        const d = it.data;
+
+        if(farmFilter !== 'all'){
+          const fid = farmKeyFromJob(d);
+          if(fid !== farmFilter) return false;
+        }
+
+        if(cropFilter !== 'all'){
+          const c = cropFromJob(d).toLowerCase();
+          if(c !== cropFilter) return false;
+        }
+
+        if(statusFilter !== 'all'){
+          const s = normalizeStatus(d.status);
+
+          if(statusFilter === 'completed'){
+            if(s !== 'completed' && s !== 'complete') return false;
+          }else if(s !== statusFilter){
+            return false;
+          }
+        }
+
+        if(yearFilter !== 'all'){
+          const y = String(cropYearFromJob(d) || '');
+          if(y !== yearFilter) return false;
+        }
+
+        if(q){
+          const fields = Array.isArray(d.fields) ? d.fields : [];
+          const fieldNames = fields.map(f=>fieldNameFromField(f)).join(' ');
+
+          const hay = [
+            d.jobNumber,
+            cropFromJob(d),
+            cropYearFromJob(d),
+            d.releaseDate,
+            d.status,
+            d.submittedBy,
+            d.submittedByEmail,
+            d.notes,
+            farmNameFromJob(d),
+            fieldNames,
+            it._col
+          ].join(' ').toLowerCase();
+
+          if(!hay.includes(q)) return false;
+        }
+
+        return true;
+      });
+
+      filtered.sort(sortJobs);
+      STATE.filteredItems = filtered;
+
+      renderList();
+
+      setTimeout(bindActionButtons,0);
+    }
+
+    function populateFarmFilterFromItems(){
+      const farmSelEl = $('#filterFarm');
+      if(!farmSelEl) return;
+
+      farmSelEl.innerHTML = '<option value="all">All farms</option>';
+
+      const farmMap = new Map();
+
+      (STATE.items || []).forEach(it=>{
+        const key = farmKeyFromJob(it.data);
+        const name = farmNameFromJob(it.data);
+        if(key) farmMap.set(key, name || key);
+      });
+
+      Array.from(farmMap.entries())
+        .sort((a,b)=>(a[1] || '').localeCompare(b[1] || ''))
+        .forEach(([key,label])=>{
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = label;
+          farmSelEl.appendChild(opt);
+        });
+    }
+
+    function populateCropAndYearFilters(){
+      const cropSel = $('#filterCrop');
+      const yearSel = $('#filterYear');
+
+      if(!cropSel || !yearSel) return;
+
+      const crops = new Set();
+      const years = new Set();
+
+      (STATE.items || []).forEach(it=>{
+        const d = it.data;
+        const c = cropFromJob(d);
+        const y = cropYearFromJob(d);
+
+        if(c) crops.add(c);
+        if(y) years.add(String(y));
+      });
+
+      cropSel.innerHTML = '<option value="all">All crops</option>';
+      Array.from(crops).sort((a,b)=>a.localeCompare(b)).forEach(c=>{
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        cropSel.appendChild(opt);
+      });
+
+      yearSel.innerHTML = '<option value="all">All years</option>';
+      Array.from(years).sort((a,b)=>Number(a) - Number(b)).forEach(y=>{
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSel.appendChild(opt);
+      });
+    }
+
+    async function loadCompanyHeader(){
+      if(STATE.company) return STATE.company;
+
+      try{
+        const [col,id] = CONFIG.COMPANY_DOC_PATH;
+        const ref = doc(STATE.db, col, id);
+        const snap = await getDoc(ref);
+        const d = snap.exists() ? (snap.data() || {}) : {};
+
+        const name = d.name || '';
+        const address = [
+          d.addressStreet || '',
+          [d.addressCity, d.addressState].filter(Boolean).join(', '),
+          d.addressZip || ''
+        ].filter(Boolean).join(' · ');
+
+        const phone = d.phone || '';
+        const email = d.email || '';
+
+        STATE.company = {name,address,phone,email};
+      }catch(e){
+        console.warn('[aerial-report] failed to load company header', e);
+        STATE.company = {name:'',address:'',phone:'',email:''};
+      }
+
+      return STATE.company;
+    }
+
+    function summarizeFilters(){
+      const farmSel = $('#filterFarm');
+      const cropSel = $('#filterCrop');
+      const statusSel = $('#filterStatus');
+      const yearSel = $('#filterYear');
+      const searchEl = $('#filterSearch');
+
+      let farmLabel = 'All farms';
+
+      if(farmSel && farmSel.value !== 'all'){
+        const id = farmSel.value;
+        const opt = farmSel.options[farmSel.selectedIndex];
+        farmLabel = opt?.textContent || id;
+      }
+
+      const cropLabel = cropSel && cropSel.value !== 'all' ? cropSel.value : 'All crops';
+
+      let statusLabel = 'All jobs';
+      if(statusSel && statusSel.value !== 'all'){
+        const opt = statusSel.options[statusSel.selectedIndex];
+        statusLabel = opt?.textContent || statusSel.value;
+      }
+
+      const yearLabel = yearSel && yearSel.value !== 'all' ? yearSel.value : 'All years';
+
+      const searchVal = (searchEl?.value || '').trim();
+      const searchLabel = searchVal ? `Search: "${searchVal}"` : 'No text filter';
+
+      return `${farmLabel} • ${cropLabel} • ${statusLabel} • ${yearLabel} • ${searchLabel}`;
+    }
+
+    function computeDateRange(items){
+      if(!items.length) return '';
+
+      let min = Infinity;
+      let max = -Infinity;
+
+      items.forEach(it=>{
+        const d = it.data._createdAtDate;
+        if(!d) return;
+
+        const t = d.getTime();
+
+        if(t < min) min = t;
+        if(t > max) max = t;
+      });
+
+      if(!Number.isFinite(min) || !Number.isFinite(max)) return '';
+
+      const dMin = new Date(min);
+      const dMax = new Date(max);
+
+      if(dMin.toDateString() === dMax.toDateString()) return formatDate(dMin);
+
+      return `${formatDate(dMin)} – ${formatDate(dMax)}`;
+    }
+
+    async function handlePrintClick(){
+      const items = getWorkingItems();
+
+      if(!items.length){
+        alert('No aerial application jobs match the current filters to print.');
+        return;
+      }
+
+      const company = await loadCompanyHeader();
+      const grouped = groupItems(items);
+
+      const now = new Date();
+      const runStr = formatDateTime(now);
+      const runDateOnly = formatDate(now);
+
+      const openItems = items.filter(it=>normalizeStatus(it.data.status) === 'open');
+      const completedItems = items.filter(it=>{
+        const s = normalizeStatus(it.data.status);
+        return s === 'completed' || s === 'complete';
+      });
+
+      const openCount = openItems.length;
+      const completedCount = completedItems.length;
+      const totalCount = items.length;
+      const openAcres = sumReleaseAcres(openItems);
+      const completedAcres = sumReleaseAcres(completedItems);
+      const totalAcres = sumReleaseAcres(items);
+      const completionPct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
+      const uniqueFarms = new Set(items.map(it=>farmKeyFromJob(it.data)).filter(Boolean)).size;
+      const uniqueCrops = new Set(items.map(it=>cropFromJob(it.data)).filter(Boolean)).size;
+
+      const dateRange = computeDateRange(items);
+      const filterSummary = summarizeFilters();
+
+      const html = buildPrintHtml({
+        company,
+        runStr,
+        runDateOnly,
+        dateRange,
+        filterSummary,
+        totalCount,
+        openCount,
+        completedCount,
+        uniqueFarms,
+        uniqueCrops,
+        totalAcres,
+        openAcres,
+        completedAcres,
+        completionPct,
+        grouped
+      });
+
+      let iframe = document.getElementById('fv-print-frame');
+
+      if(!iframe){
+        iframe = document.createElement('iframe');
+        iframe.id = 'fv-print-frame';
+        document.body.appendChild(iframe);
+      }
+
+      const win = iframe.contentWindow || iframe.contentDocument;
+      const docu = iframe.contentDocument || iframe.contentWindow.document;
+
+      docu.open();
+      docu.write(html);
+      docu.close();
+
+      setTimeout(()=>{
+        try{
+          win.focus();
+          win.print();
+        }catch(err){
+          console.warn('[aerial-report] iframe print failed, falling back to window.print()', err);
+          window.print();
+        }
+      },350);
+    }
+
+    function buildPrintHtml({
+      company,
+      runStr,
+      runDateOnly,
+      dateRange,
+      filterSummary,
+      totalCount,
+      openCount,
+      completedCount,
+      uniqueFarms,
+      uniqueCrops,
+      totalAcres,
+      openAcres,
+      completedAcres,
+      completionPct,
+      grouped
+    }){
+      return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Aerial Application Jobs</title>
+  <style>
+    :root{
+      --fv-green:#3B7E46;
+      --fv-border:#D1D5DB;
+      --fv-text:#111827;
+      --fv-muted:#6B7280;
+      --fv-bg:#F3F4F6;
+    }
+
+    *{box-sizing:border-box;}
+
+    html,body{
+      margin:0;
+      padding:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--fv-text);
+      background:var(--fv-bg);
+    }
+
+    body{
+      display:flex;
+      justify-content:center;
+      padding:22px 12px;
+    }
+
+    .page{
+      width:100%;
+      max-width:940px;
+      background:#fff;
+      border-radius:14px;
+      box-shadow:0 10px 30px rgba(15,23,42,.12);
+      padding:20px 22px 22px;
+    }
+
+    .hdr{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:14px;
+      align-items:center;
+      border-bottom:2px solid var(--fv-green);
+      padding-bottom:12px;
+      margin-bottom:14px;
+    }
+
+    .logo{
+      width:60px;
+      height:60px;
+      border-radius:16px;
+      border:1px solid var(--fv-border);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      font-weight:900;
+      color:#fff;
+      background:radial-gradient(circle at 30% 0%,#4CAF50,var(--fv-green));
+    }
+
+    .co-name{
+      font-size:16px;
+      font-weight:900;
+      margin:0 0 2px;
+    }
+
+    .co-line{
+      font-size:11px;
+      color:var(--fv-muted);
+      margin:0;
+      line-height:1.35;
+    }
+
+    .meta{
+      text-align:right;
+      font-size:11px;
+      color:var(--fv-muted);
+      line-height:1.35;
+      white-space:nowrap;
+    }
+
+    .meta strong{color:var(--fv-text);}
+
+    .title{
+      margin:0;
+      font-size:18px;
+      font-weight:950;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .subtitle{
+      margin:4px 0 0;
+      font-size:12px;
+      color:var(--fv-muted);
+      line-height:1.35;
+    }
+
+    .summary{
+      margin-top:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:linear-gradient(90deg,rgba(59,126,70,.10),transparent);
+      border:1px solid rgba(59,126,70,.22);
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 14px;
+      font-size:11px;
+    }
+
+    .pill{
+      display:inline-flex;
+      gap:6px;
+      align-items:baseline;
+      white-space:nowrap;
+    }
+
+    .k{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.10em;
+      color:var(--fv-muted);
+      font-weight:700;
+    }
+
+    .v{
+      font-weight:700;
+      color:var(--fv-text);
+    }
+
+    .kpis{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .kpi{
+      border:1px solid var(--fv-border);
+      border-radius:12px;
+      padding:9px 10px;
+      background:linear-gradient(135deg,rgba(59,126,70,.06),#fff);
+    }
+
+    .kpi .lab{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.10em;
+      color:var(--fv-muted);
+      font-weight:800;
+    }
+
+    .kpi .val{
+      font-size:18px;
+      font-weight:950;
+      margin-top:2px;
+    }
+
+    .kpi .note{
+      font-size:10px;
+      color:var(--fv-muted);
+      margin-top:2px;
+      line-height:1.25;
+    }
+
+    .farm-section{
+      margin-top:16px;
+      border-top:1px solid #EEF2F7;
+      padding-top:14px;
+      break-inside:avoid;
+    }
+
+    .farm-title{
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color:#1F2937;
+      margin:0 0 6px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+    }
+
+    .farm-sub{
+      font-size:11px;
+      color:var(--fv-muted);
+      margin:0 0 10px;
+    }
+
+    .crop-title{
+      margin:12px 0 8px;
+      padding:6px 8px;
+      border-radius:10px;
+      background:#F3F4F6;
+      font-size:11px;
+      font-weight:950;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .job-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .job{
+      border:1px solid var(--fv-border);
+      border-radius:12px;
+      padding:10px 10px 9px;
+      break-inside:avoid;
+    }
+
+    .job-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      padding-bottom:7px;
+      border-bottom:1px solid #EEF2F7;
+      margin-bottom:8px;
+    }
+
+    .job-name{
+      font-weight:950;
+      font-size:13px;
+      line-height:1.25;
+    }
+
+    .job-farm{
+      font-size:10.5px;
+      color:var(--fv-muted);
+      margin-top:2px;
+    }
+
+    .badge{
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(59,126,70,.28);
+      background:rgba(59,126,70,.07);
+      color:#0F172A;
+      white-space:nowrap;
+    }
+
+    .job-meta{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px 10px;
+      font-size:11px;
+    }
+
+    .pair .kk{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.10em;
+      color:var(--fv-muted);
+      font-weight:800;
+      margin-bottom:2px;
+    }
+
+    .pair .vv{
+      font-weight:600;
+      color:#111827;
+      line-height:1.25;
+      word-break:break-word;
+    }
+
+    .fields,
+    .notes{
+      grid-column:1 / -1;
+      margin-top:2px;
+      padding-top:8px;
+      border-top:1px dashed #E5E7EB;
+    }
+
+    .fields .vv,
+    .notes .vv{
+      white-space:pre-wrap;
+      line-height:1.28;
+    }
+
+    .footer{
+      margin-top:16px;
+      padding-top:10px;
+      border-top:1px solid var(--fv-border);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      font-size:10px;
+      color:var(--fv-muted);
+      line-height:1.3;
+    }
+
+    .footer .l{max-width:65%;}
+    .footer .r{text-align:right;}
+
+    @media(max-width:860px){
+      .job-grid{grid-template-columns:1fr;}
+      .kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .meta{white-space:normal;}
+    }
+
+    @media print{
+      html,body{
+        background:#fff;
+        padding:0;
+      }
+
+      .page{
+        max-width:none;
+        border-radius:0;
+        box-shadow:none;
+        padding:12mm 13mm;
+      }
+
+      .job{
+        break-inside:avoid;
+        page-break-inside:avoid;
+      }
+
+      .farm-section{
+        break-inside:auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="hdr">
+      <div class="logo"><span>DF</span></div>
+
+      <div>
+        <p class="co-name">${escapeHtml(company.name || '')}</p>
+        <p class="co-line">
+          ${company.address ? escapeHtml(company.address) + '<br>' : ''}
+          ${company.phone ? 'Phone: ' + escapeHtml(company.phone) : ''}${company.phone && company.email ? ' · ' : ''}
+          ${company.email ? 'Email: ' + escapeHtml(company.email) : ''}
+        </p>
+      </div>
+
+      <div class="meta">
+        <div><strong>Aerial Application Jobs</strong></div>
+        <div>Generated: ${escapeHtml(runStr)}</div>
+        <div>Prepared by: ${escapeHtml(company.name || 'FarmVista')}</div>
+      </div>
+    </header>
+
+    <h1 class="title">Aerial Application Jobs</h1>
+    <p class="subtitle">Jobs grouped by farm and crop. All job details are expanded automatically for print/PDF.</p>
+
+    <div class="summary">
+      <div class="pill"><span class="k">Date range</span><span class="v">${escapeHtml(dateRange || 'All dates')}</span></div>
+      <div class="pill"><span class="k">Filters</span><span class="v">${escapeHtml(filterSummary)}</span></div>
+      <div class="pill"><span class="k">Records</span><span class="v">${escapeHtml(String(totalCount))}</span></div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="lab">Open Jobs</div>
+        <div class="val">${escapeHtml(formatNum(openCount,0))}</div>
+        <div class="note">Status Open</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Completed Jobs</div>
+        <div class="val">${escapeHtml(formatNum(completedCount,0))}</div>
+        <div class="note">Status Completed</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Total Jobs</div>
+        <div class="val">${escapeHtml(formatNum(totalCount,0))}</div>
+        <div class="note">All matching jobs</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Open Acres</div>
+        <div class="val">${escapeHtml(formatNum(openAcres,0))}</div>
+        <div class="note">Open release acres</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Completed Acres</div>
+        <div class="val">${escapeHtml(formatNum(completedAcres,0))}</div>
+        <div class="note">Completed release acres</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Completion</div>
+        <div class="val">${escapeHtml(formatNum(completionPct,0))}%</div>
+        <div class="note">${escapeHtml(formatNum(completedCount,0))} of ${escapeHtml(formatNum(totalCount,0))} jobs done</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Total Acres</div>
+        <div class="val">${escapeHtml(formatNum(totalAcres,0))}</div>
+        <div class="note">All release acres</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Farms</div>
+        <div class="val">${escapeHtml(formatNum(uniqueFarms,0))}</div>
+        <div class="note">Current report</div>
+      </div>
+
+      <div class="kpi">
+        <div class="lab">Crops</div>
+        <div class="val">${escapeHtml(formatNum(uniqueCrops,0))}</div>
+        <div class="note">Current report</div>
+      </div>
+    </div>
+
+    ${grouped.map(farm=>{
+      const farmOpen = farm.items.filter(it=>normalizeStatus(it.data.status) === 'open');
+      const farmOpenAcres = sumReleaseAcres(farmOpen);
+      const farmTotalAcres = sumReleaseAcres(farm.items);
+
+      return `
+        <section class="farm-section">
+          <div class="farm-title">
+            <span>${escapeHtml(farm.farmName)}</span>
+            <span style="font-size:11px;color:var(--fv-muted);letter-spacing:.06em;text-transform:none;font-weight:800;">
+              ${escapeHtml(formatNum(farmOpen.length,0))} open / ${escapeHtml(formatNum(farm.items.length,0))} total · ${escapeHtml(formatNum(farmTotalAcres,0))} ac
+            </span>
+          </div>
+
+          <p class="farm-sub">${escapeHtml(formatNum(farmOpenAcres,0))} open acres. Jobs below are grouped by crop.</p>
+
+          ${Array.from(farm.crops.values()).map(crop=>{
+            const cropOpen = crop.items.filter(it=>normalizeStatus(it.data.status) === 'open');
+            const cropTotalAcres = sumReleaseAcres(crop.items);
+
+            return `
+              <div class="crop-title">
+                <span>${escapeHtml(crop.cropName)}</span>
+                <span>${escapeHtml(formatNum(cropOpen.length,0))} open · ${escapeHtml(formatNum(crop.items.length,0))} jobs · ${escapeHtml(formatNum(cropTotalAcres,0))} ac</span>
+              </div>
+
+              <div class="job-grid">
+                ${crop.items.map(it=>{
+                  const d = it.data;
+                  const jobNum = d?.jobNumber != null ? String(d.jobNumber) : '';
+                  const year = cropYearFromJob(d);
+                  const status = coerceStr(d.status || '');
+                  const relDate = jobReleaseDate(d);
+                  const relDateStr = relDate ? formatDate(relDate) : (coerceStr(d.releaseDate) || '—');
+                  const relAc = Number(d.releaseAcres);
+                  const fields = Array.isArray(d.fields) ? d.fields : [];
+
+                  const fieldLines = fields.map(f=>{
+                    const nm = fieldNameFromField(f);
+                    const ac = Number(f?.tillableAcres);
+                    return `• ${nm || 'Field'}${Number.isFinite(ac) ? ` (${formatNum(ac,2)} ac)` : ''}`;
+                  }).join('\\n');
+
+                  const trialEnabled = !!d?.trialLink?.enabled;
+                  const trialAc = sumTrialAcres(d);
+                  const notes = coerceStr(d.notes || '');
+
+                  return `
+                    <article class="job">
+                      <div class="job-top">
+                        <div>
+                          <div class="job-name">${escapeHtml(jobNum ? 'Job #' + jobNum : 'Aerial Job')} ${year ? ` · ${escapeHtml(String(year))}` : ''}</div>
+                          <div class="job-farm">${escapeHtml(farm.farmName)} · ${escapeHtml(crop.cropName)}${relDateStr ? ` · ${escapeHtml(relDateStr)}` : ''}</div>
+                        </div>
+                        <div class="badge">${escapeHtml(status || 'unknown')}</div>
+                      </div>
+
+                      <div class="job-meta">
+                        <div class="pair">
+                          <div class="kk">Release Acres</div>
+                          <div class="vv">${Number.isFinite(relAc) ? escapeHtml(formatNum(relAc,0)) + ' ac' : '—'}</div>
+                        </div>
+
+                        <div class="pair">
+                          <div class="kk">Fields</div>
+                          <div class="vv">${escapeHtml(String(fields.length || 0))}</div>
+                        </div>
+
+                        <div class="pair">
+                          <div class="kk">Release Date</div>
+                          <div class="vv">${escapeHtml(relDateStr || '—')}</div>
+                        </div>
+
+                        <div class="pair">
+                          <div class="kk">Submitted By</div>
+                          <div class="vv">${escapeHtml(coerceStr(d.submittedBy) || '—')}</div>
+                        </div>
+
+                        <div class="pair">
+                          <div class="kk">Trial</div>
+                          <div class="vv">${trialEnabled ? 'Yes · ' + escapeHtml(formatNum(trialAc,0)) + ' ac' : 'No'}</div>
+                        </div>
+
+                        <div class="pair">
+                          <div class="kk">Created</div>
+                          <div class="vv">${escapeHtml(d._createdAtDate ? formatDate(d._createdAtDate) : '—')}</div>
+                        </div>
+
+                        <div class="pair fields">
+                          <div class="kk">Fields</div>
+                          <div class="vv">${escapeHtml(fieldLines || '—')}</div>
+                        </div>
+
+                        ${notes ? `
+                          <div class="pair notes">
+                            <div class="kk">Notes</div>
+                            <div class="vv">${escapeHtml(notes)}</div>
+                          </div>
+                        ` : ''}
+                      </div>
+                    </article>
+                  `;
+                }).join('')}
+              </div>
+            `;
+          }).join('')}
+        </section>
+      `;
+    }).join('')}
+
+    <footer class="footer">
+      <div class="l">Internal use only. Verify release acres, field lists, and trial assignments before sending to applicator.</div>
+      <div class="r">FarmVista • Aerial Application Jobs • ${escapeHtml(runDateOnly || '')}</div>
+    </footer>
+  </div>
+</body>
+</html>`;
+    }
+
+    async function handleMarkCompleted(jobId){
+      if(!jobId){
+        alert('Select an aerial job first.');
+        return;
+      }
+
+      const item = STATE.items.find(it=>it.id === jobId);
+
+      if(!item){
+        alert('Could not find this job in memory.');
+        return;
+      }
+
+      const currentStatus = item.data.status || '';
+      if(normalizeStatus(currentStatus) !== 'open') return;
+
+      try{
+        const ref = doc(STATE.db, item._col || STATE.sourceCollection || CONFIG.JOB_COLLECTIONS[0], jobId);
+        await updateDoc(ref, {
+          status:'Completed',
+          updatedAt:new Date()
+        });
+
+        item.data.status = 'Completed';
+        item.data.updatedAt = new Date();
+
+        await applyFilters();
+      }catch(err){
+        console.error('Error marking aerial job completed:', err);
+        alert('Could not mark this job as completed. Check console for details.');
+      }
+    }
+
+    async function handleDeleteJob(jobId){
+      if(!jobId){
+        alert('Select an aerial job first.');
+        return;
+      }
+
+      const item = STATE.items.find(it=>it.id === jobId);
+
+      if(!item){
+        alert('Could not find this job in memory.');
+        return;
+      }
+
+      const jobNum = item.data?.jobNumber != null ? ` #${item.data.jobNumber}` : '';
+      const confirmDelete = confirm(`Delete aerial job${jobNum}? This cannot be undone.`);
+
+      if(!confirmDelete) return;
+
+      try{
+        const ref = doc(STATE.db, item._col || STATE.sourceCollection || CONFIG.JOB_COLLECTIONS[0], jobId);
+        await deleteDoc(ref);
+
+        STATE.items = STATE.items.filter(it=>it.id !== jobId);
+        STATE.openJobIds.delete(jobId);
+        STATE.selectedId = null;
+
+        await applyFilters();
+      }catch(err){
+        console.error('Error deleting aerial job:', err);
+        alert('Could not delete this job. Check console for details.');
+      }
+    }
+
+    function wireRenderedJobActions(){
+      const jobCards = Array.from(document.querySelectorAll('.job-card'));
+
+      jobCards.forEach(card=>{
+        const titleText = $('.main-title', card)?.textContent || '';
+        const possible = getWorkingItems().find(it=>{
+          const d = it.data;
+          const first = jobTitleLine(d).split(' · ')[0];
+          return titleText.includes(first);
+        });
+
+        if(!possible) return;
+
+        const completeBtn = $('.btn-complete', card);
+        const deleteBtn = $('.btn-delete', card);
+
+        if(completeBtn){
+          completeBtn.addEventListener('click', ev=>{
+            ev.stopPropagation();
+            handleMarkCompleted(possible.id);
+          });
+        }
+
+        if(deleteBtn){
+          deleteBtn.addEventListener('click', ev=>{
+            ev.stopPropagation();
+            handleDeleteJob(possible.id);
+          });
+        }
+      });
+    }
+
+    (async function boot(){
+      await ready;
+      STATE.db = getFirestore();
+
+      const shell = document.querySelector('fv-shell');
+      if(shell) shell.nav = NAV_MENU;
+
+      const backBtn = document.getElementById('btnBack');
+
+      if(backBtn){
+        backBtn.addEventListener('click',()=>{
+          location.href = '/pages/reports/reports-predefined.html';
+        });
+      }
+
+      await loadFarmsMap();
+      await loadAerialJobs();
+
+      STATE.items.sort(sortJobs);
+
+      populateFarmFilterFromItems();
+      populateCropAndYearFilters();
+
+      const farmSel = $('#filterFarm');
+      const cropSel = $('#filterCrop');
+      const statusSel = $('#filterStatus');
+      const yearSel = $('#filterYear');
+      const searchEl = $('#filterSearch');
+      const clearBtn = $('#filterClear');
+
+      if(farmSel) farmSel.addEventListener('change',()=>applyFilters());
+      if(cropSel) cropSel.addEventListener('change',()=>applyFilters());
+      if(statusSel) statusSel.addEventListener('change',()=>applyFilters());
+      if(yearSel) yearSel.addEventListener('change',()=>applyFilters());
+      if(searchEl) searchEl.addEventListener('input',()=>applyFilters());
+
+      if(clearBtn){
+        clearBtn.addEventListener('click',()=>{
+          if(farmSel) farmSel.value = 'all';
+          if(cropSel) cropSel.value = 'all';
+          if(statusSel) statusSel.value = 'all';
+          if(yearSel) yearSel.value = 'all';
+          if(searchEl) searchEl.value = '';
+
+          STATE.openFarmKeys.clear();
+          STATE.openCropKeys.clear();
+          STATE.openJobIds.clear();
+
+          applyFilters();
+        });
+      }
+
+      await applyFilters();
+
+      const printTop = $('#btnPrint');
+      if(printTop) printTop.addEventListener('click',handlePrintClick);
+
+      const observer = new MutationObserver(()=>{
+        wireRenderedJobActions();
+      });
+
+      const list = document.getElementById('reportList');
+      if(list){
+        observer.observe(list,{childList:true,subtree:true});
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🚁</div>
+          <div>
+            <h1>Aerial Application Jobs</h1>
+            <p class="muted">
+              Simple farm and crop overview. Open a farm, then a crop, then a job to see full details and field lists.
+            </p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <button id="btnBack" type="button" class="btn btn-quiet">← Back to Reports</button>
+              <button id="btnPrint" type="button" class="btn btn-primary">Print / Save PDF</button>
+              <span id="sourcePill" class="src-pill" style="display:none;"></span>
+            </div>
+
+            <div class="page-header-meta" id="brCount">0 open · 0 completed · 0 total · 0% done</div>
+          </div>
+
+          <section id="overview" class="overview" aria-label="Aerial application overview"></section>
+
+          <div class="filters">
+            <div class="filter-field">
+              <label class="filter-label" for="filterFarm">Farm</label>
+              <select id="filterFarm" class="filter-select">
+                <option value="all">All farms</option>
+              </select>
+            </div>
+
+            <div class="filter-field">
+              <label class="filter-label" for="filterCrop">Crop</label>
+              <select id="filterCrop" class="filter-select">
+                <option value="all">All crops</option>
+              </select>
+            </div>
+
+            <div class="filter-field">
+              <label class="filter-label" for="filterStatus">Status</label>
+              <select id="filterStatus" class="filter-select">
+                <option value="all">All jobs</option>
+                <option value="open">Open</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            <div class="filter-field">
+              <label class="filter-label" for="filterYear">Year</label>
+              <select id="filterYear" class="filter-select">
+                <option value="all">All years</option>
+              </select>
+            </div>
+
+            <div class="filter-field" style="flex:2 1 260px;min-width:220px;">
+              <label class="filter-label" for="filterSearch">Search</label>
+              <input id="filterSearch" class="filter-input" type="search" placeholder="Search job #, field, notes, submitter…" />
+            </div>
+
+            <button id="filterClear" type="button" class="btn btn-quiet">Clear filters</button>
+          </div>
+
+          <section aria-label="Aerial application jobs">
+            <div class="wo-empty">Loading aerial application jobs…</div>
+            <div id="reportList" class="report-list"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <iframe id="fv-print-frame"></iframe>
+  </fv-shell>
+</body>
+</html>

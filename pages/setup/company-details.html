@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Company Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Standard includes -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  
+
+  <!-- ✅ Permission UI controller -->
+  <script src="/js/shared/permissions/perm-ui.js"></script>
+
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure <fv-shell> exists when deep-linking -->
+  <script>(function(){
+    if(!customElements.get('fv-shell')){
+      const s=document.createElement('script');s.src='/js/core/shell/fv-shell.js';s.defer=true;document.head.appendChild(s);
+    }
+  })();</script>
+
+  <!-- ✅ Firebase config (consistent with the rest of FarmVista) -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <style>
+    .page{max-width:980px;margin:0 auto;padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;}
+    .section{border:1px solid var(--border);border-radius:14px;background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));overflow:hidden;}
+    .section-head{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:center;
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);}
+    .section-body{padding:16px;display:grid;gap:14px;}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:640px){.row{grid-template-columns:1fr}}
+    .field label{display:block;font-weight:800;margin:0 0 6px 0;}
+    .input,.select,.textarea{width:100%;font:inherit;font-size:16px;color:var(--text);
+      background:var(--card-surface,var(--surface));border:1px solid var(--border);
+      border-radius:10px;padding:12px;outline:none;}
+    .muted{font-size:13px;color:var(--muted,#67706B)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:6px;}
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:140px;padding:12px 16px;border-radius:12px;
+      border:1px solid var(--border);background:var(--card-surface,var(--surface));font-weight:800;color:var(--text);cursor:pointer;}
+    .btn-primary{border-color:transparent;background:#2F6C3C;color:#fff;}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .error{border:1px solid #b3261e;background:#fff;color:#b3261e;border-radius:10px;padding:10px 12px;display:none;white-space:pre-wrap}
+    .error.show{display:block}
+    .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 72px);transform:translateX(-50%);
+      background:#2F6C3C;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;display:none}
+    .toast.show{display:block;animation:fadeout 3s forwards;}
+    @keyframes fadeout{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+
+    .ok{color:#2F6C3C;font-weight:800}
+
+    /* Match Ideas file upload UI */
+    .thumbs{display:flex;gap:8px;flex-wrap:wrap}
+    .thumb{width:72px;height:72px;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;place-items:center;background:var(--surface)}
+    .thumb img{max-width:100%;max-height:100%;display:block}
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <!-- Page visibility -->
+    <div class="page container" data-perm="setup-company:view">
+      <h1 class="page-title">Company Details</h1>
+
+      <section class="section">
+        <header class="section-head">
+          <div class="icon" aria-hidden="true">🏢</div>
+          <div><strong>Organization Information</strong></div>
+        </header>
+
+        <!-- Entire form is EDIT-gated (perm-ui will disable controls for view-only) -->
+        <div class="section-body" data-perm="setup-company:edit">
+          <div id="err" class="error"></div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="farmName">Company / Farm Name *</label>
+              <input id="farmName" class="input" placeholder="Example: Prairie Ridge Farms" autocomplete="organization">
+            </div>
+
+            <div class="field">
+              <label for="addrStreet">Street</label>
+              <input id="addrStreet" class="input" placeholder="123 Main St" autocomplete="address-line1">
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="addrCity">City</label>
+                <input id="addrCity" class="input" placeholder="City" autocomplete="address-level2">
+              </div>
+              <div class="field">
+                <label for="addrState">State</label>
+                <select id="addrState" class="select" autocomplete="off">
+                  <option value="">—</option>
+                  <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
+                  <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DC">DC</option>
+                  <option value="DE">DE</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option>
+                  <option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+                  <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option>
+                  <option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
+                  <option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+                  <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option>
+                  <option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option>
+                  <option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option>
+                  <option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option>
+                  <option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option>
+                  <option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="addrZip">ZIP</label>
+                <input id="addrZip" class="input" placeholder="12345 or 12345-6789" inputmode="numeric" maxlength="10" autocomplete="postal-code">
+              </div>
+              <div class="field">
+                <label for="farmPhone">Phone *</label>
+                <input id="farmPhone" class="input" type="tel" inputmode="tel" placeholder="(630)-555-0199" autocomplete="tel">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="farmEmail">Primary Email</label>
+              <input id="farmEmail" class="input" type="email" placeholder="name@example.com" autocomplete="email">
+              <div class="muted">These details may appear where organization info is shown.</div>
+            </div>
+
+            <!-- Logo upload -->
+            <div class="field">
+              <label for="logoFile">Logo upload (optional)</label>
+              <input id="logoFile" class="input" type="file" accept="image/*"/>
+              <div id="logoThumbs" class="thumbs" aria-hidden="true"></div>
+              <div id="logoHint" class="muted" aria-hidden="true"></div>
+              <div id="logoNote" class="muted" style="display:none"></div>
+              <div class="muted" id="currentLogoWrap" style="display:none">Current logo:</div>
+              <div class="thumbs" id="currentLogoThumb" style="display:none"></div>
+            </div>
+
+            <div class="actions">
+              <button id="clear" class="btn" type="button">Cancel</button>
+              <button id="save" class="btn btn-primary" type="button" data-perm="setup-company:edit">Save</button>
+            </div>
+          </div>
+
+          <div class="muted" id="saveStatus" style="margin-top:6px"></div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore, doc, getDoc, setDoc, serverTimestamp,
+      getStorage, ref as storageRef, uploadBytes, getDownloadURL
+    } from '/js/core/firebase/firebase-init.js';
+
+    (function(){
+      "use strict";
+      const $=(s)=>document.querySelector(s);
+
+      const canNow = (k)=> (window.FV && typeof window.FV.can === 'function') ? window.FV.can(k) : true;
+
+      const el={
+        name:$('#farmName'),
+        street:$('#addrStreet'), city:$('#addrCity'), state:$('#addrState'), zip:$('#addrZip'),
+        phone:$('#farmPhone'), email:$('#farmEmail'),
+        logo:$('#logoFile'), logoThumbs:$('#logoThumbs'), logoHint:$('#logoHint'), logoNote:$('#logoNote'),
+        currentLogoWrap:$('#currentLogoWrap'), currentLogoThumb:$('#currentLogoThumb'),
+        save:$('#save'), clear:$('#clear'),
+        err:$('#err'), toast:$('#toast'), saveStatus:$('#saveStatus')
+      };
+
+      const REF=(db)=>doc(db,'company','main');
+      const CACHE_KEY='fv_company_main';
+
+      let CID = null;
+      let storedState = '';
+
+      function genCID(){
+        try {
+          const raw = (self.crypto?.randomUUID?.() || String(Math.random()).slice(2) + String(Math.random()).slice(2))
+            .replace(/-/g,'');
+          return raw.slice(0,16);
+        } catch {
+          return (Date.now().toString(36) + Math.random().toString(36).slice(2,10)).slice(0,16);
+        }
+      }
+
+      async function ensureCID(db){
+        const r = REF(db);
+        const snap = await getDoc(r);
+        if (snap.exists()){
+          const d = snap.data() || {};
+          if (typeof d.cid === 'string' && d.cid.length >= 8){
+            CID = d.cid;
+            return CID;
+          }
+        }
+        const created = genCID();
+        await setDoc(r, { cid: created, updatedAt: serverTimestamp() }, { merge: true });
+        CID = created;
+        return CID;
+      }
+
+      const storageBase = ()=> `company/${CID || 'main'}/logo`;
+
+      const showErr=(m)=>{ el.err.textContent=m||""; el.err.classList.toggle('show',!!m); };
+      const showToast=(m="Saved.")=>{ el.toast.textContent=m; el.toast.classList.remove('show'); void el.toast.offsetWidth; el.toast.classList.add('show'); };
+
+      const onlyDigits=(s)=>String(s||"").replace(/\D+/g,"");
+      function fmtPhoneLive(v){
+        let d=onlyDigits(v);
+        if(d.startsWith('1')&&d.length>10) d=d.slice(1);
+        if(!d) return "";
+        if(d.length<=3) return `(${d}`;
+        if(d.length<=6) return `(${d.slice(0,3)})-${d.slice(3)}`;
+        return `(${d.slice(0,3)})-${d.slice(3,6)}-${d.slice(6,10)}` + (d.length>10?` x${d.slice(10)}`:"");
+      }
+      function fmtPhoneFinal(v){
+        let d=onlyDigits(v);
+        if(d.startsWith('1')&&d.length>10) d=d.slice(1);
+        if(d.length>=10) return `(${d.slice(0,3)})-${d.slice(3,6)}-${d.slice(6,10)}` + (d.length>10?` x${d.slice(10)}`:"");
+        return v.trim();
+      }
+      function normalizeEmail(s){ return String(s||"").trim().toLowerCase(); }
+      const emailOk=(e)=>/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,24}$/.test(String(e||"").trim());
+      const zipOk=(z)=>/^(\d{5})(-\d{4})?$/.test(String(z||"").trim());
+
+      el.phone.addEventListener('input', ()=>{ el.phone.value = fmtPhoneLive(el.phone.value); });
+      el.phone.addEventListener('blur',  ()=>{ el.phone.value = fmtPhoneFinal(el.phone.value); });
+      el.email.addEventListener('blur', ()=>{ const v=normalizeEmail(el.email.value); el.email.value=v; if(v && !emailOk(v)) showErr('Please enter a valid email.'); else showErr(''); });
+      el.city.addEventListener('blur', ()=>{ const s=String(el.city.value||'').trim(); el.city.value = s ? (s[0].toUpperCase()+s.slice(1).toLowerCase()) : ''; });
+      el.zip.addEventListener('blur', ()=>{ const z=String(el.zip.value||'').trim(); if(z && !zipOk(z)) showErr('ZIP must be 12345 or 12345-6789.'); else showErr(''); });
+
+      function normalizeStateValue(raw){
+        if (typeof raw !== 'string') return '';
+        const value = raw.trim();
+        if (!value) return '';
+
+        const stateNames = {
+          AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California', CO:'Colorado', CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia', HI:'Hawaii', ID:'Idaho', IL:'Illinois', IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky', LA:'Louisiana', ME:'Maine', MD:'Maryland', MA:'Massachusetts', MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri', MT:'Montana', NE:'Nebraska', NV:'Nevada', NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico', NY:'New York', NC:'North Carolina', ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon', PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina', SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont', VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming', DC:'District of Columbia'
+        };
+
+        const upper = value.toUpperCase();
+        if (Array.from(el.state.options).some(option => option.value === upper)) return upper;
+
+        const lower = value.toLowerCase();
+        const matched = Object.entries(stateNames).find(([, name]) => name.toLowerCase() === lower);
+        return matched ? matched[0] : '';
+      }
+
+      function stateFromData(d){
+        return normalizeStateValue(
+          d?.addressState ||
+          d?.state ||
+          d?.stateCode ||
+          d?.state_code ||
+          d?.farmState ||
+          d?.address?.state ||
+          ''
+        );
+      }
+
+      function selectState(raw){
+        const code = normalizeStateValue(raw);
+        const blankOption = el.state.options[0];
+
+        if (!code) {
+          if (blankOption) blankOption.disabled = false;
+          el.state.selectedIndex = 0;
+          el.state.value = '';
+          return '';
+        }
+
+        const index = Array.from(el.state.options).findIndex(option => option.value === code);
+        if (index >= 0) {
+          if (blankOption) {
+            blankOption.selected = false;
+            blankOption.disabled = true;
+          }
+          for (const option of el.state.options) option.selected = false;
+          el.state.options[index].selected = true;
+          el.state.selectedIndex = index;
+          el.state.value = code;
+          el.state.setAttribute('data-loaded-state', code);
+        }
+        return code;
+      }
+
+      function applyStoredState(force=false){
+        if (!storedState || !el.state) return;
+        if (document.activeElement === el.state) return;
+
+        const blankOption = el.state.options[0];
+        if (blankOption) {
+          blankOption.selected = false;
+          blankOption.disabled = true;
+        }
+
+        if (force || el.state.value !== storedState) {
+          selectState(storedState);
+        }
+      }
+
+      function scheduleStateRestore(){
+        [0,120,500,1200].forEach(delay=>{
+          setTimeout(()=>applyStoredState(false),delay);
+        });
+      }
+
+      el.state.addEventListener('change',()=>{
+        const selected=normalizeStateValue(el.state.value);
+        if(selected) storedState=selected;
+        const blankOption = el.state.options[0];
+        if (blankOption) blankOption.disabled = !!selected;
+      });
+
+      window.addEventListener('pageshow',()=>scheduleStateRestore());
+      document.addEventListener('visibilitychange',()=>{
+        if(!document.hidden) scheduleStateRestore();
+      });
+
+      function fillForm(d){
+        el.name.value   = d?.name || "";
+        el.street.value = d?.addressStreet || "";
+        el.city.value   = d?.addressCity || "";
+        storedState = stateFromData(d) || storedState;
+        if (storedState) selectState(storedState);
+        scheduleStateRestore();
+        el.zip.value    = d?.addressZip || "";
+        el.phone.value  = d?.phone ? fmtPhoneFinal(d.phone) : "";
+        el.email.value  = d?.email || "";
+
+        if (!CID && d?.cid) CID = d.cid;
+
+        const logo = d?.logo;
+        if (logo && logo.url){
+          el.currentLogoWrap.style.display='block';
+          el.currentLogoThumb.style.display='flex';
+          el.currentLogoThumb.innerHTML='';
+          const div=document.createElement('div'); div.className='thumb';
+          const img=document.createElement('img'); img.alt='Current logo'; img.src=logo.url;
+          div.appendChild(img); el.currentLogoThumb.appendChild(div);
+        }else{
+          el.currentLogoWrap.style.display='none';
+          el.currentLogoThumb.style.display='none';
+          el.currentLogoThumb.innerHTML='';
+        }
+      }
+
+      function readCore(){
+        return { name:(el.name.value||"").trim(), phone:fmtPhoneFinal(el.phone.value||"") };
+      }
+      function readExtras(){
+        return {
+          addressStreet:(el.street.value||"").trim(),
+          addressCity:(el.city.value||"").trim(),
+          addressState:(el.state.value||storedState||"").trim().toUpperCase(),
+          addressZip:(el.zip.value||"").trim(),
+          email:normalizeEmail(el.email.value||"")
+        };
+      }
+      function cacheWrite(d){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify(d)); }catch{} }
+      function cacheRead(){ try{ const s=localStorage.getItem(CACHE_KEY); return s? JSON.parse(s): null; }catch{ return null; } }
+
+      el.logo?.addEventListener('change', ()=>{
+        const files = Array.from(el.logo.files||[]);
+        if (files.length > 1){ el.logo.value=''; files.length=0; }
+        const f = files[0] || null;
+        el.logoThumbs.innerHTML='';
+        if (!f){ el.logoThumbs.setAttribute('aria-hidden','true'); el.logoHint.textContent=''; el.logoHint.setAttribute('aria-hidden','true'); return; }
+        const wrap=document.createElement('div'); wrap.className='thumb';
+        if (f.type.startsWith('image/')){
+          const img=document.createElement('img'); img.alt=f.name; wrap.appendChild(img);
+          const reader=new FileReader(); reader.onload=e=>{ img.src=e.target.result; }; reader.readAsDataURL(f);
+        } else { wrap.textContent=(f.name||'file').split('.').pop().toUpperCase(); }
+        el.logoThumbs.appendChild(wrap);
+        el.logoThumbs.removeAttribute('aria-hidden');
+        el.logoHint.textContent='1 file selected'; el.logoHint.removeAttribute('aria-hidden');
+      });
+
+      let db;
+
+      async function loadFromFirestore(){
+        try{
+          const snap=await getDoc(REF(db));
+          const d=snap.exists()? (snap.data()||{}) : {};
+          fillForm(d); cacheWrite(d); el.saveStatus.textContent="";
+          requestAnimationFrame(()=>applyStoredState(true));
+          setTimeout(()=>applyStoredState(true),100);
+          setTimeout(()=>applyStoredState(true),500);
+          setTimeout(()=>applyStoredState(true),1200);
+          showErr("");
+        }catch(e){
+          console.error(e);
+          showErr(`Failed to load.\n${e.code||''} ${e.message||''}`.trim());
+        }
+      }
+
+      async function uploadLogoAndUpdateDoc(){
+        const files = Array.from(el.logo.files||[]);
+        if (files.length === 0) return { ok:true, note:'' };
+        if (files.length > 1){ return { ok:false, note:'Please choose only one logo file.' }; }
+
+        const f = files[0];
+        const safeName = (Date.now() + '-' + (f.name||'logo.png')).replace(/[^a-zA-Z0-9._-]+/g,'_');
+        const path = `${storageBase()}/${safeName}`;
+        try{
+          const store = getStorage();
+          const ref = storageRef(store, path);
+          await uploadBytes(ref, f, { contentType: f.type || 'application/octet-stream' });
+          const url = await getDownloadURL(ref);
+          const logoMeta = { name:f.name||safeName, path, url, contentType:f.type||'', size:f.size||0 };
+          await setDoc(REF(db), { logo: logoMeta, updatedAt: serverTimestamp(), cid: CID }, { merge:true });
+          return { ok:true, note:'' };
+        }catch(e){
+          console.warn('[Company] Logo upload failed', e);
+          return { ok:false, note:'Saved details. Logo upload failed (check Storage permissions).' };
+        }
+      }
+
+      async function save(){
+        if(!canNow('setup-company:edit')){
+          alert("You don't have permission to edit company details.");
+          return;
+        }
+
+        try{
+          showErr(""); el.saveStatus.textContent="";
+
+          const core = readCore();
+          if(!core.name || !core.phone){ showErr("Please fill required fields (Name, Phone)."); return; }
+
+          const extras = readExtras();
+          if (extras.email && !emailOk(extras.email)){ showErr('Please enter a valid email.'); return; }
+          if (extras.addressZip && !zipOk(extras.addressZip)){ showErr('ZIP must be 12345 or 12345-6789.'); return; }
+
+          if (!CID) await ensureCID(db);
+
+          await setDoc(REF(db), { ...core, cid: CID, updatedAt: serverTimestamp() }, { merge:true });
+          el.saveStatus.innerHTML = `<span class="ok">Saved core fields (name, phone).</span>`;
+
+          await setDoc(REF(db), { ...extras, updatedAt: serverTimestamp(), cid: CID }, { merge:true });
+          el.saveStatus.innerHTML += ` <span class="ok">Saved extra fields.</span>`;
+          storedState = extras.addressState || storedState;
+
+          const up = await uploadLogoAndUpdateDoc();
+          if (!up.ok && up.note){ el.logoNote.textContent = up.note; el.logoNote.style.display='block'; }
+          else { el.logoNote.style.display='none'; }
+
+          showToast("Saved.");
+          if (el.logo) {
+            el.logo.value='';
+            el.logoThumbs.innerHTML='';
+            el.logoHint.textContent='';
+            el.logoThumbs.setAttribute('aria-hidden','true');
+            el.logoHint.setAttribute('aria-hidden','true');
+          }
+
+          await loadFromFirestore();
+        }catch(e){
+          console.error(e);
+          showErr(`Save failed.\n${e.code||''} ${e.message||''}`.trim());
+        }
+      }
+
+      el.save.addEventListener('click', save);
+      el.clear.addEventListener('click', ()=>{ history.back(); });
+
+      (async ()=>{
+        await ready;
+        db = getFirestore();
+
+        const cached = cacheRead();
+        if (cached) fillForm(cached);
+
+        await ensureCID(db);
+        await loadFromFirestore();
+      })();
+    })();
+  </script>
+</body>
+</html>

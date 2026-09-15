@@ -1,0 +1,2075 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Shop Equipment</title>
+
+  <!-- ✅ page zoom allowed (we still do grid-zoom inside viewport) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=8, user-scalable=yes"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure fv-shell -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js'; s.defer=true; document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <!-- Firebase config FIRST (for firebase-init imports) -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <!-- ✅ Shop Equipment modal logic moved to JS file -->
+  <script type="module" src="/js/equipment/shop/shop-equipment-modal.js"></script>
+
+  <style>
+    :root{
+      --green:#2F6C3C;
+      --danger:#b3261e;
+
+      --gridline: rgba(0,0,0,.10);
+      --gridline-strong: rgba(0,0,0,.14);
+
+      /* “sheet” defaults (light sheet inside app) */
+      --sheet-head-bg: #ffffff;
+      --sheet-cell-bg: #ffffff;
+      --sheet-text: #111827;
+      --sheet-muted: #6B7280;
+      --sheet-hover: rgba(47,108,60,.06);
+      --sheet-active: rgba(47,108,60,.08);
+
+      /* ✅ season-ready row highlight */
+      --ready-row-bg: rgba(47,108,60,.14);     /* light mode */
+      --ready-row-bg-hover: rgba(47,108,60,.18);
+
+      /* ✅ Unknown/Missing row highlight (light reddish) */
+      --missing-row-bg: rgba(179, 38, 30, .12);
+      --missing-row-bg-hover: rgba(179, 38, 30, .16);
+    }
+
+    html, body{
+      touch-action:auto;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+    }
+
+    /* ✅ When the category dropdown is opened, add extra bottom room so the last option
+       isn’t trapped behind the footer (iOS/PWA can render expanded <select> in-page). */
+    body.catOpen .page{
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 520px)!important;
+    }
+
+    .page{
+      max-width:1500px;
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 140px)!important;
+    }
+
+    .page-title{margin:0 0 6px 0;}
+    .page-sub{margin:0 0 14px 0;color:var(--muted,#67706B);font-weight:850;}
+
+    .alert{
+      display:none;margin:0 0 12px 0;border:1px solid #c62828;background:#fdecea;color:#8a1c1c;
+      border-radius:12px;padding:12px 14px;font-weight:950;
+    }
+    .alert.show{display:block;}
+
+    .section{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:visible;
+      position:relative;
+      z-index:1;
+    }
+
+    .section-head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      display:grid;
+      gap:10px;
+      overflow:visible;
+      position:relative;
+      z-index:50;
+    }
+
+    .head-row1{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .icon{width:24px;height:24px;display:grid;place-items:center;color:var(--green);flex:0 0 auto;}
+    .head-title{font-weight:950;}
+
+    /* ✅ FIX: prevent overlap at in-between widths */
+    .head-row2{
+      display:flex;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      min-width:0;
+      overflow:visible;
+      position:relative;
+      z-index:60;
+    }
+
+    .filter-field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:260px;
+      flex:1 1 420px;
+    }
+    .filter-label{
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      opacity:0.78;
+      font-weight:900;
+      font-size:12px;
+      color:var(--muted,#67706B);
+      margin:0;
+    }
+    .bar{display:flex;align-items:center;gap:10px;}
+    .search{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:10px 12px;
+      flex:1 1 auto;
+      min-height:42px;
+      box-sizing:border-box;
+    }
+    .search svg{opacity:.65;flex:0 0 auto;}
+    .search input{
+      flex:1 1 auto;
+      background:transparent;
+      border:0;
+      outline:none;
+      font:inherit;
+      color:var(--text);
+      min-width:0;
+      font-size:16px;
+    }
+    .search input::placeholder{color:var(--muted,#9CA3AF);}
+
+    .cat-field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1 1 360px;
+      min-width:260px;
+      max-width:760px;
+      position:relative;
+      z-index:80;
+    }
+    .cat-select{
+      width:100%;
+      height:auto;
+      min-height:42px;
+      line-height:1.2;
+      border-radius:12px;
+      border:1px solid var(--border);
+      padding:10px 12px;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      font-size:16px;
+      font-weight:850;
+      white-space:normal;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      box-sizing:border-box;
+      position:relative;
+      z-index:90;
+      display:block;
+      appearance:auto;
+      -webkit-appearance:menulist;
+    }
+    .cat-select option{white-space:nowrap;}
+
+    .section-body{padding:16px;position:relative;z-index:1;}
+
+    .table-wrap{
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      background:var(--surface);
+      position:relative;
+      z-index:1;
+    }
+
+    @media (max-width:1120px){
+      .section-head{ border-bottom:none; }
+      .section-body{ padding-top:10px; }
+      .table-wrap{ margin-top:6px; }
+    }
+
+    .grid-viewport{
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      background:var(--sheet-cell-bg);
+      touch-action:auto;
+      width:100%;
+      max-width:100%;
+      position:relative;
+    }
+
+    .grid-sizer{
+      position:relative;
+      display:block;
+      width:100%;
+      height:auto;
+    }
+    .grid-scaled{
+      position:absolute;
+      inset:0 auto auto 0;
+      transform-origin:0 0;
+      will-change:transform;
+    }
+
+    table.grid{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width:980px;
+      font-size:14px;
+      background:var(--sheet-cell-bg);
+      color:var(--sheet-text);
+    }
+
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:2;
+      background:var(--sheet-head-bg);
+      border-bottom:1px solid var(--gridline-strong);
+      border-right:1px solid var(--gridline);
+      padding:12px 10px;
+      font-size:13px;
+      color:var(--sheet-text);
+      font-weight:1000;
+      letter-spacing:.25px;
+      white-space:nowrap;
+      text-align:center;
+    }
+    thead th:last-child{border-right:none;}
+
+    thead th.th-sort{
+      cursor:pointer;
+      user-select:none;
+    }
+    .th-inner{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      width:100%;
+    }
+    .th-sort-ind{
+      font-size:11px;
+      opacity:.6;
+      line-height:1;
+    }
+
+    tbody td{
+      border-bottom:1px solid var(--gridline);
+      border-right:1px solid var(--gridline);
+      padding:10px 10px;
+      vertical-align:middle;
+      white-space:nowrap;
+      text-align:center;
+      background:var(--sheet-cell-bg);
+      color:var(--sheet-text);
+    }
+    tbody td:last-child{border-right:none;}
+
+    tbody tr{cursor:pointer;background:transparent;}
+    tbody tr:hover{background:var(--sheet-hover);}
+
+    tbody tr.activeRow{
+      outline:2px solid var(--green,#3B7E46);
+      outline-offset:-2px;
+      background:transparent;
+    }
+    tbody tr.activeRow td{
+      background:var(--sheet-cell-bg) !important;
+    }
+
+    tbody tr.readyRow td{
+      background:var(--ready-row-bg);
+    }
+    tbody tr.readyRow:hover td{
+      background:var(--ready-row-bg-hover);
+    }
+    tbody tr.readyRow.activeRow td{
+      background:var(--ready-row-bg) !important;
+    }
+
+    /* ✅ Unknown/Missing row styling */
+    tbody tr.missingRow td{
+      background:var(--missing-row-bg);
+    }
+    tbody tr.missingRow:hover td{
+      background:var(--missing-row-bg-hover);
+    }
+    tbody tr.missingRow.activeRow td{
+      background:var(--missing-row-bg) !important;
+    }
+
+    .cell-title{font-weight:950;}
+    .kpi{font-weight:950;}
+    .muted{color:var(--sheet-muted);font-size:12px;font-weight:850;}
+
+    @media(min-width:1200px){
+      table.grid{min-width:0;}
+      tbody td.wrap, thead th.wrap{white-space:normal;}
+    }
+
+    @media(max-width:820px){
+      html, body{
+        min-height:100%;
+      }
+
+      .page{
+        max-width:none;
+        margin:0;
+        padding:0;
+        padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 420px)!important;
+      }
+
+      body.catOpen .page{
+        padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 900px)!important;
+      }
+
+      .page-title, .page-sub{
+        padding-left:max(2px, env(safe-area-inset-left, 0px));
+        padding-right:max(2px, env(safe-area-inset-right, 0px));
+        padding-top:10px;
+      }
+      .page-title{padding-bottom:0;}
+      .page-sub{padding-top:6px;padding-bottom:8px;}
+
+      .section{
+        border:none;
+        border-radius:0;
+        box-shadow:none;
+        background:transparent;
+        overflow:visible;
+      }
+
+      .section-head{
+        border-left:none;border-right:none;
+        border-radius:0;
+        padding-top:10px;
+        padding-bottom:10px;
+        padding-left:max(2px, env(safe-area-inset-left, 0px));
+        padding-right:max(2px, env(safe-area-inset-right, 0px));
+        background:transparent;
+        overflow:visible;
+      }
+
+      .section-body{padding:0;}
+
+      .table-wrap{
+        margin:0;
+        border-left:0;
+        border-right:0;
+        border-radius:0;
+        overflow:hidden;
+        background:var(--surface);
+      }
+
+      .head-row2{flex-wrap:wrap;gap:10px;}
+      .filter-field{flex:1 1 100%;min-width:0;}
+      .cat-field{flex:1 1 100%;min-width:0;max-width:none;}
+
+      .grid-viewport{
+        height:auto;
+        min-height:220px;
+        max-height:calc(100vh - 210px);
+      }
+
+      table.grid{min-width:860px;font-size:13px;}
+      thead th{padding:10px 7px;font-size:13px;}
+      tbody td{padding:8px 7px;font-size:13px;}
+
+      tbody td.wrap, thead th.wrap{
+        white-space:normal !important;
+        overflow-wrap:anywhere;
+        word-break:break-word;
+      }
+    }
+
+    @media (prefers-color-scheme: dark){
+      :root{
+        --gridline: rgba(255,255,255,.10);
+        --gridline-strong: rgba(255,255,255,.16);
+        --sheet-hover: rgba(255,255,255,.05);
+        --sheet-active: rgba(47,108,60,.18);
+
+        --ready-row-bg: rgba(47,108,60,.28);
+        --ready-row-bg-hover: rgba(47,108,60,.34);
+
+        /* ✅ Unknown/Missing row (dark mode) */
+        --missing-row-bg: rgba(179, 38, 30, .22);
+        --missing-row-bg-hover: rgba(179, 38, 30, .28);
+      }
+      .grid-viewport{ background:var(--surface) !important; }
+      table.grid{ background:var(--surface) !important; color:var(--text) !important; }
+      thead th{
+        background:var(--surface) !important;
+        color:var(--text) !important;
+        border-bottom:1px solid var(--gridline-strong) !important;
+        border-right:1px solid var(--gridline) !important;
+      }
+      tbody td{
+        background:var(--surface) !important;
+        color:var(--text) !important;
+        border-bottom:1px solid var(--gridline) !important;
+        border-right:1px solid var(--gridline) !important;
+      }
+
+      tbody tr.activeRow td{
+        background:var(--surface) !important;
+      }
+
+      tbody tr.readyRow td{ background:var(--ready-row-bg) !important; }
+      tbody tr.readyRow:hover td{ background:var(--ready-row-bg-hover) !important; }
+      tbody tr.readyRow.activeRow td{ background:var(--ready-row-bg) !important; }
+
+      tbody tr.missingRow td{ background:var(--missing-row-bg) !important; }
+      tbody tr.missingRow:hover td{ background:var(--missing-row-bg-hover) !important; }
+      tbody tr.missingRow.activeRow td{ background:var(--missing-row-bg) !important; }
+
+      .muted{ color:var(--muted,#9CA3AF) !important; }
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom,0px)+72px);
+      transform:translateX(-50%);
+      background:var(--green);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;
+      display:none;
+      font-weight:950;
+    }
+    .toast.show{display:block;animation:fadeout 2.8s forwards;}
+    @keyframes fadeout{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+
+    dialog.sheet{
+      width:min(860px, 94vw);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:0;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+    }
+    .sheet::backdrop{ background:rgba(0,0,0,.55); }
+    .sheet header{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .sheet header strong{font-weight:950;}
+    .sheet .body{
+      padding:14px 16px;
+      max-height:70vh;
+      overflow-y:auto;
+      overflow-x:hidden;
+      display:grid;
+      gap:14px;
+    }
+    .sheet footer{
+      padding:12px 16px;
+      border-top:1px solid var(--border);
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:950;
+      cursor:pointer;
+      font-size:14px;
+      text-decoration:none;
+      color:var(--text);
+    }
+    .btn-primary{border-color:transparent;background:var(--green);color:#fff !important;}
+
+    .field label{display:block;font-weight:950;margin:0 0 6px 0;}
+    .input,.select,.textarea{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      outline:none;
+    }
+    .textarea{min-height:120px;resize:vertical;}
+
+    .subcard{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+
+    .loanBox{
+      border:1px dashed var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:rgba(47,108,60,.04);
+      display:none;
+    }
+    .loanBox.show{ display:block; }
+    .loanHint{
+      margin-top:6px;
+      font-size:0.8rem;
+      color:var(--muted,#67706B);
+      font-weight:850;
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="page">
+      <h1 class="page-title">Shop Equipment</h1>
+      <p class="page-sub">Tap a row to view work orders and update lifetime notes.</p>
+
+      <div id="alert" class="alert" role="alert"></div>
+
+      <section class="section">
+        <header class="section-head">
+          <div class="head-row1">
+            <div class="head-left">
+              <div class="icon" aria-hidden="true">🧰</div>
+              <div class="head-title">Equipment List</div>
+            </div>
+          </div>
+
+          <div class="head-row2">
+            <div class="filter-field" aria-label="Search equipment">
+              <label class="filter-label" for="q">Search</label>
+              <div class="bar">
+                <div class="search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <input id="q" type="search" placeholder="unitId, name, serial, notes…" autocomplete="off">
+                </div>
+              </div>
+            </div>
+
+            <div class="cat-field" aria-label="Category filter">
+              <label class="filter-label" for="cat">Category</label>
+              <select id="cat" class="cat-select"></select>
+            </div>
+          </div>
+        </header>
+
+        <div class="section-body">
+          <div class="table-wrap">
+            <div id="gridViewport" class="grid-viewport" aria-label="Equipment spreadsheet viewport">
+              <div id="gridInner" class="grid-sizer">
+                <div id="gridScaled" class="grid-scaled">
+                  <table class="grid" aria-label="Equipment spreadsheet">
+                    <thead id="thead"></thead>
+                    <tbody id="tbody">
+                      <tr><td class="muted" style="padding:12px;">Loading…</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- helper text removed -->
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <!-- ✅ Keep minimal markup for modal (logic moved to /js/equipment/shop/shop-equipment-modal.js) -->
+  <dialog id="svcSheet" class="sheet" aria-modal="true">
+    <header>
+      <strong id="svcTitle">Equipment</strong>
+      <button id="svcClose" class="btn" type="button">Close</button>
+    </header>
+
+    <div class="body">
+      <div class="subcard">
+        <div class="muted" id="svcMeta">—</div>
+      </div>
+
+      <div class="subcard">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+          <strong>Lifetime Notes</strong>
+        </div>
+        <textarea id="lifetimeNotes" class="textarea" placeholder="Lifetime notes for this unit…"></textarea>
+
+        <div style="display:flex;justify-content:flex-end;">
+          <button id="btnSaveNotes" class="btn btn-primary" type="button">Save Notes</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <button class="btn" id="svcClose2" type="button">Close</button>
+    </footer>
+  </dialog>
+
+  <!-- STARFIRE LOCATION SHEET -->
+  <dialog id="sfSheet" class="sheet" aria-modal="true">
+    <header>
+      <strong id="sfTitle">Change StarFire Location</strong>
+      <button id="sfClose" class="btn" type="button">Close</button>
+    </header>
+
+    <div class="body">
+      <div style="display:grid;gap:10px;grid-template-columns:1fr 1fr;">
+        <div class="field">
+          <label>StarFire Serial</label>
+          <input id="sfSerial" class="input" readonly>
+        </div>
+        <div class="field">
+          <label for="sfSince">Location Since</label>
+          <input id="sfSince" class="input" readonly>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="sfLoc">New Location</label>
+        <select id="sfLoc" class="select"></select>
+      </div>
+
+      <div id="sfLoanBox" class="loanBox" aria-live="polite">
+        <div class="field">
+          <label for="sfLoanTo">Whom is it loaned to?</label>
+          <input id="sfLoanTo" class="input" type="text" maxlength="20" placeholder="Type name (max 20)">
+          <div class="loanHint">Will display everywhere as: <strong>Loaned Out (Name)</strong></div>
+        </div>
+      </div>
+
+      <div class="field" style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span class="pill" id="sfCurrentPill">Current: —</span>
+        <span class="pill" id="sfDurationPill">Duration: —</span>
+        <span class="pill" id="sfMovedByPill">Moved By: —</span>
+      </div>
+    </div>
+
+    <footer>
+      <button id="sfCancel" class="btn" type="button">Cancel</button>
+      <button id="sfSave" class="btn btn-primary" type="button">Save Location</button>
+    </footer>
+  </dialog>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      getAuth,
+      collection,
+      doc,
+      getDocs,
+      addDoc,
+      updateDoc,
+      serverTimestamp
+    } from "/js/core/firebase/firebase-init.js";
+
+    const $ = s => document.querySelector(s);
+
+    // ✅ Natural sort (so #2 comes before #10)
+    const COLLATOR = new Intl.Collator(undefined, { numeric:true, sensitivity:"base" });
+
+    // ✅ Persist last selected category
+    const LS_FILTER_KEY = "fv.shopEquipment.categoryFilter";
+
+    const alertBox = $("#alert");
+    const tbody = $("#tbody");
+    const thead = $("#thead");
+
+    const catSelect = $("#cat");
+    const qInput = $("#q");
+
+    const gridViewport = $("#gridViewport");
+    const gridInner = $("#gridInner");
+    const gridScaled = $("#gridScaled");
+
+    // starfire sheet
+    const sfSheet  = $("#sfSheet");
+    const sfClose  = $("#sfClose");
+    const sfCancel = $("#sfCancel");
+    const sfSave   = $("#sfSave");
+    const sfTitle  = $("#sfTitle");
+    const sfSerial = $("#sfSerial");
+    const sfSince  = $("#sfSince");
+    const sfLoc    = $("#sfLoc");
+    const sfCurrentPill = $("#sfCurrentPill");
+    const sfDurationPill = $("#sfDurationPill");
+    const sfMovedByPill = $("#sfMovedByPill");
+    const sfLoanBox = $("#sfLoanBox");
+    const sfLoanTo  = $("#sfLoanTo");
+
+    const FILTERS = [
+      { key:"planters", label:"Planters" },
+      { key:"combines", label:"Combines" },
+      { key:"sprayers", label:"Sprayers" },
+      { key:"grain",   label:"Grain Carts / Handling" },
+      { key:"tractors",label:"Tractors" },
+      { key:"trucks",  label:"Trucks" },
+      { key:"tillage", label:"Tillage" },
+      { key:"seeders", label:"Seeders / Drills" },
+      { key:"misc",    label:"Misc Implements" },
+      { key:"starfire",label:"StarFire" },
+      { key:"all",     label:"All" }
+    ];
+
+    const state = {
+      all: [],
+      equipActive: [],
+      rtkTowers: [],
+
+      // fast lookup for "current location" display
+      equipById: new Map(),
+      rtkById: new Map(),
+
+      // Occupancy sets (match StarFire Update page behavior)
+      occupiedEquipmentIds: new Set(),
+      occupiedEquipmentLabels: new Set(),
+      occupiedRTKIds: new Set(),
+      occupiedRTKNames: new Set(),
+
+      filter: "planters",
+      q: "",
+      sfSelected: null,
+      selectedRowId: null,
+
+      sortKey: null,
+      sortDir: 1
+    };
+
+    const norm = v => (v||"").toString().trim().toLowerCase();
+    const normSp = s => String(s ?? "").toLowerCase().replace(/\s+/g," ").trim();
+
+    const isActive = d => norm(d.status || "active") !== "archived";
+
+    const todayISO = ()=>{
+      const d=new Date(); const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,"0");
+      const da=String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${da}`;
+    };
+
+    function daysSince(iso){
+      if(!iso) return null;
+      const d = new Date(String(iso));
+      if(Number.isNaN(d.getTime())) return null;
+      const now = new Date();
+      const diffMs = now - d;
+      if(diffMs < 0) return 0;
+      return Math.floor(diffMs / (1000*60*60*24));
+    }
+
+    const last6 = (s)=>{
+      const t = String(s||"").trim();
+      if(!t) return "";
+      return t.length <= 6 ? t : t.slice(-6);
+    };
+
+    const serialLast4 = (s)=>{
+      if(!s) return "";
+      const t=String(s).trim();
+      return t.length<=4 ? t : t.slice(-4);
+    };
+
+    const showError = (msg)=>{
+      alertBox.textContent = msg;
+      alertBox.classList.add("show");
+      clearTimeout(showError._t);
+      showError._t = setTimeout(()=> alertBox.classList.remove("show"), 8000);
+    };
+
+    const toast = (msg="Saved.")=>{
+      const el = document.getElementById("toast");
+      if(!el) return;
+      el.textContent = msg;
+      el.classList.remove("show");
+      void el.offsetWidth;
+      el.classList.add("show");
+      setTimeout(()=> el.classList.remove("show"), 2800);
+    };
+
+    function escapeHtml(s){
+      return String(s ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]));
+    }
+
+    function detectCategory(d){
+      const t = norm(d.type);
+      const it = norm(d.implementType);
+
+      if(t === "starfire") return "starfire";
+      if(t === "tractor") return "tractors";
+      if(t === "truck") return "trucks";
+      if(t === "sprayer") return "sprayers";
+      if(t === "combine") return "combines";
+
+      if(t === "implement"){
+        if(it === "planter") return "planters";
+        if(it.includes("grain") || it.includes("cart") || it.includes("auger") || it.includes("bin")) return "grain";
+        if(it.includes("tillage")) return "tillage";
+        if(it.includes("drill") || it.includes("seeder")) return "seeders";
+        return "misc";
+      }
+
+      const name = ((d.name||"") + " " + (d.modelName||"")).toLowerCase();
+      if(name.includes("planter")) return "planters";
+      if(name.includes("combine")) return "combines";
+      if(name.includes("sprayer")) return "sprayers";
+      return "misc";
+    }
+
+    function matchesSearch(d, q){
+      if(!q) return true;
+      const hay = [
+        d.unitId, d.name, d.makeName, d.modelName, d.serial, d.notes, d.lifetimeNotes,
+        d.type, d.implementType, d.year,
+        d.totalAcres, d.totalHours, d.engineHours,
+        d.odometerMiles, d.licensePlate,
+        d.placedInServiceDate,
+        d.fieldReady,
+
+        d.licensePlateExpiration,
+        d.licensePlateExp,
+        d.insuranceExpiration,
+        d.insuranceExp,
+        d.dotExpirationDate,
+        d.dotExpiration,
+
+        d.starfireCurrentLocationName,
+        d.starfireLoanedToName,
+        d.starfireCurrentLocationType
+      ].map(x => (x==null?"":String(x))).join(" ").toLowerCase();
+      return hay.includes(q);
+    }
+
+    function fmtNum(v, decimals=0){
+      if(v==null || v==="") return "";
+      const n = Number(v);
+      if(Number.isNaN(n)) return String(v);
+      return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }).format(n);
+    }
+
+    function catLabel(d){
+      const c = detectCategory(d);
+      const map = {
+        planters:"Planter", combines:"Combine", sprayers:"Sprayer", grain:"Grain",
+        tractors:"Tractor", trucks:"Truck", tillage:"Tillage", seeders:"Seeder/Drill", misc:"Implement",
+        starfire:"StarFire"
+      };
+      return map[c] || "Equipment";
+    }
+
+    function serialShort6(s){
+      if(!s) return "";
+      const t = String(s);
+      return t.length <= 6 ? t : ("…" + t.slice(-6));
+    }
+
+    function hasAny(arr, pred){
+      for(const x of arr){ if(pred(x)) return true; }
+      return false;
+    }
+
+    function isPresent(v){
+      if(v === 0) return true;
+      if(v === false) return true;
+      return v !== null && v !== undefined && String(v).trim() !== "";
+    }
+
+    function toDateObj(v){
+      if(!v) return null;
+      if(v instanceof Date) return v;
+      if(typeof v === "object"){
+        if(typeof v.toDate === "function") return v.toDate();
+        if(typeof v.seconds === "number") return new Date(v.seconds * 1000);
+      }
+      const s = String(v).trim();
+      if(!s) return null;
+      const d = new Date(s);
+      if(Number.isNaN(d.getTime())) return null;
+      return d;
+    }
+    function fmtDateISO(v){
+      const d = toDateObj(v);
+      if(!d) return "";
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const da = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${da}`;
+    }
+    function dateSortNum(v){
+      const d = toDateObj(v);
+      return d ? d.getTime() : 0;
+    }
+
+    function getSavedFilter(){
+      try{
+        const v = localStorage.getItem(LS_FILTER_KEY);
+        return (v || "").trim();
+      }catch{
+        return "";
+      }
+    }
+
+    function setSavedFilter(v){
+      try{ localStorage.setItem(LS_FILTER_KEY, String(v||"")); }catch{}
+    }
+
+    function renderFilterDropdown(){
+      // ✅ Alphabetical order by label, but keep "All" at the bottom.
+      const opts = FILTERS.slice().sort((a,b)=>{
+        if(a.key === "all" && b.key !== "all") return 1;
+        if(b.key === "all" && a.key !== "all") return -1;
+        return COLLATOR.compare(String(a.label||""), String(b.label||""));
+      });
+
+      catSelect.innerHTML = opts.map(f=>(
+        `<option value="${escapeHtml(f.key)}">${escapeHtml(f.label)}</option>`
+      )).join("");
+
+      // ✅ Keep last used selection (if valid); otherwise keep current state.filter (fallback).
+      const saved = getSavedFilter();
+      const validKeys = new Set(FILTERS.map(x=>x.key));
+      if(saved && validKeys.has(saved)){
+        state.filter = saved;
+      }
+      catSelect.value = state.filter;
+    }
+
+    function filteredRows(){
+      const q = norm(state.q);
+      const active = state.all;
+
+      if(state.filter === "starfire"){
+        let arr = active.filter(d => norm(d.type) === "starfire");
+        if(q) arr = arr.filter(d => matchesSearch(d, q));
+        if(!state.sortKey){
+          arr.sort((a,b)=> COLLATOR.compare(String(a.serial||""), String(b.serial||"")));
+        }
+        return arr;
+      }
+
+      let arr = active.filter(d => norm(d.type) !== "starfire");
+      if(state.filter !== "all"){
+        arr = arr.filter(d => detectCategory(d) === state.filter);
+      }
+      if(q) arr = arr.filter(d => matchesSearch(d, q));
+
+      if(!state.sortKey){
+        arr.sort((a,b)=>{
+          const an=(a.unitId||a.name||"").toLowerCase();
+          const bn=(b.unitId||b.name||"").toLowerCase();
+          const c = COLLATOR.compare(an, bn);
+          if(c !== 0) return c;
+          return (Number(b.year||0)-Number(a.year||0));
+        });
+      }
+
+      return arr;
+    }
+
+    function buildColumnsForCurrentView(rows){
+      if(state.filter === "starfire"){
+        return [
+          { key:"sfSerial", label:"Serial", w:260, wrap:false },
+          { key:"sfLast4",  label:"Last 4", w:90,  wrap:false },
+          { key:"sfLoc",    label:"Current Location", w:340, wrap:true },
+          { key:"sfSince",  label:"Since", w:140, wrap:false }
+        ];
+      }
+
+      const showInService = hasAny(rows, r => isPresent(r.placedInServiceDate));
+      const showMileage   = hasAny(rows, r => isPresent(r.odometerMiles));
+      const showAcres     = hasAny(rows, r => isPresent(r.totalAcres));
+      const showHours     = hasAny(rows, r => isPresent(r.totalHours) || isPresent(r.engineHours));
+      const showUnitIdCol = hasAny(rows, r => isPresent(r.unitId));
+      const showCategoryCol = (state.filter === "all");
+      const isTruckTrailerView = (state.filter === "trucks");
+
+      const showLPExp  = isTruckTrailerView && hasAny(rows, r => isPresent(r.licensePlateExp) || isPresent(r.licensePlateExpiration));
+      const showInsExp = isTruckTrailerView && hasAny(rows, r => isPresent(r.insuranceExp) || isPresent(r.insuranceExpiration));
+      const showDOTExp = isTruckTrailerView && hasAny(rows, r => isPresent(r.dotExpiration) || isPresent(r.dotExpirationDate));
+
+      const cols = [
+        { key:"unit",   label:"Unit", w:420, wrap:true }
+      ];
+
+      if(showUnitIdCol){
+        cols.push({ key:"unitId", label:"Unit ID", w:160, wrap:false });
+      }
+
+      if(showAcres){ cols.push({ key:"acres", label:"Acres", w:110, wrap:false }); }
+      if(showHours){ cols.push({ key:"hours", label:"Hours", w:110, wrap:false }); }
+      if(showMileage){ cols.push({ key:"miles", label:"Mileage", w:120, wrap:false }); }
+
+      if(showLPExp){  cols.push({ key:"lpExp",  label:"LP Exp",  w:110, wrap:false }); }
+      if(showInsExp){ cols.push({ key:"insExp", label:"Ins Exp", w:110, wrap:false }); }
+      if(showDOTExp){ cols.push({ key:"dotExp", label:"DOT Exp", w:110, wrap:false }); }
+
+      cols.push({ key:"notes",  label:"Notes", w:420, wrap:true });
+
+      if(showCategoryCol){
+        cols.push({ key:"cat", label:"Category", w:140, wrap:false });
+      }
+
+      cols.push({ key:"year",   label:"Year", w:80, wrap:false });
+      cols.push({ key:"serial", label:"Serial", w:160, wrap:false });
+
+      if(showInService){ cols.push({ key:"pis", label:"In Service", w:140, wrap:false }); }
+
+      return cols;
+    }
+
+    function scaleW(w){
+      return window.matchMedia("(max-width: 820px)").matches ? Math.max(72, Math.round(w * 0.78)) : w;
+    }
+
+    function renderHead(cols){
+      thead.innerHTML = `
+        <tr>
+          ${cols.map(c=>{
+            const isSorted = (state.sortKey === c.key);
+            const ind = isSorted ? (state.sortDir === 1 ? "▲" : "▼") : "";
+            return `
+              <th
+                class="${c.wrap ? 'wrap' : ''} th-sort"
+                data-key="${escapeHtml(c.key)}"
+                style="min-width:${scaleW(c.w)}px"
+                title="Sort"
+              ><span class="th-inner">${escapeHtml(c.label)}<span class="th-sort-ind">${escapeHtml(ind)}</span></span></th>
+            `;
+          }).join("")}
+        </tr>
+      `;
+
+      thead.querySelectorAll("th.th-sort[data-key]").forEach(th=>{
+        th.addEventListener("click", ()=>{
+          const key = th.getAttribute("data-key") || "";
+          if(!key) return;
+
+          if(state.sortKey === key){
+            state.sortDir = (state.sortDir === 1 ? -1 : 1);
+          } else {
+            state.sortKey = key;
+            state.sortDir = 1;
+          }
+
+          state.selectedRowId = null;
+          renderTable();
+          requestAnimationFrame(()=> ZOOM.recomputeBounds());
+        });
+      });
+    }
+
+    function unitDisplay(eq){
+      const mm = [eq.makeName, eq.modelName].filter(Boolean).join(" / ").trim();
+      const base = mm || (eq.name || "(unnamed)");
+      const uid = (eq.unitId!=null && String(eq.unitId).trim()) ? String(eq.unitId).trim() : "";
+      return uid ? `${base} / ${uid}` : base;
+    }
+
+    function combinedNotes(d){
+      const a = String(d.notes || "").trim();
+      const b = String(d.lifetimeNotes || "").trim();
+      if(a && b) return `${a}; ${b}`;
+      return a || b || "";
+    }
+
+    function labelEquipment(row){
+      const make = row.makeName || row.make || "";
+      const model = row.modelName || row.model || row.name || "";
+      const mm = [make, model].filter(Boolean).join(" ").trim() || "Unit";
+      const ls = last6(row.serial || "");
+      return ls ? `${mm} (#${ls})` : mm;
+    }
+
+    function labelEquipmentWithUnitId(row){
+      const base = labelEquipment(row);
+      const uid = (row?.unitId != null && String(row.unitId).trim()) ? String(row.unitId).trim() : "";
+      if(!uid) return base;
+
+      const idx = base.indexOf(" (#");
+      if(idx > 0){
+        return base.slice(0, idx) + ` / ${uid}` + base.slice(idx);
+      }
+      return `${base} / ${uid}`;
+    }
+
+    function labelStarFire(row){
+      const model = row.modelName || row.model || row.name || "StarFire";
+      const ls = last6(row.serial || row.sn || "");
+      return ls ? `${model} (#${ls})` : model;
+    }
+
+    function labelRTK(row){
+      const name = (row?.name || row?.towerName || row?.label || row?.id || "").toString().trim();
+      return name ? `RTK Tower (${name})` : "RTK Tower";
+    }
+
+    function normalizeRTKNameMaybe(raw){
+      const s = String(raw || "").trim();
+      if(!s) return "";
+      const m = s.match(/^rtk\s*tower\s*\((.+)\)\s*$/i);
+      if(m) return normSp(m[1]);
+      const m2 = s.match(/^rtk\s*tower\s+(.+)$/i);
+      if(m2) return normSp(m2[1]);
+      return normSp(s);
+    }
+
+    function cleanLoanName(v){
+      const s = String(v ?? "").trim();
+      return s.length > 20 ? s.slice(0,20) : s;
+    }
+    function loanedLabel(name){
+      const n = cleanLoanName(name);
+      return n ? `Loaned Out (${n})` : "Loaned Out";
+    }
+
+    function isTruthyFlag(v){
+      if(v === true) return true;
+      if(v === 1) return true;
+      const s = String(v ?? "").toLowerCase().trim();
+      return s === "true" || s === "1" || s === "yes" || s === "y";
+    }
+    function isEligibleStarfireMount(eq){
+      return (
+        isTruthyFlag(eq?.starfireCapable) ||
+        isTruthyFlag(eq?.gpsCapable) ||
+        isTruthyFlag(eq?.starfire) ||
+        isTruthyFlag(eq?.extras?.starfireCapable) ||
+        isTruthyFlag(eq?.extras?.gpsCapable)
+      );
+    }
+
+    function normalizeReceiverLocType(raw){
+      const t = String(raw || "").toLowerCase().trim();
+      if(!t) return "";
+      if(t === "storage" || t === "loaned" || t === "missing" || t === "rtk" || t === "equipment") return t;
+      return "equipment";
+    }
+
+    function isStarfireNotInStorage(sf){
+      const t = normalizeReceiverLocType(sf.starfireCurrentLocationType || "");
+      const name = String(sf.starfireCurrentLocationName || "").trim();
+      if(t === "storage" || t === "missing") return false;
+      if(name === "In Storage" || name === "Unknown / Missing") return false;
+      return !!name;
+    }
+
+    function isStarfireMissing(sf){
+      const t = normalizeReceiverLocType(sf.starfireCurrentLocationType || "");
+      const name = String(sf.starfireCurrentLocationName || "").trim();
+      if(t === "missing") return true;
+      return name.toLowerCase() === "unknown / missing";
+    }
+
+    // ✅ EXACT DISPLAY LABEL used for BOTH rendering and sorting
+    function starfireCurrentLocationDisplay(sf, { includeUnitId=false } = {}){
+      const t = normalizeReceiverLocType(sf?.starfireCurrentLocationType || "");
+      const id = sf?.starfireCurrentLocationId ? String(sf.starfireCurrentLocationId) : "";
+      const name = String(sf?.starfireCurrentLocationName || "").trim();
+
+      if(t === "storage" || (!t && !id) || name === "In Storage") return "In Storage";
+      if(t === "missing" || name === "Unknown / Missing") return "Unknown / Missing";
+      if(t === "loaned") return name || "Loaned Out";
+      if(t === "rtk"){
+        const tw = id ? state.rtkById.get(id) : null;
+        return tw ? labelRTK(tw) : (name || "RTK Tower");
+      }
+
+      const eq = id ? state.equipById.get(id) : null;
+      if(eq){
+        return includeUnitId ? labelEquipmentWithUnitId(eq) : labelEquipment(eq);
+      }
+      return name || "—";
+    }
+
+    function sortValue(d, key){
+      switch(key){
+        case "unit":   return unitDisplay(d);
+        case "unitId": return String(d.unitId||"");
+        case "acres":  return Number(d.totalAcres ?? 0) || 0;
+        case "hours":  return Number(d.totalHours ?? d.engineHours ?? 0) || 0;
+        case "miles":  return Number(d.odometerMiles ?? 0) || 0;
+
+        case "lpExp":  return dateSortNum(d.licensePlateExp || d.licensePlateExpiration);
+        case "insExp": return dateSortNum(d.insuranceExp || d.insuranceExpiration);
+        case "dotExp": return dateSortNum(d.dotExpiration || d.dotExpirationDate);
+
+        case "notes":  return combinedNotes(d);
+        case "cat":    return catLabel(d);
+        case "year":   return Number(d.year ?? 0) || 0;
+        case "serial": return String(d.serial||"");
+        case "pis":    return dateSortNum(d.placedInServiceDate);
+
+        case "sfSerial": return String(d.serial||"");
+        case "sfLast4":  return serialLast4(d.serial||"");
+        // ✅ KEY FIX: sort by EXACT display string (includes RTK Tower prefix + Unit ID natural order)
+        case "sfLoc":    return starfireCurrentLocationDisplay(d, { includeUnitId:true }) || "";
+        case "sfSince":  return dateSortNum(d.starfireCurrentLocationSince);
+
+        default:
+          return String(d[key] ?? "");
+      }
+    }
+
+    function applySort(rows){
+      if(!state.sortKey) return rows;
+
+      const key = state.sortKey;
+      const dir = state.sortDir || 1;
+
+      const arr = rows.slice();
+      arr.sort((a,b)=>{
+        const av = sortValue(a, key);
+        const bv = sortValue(b, key);
+
+        if(typeof av === "number" && typeof bv === "number"){
+          if(av < bv) return -1 * dir;
+          if(av > bv) return  1 * dir;
+          return 0;
+        }
+
+        const as = String(av ?? "");
+        const bs = String(bv ?? "");
+        return COLLATOR.compare(as, bs) * dir;
+      });
+
+      return arr;
+    }
+
+    function renderTable(){
+      const rows = filteredRows();
+      const cols = buildColumnsForCurrentView(rows);
+      renderHead(cols);
+
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td class="muted" colspan="${cols.length}" style="padding:12px;">No results.</td></tr>`;
+        requestAnimationFrame(()=> ZOOM.recomputeBounds());
+        return;
+      }
+
+      const viewRows = applySort(rows);
+
+      tbody.innerHTML = viewRows.map(d=>{
+        if(state.filter === "starfire"){
+          const loc = starfireCurrentLocationDisplay(d, { includeUnitId:true }) || "—";
+          const since = d.starfireCurrentLocationSince || "";
+          const missingClass = isStarfireMissing(d) ? " missingRow" : "";
+          const readyClass = (!missingClass && isStarfireNotInStorage(d)) ? " readyRow" : "";
+          return `
+            <tr data-id="${escapeHtml(d.id)}" data-kind="starfire" class="${(missingClass + readyClass).trim()}">
+              <td class="wrap"><span class="cell-title">${escapeHtml(String(d.serial||""))}</span></td>
+              <td class="kpi">${escapeHtml(serialLast4(d.serial||""))}</td>
+              <td class="wrap">${escapeHtml(loc)}</td>
+              <td class="muted">${escapeHtml(String(fmtDateISO(since) || String(since||"")))}</td>
+            </tr>
+          `;
+        }
+
+        const hours = (d.totalHours ?? d.engineHours ?? "");
+        const acres = (d.totalAcres ?? "");
+        const unitId = d.unitId ? String(d.unitId) : "";
+
+        const cells = cols.map(c=>{
+          switch(c.key){
+            case "unit":
+              return `<td class="wrap"><span class="cell-title">${escapeHtml(unitDisplay(d))}</span></td>`;
+            case "unitId":
+              return `<td><span class="cell-title">${escapeHtml(unitId || "—")}</span></td>`;
+            case "acres":
+              return `<td class="kpi">${escapeHtml(fmtNum(acres, 0))}</td>`;
+            case "hours":
+              return `<td class="kpi">${escapeHtml(fmtNum(hours, 1))}</td>`;
+            case "miles":
+              return `<td class="kpi">${escapeHtml(fmtNum(d.odometerMiles ?? "", 0))}</td>`;
+            case "lpExp": {
+              const v = d.licensePlateExp || d.licensePlateExpiration;
+              return `<td class="muted">${escapeHtml(fmtDateISO(v) || "—")}</td>`;
+            }
+            case "insExp": {
+              const v = d.insuranceExp || d.insuranceExpiration;
+              return `<td class="muted">${escapeHtml(fmtDateISO(v) || "—")}</td>`;
+            }
+            case "dotExp": {
+              const v = d.dotExpiration || d.dotExpirationDate;
+              return `<td class="muted">${escapeHtml(fmtDateISO(v) || "—")}</td>`;
+            }
+            case "notes":
+              return `<td class="muted wrap">${escapeHtml(combinedNotes(d))}</td>`;
+            case "cat":
+              return `<td class="muted">${escapeHtml(catLabel(d))}</td>`;
+            case "year":
+              return `<td class="muted">${escapeHtml(String(d.year||""))}</td>`;
+            case "serial":
+              return `<td class="muted">${escapeHtml(serialShort6(d.serial||""))}</td>`;
+            case "pis":
+              return `<td class="muted">${escapeHtml(String(d.placedInServiceDate||""))}</td>`;
+            default:
+              return `<td></td>`;
+          }
+        }).join("");
+
+        const readyClass = d.fieldReady ? " readyRow" : "";
+        return `<tr data-id="${escapeHtml(d.id)}" data-kind="equip" class="${readyClass.trim()}">${cells}</tr>`;
+      }).join("");
+
+      tbody.querySelectorAll("tr[data-id]").forEach(tr=>{
+        const id = tr.getAttribute("data-id");
+        const kind = tr.getAttribute("data-kind");
+
+        tr.addEventListener("click", ()=>{
+          state.selectedRowId = id;
+          tbody.querySelectorAll("tr").forEach(r=>r.classList.remove("activeRow"));
+          tr.classList.add("activeRow");
+
+          if(kind === "equip"){
+            const eq = state.all.find(x => x.id === id);
+            if(eq && window.FVShopEquipModal && typeof window.FVShopEquipModal.open === "function"){
+              window.FVShopEquipModal.open(eq);
+            }
+          }
+        });
+
+        if(kind === "starfire"){
+          const sf = state.all.find(x => x.id === id);
+          if(!sf) return;
+
+          tr.addEventListener("dblclick", (e)=>{
+            e.preventDefault();
+            openStarfireSheet(sf);
+          });
+
+          let pressTimer=null;
+          tr.addEventListener("touchstart", ()=>{
+            pressTimer=setTimeout(()=> openStarfireSheet(sf), 520);
+          }, {passive:true});
+          tr.addEventListener("touchmove", ()=>{ if(pressTimer) clearTimeout(pressTimer); }, {passive:true});
+          tr.addEventListener("touchend", ()=>{ if(pressTimer) clearTimeout(pressTimer); }, {passive:true});
+
+          let lastTap = 0;
+          tr.addEventListener("touchend", (e)=>{
+            const now = Date.now();
+            if(now - lastTap < 280){
+              e.preventDefault();
+              openStarfireSheet(sf);
+              lastTap = 0;
+              return;
+            }
+            lastTap = now;
+          }, {passive:false});
+        }
+      });
+
+      requestAnimationFrame(()=>{
+        ZOOM.recomputeBounds();
+        ZOOM.clampScroll();
+      });
+    }
+
+    function openSheet(dlg){
+      try{ dlg.showModal(); }catch{ dlg.setAttribute("open",""); }
+    }
+    function closeSheet(dlg){
+      try{ dlg.close(); }catch{ dlg.removeAttribute("open"); }
+    }
+
+    function syncLoanUI(){
+      const v = sfLoc.value || "";
+      let choice=null;
+      try{ choice = JSON.parse(v); }catch{ choice=null; }
+      const isLoan = (choice && choice.kind === "loaned");
+      sfLoanBox.classList.toggle("show", !!isLoan);
+      if(isLoan){
+        sfLoanTo.value = cleanLoanName(sfLoanTo.value);
+        setTimeout(()=> sfLoanTo.focus(), 0);
+      }else{
+        sfLoanTo.value = "";
+      }
+    }
+
+    function currentLocationKind(sf){
+      const t = normalizeReceiverLocType(sf?.starfireCurrentLocationType || "");
+      const locId = sf?.starfireCurrentLocationId ? String(sf.starfireCurrentLocationId) : "";
+      const name = String(sf?.starfireCurrentLocationName || "").trim();
+
+      if(t === "missing" || name === "Unknown / Missing") return { kind:"missing" };
+      if(t === "loaned") return { kind:"loaned" };
+      if(t === "storage" || name === "In Storage" || (!t && !locId)) return { kind:"storage" };
+      if(t === "rtk" && locId) return { kind:"rtk", id: locId };
+      if(locId) return { kind:"equip", id: locId };
+      return { kind:"storage" };
+    }
+
+    function buildLocationOptionsFor(sf){
+      sfLoc.innerHTML = "";
+
+      const cur = currentLocationKind(sf);
+      const curKind = cur.kind;
+      const curId = cur.id ? String(cur.id) : "";
+
+      const mkOpt = (payload, text)=>{
+        const opt=document.createElement("option");
+        opt.value = JSON.stringify(payload);
+        opt.textContent = text;
+        return opt;
+      };
+
+      const ogQuick = document.createElement("optgroup");
+      ogQuick.label = "Quick";
+
+      if(curKind !== "storage"){
+        ogQuick.appendChild(mkOpt({ kind:"storage" }, "In Storage"));
+      }
+      if(curKind !== "missing"){
+        ogQuick.appendChild(mkOpt({ kind:"missing" }, "Unknown / Missing"));
+      }
+      if(curKind !== "loaned"){
+        ogQuick.appendChild(mkOpt({ kind:"loaned" }, "Loaned Out"));
+      }
+      if(ogQuick.children.length){
+        sfLoc.appendChild(ogQuick);
+      }
+
+      const ogEquip = document.createElement("optgroup");
+      ogEquip.label = "Equipment (GPS Capable)";
+
+      const occEqIds = state.occupiedEquipmentIds || new Set();
+      const occEqLabels = state.occupiedEquipmentLabels || new Set();
+
+      const equipCandidates = (state.equipActive || [])
+        .filter(e=>{
+          const id = String(e?.id || "");
+          if(!id) return false;
+
+          if(!isEligibleStarfireMount(e)) return false;
+
+          if(curKind === "equip" && id === curId) return false;
+
+          if(occEqIds.has(id)) return false;
+
+          const lbl = normSp(labelEquipment(e));
+          if(lbl && occEqLabels.has(lbl)) return false;
+
+          return true;
+        })
+        .sort((a,b)=> COLLATOR.compare(labelEquipment(a), labelEquipment(b)));
+
+      equipCandidates.forEach(e=>{
+        ogEquip.appendChild(mkOpt({ kind:"equip", id: e.id }, labelEquipment(e)));
+      });
+
+      if(ogEquip.children.length){
+        sfLoc.appendChild(ogEquip);
+      }
+
+      const ogRTK = document.createElement("optgroup");
+      ogRTK.label = "RTK Towers";
+
+      const occRtkIds = state.occupiedRTKIds || new Set();
+      const occRtkNames = state.occupiedRTKNames || new Set();
+
+      const rtkCandidates = (state.rtkTowers || [])
+        .filter(t=>{
+          const id = String(t?.id || "");
+          if(!id) return false;
+
+          if(curKind === "rtk" && id === curId) return false;
+
+          if(occRtkIds.has(id)) return false;
+
+          const nm = normalizeRTKNameMaybe(t.name || t.towerName || t.label || t.id);
+          if(nm && occRtkNames.has(nm)) return false;
+
+          return true;
+        })
+        .sort((a,b)=> COLLATOR.compare(labelRTK(a), labelRTK(b)));
+
+      rtkCandidates.forEach(t=>{
+        ogRTK.appendChild(mkOpt({ kind:"rtk", id: t.id }, labelRTK(t)));
+      });
+
+      if(ogRTK.children.length){
+        sfLoc.appendChild(ogRTK);
+      }
+
+      sfLoc.selectedIndex = 0;
+    }
+
+    function pillDurationText(sinceISO){
+      const days = daysSince(sinceISO);
+      if(days == null) return "Duration: —";
+      if(days === 0) return "Duration: Today";
+      return `Duration: ${days} day${days===1 ? "" : "s"}`;
+    }
+
+    function pillMovedByText(sf){
+      const mb = sf?.starfireLastMovedBy || null;
+      const nm = (mb?.name || mb?.email || "").toString().trim();
+      return `Moved By: ${nm || "—"}`;
+    }
+
+    function openStarfireSheet(sf){
+      state.sfSelected = sf;
+
+      buildLocationOptionsFor(sf);
+
+      sfTitle.textContent = `Change StarFire Location • …${serialLast4(sf.serial||"")}`;
+      sfSerial.value = sf.serial || "";
+
+      const since = sf.starfireCurrentLocationSince || "";
+      sfSince.value = fmtDateISO(since) || String(since || "—");
+
+      sfCurrentPill.textContent = `Current: ${starfireCurrentLocationDisplay(sf, { includeUnitId:true }) || "—"}`;
+      sfDurationPill.textContent = pillDurationText(since);
+      sfMovedByPill.textContent = pillMovedByText(sf);
+
+      sfLoanTo.value = "";
+      syncLoanUI();
+
+      openSheet(sfSheet);
+    }
+
+    sfClose.addEventListener("click", ()=> closeSheet(sfSheet));
+    sfCancel.addEventListener("click", ()=> closeSheet(sfSheet));
+    sfLoc.addEventListener("change", syncLoanUI);
+    sfLoanTo.addEventListener("input", ()=>{
+      const v = cleanLoanName(sfLoanTo.value);
+      if(sfLoanTo.value !== v) sfLoanTo.value = v;
+    });
+
+    function rebuildOccupiedSets(){
+      const occEqIds = new Set();
+      const occEqLabels = new Set();
+      const occRtkIds = new Set();
+      const occRtkNames = new Set();
+
+      state.all.forEach(x=>{
+        if(norm(x.type) !== "starfire") return;
+
+        const t = normalizeReceiverLocType(x.starfireCurrentLocationType || "");
+        const locId = x.starfireCurrentLocationId || x.starfireMountedOnId || null;
+        const locName = String(x.starfireCurrentLocationName || "").trim();
+
+        if(t === "rtk"){
+          if(locId) occRtkIds.add(String(locId));
+          if(locName) occRtkNames.add(normalizeRTKNameMaybe(locName));
+          return;
+        }
+
+        if(t === "storage" || t === "loaned" || t === "missing") return;
+
+        if(locId) occEqIds.add(String(locId));
+        if(locName && normSp(locName) !== normSp("In Storage") && normSp(locName) !== normSp("Unknown / Missing") && !/^loaned out/i.test(locName)){
+          occEqLabels.add(normSp(locName));
+        }
+      });
+
+      state.occupiedEquipmentIds = occEqIds;
+      state.occupiedEquipmentLabels = occEqLabels;
+      state.occupiedRTKIds = occRtkIds;
+      state.occupiedRTKNames = occRtkNames;
+    }
+
+    function moverFromAuth(){
+      const auth = getAuth();
+      const u = auth.currentUser;
+      const email = (u?.email || "").trim();
+      const name = (u?.displayName || email || "Unknown").trim();
+      return {
+        email: email || null,
+        employeeId: email || "unknown",
+        name
+      };
+    }
+
+    async function writeStarfireMoveLog({ receiver, fromName, fromId, toType, toName, toId, moveDate, loanToName, movedBy }) {
+      const db = getFirestore();
+
+      const payload = {
+        type: "starfireMove",
+        receiverId: receiver.id,
+        receiverLabel: labelStarFire(receiver),
+        fromLocationId: fromId || null,
+        fromLocationName: fromName || "In Storage",
+        toLocationId: toId || null,
+        toLocationName: toName || "In Storage",
+        toLocationType: toType,
+        toLoanedToName: loanToName || null,
+        moveDate,
+        movedBy: movedBy || moverFromAuth(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      await addDoc(collection(db, "starfireMoves"), payload);
+    }
+
+    sfSave.addEventListener("click", async ()=>{
+      if(!state.sfSelected) return;
+
+      let choice=null;
+      try{ choice = JSON.parse(sfLoc.value); }catch{ return; }
+
+      const moveDate = todayISO();
+
+      const curTypeRaw = normalizeReceiverLocType(state.sfSelected.starfireCurrentLocationType || "");
+      const curName = String(state.sfSelected.starfireCurrentLocationName || "In Storage").trim() || "In Storage";
+      const curId = state.sfSelected.starfireCurrentLocationId || null;
+
+      const fromId = (curTypeRaw && curTypeRaw !== "storage" && curTypeRaw !== "loaned" && curTypeRaw !== "missing") ? curId : null;
+      const fromName = curName;
+
+      const patch = {};
+      let toType = "storage";
+      let toId = null;
+      let toName = "In Storage";
+      let loanTo = null;
+
+      const kind = choice?.kind;
+
+      if(kind === "storage"){
+        toType = "storage";
+        toId = null;
+        toName = "In Storage";
+        loanTo = null;
+
+        patch.starfireCurrentLocationId = null;
+        patch.starfireCurrentLocationName = "In Storage";
+        patch.starfireCurrentLocationType = "storage";
+        patch.starfireCurrentLocationSince = moveDate;
+        patch.starfireLoanedToName = null;
+      } else if(kind === "missing"){
+        toType = "missing";
+        toId = null;
+        toName = "Unknown / Missing";
+        loanTo = null;
+
+        patch.starfireCurrentLocationId = null;
+        patch.starfireCurrentLocationName = "Unknown / Missing";
+        patch.starfireCurrentLocationType = "missing";
+        patch.starfireCurrentLocationSince = moveDate;
+        patch.starfireLoanedToName = null;
+      } else if(kind === "loaned"){
+        const loanToName = cleanLoanName(sfLoanTo.value);
+        if(!loanToName){
+          showError("Enter whom it is loaned to (max 20 characters).");
+          sfLoanTo.focus();
+          return;
+        }
+
+        toType = "loaned";
+        toId = null;
+        loanTo = loanToName;
+        toName = loanedLabel(loanToName);
+
+        patch.starfireCurrentLocationId = null;
+        patch.starfireCurrentLocationName = toName;
+        patch.starfireCurrentLocationType = "loaned";
+        patch.starfireCurrentLocationSince = moveDate;
+        patch.starfireLoanedToName = loanToName;
+      } else if(kind === "rtk"){
+        const t = state.rtkTowers.find(x => String(x.id) === String(choice.id));
+        if(!t){
+          showError("RTK tower not found.");
+          return;
+        }
+
+        const id = String(t.id||"");
+        const nm = normalizeRTKNameMaybe(t.name || t.towerName || t.label || t.id);
+        if((state.occupiedRTKIds||new Set()).has(id) || (nm && (state.occupiedRTKNames||new Set()).has(nm))){
+          showError("That RTK tower already has a StarFire assigned.");
+          return;
+        }
+
+        toType = "rtk";
+        toId = t.id;
+        toName = labelRTK(t);
+        loanTo = null;
+
+        patch.starfireCurrentLocationId = t.id;
+        patch.starfireCurrentLocationName = toName;
+        patch.starfireCurrentLocationType = "rtk";
+        patch.starfireCurrentLocationSince = moveDate;
+        patch.starfireLoanedToName = null;
+      } else if(kind === "equip"){
+        const e = state.equipActive.find(x => String(x.id) === String(choice.id));
+        if(!e){
+          showError("Equipment not found.");
+          return;
+        }
+
+        const id = String(e.id||"");
+        const lbl = normSp(labelEquipment(e));
+        if((state.occupiedEquipmentIds||new Set()).has(id) || (lbl && (state.occupiedEquipmentLabels||new Set()).has(lbl))){
+          showError("That unit already has a StarFire mounted.");
+          return;
+        }
+
+        toType = "equipment";
+        toId = e.id;
+        toName = labelEquipment(e);
+        loanTo = null;
+
+        patch.starfireCurrentLocationId = e.id;
+        patch.starfireCurrentLocationName = toName;
+        patch.starfireCurrentLocationType = "equipment";
+        patch.starfireCurrentLocationSince = moveDate;
+        patch.starfireLoanedToName = null;
+      } else {
+        return;
+      }
+
+      try{
+        const db = getFirestore();
+        const movedBy = moverFromAuth();
+
+        await writeStarfireMoveLog({
+          receiver: state.sfSelected,
+          fromName,
+          fromId,
+          toType,
+          toName,
+          toId,
+          moveDate,
+          loanToName: loanTo,
+          movedBy
+        });
+
+        await updateDoc(doc(db, "equipment", state.sfSelected.id), {
+          ...patch,
+          starfireLastMovedBy: movedBy,
+          starfireLastMoveDate: moveDate,
+          starfireLastMovedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        Object.assign(state.sfSelected, patch, {
+          starfireLastMovedBy: movedBy,
+          starfireLastMoveDate: moveDate
+        });
+
+        rebuildOccupiedSets();
+
+        closeSheet(sfSheet);
+        renderTable();
+        ZOOM.recomputeBounds();
+        toast("Location updated.");
+      }catch(e){
+        console.error(e);
+        showError(e.message || "Save failed.");
+      }
+    });
+
+    const ZOOM = {
+      scale: 1,
+      min: 0.8,
+      max: 2.6,
+      active: false,
+      startDist: 0,
+      startScale: 1,
+
+      _tableEl(){
+        return gridScaled ? gridScaled.querySelector("table") : null;
+      },
+
+      _syncSizer(){
+        const table = this._tableEl();
+        if(!table || !gridInner) return;
+
+        const tw = Math.max(1, table.offsetWidth);
+        const th = Math.max(1, table.offsetHeight);
+
+        gridInner.style.width = Math.ceil(tw * this.scale) + "px";
+        gridInner.style.height = Math.ceil(th * this.scale) + "px";
+      },
+
+      setScale(s){
+        const clamped = Math.max(this.min, Math.min(this.max, s));
+        this.scale = clamped;
+        if(gridScaled){
+          gridScaled.style.transform = `scale(${clamped})`;
+        }
+        this._syncSizer();
+        this.clampScroll();
+      },
+
+      clampScroll(){
+        if(!gridViewport || !gridInner) return;
+
+        const maxLeft = Math.max(0, gridInner.scrollWidth - gridViewport.clientWidth);
+        const maxTop  = Math.max(0, gridInner.scrollHeight - gridViewport.clientHeight);
+
+        if(gridViewport.scrollLeft > maxLeft) gridViewport.scrollLeft = maxLeft;
+        if(gridViewport.scrollTop  > maxTop)  gridViewport.scrollTop = maxTop;
+        if(gridViewport.scrollLeft < 0) gridViewport.scrollLeft = 0;
+        if(gridViewport.scrollTop  < 0) gridViewport.scrollTop = 0;
+      },
+
+      recomputeBounds(){
+        const table = this._tableEl();
+        if(!table || !gridViewport) return;
+
+        const vw = Math.max(1, gridViewport.clientWidth);
+        const tw = Math.max(1, table.offsetWidth);
+
+        const fit = Math.min(1, vw / tw);
+        this.min = Math.max(0.25, fit);
+
+        if(this.scale < this.min) this.scale = this.min;
+        this._syncSizer();
+        this.setScale(this.scale);
+      }
+    };
+
+    function enableGridPinch(){
+      if(!gridViewport || !gridInner || !gridScaled) return;
+
+      ZOOM.recomputeBounds();
+      if(window.matchMedia("(max-width: 820px)").matches){
+        ZOOM.setScale(ZOOM.min);
+      } else {
+        ZOOM.setScale(1);
+      }
+
+      gridViewport.addEventListener("scroll", ()=>{ ZOOM.clampScroll(); }, { passive:true });
+
+      gridViewport.addEventListener("touchstart", (e)=>{
+        if(e.touches && e.touches.length === 2){
+          const dx = e.touches[1].clientX - e.touches[0].clientX;
+          const dy = e.touches[1].clientY - e.touches[0].clientY;
+          const dist = Math.hypot(dx, dy);
+          ZOOM.active = true;
+          ZOOM.startDist = dist;
+          ZOOM.startScale = ZOOM.scale;
+        }
+      }, { passive: true });
+
+      gridViewport.addEventListener("touchmove", (e)=>{
+        if(!ZOOM.active) return;
+        if(!e.touches || e.touches.length !== 2) return;
+
+        e.preventDefault();
+
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        const dist = Math.hypot(dx, dy);
+
+        const ratio = dist / (ZOOM.startDist || dist);
+        const target = ZOOM.startScale * ratio;
+
+        const rect = gridViewport.getBoundingClientRect();
+        const xInViewport = midX - rect.left;
+        const yInViewport = midY - rect.top;
+        const contentX = (gridViewport.scrollLeft + xInViewport) / ZOOM.scale;
+        const contentY = (gridViewport.scrollTop  + yInViewport) / ZOOM.scale;
+
+        ZOOM.setScale(target);
+        gridViewport.scrollLeft = (contentX * ZOOM.scale) - xInViewport;
+        gridViewport.scrollTop  = (contentY * ZOOM.scale) - yInViewport;
+        ZOOM.clampScroll();
+      }, { passive: false });
+
+      gridViewport.addEventListener("touchend", (e)=>{
+        if(!e.touches || e.touches.length < 2){
+          ZOOM.active = false;
+        }
+      }, { passive: true });
+
+      gridViewport.addEventListener("touchcancel", ()=>{ ZOOM.active = false; }, { passive: true });
+
+      window.addEventListener("resize", ()=>{ ZOOM.recomputeBounds(); });
+    }
+
+    // ✅ Open dropdown: add extra bottom space + scroll it into view
+    function beginCatOpen(){
+      document.body.classList.add("catOpen");
+      setTimeout(()=>{
+        try{ catSelect.scrollIntoView({ block:"center", inline:"nearest" }); }catch{}
+      }, 0);
+    }
+    function endCatOpen(){
+      document.body.classList.remove("catOpen");
+    }
+
+    catSelect.addEventListener("focus", beginCatOpen);
+    catSelect.addEventListener("blur", endCatOpen);
+    catSelect.addEventListener("mousedown", beginCatOpen);
+    catSelect.addEventListener("touchstart", beginCatOpen, { passive:true });
+
+    catSelect.addEventListener("change", ()=>{
+      state.filter = catSelect.value;
+      setSavedFilter(state.filter);   // ✅ remember last selected category
+      state.selectedRowId = null;
+      renderTable();
+      requestAnimationFrame(()=> ZOOM.recomputeBounds());
+    });
+
+    qInput.addEventListener("input", ()=>{
+      state.q = qInput.value || "";
+      state.selectedRowId = null;
+      renderTable();
+      requestAnimationFrame(()=> ZOOM.recomputeBounds());
+    });
+
+    async function loadAll(){
+      try{
+        const db = getFirestore();
+
+        const [equipSnap, rtkSnap] = await Promise.all([
+          getDocs(collection(db, "equipment")),
+          getDocs(collection(db, "rtkTowers"))
+        ]);
+
+        const all = [];
+        equipSnap.forEach(d=> all.push({ id: d.id, ...d.data() }));
+
+        const towers = [];
+        rtkSnap.forEach(d=> towers.push({ id: d.id, ...d.data() }));
+
+        state.all = all.filter(isActive);
+        state.rtkTowers = towers;
+
+        state.equipActive = state.all
+          .filter(d => norm(d.type) !== "starfire")
+          .sort((a,b)=> COLLATOR.compare(String(a.unitId||a.name||""), String(b.unitId||b.name||"")));
+
+        // lookup maps for display
+        state.equipById = new Map();
+        state.equipActive.forEach(e => { if(e?.id) state.equipById.set(String(e.id), e); });
+
+        state.rtkById = new Map();
+        state.rtkTowers.forEach(t => { if(t?.id) state.rtkById.set(String(t.id), t); });
+
+        rebuildOccupiedSets();
+
+        renderTable();
+        requestAnimationFrame(()=> ZOOM.recomputeBounds());
+      }catch(e){
+        console.error(e);
+        showError(e.message || "Load failed.");
+        tbody.innerHTML = `<tr><td class="muted" style="padding:12px;">Load failed.</td></tr>`;
+      }
+    }
+
+    function startAutoRefresh(){
+      document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadAll(); });
+      window.addEventListener("focus", ()=> loadAll());
+      setInterval(()=>{ if(!document.hidden) loadAll(); }, 60000);
+    }
+
+    window.addEventListener("fv-shop-equip:lifetimeNotesSaved", (e)=>{
+      try{
+        const id = e?.detail?.id;
+        const txt = e?.detail?.lifetimeNotes ?? "";
+        if(!id) return;
+
+        const row = state.all.find(x => x.id === id);
+        if(!row) return;
+
+        row.lifetimeNotes = txt;
+        renderTable();
+        requestAnimationFrame(()=> ZOOM.recomputeBounds());
+      }catch(err){
+        console.warn("fv-shop-equip:lifetimeNotesSaved handler failed", err);
+      }
+    });
+
+    window.addEventListener("fv-shop-equip:fieldReadySaved", (e)=>{
+      try{
+        const id = e?.detail?.id;
+        const v = !!e?.detail?.fieldReady;
+        if(!id) return;
+
+        const row = state.all.find(x => x.id === id);
+        if(!row) return;
+
+        row.fieldReady = v;
+        renderTable();
+        requestAnimationFrame(()=> ZOOM.recomputeBounds());
+      }catch(err){
+        console.warn("fv-shop-equip:fieldReadySaved handler failed", err);
+      }
+    });
+
+    (async()=>{
+      await ready;
+      getAuth();
+
+      // ✅ Load saved filter BEFORE rendering dropdown/table
+      const saved = getSavedFilter();
+      if(saved){
+        const validKeys = new Set(FILTERS.map(x=>x.key));
+        if(validKeys.has(saved)) state.filter = saved;
+      }
+
+      renderFilterDropdown();
+      enableGridPinch();
+      await loadAll();
+      startAutoRefresh();
+    })();
+  </script>
+</body>
+</html>

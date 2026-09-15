@@ -1,0 +1,2125 @@
+<!-- =====================================================================
+/pages/equipment/actions/add.html  (FULL FILE)
+Rev: 2026-01-09c
+
+UPGRADE (per Dane):
+✅ “Make” / “Model” label links ONLY edit the currently selected item
+✅ Adding NEW Make/Model happens from the dropdown list via “➕ Add new …”
+✅ Category visibility is controlled by per-category ON/OFF sliders (no archive anywhere)
+✅ Keeps old behavior: if categories[] is empty/missing => treat as “visible everywhere”
+✅ Save writes:
+   - equipment-makes: { name, categories[], updatedAt, createdAt }
+   - equipment-models: { makeId, name, categories[], updatedAt, createdAt }
+
+Keeps:
+✅ Existing dropdown UX + label/PDF/QR flow unchanged
+===================================================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Add Tractor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <!-- Theme + base app styles -->
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Shared equipment form layouts (extras per category) -->
+  <script src="/js/equipment/forms/equipment-forms.js"></script>
+
+  <!-- Ensure fv-shell -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max:1100px;
+      --page-bottom-gap:96px;
+      --brand: var(--green,#3B7E46);
+      --danger:#b00020;
+
+      --ctl-h:48px;
+      --ctl-pad-x:12px;
+      --ctl-pad-y:12px;
+      --ctl-radius:10px;
+
+      /* ===== Brother QL-820NWB / DK-2205 (62mm wide continuous) ===== */
+      --ql-tape-mm: 62mm;
+      --ql-qr-mm: 48mm;
+      --ql-pad-mm: 2.2mm;
+      --ql-gap-mm: 2mm;
+
+      --ql-font: 18pt;
+      --ql-font-small: 16pt;
+      --ql-font-lab: 12pt;
+
+      --sf-cut-mm: 62mm;
+      --sf-qr-mm: 46mm;
+      --sf-serial-font: 16pt;
+      --sf-serial-font-sm: 13pt;
+      --sf-lab-font: 10pt;
+
+      /* ===== Switch (StarFire GPS Capable) ===== */
+      --sw-w: 56px;
+      --sw-h: 32px;
+      --sw-pad: 3px;
+      --sw-thumb: calc(var(--sw-h) - (var(--sw-pad) * 2));
+    }
+
+    html, body { min-height:100%; }
+    body { scrollbar-gutter:stable; }
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap))!important;
+    }
+
+    .hero{
+      width:min(720px, calc(100% - 24px));
+      margin:0 auto var(--page-bottom-gap);
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+      contain:layout paint;
+    }
+
+    .hero-head{
+      display:grid; grid-template-columns:36px 1fr; gap:12px; align-items:center;
+      padding:14px 16px; border-bottom:1px solid var(--border); background:var(--surface);
+    }
+    .hero-head .icon{ width:24px; height:24px; display:grid; place-items:center; color:var(--brand); }
+    .hero-head h1{ margin:0; font-size:clamp(20px,3.2vw,26px); line-height:1.2; }
+    .muted{ color:var(--muted,#67706B) }
+
+    .body{ padding:16px; display:grid; gap:14px; }
+    .row{ display:grid; gap:10px; grid-template-columns:1fr 1fr }
+    @media (max-width:880px){ .row{ grid-template-columns:1fr } }
+
+    .field label{ display:flex; align-items:center; gap:10px; font-weight:800; margin:0 0 6px }
+    .req::after{ content:" *"; color:var(--brand); }
+
+    .as-label{
+      display:inline-flex; align-items:center; gap:8px;
+      font:inherit; font-weight:800; background:transparent; border:none; padding:0;
+      color:var(--text); cursor:pointer;
+    }
+    .as-label:hover{ text-decoration:underline; }
+    .as-label.req::after{ content:" *"; color:var(--brand); }
+
+    .input,.select,.textarea{
+      width:100%; font:inherit; font-size:16px; color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border); border-radius:var(--ctl-radius);
+      padding:var(--ctl-pad-y) var(--ctl-pad-x); box-sizing:border-box; outline:none;
+    }
+    .input,.select{ height:var(--ctl-h); line-height:calc(var(--ctl-h) - 2px); }
+    .textarea{ min-height:110px; resize:vertical; line-height:1.35; }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; min-width:148px;
+      padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+      background:var(--card-surface,var(--surface)); font-weight:800; cursor:pointer;
+      -webkit-appearance:none; appearance:none; color:var(--text)!important;
+      text-decoration:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary{ border-color:transparent; background:var(--brand); color:#fff!important }
+    .btn-quiet{ background:transparent; color:var(--text)!important }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed }
+
+    .error{ color:var(--danger); font-weight:700 }
+
+    .toast{
+      position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
+      transform:translateX(-50%);
+      background:var(--brand); color:#fff; padding:10px 14px; border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25); z-index:99999; display:none;
+    }
+    .toast.show{ display:block; animation:fadeout 5s forwards }
+    @keyframes fadeout{ 0%{opacity:1} 85%{opacity:1} 100%{opacity:0} }
+
+    /* Year popover */
+    .combo{ position:relative; }
+    .combo-trigger{ width:100%; text-align:left; }
+    .combo-trigger.select{ position:relative; display:flex; align-items:center; }
+    .combo-trigger.select::after{
+      content:""; position:absolute; right:12px; top:50%; width:8px; height:8px; transform:translateY(-50%) rotate(45deg);
+      border-right:2px solid currentColor; border-bottom:2px solid currentColor; opacity:.75; pointer-events:none;
+    }
+    .combo-panel{
+      position:absolute; left:0; right:0; z-index:1000; margin-top:6px; padding:6px;
+      background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 26px rgba(0,0,0,.18);
+      --row-h: 36px; max-height: calc(var(--row-h) * 5 + 12px); overflow:auto;
+    }
+    .combo-item{
+      display:block; width:100%; text-align:left; font:inherit; color:var(--text);
+      background:transparent; border:none; border-radius:10px;
+      padding:10px 12px; height:var(--row-h); line-height:16px; cursor:pointer; font-weight:400;
+    }
+    .combo-item:hover, .combo-item:focus{ background:var(--hover, rgba(0,0,0,.06)); outline:none; }
+    .combo-hidden{ display:none !important; }
+
+    /* Custom dropdowns */
+    .dd{position:relative}
+    .dd-btn{
+      width:100%;text-align:left;padding:12px;padding-right:40px;
+      border:1px solid var(--border);border-radius:10px;background:var(--card-surface,var(--surface));
+      font:inherit;color:var(--text);cursor:pointer;appearance:none;position:relative;height:var(--ctl-h);
+      line-height:calc(var(--ctl-h) - 2px);
+      display:flex; align-items:center;
+    }
+    .dd-btn::after{
+      content:""; position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      width:18px; height:18px; pointer-events:none; opacity:.7;
+      background:no-repeat center/18px 18px url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%2367706B' d='M7.41 8.58L12 13.17l4.59-4.59L18 10l-6 6-6-6z'/></svg>");
+    }
+    .dd-list{position:absolute;z-index:40;top:calc(100% + 4px);left:0;right:0;max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,.1);display:none}
+    .dd.open .dd-list{display:block}
+    .dd-list input{width:100%;box-sizing:border-box;padding:10px 12px;border:none;border-bottom:1px solid var(--border);font:inherit;outline:none;background:var(--surface)}
+    .dd-list ul{list-style:none;margin:0;padding:0;max-height:220px;overflow-y:auto}
+    .dd-list li{padding:10px 12px;cursor:pointer}
+    .dd-list li:hover{background:#f0f1f0}
+    .dd-btn[disabled]{opacity:.6;cursor:not-allowed}
+
+    /* “Add new…” row in dropdown */
+    .dd-list li.add-row{
+      font-weight:900;
+      color:var(--brand);
+      border-bottom:1px solid var(--border);
+      background:color-mix(in srgb, var(--brand) 8%, transparent);
+    }
+    .dd-list li.add-row:hover{
+      background:color-mix(in srgb, var(--brand) 12%, transparent);
+    }
+
+    /* QR thumb */
+    .qr-area{
+      border:1px solid var(--border); border-radius:12px; background:var(--surface);
+      display:flex; align-items:center; justify-content:center; padding:10px;
+      width:112px; height:112px;
+    }
+    #qrThumb{ display:none; max-width:100%; max-height:100%; border-radius:6px; }
+    .qr-row{ display:flex; align-items:center; gap:12px; }
+    .qr-row .btn{ min-width:160px; }
+
+    input[type="file"].input{
+      height:auto;
+      line-height:normal;
+      padding:8px 12px;
+      color:var(--text) !important;
+      -webkit-text-fill-color:var(--text) !important;
+    }
+    input[type="file"].input::-webkit-file-upload-button{
+      color:#111111 !important;
+      -webkit-text-fill-color:#111111 !important;
+      background-color:#ffffff;
+    }
+
+    /* ===== Dialogs ===== */
+    dialog.sheet{
+      width:min(740px, 92vw);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:0;
+      background:var(--card-surface, var(--surface));
+      color:var(--text);
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+    }
+    dialog.sheet::backdrop{ background:rgba(0,0,0,.55); }
+    dialog.sheet header{
+      padding:14px 16px; border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
+      background:var(--card-surface, var(--surface));
+      color:var(--text);
+    }
+    dialog.sheet .body{
+      padding:14px 16px; max-height:70vh; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+      background:var(--card-surface, var(--surface));
+    }
+    dialog.sheet footer{
+      padding:12px 16px; border-top:1px solid var(--border);
+      display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;
+      background:var(--card-surface, var(--surface)); color:var(--text);
+    }
+    #labelChoice footer{ justify-content:center; }
+
+    /* Preview sizing */
+    dialog.sheet.sheet-print{
+      width:min(980px, 96vw);
+      max-width:calc(100vw - 16px);
+    }
+    dialog.sheet.sheet-print .body{
+      width:100%;
+      max-width:100%;
+      overflow-x:hidden;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .print-help{
+      color:var(--muted,#6f7772);
+      font-size:14px;
+      line-height:1.35;
+      margin:0 0 10px;
+      max-width: min(560px, calc(100vw - 48px));
+      text-align:center;
+    }
+    #printWrap{
+      display:flex;
+      width:100%;
+      max-width:100%;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling:touch;
+      justify-content:center;
+      padding: 6px 8px;
+      box-sizing:border-box;
+    }
+    #printWrap.center{ justify-content:center; }
+
+    #pPreviewHost{ flex:0 0 auto; }
+
+    /* Desktop/Preview (landscape label) */
+    .pv-long{
+      width:fit-content;
+      height:62mm;
+      border:1px dashed var(--border);
+      border-radius:10px;
+      background:#fff;
+      color:#000;
+      display:grid;
+      grid-template-columns: max-content 48mm max-content;
+      align-items:center;
+      gap:2mm;
+      padding:2.2mm;
+      box-sizing:border-box;
+      white-space:nowrap;
+    }
+    .pv-long .left,
+    .pv-long .right{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:max-content;
+    }
+    .pv-long .make{ font-weight:900; font-size:18pt; line-height:1.05; }
+    .pv-long .model{ font-weight:800; font-size:16pt; line-height:1.05; margin-top:1mm; }
+    .pv-long .mid{ width:48mm; height:48mm; display:flex; align-items:center; justify-content:center; background:#fff; }
+    .pv-long .mid img{ width:100%; height:100%; image-rendering:pixelated; display:block; }
+    .pv-long .right{ align-items:flex-end; text-align:right; padding-right:1mm; }
+    .pv-long .lab{ font-weight:800; font-size:12pt; line-height:1.05; opacity:.85; }
+    .pv-long .val{ font-weight:900; font-size:18pt; line-height:1.05; letter-spacing:.6px; margin-top:1mm; }
+
+    .pv-sf{
+      width:62mm;
+      height:62mm;
+      border:1px dashed var(--border);
+      border-radius:10px;
+      background:#fff;
+      color:#000;
+      display:grid;
+      grid-template-rows: 46mm max-content max-content;
+      align-content:center;
+      justify-items:center;
+      gap:1mm;
+      padding:2.2mm;
+      box-sizing:border-box;
+      overflow:hidden;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .pv-sf .qr{ width:46mm; height:46mm; display:grid; place-items:center; background:#fff; }
+    .pv-sf .qr img,
+    .pv-sf .qr canvas{
+      width:100% !important;
+      height:100% !important;
+      object-fit:contain;
+      display:block;
+      margin:0 !important;
+    }
+    .pv-sf .lab{
+      width:100%;
+      text-align:center;
+      font-weight:800;
+      letter-spacing:.2px;
+      line-height:1.05;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:var(--sf-lab-font);
+      opacity:.85;
+    }
+    .pv-sf .val{
+      width:100%;
+      text-align:center;
+      font-weight:900;
+      letter-spacing:.6px;
+      line-height:1.05;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:16pt;
+    }
+
+    #fv-print-frame{ position:fixed; right:0; bottom:0; width:0; height:0; border:0; visibility:hidden; }
+
+    /* Overlay */
+    .pdf-loading{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:2147483647;
+      padding:16px;
+      pointer-events:auto;
+    }
+    .pdf-loading.hidden{ display:none; }
+    .pdf-loading-inner{
+      max-width:260px;
+      width:100%;
+      border-radius:16px;
+      background:var(--surface,#ffffff);
+      padding:16px 18px 14px;
+      box-shadow:0 18px 45px rgba(0,0,0,.26);
+      text-align:center;
+      border:1px solid var(--border);
+    }
+    .pdf-loading-spinner{
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      border:3px solid rgba(0,0,0,0.12);
+      border-top-color:var(--accent,#2F6C3C);
+      margin:0 auto 10px;
+      animation:pdf-spin 0.8s linear infinite;
+    }
+    .pdf-loading-text{
+      font-size:0.95rem;
+      font-weight:600;
+      color:var(--text,#111827);
+      margin:0;
+    }
+    .pdf-loading-sub{
+      font-size:0.78rem;
+      margin-top:4px;
+      color:var(--muted,#67706B);
+    }
+    @keyframes pdf-spin{ to{ transform:rotate(360deg); } }
+
+    dialog#labelChoice.sheet{ width:fit-content; max-width:min(260px, 92vw); }
+    .radio-box{
+      display:grid;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:var(--surface);
+    }
+    .radio-row{
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .radio-row:hover{ background:var(--surface-2, rgba(127,127,127,.08)); }
+    .radio-row, .radio-row:focus, .radio-row:focus-within{ outline:none !important; box-shadow:none !important; }
+    .radio-row input{ accent-color:var(--brand); outline:none !important; box-shadow:none !important; }
+    .radio-row input:focus{ outline:none !important; box-shadow:none !important; }
+
+    /* Bottom actions layout */
+    .actions{
+      display:grid;
+      grid-template-columns: minmax(140px, 220px) minmax(140px, 220px);
+      grid-template-areas:
+        "cancel save"
+        "print  print";
+      gap:12px;
+      justify-content:center;
+      align-items:center;
+      margin-top:6px;
+    }
+    #btnClear{ grid-area: cancel; }
+    #btnSave{ grid-area: save; }
+    #btnCreateLabel{
+      grid-area: print;
+      justify-self:center;
+      width:min(320px, 100%);
+    }
+    .actions .btn, .actions a.btn{ width:100%; min-width:0; }
+    @media (max-width:420px){
+      .actions{ grid-template-columns: 1fr 1fr; width:100%; }
+      #btnCreateLabel{ width:100%; }
+    }
+
+    /* Slider toggle */
+    .pv-switch-row{ display:flex; align-items:center; justify-content:flex-start; gap:12px; min-height:var(--ctl-h); }
+    .pv-switch{ position:relative; display:inline-flex; align-items:center; gap:10px; user-select:none; -webkit-tap-highlight-color: transparent; }
+    .pv-switch input{
+      position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+      clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+    .pv-switch-track{
+      width:var(--sw-w); height:var(--sw-h); border-radius:999px; border:1px solid var(--border);
+      background: linear-gradient(to bottom,
+        color-mix(in srgb, var(--surface) 88%, #ffffff 12%),
+        color-mix(in srgb, var(--surface) 96%, #000000 4%)
+      );
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+      position:relative;
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .pv-switch-thumb{
+      width:var(--sw-thumb); height:var(--sw-thumb); border-radius:999px; position:absolute;
+      top:var(--sw-pad); left:var(--sw-pad);
+      background:#fff; box-shadow: 0 6px 14px rgba(0,0,0,.22);
+      transition: transform .18s ease, box-shadow .18s ease;
+      transform: translateX(0);
+    }
+    .pv-switch-text{ font-weight:800; font-size:14px; color:var(--muted,#67706B); min-width:32px; }
+    .pv-switch input:checked + .pv-switch-track{ background: var(--brand); border-color: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+    .pv-switch input:checked + .pv-switch-track .pv-switch-thumb{
+      transform: translateX(calc(var(--sw-w) - var(--sw-thumb) - (var(--sw-pad) * 2)));
+      box-shadow: 0 8px 18px rgba(0,0,0,.26);
+    }
+    .pv-switch input:checked ~ .pv-switch-text{ color: var(--brand); }
+    .pv-switch input:focus-visible + .pv-switch-track{
+      outline: 3px solid color-mix(in srgb, var(--brand) 55%, transparent);
+      outline-offset: 2px;
+    }
+
+    /* ===== Category slider grid inside manager dialogs ===== */
+    .cat-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:8px;
+    }
+    .cat-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:var(--surface);
+    }
+    .cat-row .left{
+      display:grid;
+      gap:2px;
+    }
+    .cat-row .left b{
+      font-weight:900;
+    }
+    .cat-row .left span{
+      font-size:12px;
+      color:var(--muted,#67706B);
+      font-weight:700;
+    }
+    .mgr-help{
+      color:var(--muted,#67706B);
+      font-size:13px;
+      line-height:1.35;
+      margin:0;
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap" data-equipment-type="">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🚜</div>
+          <div>
+            <h1>Add Tractor</h1>
+            <p class="muted">Pick Make/Model, set year, add serial (required), optional notes/photos.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="row">
+            <div class="field">
+              <button id="openMakes" type="button" class="as-label req">Make</button>
+              <input type="hidden" id="makeId" value=""/>
+              <div id="ddMake" class="dd">
+                <button type="button" id="ddMakeBtn" class="dd-btn">— Loading… —</button>
+                <div class="dd-list">
+                  <input type="text" id="ddMakeSearch" placeholder="Search make…">
+                  <ul id="ddMakeList"></ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <button id="openModels" type="button" class="as-label req">Model</button>
+              <input type="hidden" id="modelId" value=""/>
+              <div id="ddModel" class="dd">
+                <button type="button" id="ddModelBtn" class="dd-btn" disabled>— Select a Make first —</button>
+                <div class="dd-list">
+                  <input type="text" id="ddModelSearch" placeholder="Search model…" disabled>
+                  <ul id="ddModelList"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="year">Year</label>
+              <div class="combo" id="yearCombo">
+                <button type="button" id="yearTrigger" class="select combo-trigger" aria-haspopup="listbox" aria-expanded="false">— Select —</button>
+                <div id="yearPanel" class="combo-panel combo-hidden" role="listbox" aria-label="Year"></div>
+                <select id="year" class="select" aria-hidden="true" style="display:none"></select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="serial" class="req">Serial #</label>
+              <input id="serial" class="input" placeholder="Required">
+            </div>
+          </div>
+
+          <div id="equipExtras"></div>
+
+          <div class="field">
+            <label for="notes">Notes</label>
+            <textarea id="notes" class="textarea" placeholder="Optional details (tires, guidance, attachments, etc.)"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="photos">Photos (optional)</label>
+            <input id="photos" class="input" type="file" accept="image/*,.jpg,.jpeg,.png,.heic,.pdf" multiple>
+          </div>
+
+          <div class="field qr-row">
+            <div id="qrArea" class="qr-area" hidden>
+              <img id="qrThumb" alt="QR code">
+            </div>
+            <button id="btnQR" class="btn" type="button">Create QR Code</button>
+          </div>
+
+          <div id="err" class="error" hidden></div>
+
+          <div class="actions">
+            <a id="btnClear" class="btn btn-quiet" role="button">Cancel</a>
+            <button id="btnSave" class="btn btn-primary" type="button" disabled>Save</button>
+            <button id="btnCreateLabel" class="btn btn-primary" type="button" disabled>Create Label</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <!-- Overlay -->
+  <div id="pdfLoading" class="pdf-loading hidden" role="alertdialog" aria-live="assertive" aria-hidden="true">
+    <div class="pdf-loading-inner">
+      <div class="pdf-loading-spinner"></div>
+      <p id="pdfLoadingText" class="pdf-loading-text">Creating label PDF…</p>
+      <p id="pdfLoadingSub" class="pdf-loading-sub">Please keep this tab open.</p>
+    </div>
+  </div>
+
+  <!-- Hidden iframe for desktop print -->
+  <iframe id="fv-print-frame"></iframe>
+
+  <!-- Label type -->
+  <dialog id="labelChoice" class="sheet" aria-modal="true">
+    <header>
+      <strong>Label type</strong>
+      <span></span>
+    </header>
+    <div class="body">
+      <div class="radio-box">
+        <label class="radio-row"><input type="radio" name="labelMode" value="summary"/> <span><b>Summary</b></span></label>
+        <label class="radio-row"><input type="radio" name="labelMode" value="detailed"/> <span><b>Detailed</b></span></label>
+      </div>
+    </div>
+    <footer>
+      <button id="cOk" class="btn btn-primary" type="button">OK</button>
+      <button id="cCancel" class="btn" type="button">Cancel</button>
+    </footer>
+  </dialog>
+
+  <!-- Preview (NO Close button; Cancel only) -->
+  <dialog id="printPrev" class="sheet sheet-print" aria-modal="true">
+    <header>
+      <strong id="pHdrTitle">QR Label Preview</strong>
+      <span></span>
+    </header>
+    <div class="body">
+      <p id="pHelp" class="print-help">Tap <b>Create Label</b>.</p>
+      <div id="printWrap"><div id="pPreviewHost"></div></div>
+    </div>
+    <footer>
+      <button id="pCreate" class="btn btn-primary" type="button">Create Label</button>
+      <button id="pCancel" class="btn" type="button">Cancel</button>
+    </footer>
+  </dialog>
+
+  <!-- Make Manager (Add/Edit only; Cancel + Save) -->
+  <dialog id="makeManager" class="sheet" aria-modal="true">
+    <header>
+      <strong id="mmTitle">Make</strong>
+      <span></span>
+    </header>
+    <div class="body">
+      <p class="mgr-help">Toggle which equipment categories this Make appears under.</p>
+
+      <div class="field" style="margin-top:10px;">
+        <label for="mmName" class="req">Name</label>
+        <input id="mmName" class="input" placeholder="e.g., John Deere">
+      </div>
+
+      <div id="mmCats" class="cat-grid"></div>
+
+      <div id="mmErr" class="error" hidden></div>
+    </div>
+    <footer>
+      <button id="mmSave" class="btn btn-primary" type="button">Save</button>
+      <button id="mmClose" class="btn" type="button">Cancel</button>
+    </footer>
+  </dialog>
+
+  <!-- Model Manager (Add/Edit only; Cancel + Save) -->
+  <dialog id="modelManager" class="sheet" aria-modal="true">
+    <header>
+      <strong id="mdlTitle">Model</strong>
+      <span></span>
+    </header>
+    <div class="body">
+      <p class="mgr-help" id="mdlHelp">Toggle which equipment categories this Model appears under.</p>
+
+      <div class="field" style="margin-top:10px;">
+        <label for="mdlName" class="req">Name</label>
+        <input id="mdlName" class="input" placeholder="e.g., 8R370">
+      </div>
+
+      <div id="mdlCats" class="cat-grid"></div>
+
+      <div id="mdlErr" class="error" hidden></div>
+    </div>
+    <footer>
+      <button id="mdlSave" class="btn btn-primary" type="button">Save</button>
+      <button id="mdlClose" class="btn" type="button">Cancel</button>
+    </footer>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" onload="window.__qrReady=true;"></script>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection, setDoc, doc, getDocs, getDoc,
+      query, orderBy, where,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+    const FV_LABEL_PDF_ENDPOINT = 'https://farmvista-pdf-label-300398089669.us-central1.run.app/label';
+
+    const $ = (id)=>document.getElementById(id);
+    const qs = new URLSearchParams(location.search);
+    const TYPE = (qs.get('type') || 'tractor').toLowerCase();
+    const IS_STARFIRE = TYPE === 'starfire';
+
+    const ENTRY_REFERRER = document.referrer || '';
+
+    const CATEGORY_TYPES = [
+      { id:'tractor',      label:'Tractor' },
+      { id:'combine',      label:'Combine' },
+      { id:'implement',    label:'Implement' },
+      { id:'sprayer',      label:'Sprayer' },
+      { id:'construction', label:'Construction' },
+      { id:'truck',        label:'Truck' },
+      { id:'trailer',      label:'Trailer' },
+      { id:'fertilizer',   label:'Fertilizer' },
+      { id:'starfire',     label:'StarFire' }
+    ];
+
+    function portalFallbackForType(type){
+      const map = {
+        tractor: '/pages/equipment/equipment-tractors.html',
+        combine: '/pages/equipment/equipment-combines.html',
+        implement: '/pages/equipment/equipment-implements.html',
+        sprayer: '/pages/equipment/equipment-sprayers.html',
+        construction: '/pages/equipment/equipment-construction.html',
+        truck: '/pages/equipment/equipment-trucks.html',
+        trailer: '/pages/equipment/equipment-trailers.html',
+        fertilizer: '/pages/equipment/equipment-implements.html',
+        starfire: '/pages/equipment/equipment-starfire.html'
+      };
+      return map[type] || '/pages/equipment/index.html';
+    }
+
+    function returnAfterSave(){
+      try{
+        if(ENTRY_REFERRER && ENTRY_REFERRER.includes('/')){
+          window.location.assign(ENTRY_REFERRER);
+          return;
+        }
+      }catch{}
+      window.location.assign(portalFallbackForType(TYPE));
+    }
+
+    let EXTRAS_API = null;
+
+    function normType(label){
+      const s = String(label||'').toLowerCase();
+      if(s.includes('tractor')) return 'tractor';
+      if(s.includes('combine')) return 'combine';
+      if(s.includes('implement')) return 'implement';
+      if(s.includes('sprayer')) return 'sprayer';
+      if(s.includes('fertilizer')) return 'fertilizer';
+      if(s.includes('construction')) return 'construction';
+      if(s.includes('truck')) return 'truck';
+      if(s.includes('trailer')) return 'trailer';
+      if(s.includes('starfire') || s.includes('technology')) return 'starfire';
+      return s.replace(/[^a-z0-9]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+    }
+    function lookupEquipIcon(typeSlug){
+      try{
+        const group = NAV_MENU.items?.find(x => x.type === 'group' && x.id === 'equipment');
+        const children = group?.children || [];
+        const target = normType(typeSlug);
+        const hit = children.find(c => normType(c.label) === target);
+        const iconVal = (hit && typeof hit.icon === 'string') ? hit.icon.trim() : null;
+        return iconVal || '🚜';
+      }catch(_){
+        return '🚜';
+      }
+    }
+
+    function showToast(msg="Saved.", ms=2500){
+      const t=$("toast");
+      t.textContent=msg;
+      t.classList.remove("show");
+      t.style.display='block';
+      void t.offsetWidth;
+      t.classList.add("show");
+      setTimeout(()=>{ t.classList.remove("show"); t.style.display='none'; }, ms);
+    }
+
+    function isMobileLike(){
+      const ua = (navigator.userAgent || '').toLowerCase();
+      return /iphone|ipad|ipod|android|mobi/.test(ua);
+    }
+
+    // Overlay
+    const pdfLoading = $("pdfLoading");
+    const pdfLoadingText = $("pdfLoadingText");
+    const pdfLoadingSub = $("pdfLoadingSub");
+    function setPdfLoading(active, text, sub){
+      if (pdfLoadingText && text) pdfLoadingText.textContent = text;
+      if (pdfLoadingSub && sub) pdfLoadingSub.textContent = sub;
+      if (active){
+        pdfLoading.classList.remove('hidden');
+        pdfLoading.setAttribute('aria-hidden','false');
+      } else {
+        pdfLoading.classList.add('hidden');
+        pdfLoading.setAttribute('aria-hidden','true');
+      }
+    }
+
+    function openDialog(d){ try{ d.showModal(); }catch{ d.setAttribute('open',''); } }
+    function closeDialog(d){ try{ d.close(); }catch{ d.removeAttribute('open'); } }
+
+    /* ===== MATCH LOOKUP: center only for summary ===== */
+    async function setPrintWrapCentered(isSummary){
+      const wrapEl = $("printWrap");
+      if(!wrapEl) return;
+      wrapEl.classList.toggle('center', !!isSummary);
+      wrapEl.scrollLeft = 0;
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      wrapEl.scrollLeft = 0;
+    }
+
+    /* =========================
+       LABEL HTML BUILDERS (MATCH LOOKUP)
+       ========================= */
+    function esc(s){
+      return String(s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+    }
+
+    // ---- calibrated px <-> mm (avoids 96dpi assumptions on iOS/PDF) ----
+    let __pxPerMm = null;
+    function getPxPerMm(){
+      if (__pxPerMm) return __pxPerMm;
+      const d = document.createElement('div');
+      d.style.width = '100mm';
+      d.style.position = 'absolute';
+      d.style.left = '-1000mm';
+      d.style.top = '0';
+      d.style.visibility = 'hidden';
+      document.body.appendChild(d);
+      const px = d.getBoundingClientRect().width;
+      document.body.removeChild(d);
+      __pxPerMm = px / 100;
+      return __pxPerMm;
+    }
+    function pxToMm(px){ return px / getPxPerMm(); }
+    function clampMm(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+    function roundUpMm(v){ return Math.ceil(v * 10) / 10; } // 0.1mm
+
+    function buildMobilePortraitHtml({ mode, qrSrc, make, model, serial6, cutLenMm }){
+      const isSummary = mode === 'summary';
+      const pad = 2.2;
+
+      if (isSummary){
+        return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; overflow:hidden; }
+.page{ width:100%; height:100%; display:block; overflow:hidden; position:relative; }
+.rot{ width:${cutLenMm}mm; height:62mm; transform-origin:top left; transform:rotate(-90deg) translateX(-${cutLenMm}mm); }
+.label{
+  width:${cutLenMm}mm; height:62mm;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid; grid-template-rows:46mm max-content max-content;
+  align-content:center; justify-items:center;
+  gap:1mm;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000; overflow:hidden;
+}
+.qr{ width:46mm; height:46mm; display:flex; align-items:center; justify-content:center; }
+.qr img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.lab{ width:100%; text-align:center; font-weight:800; font-size:10pt; opacity:.85; letter-spacing:.2px; }
+.val{
+  width:100%;
+  text-align:center;
+  font-weight:900;
+  font-size:16pt;
+  letter-spacing:.6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style></head><body>
+<div class="page"><div class="rot"><div class="label">
+  <div class="qr"><img alt="QR" src="${qrSrc}"></div>
+  <div class="lab">VIN/Serial</div>
+  <div class="val">${esc(serial6 || '—')}</div>
+</div></div></div>
+</body></html>`;
+      }
+
+      return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; overflow:hidden; }
+.page{ width:100%; height:100%; display:block; overflow:hidden; position:relative; }
+.rot{ width:${cutLenMm}mm; height:62mm; transform-origin:top left; transform:rotate(-90deg) translateX(-${cutLenMm}mm); }
+.label{
+  width:${cutLenMm}mm; height:62mm;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid;
+  grid-template-columns:max-content 48mm max-content;
+  align-items:center;
+  gap:2mm;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000;
+  overflow:visible;
+  white-space:nowrap;
+}
+.left,.right{ display:flex; flex-direction:column; justify-content:center; min-width:max-content; }
+.make{ font-weight:900; font-size:18pt; line-height:1.05; }
+.model{ font-weight:800; font-size:16pt; line-height:1.05; margin-top:1mm; }
+.mid{ width:48mm; height:48mm; display:flex; align-items:center; justify-content:center; background:#fff; }
+.mid img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.right{ align-items:flex-end; text-align:right; padding-right:2.5mm; }
+.lab{ font-weight:800; font-size:12pt; line-height:1.05; opacity:.85; }
+.val{ font-weight:900; font-size:18pt; line-height:1.05; letter-spacing:.6px; margin-top:1mm; }
+</style></head><body>
+<div class="page"><div class="rot"><div class="label">
+  <div class="left"><div class="make">${esc(make||'—')}</div><div class="model">${esc(model||'—')}</div></div>
+  <div class="mid"><img alt="QR" src="${qrSrc}"></div>
+  <div class="right"><div class="lab">VIN/Serial</div><div class="val">${esc(serial6||'—')}</div></div>
+</div></div></div>
+</body></html>`;
+    }
+
+    function buildDesktopHtml({ mode, qrSrc, make, model, serial6 }){
+      const isSummary = mode === 'summary';
+      const pad = 2.2;
+
+      if (isSummary){
+        return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; }
+.label{
+  width:100%; height:100%;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid; grid-template-rows:46mm max-content max-content;
+  align-content:center; justify-items:center;
+  gap:1mm;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000; overflow:hidden;
+}
+.qr{ width:46mm; height:46mm; display:flex; align-items:center; justify-content:center; }
+.qr img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.lab{ width:100%; text-align:center; font-weight:800; font-size:10pt; opacity:.85; letter-spacing:.2px; }
+.val{
+  width:100%;
+  text-align:center;
+  font-weight:900;
+  font-size:16pt;
+  letter-spacing:.6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style></head><body>
+<div class="label">
+  <div class="qr"><img alt="QR" src="${qrSrc}"></div>
+  <div class="lab">VIN/Serial</div>
+  <div class="val">${esc(serial6 || '—')}</div>
+</div>
+</body></html>`;
+      }
+
+      return `<!doctype html><html><head><meta charset="utf-8"><style>
+@page{ margin:0; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:#fff; }
+.label{
+  width:100%; height:100%;
+  box-sizing:border-box; padding:${pad}mm;
+  display:grid;
+  grid-template-columns:max-content 48mm max-content;
+  align-items:center;
+  gap:2mm;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:#000;
+  overflow:visible;
+  white-space:nowrap;
+}
+.left,.right{ display:flex; flex-direction:column; justify-content:center; min-width:max-content; }
+.make{ font-weight:900; font-size:18pt; line-height:1.05; }
+.model{ font-weight:800; font-size:16pt; line-height:1.05; margin-top:1mm; }
+.mid{ width:48mm; height:48mm; display:flex; align-items:center; justify-content:center; background:#fff; }
+.mid img{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+.right{ align-items:flex-end; text-align:right; padding-right:2.5mm; }
+.lab{ font-weight:800; font-size:12pt; line-height:1.05; opacity:.85; }
+.val{ font-weight:900; font-size:18pt; line-height:1.05; letter-spacing:.6px; margin-top:1mm; }
+</style></head><body>
+<div class="label">
+  <div class="left"><div class="make">${esc(make||'—')}</div><div class="model">${esc(model||'—')}</div></div>
+  <div class="mid"><img alt="QR" src="${qrSrc}"></div>
+  <div class="right"><div class="lab">VIN/Serial</div><div class="val">${esc(serial6||'—')}</div></div>
+</div>
+</body></html>`;
+    }
+
+    // Year combo
+    function buildYearOptions(){
+      const sel=$("year"); const now=new Date().getFullYear();
+      sel.innerHTML='<option value="">— Select —</option>';
+      for(let y=now; y>=1980; y--){
+        const o=document.createElement('option');
+        o.value=String(y);
+        o.textContent=String(y);
+        sel.appendChild(o);
+      }
+      const panel=$("yearPanel"), trigger=$("yearTrigger");
+      panel.innerHTML="";
+      [...sel.options].forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='combo-item';
+        btn.role='option';
+        btn.dataset.val=opt.value;
+        btn.textContent=opt.textContent;
+        btn.addEventListener('click', ()=>{
+          sel.value = opt.value;
+          trigger.textContent = opt.value ? opt.textContent : "— Select —";
+          closeYearPanel();
+          validateForm();
+        });
+        panel.appendChild(btn);
+      });
+    }
+    function openYearPanel(){
+      $("yearPanel").classList.remove('combo-hidden');
+      $("yearTrigger").setAttribute('aria-expanded','true');
+      document.addEventListener('click', onDocClickClose, { once:true });
+      document.addEventListener('keydown', onEscClose);
+    }
+    function closeYearPanel(){
+      $("yearPanel").classList.add('combo-hidden');
+      $("yearTrigger").setAttribute('aria-expanded','false');
+      document.removeEventListener('keydown', onEscClose);
+    }
+    function onDocClickClose(e){
+      if(!$("yearCombo").contains(e.target)) closeYearPanel();
+      else document.addEventListener('click', onDocClickClose, { once:true });
+    }
+    function onEscClose(e){ if(e.key==='Escape') closeYearPanel(); }
+
+    // Dropdowns
+    function wireDropdownOpenClose(root){
+      const btn = root.querySelector(".dd-btn");
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".dd").forEach(d=>{ if(d!==root) d.classList.remove("open"); });
+        if(btn.disabled) return;
+        root.classList.toggle("open");
+        const inp = root.querySelector(".dd-list input");
+        if(root.classList.contains("open") && inp){ setTimeout(()=>inp.focus(), 60); }
+      });
+    }
+    document.addEventListener("click",(e)=>{
+      if(!e.target.closest(".dd")){
+        document.querySelectorAll(".dd").forEach(d=>d.classList.remove("open"));
+      }
+    });
+    function setupSearch(inputEl, listEl){
+      inputEl.addEventListener("input", ()=>{
+        const term=inputEl.value.toLowerCase();
+        listEl.querySelectorAll("li").forEach(li=>{
+          li.style.display = li.textContent.toLowerCase().includes(term) ? "" : "none";
+        });
+      });
+    }
+
+    function normalizeSerial(s){ return String(s||'').trim().toUpperCase(); }
+    function serialLast6(serial){
+      const s = normalizeSerial(serial || '');
+      if(!s) return '';
+      return s.length <= 6 ? s : s.slice(-6);
+    }
+    function uniqKey(makeId, modelId, serial){
+      return [String(makeId||''), String(modelId||''), normalizeSerial(serial)].join('_');
+    }
+
+    function readForm(){
+      const makeId = $("makeId").value || null;
+      const modelId = $("modelId").value || null;
+      const makeName = $("ddMakeBtn").textContent.replace(/^—\s*|\s*—$/g,'').trim() || null;
+      const modelName = $("ddModelBtn").textContent.replace(/^—\s*|\s*—$/g,'').trim() || null;
+      const yr = $("year").value ? Number($("year").value) : null;
+      const serialNorm = normalizeSerial($("serial").value);
+      const name = [makeName, modelName].filter(Boolean).join(" ") + (yr?` (${yr})`:"");
+
+      const base = {
+        makeId, modelId, makeName, modelName,
+        year: yr,
+        serial: serialNorm,
+        notes: $("notes").value.trim() || null,
+        type: TYPE,
+        name: name.trim()
+      };
+
+      let extras = {};
+      if(EXTRAS_API && typeof EXTRAS_API.read === 'function'){
+        try{ extras = EXTRAS_API.read() || {}; }catch{ extras = {}; }
+      }else{
+        const engEl = $("engineHours");
+        if(engEl && engEl.value) extras.engineHours = Number(engEl.value);
+        const sfEl = $("starfireCapable");
+        if(sfEl) extras.starfireGpsCapable = !!sfEl.checked;
+      }
+
+      return { ...base, ...extras };
+    }
+
+    function validateForm(){
+      const makeOk = Boolean($("makeId").value);
+      const modelOk= Boolean($("modelId").value);
+      const serialOk= Boolean(normalizeSerial($("serial").value));
+      const ok = (makeOk && modelOk && serialOk);
+      $("btnSave").disabled = !ok;
+      $("btnCreateLabel").disabled = !ok;
+    }
+
+    // QR generation
+    let pendingToken = null;
+    let pendingEquipId = null;
+
+    async function waitQRReady(){
+      let tries=0;
+      while(!(window.__qrReady && window.QRCode && window.QRCode.CorrectLevel) && tries++<200){
+        await new Promise(r=>setTimeout(r,50));
+      }
+      if(!(window.QRCode && window.QRCode.CorrectLevel)) throw new Error('qr-lib');
+    }
+
+    function randTokenHex(len=24){
+      const bytes=new Uint8Array(len/2);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    async function canvasToBlob(canvas){
+      return await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('toBlob failed')),'image/png'));
+    }
+
+    async function makeQRForUrl(absUrl){
+      await waitQRReady();
+      const size=512, ecc=window.QRCode.CorrectLevel.H;
+      const holder=document.createElement('div');
+      new QRCode(holder,{ text:absUrl, width:size, height:size, colorDark:"#000000", colorLight:"#ffffff", correctLevel:ecc });
+
+      const node = await new Promise((res,rej)=>{
+        const start=Date.now();
+        (function check(){
+          const n = holder.querySelector('canvas') || holder.querySelector('img');
+          if(n) res(n);
+          else if(Date.now()-start>4000) rej(new Error('qr-timeout'));
+          else requestAnimationFrame(check);
+        })();
+      });
+
+      let canvas;
+      if(node.tagName==='CANVAS'){
+        canvas=node;
+      }else{
+        canvas=document.createElement('canvas'); canvas.width=size; canvas.height=size;
+        const ctx=canvas.getContext('2d');
+        await new Promise((res,rej)=>{
+          const img=new Image(); img.crossOrigin='anonymous';
+          img.onload=()=>{ ctx.drawImage(img,0,0,size,size); res(); };
+          img.onerror=rej; img.src=node.src;
+        });
+      }
+
+      const blob = await canvasToBlob(canvas);
+      const dataURL = canvas.toDataURL('image/png');
+
+      const img=$("qrThumb");
+      img.src=dataURL;
+      img.onload=()=>{ $("qrArea").hidden=false; img.style.display='block'; };
+      return { dataURL, blob };
+    }
+
+    async function ensureQrReservedAndBuilt(db){
+      if(!pendingEquipId){
+        const tmpRef = doc(collection(db, 'equipment'));
+        pendingEquipId = tmpRef.id;
+      }
+      if(!$("qrThumb")?.src){
+        const hubAbs = location.origin + `/pages/equipment/actions/hub.html?id=${encodeURIComponent(pendingEquipId)}`;
+        await makeQRForUrl(hubAbs);
+      }
+      return pendingEquipId;
+    }
+
+    /* Print flow */
+    const pDlg = $("printPrev");
+    const pHost = $("pPreviewHost");
+    const pCancel = $("pCancel");
+    const pCreate = $("pCreate");
+
+    const cDlg = $("labelChoice");
+    const cOk = $("cOk");
+    const cCancel = $("cCancel");
+
+    const printFrame = $("fv-print-frame");
+
+    let __pending = null;
+    let __mode = 'detailed';
+    let __cutLenMm = 140;
+    let __previewQrSrc = '';
+
+    function clearPreviewHost(){
+      pHost.innerHTML = '';
+      __previewQrSrc = '';
+    }
+
+    function safeQrSrcForPreview(url){
+      const s = String(url || '');
+      if(!s) return '';
+      if(s.startsWith('data:')) return s;
+      const bust = (s.includes('?') ? '&' : '?') + '_=' + Date.now();
+      return s + bust;
+    }
+
+    async function setPreview({ mode, url, make, model, serial6 }){
+      const qrSrc = safeQrSrcForPreview(url);
+
+      clearPreviewHost();
+      __previewQrSrc = qrSrc;
+
+      if (mode === 'summary'){
+        const wrap = document.createElement('div');
+        wrap.className = 'pv-sf';
+
+        const q = document.createElement('div'); q.className='qr';
+        const img = document.createElement('img'); img.alt='QR'; img.src=qrSrc;
+        q.appendChild(img);
+
+        const lab = document.createElement('div'); lab.className='lab'; lab.textContent = 'VIN/Serial';
+        const val = document.createElement('div'); val.className='val'; val.textContent = serial6 || '—';
+
+        wrap.append(q, lab, val);
+        pHost.appendChild(wrap);
+
+        __cutLenMm = 62;
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'pv-long';
+        wrap.style.width = 'fit-content';
+
+        const left = document.createElement('div'); left.className='left';
+        const mk = document.createElement('div'); mk.className='make'; mk.textContent = make || '—';
+        const md = document.createElement('div'); md.className='model'; md.textContent = model || '—';
+        left.append(mk,md);
+
+        const mid = document.createElement('div'); mid.className='mid';
+        const img = document.createElement('img'); img.alt='QR'; img.src=qrSrc; mid.appendChild(img);
+
+        const right = document.createElement('div'); right.className='right';
+        const lab = document.createElement('div'); lab.className='lab'; lab.textContent='VIN/Serial';
+        const val = document.createElement('div'); val.className='val'; val.textContent = serial6 || '—';
+        right.append(lab,val);
+
+        wrap.append(left,mid,right);
+        pHost.appendChild(wrap);
+
+        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+        let measuredMm = pxToMm(wrap.getBoundingClientRect().width);
+        measuredMm = measuredMm + 3.0;
+        measuredMm = clampMm(measuredMm, 62, 240);
+
+        __cutLenMm = roundUpMm(measuredMm);
+        wrap.style.width = `${__cutLenMm}mm`;
+      }
+
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      await setPrintWrapCentered(mode === 'summary');
+    }
+
+    cCancel.addEventListener('click', ()=> closeDialog(cDlg));
+    pCancel.addEventListener('click', ()=> closeDialog(pDlg));
+
+    cOk.addEventListener('click', ()=>{
+      const picked = cDlg.querySelector('input[name="labelMode"]:checked');
+      __mode = picked ? picked.value : __mode;
+      closeDialog(cDlg);
+
+      if (!__pending) return;
+
+      __cutLenMm = (__mode === 'summary') ? 62 : 140;
+
+      openDialog(pDlg);
+      setPreview({
+        mode: __mode,
+        url: __pending.url,
+        make: __pending.make,
+        model: __pending.model,
+        serial6: __pending.serial6
+      });
+    });
+
+    async function showOverlayAndYield(){
+      closeDialog(pDlg);
+      closeDialog(cDlg);
+
+      setPdfLoading(true, 'Creating label PDF…', 'Please keep this tab open.');
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      await new Promise(r=>setTimeout(r, 80));
+    }
+
+    async function createPdf(){
+      if (!__pending) return;
+
+      pCreate.disabled = true;
+      await showOverlayAndYield();
+
+      try{
+        const mobile = isMobileLike();
+        const cutLenMm = (__mode === 'summary') ? 62 : (__cutLenMm + 1);
+
+        const widthMm  = mobile ? 62 : cutLenMm;
+        const heightMm = mobile ? cutLenMm : 62;
+        const landscape = false;
+
+        const html = mobile
+          ? buildMobilePortraitHtml({
+              mode: __mode,
+              qrSrc: __previewQrSrc || __pending.url,
+              make: __pending.make,
+              model: __pending.model,
+              serial6: __pending.serial6,
+              cutLenMm
+            })
+          : buildDesktopHtml({
+              mode: __mode,
+              qrSrc: __previewQrSrc || __pending.url,
+              make: __pending.make,
+              model: __pending.model,
+              serial6: __pending.serial6
+            });
+
+        const resp = await fetch(FV_LABEL_PDF_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            html,
+            widthMm,
+            heightMm,
+            landscape,
+            filename: (__mode === 'summary' ? 'fv-qr-summary.pdf' : 'fv-qr-detailed.pdf')
+          })
+        });
+
+        const errText = !resp.ok ? await resp.text().catch(()=> '') : '';
+        if (!resp.ok){
+          console.warn('[label-pdf] failed', resp.status, errText);
+          alert('Label PDF failed. Check Cloud Run logs.');
+          return;
+        }
+
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+
+        if (mobile){
+          window.location.assign(url);
+        } else {
+          printFrame.onload = ()=> { try{ printFrame.contentWindow.focus(); printFrame.contentWindow.print(); } catch {} };
+          printFrame.src = url;
+        }
+      } finally {
+        setPdfLoading(false);
+        pCreate.disabled = false;
+      }
+    }
+
+    pCreate.addEventListener('click', createPdf);
+
+    /* SAVE */
+    let saving = false;
+
+    async function saveAll(db){
+      if(saving) return { ok:false };
+      const form = readForm();
+      if(!form.makeId){ alert("Please choose a Make."); return { ok:false }; }
+      if(!form.modelId){ alert("Please choose a Model."); return { ok:false }; }
+      if(!form.serial){ alert("Serial/VIN is required."); return { ok:false }; }
+
+      saving = true;
+      $("btnSave").disabled = true;
+      $("btnCreateLabel").disabled = true;
+
+      const uniqDocId = uniqKey(form.makeId, form.modelId, form.serial);
+      const eqRef = pendingEquipId ? doc(db, 'equipment', pendingEquipId) : doc(collection(db,'equipment'));
+      if(!pendingEquipId){ pendingEquipId = eqRef.id; }
+
+      const token = pendingToken || randTokenHex(24);
+      const uniqRef = doc(db, 'equipment-uniq', uniqDocId);
+      const tokenRef = doc(db, 'qr-tokens', token);
+
+      const qrImage =
+        ($("qrThumb")?.src || "").startsWith("data:")
+          ? $("qrThumb").src
+          : null;
+
+      let runTransaction;
+      try{
+        const m = await import('/js/core/firebase/firebase-init.js');
+        runTransaction = m.runTransaction;
+      }catch{}
+
+      try{
+        if (typeof runTransaction === 'function'){
+          await runTransaction(db, async (tx)=>{
+            const uSnap = await tx.get(uniqRef);
+            if(uSnap.exists()){
+              const existingEq = uSnap.data()?.equipmentId;
+              if(existingEq && existingEq !== eqRef.id) throw new Error("DUP_UNIQ");
+            }
+            const tSnap = await tx.get(tokenRef);
+            if(tSnap.exists()){
+              const boundEq = tSnap.data()?.equipmentId;
+              if(boundEq && boundEq !== eqRef.id) throw new Error("DUP_TOKEN");
+            }
+            tx.set(eqRef, {
+              ...form,
+              status:"active",
+              qr: { token, image: qrImage, createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
+              createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+            });
+            tx.set(uniqRef, { equipmentId: eqRef.id, makeId: form.makeId, modelId: form.modelId, serial: form.serial, updatedAt: serverTimestamp() });
+            tx.set(tokenRef, { equipmentId: eqRef.id, updatedAt: serverTimestamp() });
+          });
+        } else {
+          const [uSnap, tSnap] = await Promise.all([getDoc(uniqRef), getDoc(tokenRef)]);
+          if(uSnap.exists() && uSnap.data()?.equipmentId !== eqRef.id) throw new Error("DUP_UNIQ");
+          if(tSnap.exists() && tSnap.data()?.equipmentId !== eqRef.id) throw new Error("DUP_TOKEN");
+
+          await setDoc(eqRef, {
+            ...form,
+            status:"active",
+            qr: { token, image: qrImage, createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
+            createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+          });
+          await setDoc(uniqRef, { equipmentId: eqRef.id, makeId: form.makeId, modelId: form.modelId, serial: form.serial, updatedAt: serverTimestamp() });
+          await setDoc(tokenRef, { equipmentId: eqRef.id, updatedAt: serverTimestamp() });
+        }
+
+        showToast("Saved");
+        return { ok:true, id:eqRef.id };
+      }catch(err){
+        if(err && err.message === "DUP_UNIQ"){
+          alert("This Make + Model + Serial/VIN already exists. Duplicate not allowed.");
+        }else if(err && err.message === "DUP_TOKEN"){
+          alert("This QR token is already bound to another unit. Generate a new QR and try again.");
+        }else{
+          console.error(err);
+          alert("Save failed.");
+        }
+        return { ok:false };
+      }finally{
+        saving = false;
+        validateForm();
+      }
+    }
+
+    /* Data */
+    function docCats(v){ return Array.isArray(v?.categories) ? v.categories.map(String) : undefined; }
+
+    async function getMakes(db){
+      const items=[];
+      try{
+        // NOTE: we no longer use archived; keep query fallback-friendly
+        const snap=await getDocs(query(collection(db,'equipment-makes'), orderBy('name')));
+        snap.forEach(d=>{
+          const v=d.data()||{}; const name=String(v.name||'').trim();
+          if(name) items.push({id:d.id,name, categories:docCats(v)});
+        });
+      }catch{
+        const snap=await getDocs(collection(db,'equipment-makes'));
+        snap.forEach(d=>{
+          const v=d.data()||{};
+          const name=String(v.name||'').trim();
+          if(name) items.push({id:d.id,name, categories:docCats(v)});
+        });
+        items.sort((a,b)=>a.name.localeCompare(b.name));
+      }
+      return items;
+    }
+
+    async function getModels(db, makeId){
+      if(!makeId) return [];
+      const items=[];
+      try{
+        const snap=await getDocs(query(collection(db,'equipment-models'), where('makeId','==',makeId), orderBy('name')));
+        snap.forEach(d=>{
+          const v=d.data()||{}; const name=String(v.name||'').trim();
+          if(name) items.push({id:d.id,name, categories:docCats(v), makeId:String(v.makeId||'')});
+        });
+      }catch{
+        const snap=await getDocs(query(collection(db,'equipment-models'), where('makeId','==',makeId)));
+        snap.forEach(d=>{
+          const v=d.data()||{};
+          const name=String(v.name||'').trim();
+          if(name) items.push({id:d.id,name, categories:docCats(v), makeId:String(v.makeId||'')});
+        });
+        items.sort((a,b)=>a.name.localeCompare(b.name));
+      }
+      return items;
+    }
+
+    function visibleForType(doc){
+      const cats = Array.isArray(doc.categories) ? doc.categories.map(s=>String(s).toLowerCase()) : null;
+      if(!cats || cats.length===0) return true; // legacy: empty => all
+      return cats.includes(TYPE);
+    }
+
+    let ddMake, ddModel;
+    function buildDdObjects(){
+      ddMake = { root: $("ddMake"), btn: $("ddMakeBtn"), search: $("ddMakeSearch"), list: $("ddMakeList"), hidden: $("makeId") };
+      ddModel = { root: $("ddModel"), btn: $("ddModelBtn"), search: $("ddModelSearch"), list: $("ddModelList"), hidden: $("modelId") };
+      wireDropdownOpenClose(ddMake.root);
+      wireDropdownOpenClose(ddModel.root);
+      setupSearch(ddMake.search, ddMake.list);
+      setupSearch(ddModel.search, ddModel.list);
+    }
+
+    function buildListWithAdd(listEl, items, addLabel, onAdd, onPick){
+      listEl.innerHTML = "";
+
+      const liAdd = document.createElement("li");
+      liAdd.textContent = addLabel;
+      liAdd.className = "add-row";
+      liAdd.onclick = ()=> onAdd();
+      listEl.appendChild(liAdd);
+
+      items.forEach(([val,label])=>{
+        const li=document.createElement("li");
+        li.textContent=label;
+        li.dataset.value=val;
+        li.onclick=()=>onPick(val,label);
+        listEl.appendChild(li);
+      });
+    }
+
+    let __cachedMakes = [];
+    let __cachedModels = [];
+
+    async function populateMakes(db){
+      const allMakes = await getMakes(db);
+      __cachedMakes = allMakes.slice();
+      const makes = allMakes.filter(visibleForType);
+
+      buildListWithAdd(
+        ddMake.list,
+        makes.map(m=>[m.id, m.name]),
+        "➕ Add new make…",
+        ()=> openMakeManagerNew(),
+        (val,label)=> setMake(val,label)
+      );
+
+      ddMake.hidden.value = "";
+      ddMake.btn.textContent = "— Select —";
+
+      // reset models
+      ddModel.hidden.value = "";
+      ddModel.btn.textContent = "— Select a Make first —";
+      ddModel.btn.disabled = true;
+      ddModel.search.disabled = true;
+      ddModel.list.innerHTML = "";
+      validateForm();
+    }
+
+    async function populateModels(db, makeId){
+      const allModels = await getModels(db, makeId);
+      __cachedModels = allModels.slice();
+      const models = allModels.filter(visibleForType);
+
+      buildListWithAdd(
+        ddModel.list,
+        models.map(m=>[m.id, m.name]),
+        "➕ Add new model…",
+        ()=> openModelManagerNew(makeId),
+        (val,label)=> setModel(val,label)
+      );
+
+      ddModel.btn.disabled = false;
+      ddModel.search.disabled = false;
+      ddModel.hidden.value = "";
+      ddModel.btn.textContent = "— Select —";
+    }
+
+    function setMake(id, label){
+      ddMake.hidden.value = id || "";
+      ddMake.btn.textContent = id ? label : "— Select —";
+      ddMake.root.classList.remove("open");
+
+      ddModel.hidden.value = "";
+      ddModel.btn.textContent = "— Select a Make first —";
+      ddModel.btn.disabled = !id;
+      ddModel.search.disabled = !id;
+      ddModel.list.innerHTML = "";
+      validateForm();
+
+      if(id){ populateModels(window.__db, id); }
+    }
+
+    function setModel(id, label){
+      ddModel.hidden.value = id || "";
+      ddModel.btn.textContent = id ? label : "— Select —";
+      ddModel.root.classList.remove("open");
+      validateForm();
+    }
+
+    function initExtras(){
+      const host = $("equipExtras");
+      if(!host) return;
+
+      if(window.FVEquipForms && typeof window.FVEquipForms.initExtras === 'function'){
+        try{
+          EXTRAS_API = window.FVEquipForms.initExtras({
+            equipType: TYPE,
+            container: host,
+            document
+          }) || null;
+        }catch(e){
+          console.warn("extras init failed, falling back:", e);
+          EXTRAS_API = null;
+        }
+      }
+
+      if(!EXTRAS_API && TYPE === 'tractor'){
+        host.innerHTML = "";
+
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        const f1 = document.createElement('div');
+        f1.className = 'field';
+        f1.innerHTML = `
+          <label for="engineHours">Engine Hours</label>
+          <input id="engineHours" type="number" class="input"
+                 inputmode="decimal" step="0.1" placeholder="e.g., 1250.5">
+        `;
+
+        const f2 = document.createElement('div');
+        f2.className = 'field';
+        f2.innerHTML = `
+          <label for="starfireCapable">StarFire GPS Capable?</label>
+          <div class="pv-switch-row">
+            <label class="pv-switch" for="starfireCapable" aria-label="StarFire GPS Capable">
+              <input id="starfireCapable" type="checkbox" />
+              <span class="pv-switch-track" aria-hidden="true">
+                <span class="pv-switch-thumb" aria-hidden="true"></span>
+              </span>
+              <span class="pv-switch-text" id="starfireCapableText">Off</span>
+            </label>
+          </div>
+        `;
+
+        row.appendChild(f1);
+        row.appendChild(f2);
+        host.appendChild(row);
+
+        const sf = f2.querySelector('#starfireCapable');
+        const sft = f2.querySelector('#starfireCapableText');
+        if(sf && sft){
+          const sync = ()=>{ sft.textContent = sf.checked ? "On" : "Off"; };
+          sf.addEventListener('change', sync);
+          sync();
+        }
+      }
+    }
+
+    /* ============================
+       Make/Model Manager (NEW RULES)
+       - Label opens edit for CURRENT selected only
+       - Add new via dropdown row
+       - Per-category toggles (sliders)
+       - No archive
+       ============================ */
+    const makeDlg = $("makeManager");
+    const mmTitle = $("mmTitle");
+    const mmName = $("mmName");
+    const mmCatsHost = $("mmCats");
+    const mmErr = $("mmErr");
+    const mmSave = $("mmSave");
+    const mmClose = $("mmClose");
+
+    const modelDlg = $("modelManager");
+    const mdlTitle = $("mdlTitle");
+    const mdlHelp = $("mdlHelp");
+    const mdlName = $("mdlName");
+    const mdlCatsHost = $("mdlCats");
+    const mdlErr = $("mdlErr");
+    const mdlSave = $("mdlSave");
+    const mdlClose = $("mdlClose");
+
+    let __mmMode = 'edit';      // 'edit' | 'new'
+    let __mmId = null;
+
+    let __mdlMode = 'edit';     // 'edit' | 'new'
+    let __mdlId = null;
+    let __mdlMakeId = null;
+
+    function setErr(el, msg){
+      if(!el) return;
+      el.hidden = !msg;
+      el.textContent = msg || "";
+    }
+    function clearErr(el){ setErr(el, ""); }
+
+    function catsToSet(catsArr){
+      const a = Array.isArray(catsArr) ? catsArr.map(x=>String(x).toLowerCase()) : [];
+      if(a.length === 0){
+        // legacy: empty => all visible
+        return new Set(CATEGORY_TYPES.map(x=>x.id));
+      }
+      return new Set(a);
+    }
+
+    function setToCatsArray(set){
+      const all = CATEGORY_TYPES.map(x=>x.id);
+      const picked = all.filter(k => set.has(k));
+      // if all on, store [] (legacy "all")
+      if(picked.length === all.length) return [];
+      return picked;
+    }
+
+    function renderCategoryToggles(hostEl, set, prefix){
+      hostEl.innerHTML = "";
+      CATEGORY_TYPES.forEach(cat=>{
+        const row = document.createElement('div');
+        row.className = 'cat-row';
+
+        const left = document.createElement('div');
+        left.className = 'left';
+        const b = document.createElement('b');
+        b.textContent = cat.label;
+        const s = document.createElement('span');
+        s.textContent = cat.id === TYPE ? 'Default for this page' : cat.id;
+        left.append(b, s);
+
+        const right = document.createElement('div');
+        right.className = 'pv-switch-row';
+
+        const id = `${prefix}_${cat.id}`;
+        const lblId = `${id}_txt`;
+
+        const wrap = document.createElement('label');
+        wrap.className = 'pv-switch';
+        wrap.setAttribute('for', id);
+        wrap.setAttribute('aria-label', `${cat.label} on/off`);
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = id;
+        input.checked = set.has(cat.id);
+
+        const track = document.createElement('span');
+        track.className = 'pv-switch-track';
+        track.setAttribute('aria-hidden','true');
+
+        const thumb = document.createElement('span');
+        thumb.className = 'pv-switch-thumb';
+        thumb.setAttribute('aria-hidden','true');
+        track.appendChild(thumb);
+
+        const txt = document.createElement('span');
+        txt.className = 'pv-switch-text';
+        txt.id = lblId;
+        txt.textContent = input.checked ? 'On' : 'Off';
+
+        input.addEventListener('change', ()=>{
+          txt.textContent = input.checked ? 'On' : 'Off';
+        });
+
+        wrap.append(input, track, txt);
+        right.appendChild(wrap);
+
+        row.append(left, right);
+        hostEl.appendChild(row);
+      });
+    }
+
+    function readCategorySet(prefix){
+      const set = new Set();
+      CATEGORY_TYPES.forEach(cat=>{
+        const el = document.getElementById(`${prefix}_${cat.id}`);
+        if(el && el.checked) set.add(cat.id);
+      });
+      // safety: never allow 0 categories — force current TYPE on
+      if(set.size === 0) set.add(TYPE);
+      return set;
+    }
+
+    async function openMakeManagerNew(){
+      clearErr(mmErr);
+      __mmMode = 'new';
+      __mmId = null;
+      mmTitle.textContent = "Add new Make";
+      mmName.value = "";
+      const set = new Set([TYPE]); // default this page on
+      renderCategoryToggles(mmCatsHost, set, 'mmCat');
+      openDialog(makeDlg);
+      setTimeout(()=>{ try{ mmName.focus(); }catch{} }, 50);
+    }
+
+    async function openMakeManagerEditCurrent(){
+      clearErr(mmErr);
+      const id = $("makeId").value || '';
+      if(!id){
+        alert("Select a Make first (or use “Add new make…” in the dropdown).");
+        return;
+      }
+
+      __mmMode = 'edit';
+      __mmId = id;
+
+      // Try cached first, then fetch
+      let docData = __cachedMakes.find(x=>x.id===id) || null;
+      if(!docData){
+        try{
+          const snap = await getDoc(doc(window.__db,'equipment-makes', id));
+          if(snap.exists()){
+            const v = snap.data() || {};
+            docData = { id, name:String(v.name||'').trim(), categories:docCats(v) };
+          }
+        }catch(e){
+          console.warn("make fetch failed", e);
+        }
+      }
+
+      mmTitle.textContent = "Edit Make";
+      mmName.value = docData?.name || '';
+      const set = catsToSet(docData?.categories);
+      renderCategoryToggles(mmCatsHost, set, 'mmCat');
+
+      openDialog(makeDlg);
+      setTimeout(()=>{ try{ mmName.focus(); }catch{} }, 50);
+    }
+
+    async function saveMakeFromDialog(){
+      clearErr(mmErr);
+      const name = String(mmName.value||'').trim();
+      if(!name){
+        setErr(mmErr, "Name is required.");
+        return;
+      }
+
+      const set = readCategorySet('mmCat');
+      const categories = setToCatsArray(set);
+
+      try{
+        const ref = __mmId
+          ? doc(window.__db, 'equipment-makes', __mmId)
+          : doc(collection(window.__db, 'equipment-makes'));
+
+        const payload = {
+          name,
+          categories,
+          updatedAt: serverTimestamp()
+        };
+        if(!__mmId) payload.createdAt = serverTimestamp();
+
+        await setDoc(ref, payload, { merge:true });
+
+        const savedId = ref.id;
+
+        // Refresh dropdown list and preserve selection to saved make
+        await populateMakes(window.__db);
+        const savedName = name;
+
+        // Select the saved make after refresh
+        setMake(savedId, savedName);
+
+        // If we were adding new make, immediately load models list for it
+        await populateModels(window.__db, savedId);
+
+        showToast("Make saved");
+        closeDialog(makeDlg);
+      }catch(e){
+        console.error(e);
+        setErr(mmErr, "Save failed.");
+      }
+    }
+
+    async function openModelManagerNew(makeId){
+      clearErr(mdlErr);
+      if(!makeId){
+        alert("Select a Make first.");
+        return;
+      }
+
+      __mdlMode = 'new';
+      __mdlId = null;
+      __mdlMakeId = makeId;
+
+      const makeLabel = ddMake?.btn?.textContent?.trim() || '';
+      mdlTitle.textContent = "Add new Model";
+      mdlHelp.textContent = `Make: ${makeLabel || '—'} • Toggle which categories this Model appears under.`;
+      mdlName.value = "";
+      const set = new Set([TYPE]);
+      renderCategoryToggles(mdlCatsHost, set, 'mdlCat');
+
+      openDialog(modelDlg);
+      setTimeout(()=>{ try{ mdlName.focus(); }catch{} }, 50);
+    }
+
+    async function openModelManagerEditCurrent(){
+      clearErr(mdlErr);
+      const makeId = $("makeId").value || '';
+      const modelId = $("modelId").value || '';
+      if(!makeId){
+        alert("Select a Make first.");
+        return;
+      }
+      if(!modelId){
+        alert("Select a Model first (or use “Add new model…” in the dropdown).");
+        return;
+      }
+
+      __mdlMode = 'edit';
+      __mdlMakeId = makeId;
+      __mdlId = modelId;
+
+      const makeLabel = ddMake?.btn?.textContent?.trim() || '';
+      mdlTitle.textContent = "Edit Model";
+      mdlHelp.textContent = `Make: ${makeLabel || '—'} • Toggle which categories this Model appears under.`;
+
+      // Try cached first, then fetch
+      let docData = __cachedModels.find(x=>x.id===modelId) || null;
+      if(!docData){
+        try{
+          const snap = await getDoc(doc(window.__db,'equipment-models', modelId));
+          if(snap.exists()){
+            const v = snap.data() || {};
+            docData = { id:modelId, name:String(v.name||'').trim(), categories:docCats(v), makeId:String(v.makeId||makeId) };
+          }
+        }catch(e){
+          console.warn("model fetch failed", e);
+        }
+      }
+
+      mdlName.value = docData?.name || '';
+      const set = catsToSet(docData?.categories);
+      renderCategoryToggles(mdlCatsHost, set, 'mdlCat');
+
+      openDialog(modelDlg);
+      setTimeout(()=>{ try{ mdlName.focus(); }catch{} }, 50);
+    }
+
+    async function saveModelFromDialog(){
+      clearErr(mdlErr);
+      const name = String(mdlName.value||'').trim();
+      if(!name){
+        setErr(mdlErr, "Name is required.");
+        return;
+      }
+      if(!__mdlMakeId){
+        setErr(mdlErr, "Make is missing. Close and re-open from the dropdown.");
+        return;
+      }
+
+      const set = readCategorySet('mdlCat');
+      const categories = setToCatsArray(set);
+
+      try{
+        const ref = __mdlId
+          ? doc(window.__db, 'equipment-models', __mdlId)
+          : doc(collection(window.__db, 'equipment-models'));
+
+        const payload = {
+          makeId: __mdlMakeId,
+          name,
+          categories,
+          updatedAt: serverTimestamp()
+        };
+        if(!__mdlId) payload.createdAt = serverTimestamp();
+
+        await setDoc(ref, payload, { merge:true });
+
+        const savedId = ref.id;
+        const savedName = name;
+
+        // Refresh models dropdown for this make and select saved model
+        await populateModels(window.__db, __mdlMakeId);
+        setModel(savedId, savedName);
+
+        showToast("Model saved");
+        closeDialog(modelDlg);
+      }catch(e){
+        console.error(e);
+        setErr(mdlErr, "Save failed.");
+      }
+    }
+
+    mmSave.addEventListener('click', saveMakeFromDialog);
+    mmClose.addEventListener('click', ()=> closeDialog(makeDlg));
+    mdlSave.addEventListener('click', saveModelFromDialog);
+    mdlClose.addEventListener('click', ()=> closeDialog(modelDlg));
+
+    /* ============================
+       Boot
+       ============================ */
+    (async()=>{
+      await ready;
+      const db  = getFirestore();
+      window.__db = db;
+
+      const niceType = TYPE[0].toUpperCase()+TYPE.slice(1);
+      document.title = `FarmVista • Add ${niceType}`;
+      document.querySelector('.hero-head h1').textContent = `Add ${niceType}`;
+      const heroIconEl = document.querySelector('.hero-head .icon');
+      if(heroIconEl){ heroIconEl.textContent = lookupEquipIcon(TYPE); }
+
+      buildYearOptions();
+      $("yearTrigger").addEventListener('click', ()=>{
+        const open = $("yearTrigger").getAttribute('aria-expanded') === 'true';
+        if(open) closeYearPanel(); else openYearPanel();
+      });
+
+      buildDdObjects();
+      initExtras();
+      await populateMakes(db);
+
+      // Label links: edit current selected only
+      $("openMakes").addEventListener('click', openMakeManagerEditCurrent);
+      $("openModels").addEventListener('click', openModelManagerEditCurrent);
+
+      $("serial").addEventListener("input", validateForm);
+
+      $("btnQR").addEventListener("click", async ()=>{
+        try{ await ensureQrReservedAndBuilt(db); }
+        catch(e){ console.error(e); alert("Could not create QR code."); }
+      });
+
+      $("btnSave").addEventListener("click", async ()=>{
+        const res = await saveAll(db);
+        if(res && res.ok) returnAfterSave();
+      });
+
+      $("btnCreateLabel").addEventListener("click", async ()=>{
+        try{
+          const form = readForm();
+          if(!form.makeId || !form.modelId || !form.serial){
+            alert("Please choose Make, Model, and Serial/VIN first.");
+            return;
+          }
+
+          await ensureQrReservedAndBuilt(db);
+
+          const qrDataUrl = ($("qrThumb")?.src || "").trim();
+          if(!qrDataUrl){
+            alert("QR image not ready yet. Tap Create QR Code first.");
+            return;
+          }
+
+          const serial6 = serialLast6(form.serial) || "";
+
+          __pending = {
+            url: qrDataUrl,
+            make: form.makeName || '',
+            model: form.modelName || '',
+            serial6
+          };
+
+          __mode = IS_STARFIRE ? 'summary' : 'detailed';
+          __cutLenMm = (__mode === 'summary') ? 62 : 140;
+          clearPreviewHost();
+
+          const r = cDlg.querySelector(`input[name="labelMode"][value="${__mode}"]`);
+          if (r) r.checked = true;
+
+          openDialog(cDlg);
+        }catch(e){
+          console.error(e);
+          alert("Create Label failed.");
+        }
+      });
+
+      $("btnClear").addEventListener("click", () => {
+        if (document.referrer) history.back();
+        else window.location.assign('/index.html');
+      });
+
+      validateForm();
+    })();
+  </script>
+</body>
+</html>

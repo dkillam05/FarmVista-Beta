@@ -1,0 +1,1226 @@
+<!-- =====================================================================
+/pages/dev/field-readiness-dev.html  (FULL FILE)
+Rev: 2026-03-31h-dev-page-ready-based-no-cache-no-fallback
+
+GOAL:
+✅ Standalone single-field debug page
+✅ No tile renderer
+✅ Uses app-standard firebase-init.js boot flow
+✅ Waits for await ready before Firestore/Auth
+✅ Focus on ONE field only
+✅ Saved readiness comes from field_readiness_latest first
+✅ ETA uses dedicated /js/field-readiness/eta-engine.js
+✅ NO cache reuse
+✅ NO fallback ETA
+✅ If ETA cannot be calculated, show debug/error clearly
+✅ If saved readiness already meets threshold, show READY
+===================================================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Field Readiness Dev</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2F6C3C" />
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <script>
+    (function(){
+      try{
+        if (!customElements.get('fv-shell')){
+          const s = document.createElement('script');
+          s.src = '/js/core/shell/fv-shell.js';
+          s.defer = true;
+          document.head.appendChild(s);
+        }
+      }catch(_){}
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max:1100px;
+      --page-bottom-gap:96px;
+      --accent:#2F6C3C;
+    }
+    body{
+      background:var(--app-bg,var(--surface));
+      color:var(--text);
+      margin:0;
+    }
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap))!important;
+    }
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+      margin-bottom:var(--page-bottom-gap);
+    }
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    }
+    .hero-head .icon{
+      width:24px;
+      height:24px;
+      color:var(--accent);
+      display:grid;
+      place-items:center;
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+    .muted{ color:var(--muted,#67706B); }
+    .body{
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+    .row{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1.3fr 140px;
+    }
+    .rowBtns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .kgrid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width:880px){
+      .row,.kgrid{ grid-template-columns:1fr; }
+    }
+    .field label{
+      display:block;
+      font-weight:800;
+      margin:0 0 6px;
+      font-size:12px;
+      letter-spacing:.02em;
+    }
+    .input{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      line-height:1.2;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      outline:none;
+      box-sizing:border-box;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+    .input:focus{
+      border-color:color-mix(in srgb, var(--accent) 45%, var(--border) 55%);
+      box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent 84%);
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:160px;
+      padding:12px 16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font:inherit;
+      font-weight:800;
+      color:var(--text)!important;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn:active{ transform:translateY(1px); }
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+    }
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff!important;
+    }
+    .status{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:color-mix(in srgb, var(--surface) 96%, #ffffff 4%);
+      font-size:13px;
+      line-height:1.35;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .status.ok{
+      border-color:color-mix(in srgb, var(--accent) 35%, var(--border) 65%);
+      background:color-mix(in srgb, var(--accent) 8%, var(--surface) 92%);
+    }
+    .status.err{
+      border-color:rgba(176,0,32,.28);
+      background:rgba(176,0,32,.06);
+    }
+    .kcard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      background:color-mix(in srgb, var(--surface) 96%, #ffffff 4%);
+    }
+    .klabel{
+      font-size:12px;
+      font-weight:900;
+      margin-bottom:6px;
+      color:var(--muted,#67706B);
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    .kvalue{
+      font-size:22px;
+      font-weight:900;
+      line-height:1.1;
+      word-break:break-word;
+    }
+    .mono{
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+    details{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      overflow:hidden;
+    }
+    summary{
+      list-style:none;
+      cursor:pointer;
+      padding:12px 14px;
+      font-weight:900;
+      border-bottom:1px solid var(--border);
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+    }
+    summary::-webkit-details-marker{ display:none; }
+    .detail-body{
+      padding:12px;
+      display:grid;
+      gap:10px;
+    }
+    .pre{
+      margin:0;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:color-mix(in srgb, var(--surface) 96%, #ffffff 4%);
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-size:12px;
+      line-height:1.35;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:760px;
+    }
+    th,td{
+      padding:8px 10px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      font-size:12px;
+      vertical-align:top;
+      white-space:nowrap;
+    }
+    th{
+      font-weight:900;
+      background:color-mix(in srgb, var(--surface) 92%, #ffffff 8%);
+    }
+    .table-wrap{
+      overflow:auto;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+    }
+    .right{ text-align:right; }
+    .error{ color:#b00020; font-weight:700; }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🧭</div>
+          <div>
+            <h1>Field Readiness Dev</h1>
+            <p class="muted">Single-field debug page. Saved readiness from Firestore. ETA powered by dedicated eta-engine.js.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div id="bootStatus" class="status">Booting dev page…</div>
+
+          <div class="row">
+            <div class="field">
+              <label for="fieldKeyInput">FIELD ID</label>
+              <input id="fieldKeyInput" class="input mono" type="text" placeholder="02Kq4WH8RrGXR4DAyQDz" />
+            </div>
+            <div class="field">
+              <label for="thresholdInput">THRESHOLD</label>
+              <input id="thresholdInput" class="input mono" type="number" min="0" max="100" step="1" value="85" />
+            </div>
+          </div>
+
+          <div class="rowBtns">
+            <button id="runBtn" class="btn btn-primary" type="button">Run Dev Test</button>
+            <button id="copyUrlBtn" class="btn" type="button">Copy Test URL</button>
+          </div>
+
+          <div id="runStatus" class="status">Waiting to run.</div>
+          <div id="err" class="status err" hidden></div>
+
+          <div class="kgrid">
+            <div class="kcard">
+              <div class="klabel">Field</div>
+              <div id="fieldTitle" class="kvalue">—</div>
+              <div id="fieldSub" class="muted" style="margin-top:6px;">No field loaded yet.</div>
+            </div>
+
+            <div class="kcard">
+              <div class="klabel">Current Readiness</div>
+              <div id="readinessValue" class="kvalue">—</div>
+              <div class="muted" style="margin-top:6px;">From field_readiness_latest first</div>
+            </div>
+
+            <div class="kcard">
+              <div class="klabel">ETA</div>
+              <div id="etaValue" class="kvalue">—</div>
+              <div id="etaSub" class="muted" style="margin-top:6px;">Threshold 85</div>
+            </div>
+          </div>
+
+          <div class="kgrid">
+            <div class="kcard">
+              <div class="klabel">ETA status</div>
+              <div id="etaStatusValue" class="mono">—</div>
+            </div>
+            <div class="kcard">
+              <div class="klabel">ETA hours</div>
+              <div id="etaHoursValue" class="mono">—</div>
+            </div>
+            <div class="kcard">
+              <div class="klabel">Forecast usable</div>
+              <div id="forecastUsableValue" class="mono">—</div>
+            </div>
+          </div>
+
+          <div class="kgrid">
+            <div class="kcard">
+              <div class="klabel">Field doc source</div>
+              <div id="fieldSource" class="mono">—</div>
+            </div>
+            <div class="kcard">
+              <div class="klabel">Latest doc source</div>
+              <div id="latestSource" class="mono">—</div>
+            </div>
+            <div class="kcard">
+              <div class="klabel">Weather source found</div>
+              <div id="weatherSource" class="mono">—</div>
+            </div>
+          </div>
+
+          <div class="kgrid">
+            <div class="kcard">
+              <div class="klabel">Math file</div>
+              <div class="mono">/js/shared/field-readiness.model.js</div>
+            </div>
+            <div class="kcard">
+              <div class="klabel">ETA engine</div>
+              <div class="mono">/js/field-readiness/eta-engine.js</div>
+            </div>
+            <div class="kcard">
+              <div class="klabel">ETA mode</div>
+              <div class="mono">strict eta engine only</div>
+            </div>
+          </div>
+
+          <div class="kgrid">
+            <div class="kcard"><div class="klabel">History rows</div><div id="histCount" class="kvalue">0</div></div>
+            <div class="kcard"><div class="klabel">Forecast rows</div><div id="fcstCount" class="kvalue">0</div></div>
+            <div class="kcard"><div class="klabel">Merged rows</div><div id="mergedCount" class="kvalue">0</div></div>
+          </div>
+
+          <div class="kgrid">
+            <div class="kcard"><div class="klabel">Seed source</div><div id="seedSource" class="mono">—</div></div>
+            <div class="kcard"><div class="klabel">Storage final</div><div id="storageFinal" class="mono">—</div></div>
+            <div class="kcard"><div class="klabel">Surface storage final</div><div id="surfaceStorageFinal" class="mono">—</div></div>
+          </div>
+
+          <details open>
+            <summary>Lookup Debug</summary>
+            <div class="detail-body">
+              <pre id="lookupDebug" class="pre">—</pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Resolved Field Doc</summary>
+            <div class="detail-body">
+              <pre id="fieldDocDebug" class="pre">—</pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Resolved Latest Doc</summary>
+            <div class="detail-body">
+              <pre id="latestDocDebug" class="pre">—</pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Resolved Weather / Forecast</summary>
+            <div class="detail-body">
+              <pre id="weatherDebug" class="pre">—</pre>
+            </div>
+          </details>
+
+          <details open>
+            <summary>ETA Diagnostics</summary>
+            <div class="detail-body">
+              <pre id="etaDebug" class="pre">—</pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Model Result</summary>
+            <div class="detail-body">
+              <pre id="modelDebug" class="pre">—</pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Trace (last 30 rows)</summary>
+            <div class="detail-body">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th class="right">Rain</th>
+                      <th>Source</th>
+                      <th class="right">Before</th>
+                      <th class="right">After</th>
+                      <th class="right">Surface Before</th>
+                      <th class="right">Surface After</th>
+                      <th class="right">Loss</th>
+                      <th class="right">DryPwr</th>
+                    </tr>
+                  </thead>
+                  <tbody id="traceRows">
+                    <tr><td colspan="9" class="muted">No trace yet.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      getAuth,
+      doc,
+      getDoc
+    } from '/js/core/firebase/firebase-init.js';
+
+    import { runField } from '/js/shared/field-readiness.model.js';
+    import * as EtaEngine from '/js/field-readiness/eta-engine.js';
+
+    const ETA_TEMP_UNAVAILABLE = 'ETA temporarily unavailable';
+
+    const $ = id => document.getElementById(id);
+
+    const els = {
+      bootStatus: $('bootStatus'),
+      runStatus: $('runStatus'),
+      err: $('err'),
+      fieldKeyInput: $('fieldKeyInput'),
+      thresholdInput: $('thresholdInput'),
+      runBtn: $('runBtn'),
+      copyUrlBtn: $('copyUrlBtn'),
+
+      fieldTitle: $('fieldTitle'),
+      fieldSub: $('fieldSub'),
+      readinessValue: $('readinessValue'),
+      etaValue: $('etaValue'),
+      etaSub: $('etaSub'),
+
+      etaStatusValue: $('etaStatusValue'),
+      etaHoursValue: $('etaHoursValue'),
+      forecastUsableValue: $('forecastUsableValue'),
+
+      fieldSource: $('fieldSource'),
+      latestSource: $('latestSource'),
+      weatherSource: $('weatherSource'),
+
+      histCount: $('histCount'),
+      fcstCount: $('fcstCount'),
+      mergedCount: $('mergedCount'),
+      seedSource: $('seedSource'),
+      storageFinal: $('storageFinal'),
+      surfaceStorageFinal: $('surfaceStorageFinal'),
+
+      lookupDebug: $('lookupDebug'),
+      fieldDocDebug: $('fieldDocDebug'),
+      latestDocDebug: $('latestDocDebug'),
+      weatherDebug: $('weatherDebug'),
+      etaDebug: $('etaDebug'),
+      modelDebug: $('modelDebug'),
+      traceRows: $('traceRows')
+    };
+
+    let db = null;
+    let auth = null;
+    let readyCtx = null;
+
+    function safeStr(v){
+      return String(v == null ? '' : v).trim();
+    }
+
+    function safeNum(v, fallback = null){
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function clamp(n, min, max){
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function setStatus(el, msg, kind = ''){
+      if (!el) return;
+      el.textContent = String(msg || '');
+      el.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function setText(el, value){
+      if (!el) return;
+      el.textContent = String(value == null || value === '' ? '—' : value);
+    }
+
+    function pretty(obj){
+      try{
+        return JSON.stringify(obj, null, 2);
+      }catch(_){
+        return String(obj);
+      }
+    }
+
+    function getAuthDebug(){
+      const user = auth?.currentUser || null;
+      return {
+        available: !!auth,
+        signedIn: !!user,
+        uid: safeStr(user?.uid),
+        email: safeStr(user?.email),
+        resolved: !!readyCtx,
+        mode: safeStr(readyCtx?.mode || ''),
+        lastSeenAt: Date.now()
+      };
+    }
+
+    function requireSignedIn(){
+      if (auth?.currentUser) return;
+      throw new Error(
+        `You are not signed in on this page.\n\nAuth debug:\n${pretty(getAuthDebug())}`
+      );
+    }
+
+    function resetOutput(){
+      if (els.err){
+        els.err.hidden = true;
+        els.err.textContent = '';
+      }
+      setText(els.fieldTitle, '—');
+      setText(els.fieldSub, 'No field loaded yet.');
+      setText(els.readinessValue, '—');
+      setText(els.etaValue, '—');
+      setText(els.etaSub, `Threshold ${safeNum(els.thresholdInput.value, 85)}`);
+      setText(els.etaStatusValue, '—');
+      setText(els.etaHoursValue, '—');
+      setText(els.forecastUsableValue, '—');
+      setText(els.fieldSource, '—');
+      setText(els.latestSource, '—');
+      setText(els.weatherSource, '—');
+      setText(els.histCount, '0');
+      setText(els.fcstCount, '0');
+      setText(els.mergedCount, '0');
+      setText(els.seedSource, '—');
+      setText(els.storageFinal, '—');
+      setText(els.surfaceStorageFinal, '—');
+      els.lookupDebug.textContent = '—';
+      els.fieldDocDebug.textContent = '—';
+      els.latestDocDebug.textContent = '—';
+      els.weatherDebug.textContent = '—';
+      els.etaDebug.textContent = '—';
+      els.modelDebug.textContent = '—';
+      renderTraceRows([]);
+    }
+
+    function getUrlForCopy(){
+      const url = new URL(window.location.href);
+      const key = safeStr(els.fieldKeyInput.value);
+      const thr = safeStr(els.thresholdInput.value || '85');
+
+      if (key) url.searchParams.set('id', key);
+      else url.searchParams.delete('id');
+
+      url.searchParams.set('threshold', thr);
+      return url.toString();
+    }
+
+    function applyUrlToInputs(){
+      const url = new URL(window.location.href);
+      const key = safeStr(url.searchParams.get('id') || '');
+      const thr = safeStr(url.searchParams.get('threshold') || '85');
+
+      if (key) els.fieldKeyInput.value = key;
+      if (thr) els.thresholdInput.value = thr;
+    }
+
+    async function getDocIfExists(collectionName, docId){
+      const snap = await getDoc(doc(db, collectionName, docId));
+      if (!snap.exists()) return null;
+      return {
+        id: snap.id,
+        data: snap.data() || {},
+        source: `doc:${collectionName}/${docId}`,
+        collection: collectionName
+      };
+    }
+
+    function normalizeField(fieldDoc, latestDoc, weatherDoc, lookupKey){
+      const fd = (fieldDoc && fieldDoc.data) || {};
+      const ld = (latestDoc && latestDoc.data) || {};
+      const wd = (weatherDoc && weatherDoc.data) || {};
+
+      const id = safeStr(
+        fd.fieldId || fd.id || fieldDoc?.id ||
+        ld.fieldId || ld.id || latestDoc?.id ||
+        wd.fieldId || wd.id || weatherDoc?.id ||
+        lookupKey
+      );
+
+      const lat = safeNum(
+        fd.location?.lat ?? fd.lat ?? fd.latitude ?? fd.center?.lat ??
+        ld.location?.lat ?? ld.lat ?? ld.latitude ??
+        wd.location?.lat ?? wd.lat ?? wd.latitude,
+        null
+      );
+
+      const lng = safeNum(
+        fd.location?.lng ?? fd.lng ?? fd.longitude ?? fd.lon ?? fd.center?.lng ??
+        ld.location?.lng ?? ld.lng ?? ld.longitude ?? ld.lon ??
+        wd.location?.lng ?? wd.lng ?? wd.longitude ?? wd.lon,
+        null
+      );
+
+      return {
+        id,
+        fieldId: id,
+        name: safeStr(fd.name || fd.fieldName || ld.fieldName || ld.name || wd.fieldName || wd.name || 'Field'),
+        fieldName: safeStr(fd.fieldName || fd.name || ld.fieldName || ld.name || wd.fieldName || wd.name || 'Field'),
+        farmId: safeStr(fd.farmId || ld.farmId || wd.farmId || ''),
+        farmName: safeStr(fd.farmName || ld.farmName || wd.farmName || ''),
+        county: safeStr(fd.county || ld.county || wd.county || ''),
+        state: safeStr(fd.state || ld.state || wd.state || ''),
+        lat,
+        lng,
+        location: { lat, lng }
+      };
+    }
+
+    function normalizeFieldParams(fieldDoc, latestDoc, weatherDoc){
+      const fd = (fieldDoc && fieldDoc.data) || {};
+      const ld = (latestDoc && latestDoc.data) || {};
+      const wd = (weatherDoc && weatherDoc.data) || {};
+      return {
+        soilWetness: safeNum(
+          fd.soilWetness ?? fd.soilWetnessPct ?? fd.soilWetness0_100 ??
+          ld.soilWetness ?? ld.soilWetnessPct ??
+          wd.soilWetness ?? wd.soilWetnessPct,
+          45
+        ),
+        drainageIndex: safeNum(
+          fd.drainageIndex ?? fd.drainage ?? fd.drainagePct ??
+          ld.drainageIndex ?? ld.drainage ??
+          wd.drainageIndex ?? wd.drainage,
+          45
+        )
+      };
+    }
+
+    function normalizeWxRow(raw){
+      const r = raw || {};
+      const dateISO = safeStr(
+        r.dateISO || r.date || r.day || r.timeISO || r.timestampISO || r.validDate || r.validTime || ''
+      ).slice(0, 10);
+
+      const rainInAdj =
+        safeNum(r.rainMrmsIn, null) ??
+        safeNum(r.rainInAdj, null) ??
+        safeNum(r.rainIn, null) ??
+        safeNum(r.precipIn, null) ??
+        safeNum(r.precipitationIn, null) ??
+        0;
+
+      return {
+        dateISO,
+        rainInAdj,
+        rainIn: safeNum(r.rainIn, rainInAdj),
+        rainSource: safeStr(r.rainSource || (safeNum(r.rainMrmsIn, null) != null ? 'mrms' : 'open-meteo') || 'unknown'),
+        tempF: safeNum(r.tempF ?? r.tempAvgF ?? r.avgTempF ?? r.temperatureF, 0),
+        windMph: safeNum(r.windMph ?? r.windSpeedMph ?? r.windspeedMph, 0),
+        rh: safeNum(r.rh ?? r.rhPct ?? r.relativeHumidityPct ?? r.relativeHumidity, 0),
+        solarWm2: safeNum(r.solarWm2 ?? r.shortwaveWm2 ?? r.shortwaveRadiation ?? r.solar, 0),
+        sunshineHr: safeNum(r.sunshineHr ?? r.sunshineHours ?? r.sunshine_duration_hr, 0),
+        daylightHr: safeNum(r.daylightHr ?? r.daylightHours ?? r.daylight_duration_hr, 0),
+        cloudPct: safeNum(r.cloudPct ?? r.cloudCoverPct ?? r.cloud_cover, null),
+        vpdKpa: safeNum(r.vpdKpa ?? r.vpd ?? r.vapour_pressure_deficit_kpa, null),
+        sm010: safeNum(r.sm010 ?? r.soilMoisture010 ?? r.soilMoisture_0_10, null),
+        et0In: safeNum(r.et0In ?? r.etIn ?? r.et0, null),
+        rainMorningIn: safeNum(r.rainMorningIn, 0),
+        rainMiddayIn: safeNum(r.rainMiddayIn, 0),
+        rainEveningIn: safeNum(r.rainEveningIn, 0)
+      };
+    }
+
+    function normalizeRowsArray(rows){
+      return (Array.isArray(rows) ? rows : [])
+        .map(normalizeWxRow)
+        .filter(r => r && r.dateISO);
+    }
+
+    function extractNumericObjectRows(obj){
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return [];
+      const keys = Object.keys(obj)
+        .filter(k => /^\d+$/.test(String(k)))
+        .sort((a, b)=> Number(a) - Number(b));
+      if (!keys.length) return [];
+      return keys.map(k => obj[k]).filter(Boolean);
+    }
+
+    function firstRowArrayFromDoc(docData, candidates){
+      const d = docData || {};
+      for (const key of candidates){
+        const value = d[key];
+        if (Array.isArray(value) && value.length) return value;
+        const numericRows = extractNumericObjectRows(value);
+        if (numericRows.length) return numericRows;
+      }
+      return [];
+    }
+
+    function uniqueWeatherRows(rows){
+      const map = new Map();
+      for (const r of (Array.isArray(rows) ? rows : [])){
+        if (!r || !r.dateISO) continue;
+        map.set(String(r.dateISO), r);
+      }
+      return Array.from(map.values()).sort((a, b)=> String(a.dateISO).localeCompare(String(b.dateISO)));
+    }
+
+    function pickHistoryRows(latestDoc, weatherDoc){
+      const ld = (latestDoc && latestDoc.data) || {};
+      const wd = (weatherDoc && weatherDoc.data) || {};
+      const direct = [
+        ...normalizeRowsArray(firstRowArrayFromDoc(ld, ['dailySeries30d', 'dailySeries', 'weatherDailySeries', 'wxDailySeries', 'rows'])),
+        ...normalizeRowsArray(firstRowArrayFromDoc(wd, ['dailySeries30d', 'dailySeries', 'weatherDailySeries', 'wxDailySeries', 'rows']))
+      ];
+      return uniqueWeatherRows(direct);
+    }
+
+    function pickForecastRows(latestDoc, weatherDoc){
+      const ld = (latestDoc && latestDoc.data) || {};
+      const wd = (weatherDoc && weatherDoc.data) || {};
+      const direct = [
+        ...normalizeRowsArray(firstRowArrayFromDoc(ld, ['dailySeriesFcst', 'forecastRows', 'weatherForecastRows', 'forecastDailyRows', 'openMeteoForecastRows'])),
+        ...normalizeRowsArray(firstRowArrayFromDoc(wd, ['dailySeriesFcst', 'forecastRows', 'weatherForecastRows', 'forecastDailyRows', 'openMeteoForecastRows']))
+      ];
+      return uniqueWeatherRows(direct);
+    }
+
+    function mergeHistoryAndForecast(historyRows, forecastRows){
+      return uniqueWeatherRows([...(historyRows || []), ...(forecastRows || [])]);
+    }
+
+    function buildForecastDiagnostics(forecastRows){
+      const rows = Array.isArray(forecastRows) ? forecastRows : [];
+      let usable = 0;
+      for (const row of rows){
+        if (
+          safeStr(row.dateISO) &&
+          safeNum(row.tempF, null) != null &&
+          safeNum(row.windMph, null) != null &&
+          safeNum(row.rh, null) != null &&
+          safeNum(row.solarWm2, null) != null
+        ){
+          usable += 1;
+        }
+      }
+      return { total: rows.length, usable };
+    }
+
+    function deriveSavedReadiness(latestDoc, fieldDoc, weatherDoc, run){
+      const ld = latestDoc && latestDoc.data ? latestDoc.data : {};
+      const fd = fieldDoc && fieldDoc.data ? fieldDoc.data : {};
+      const wd = weatherDoc && weatherDoc.data ? weatherDoc.data : {};
+      const candidates = [
+        ld.readiness, ld.readinessR,
+        fd.readiness, fd.readinessR,
+        wd.readiness, wd.readinessR,
+        run && run.readinessR,
+        run && run.readiness
+      ];
+      for (const v of candidates){
+        const n = safeNum(v, null);
+        if (n != null) return clamp(Math.round(n), 0, 100);
+      }
+      return null;
+    }
+
+    function renderTraceRows(trace){
+      const tbody = els.traceRows;
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+
+      const rows = Array.isArray(trace) ? trace.slice(-30) : [];
+      if (!rows.length){
+        tbody.innerHTML = '<tr><td colspan="9" class="muted">No trace yet.</td></tr>';
+        return;
+      }
+
+      for (const r of rows){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="mono">${safeStr(r.dateISO || '')}</td>
+          <td class="right mono">${Number(r.rain || 0).toFixed(2)}</td>
+          <td class="mono">${safeStr(r.rainSource || '')}</td>
+          <td class="right mono">${Number(r.before || 0).toFixed(2)}</td>
+          <td class="right mono">${Number(r.after || 0).toFixed(2)}</td>
+          <td class="right mono">${Number(r.surfaceBefore || 0).toFixed(2)}</td>
+          <td class="right mono">${Number(r.surfaceAfter || 0).toFixed(2)}</td>
+          <td class="right mono">${Number(r.loss || 0).toFixed(2)}</td>
+          <td class="right mono">${Number(r.dryPwr || 0).toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function buildResolvedPayload(inputKey, latestDoc, weatherDoc, fieldDoc){
+      const field = normalizeField(fieldDoc, latestDoc, weatherDoc, inputKey);
+      const fieldParams = normalizeFieldParams(fieldDoc, latestDoc, weatherDoc);
+      const historyRows = pickHistoryRows(latestDoc, weatherDoc);
+      const forecastRows = pickForecastRows(latestDoc, weatherDoc);
+      const mergedRows = mergeHistoryAndForecast(historyRows, forecastRows);
+      const forecastDiag = buildForecastDiagnostics(forecastRows);
+
+      return {
+        inputKey,
+        latestDoc,
+        weatherDoc,
+        fieldDoc,
+        field,
+        fieldParams,
+        historyRows,
+        forecastRows,
+        mergedRows,
+        forecastDiag
+      };
+    }
+
+    async function fetchResolvedPayload(inputKey){
+      const tried = [];
+
+      let latestDoc = null;
+      let weatherDoc = null;
+      let fieldDoc = null;
+
+      tried.push(`doc:field_readiness_latest/${inputKey}`);
+      latestDoc = await getDocIfExists('field_readiness_latest', inputKey);
+
+      tried.push(`doc:field_weather_cache/${inputKey}`);
+      weatherDoc = await getDocIfExists('field_weather_cache', inputKey);
+
+      tried.push(`doc:fields/${inputKey}`);
+      fieldDoc = await getDocIfExists('fields', inputKey);
+
+      if (!fieldDoc){
+        tried.push(`doc:field_boundaries/${inputKey}`);
+        fieldDoc = await getDocIfExists('field_boundaries', inputKey);
+      }
+
+      if (!fieldDoc){
+        tried.push(`doc:field_profiles/${inputKey}`);
+        fieldDoc = await getDocIfExists('field_profiles', inputKey);
+      }
+
+      if (!fieldDoc && !latestDoc && !weatherDoc){
+        const err = new Error(
+          `Nothing matched that input.\n\nAuth debug:\n${pretty(getAuthDebug())}\n\nTried:\n${tried.join(' | ')}`
+        );
+        err.tried = tried;
+        throw err;
+      }
+
+      const payload = buildResolvedPayload(inputKey, latestDoc, weatherDoc, fieldDoc);
+      payload.tried = tried;
+      return payload;
+    }
+
+    function getDeps(payload){
+      return {
+        opKey: 'dev_test',
+        seedMode: 'rewind',
+        rewindDays: 10,
+        EXTRA: {},
+        CAL: {},
+        getFieldParams: (fieldId)=> String(fieldId) === String(payload.field.id) ? payload.fieldParams : null,
+        getModelWeatherSeriesForFieldId: (fieldId)=> String(fieldId) === String(payload.field.id) ? payload.mergedRows : [],
+        getMergedWeatherSeriesForFieldId: (fieldId)=> String(fieldId) === String(payload.field.id) ? payload.mergedRows : [],
+        getWeatherSeriesForFieldId: (fieldId)=> String(fieldId) === String(payload.field.id) ? payload.mergedRows : [],
+        getForecastSeriesForFieldId: (fieldId)=> String(fieldId) === String(payload.field.id) ? payload.forecastRows : [],
+        getWxSeriesWithForecastForFieldId: (fieldId)=> String(fieldId) === String(payload.field.id) ? payload.mergedRows : []
+      };
+    }
+
+    function findEtaEngineFunction(){
+      if (typeof EtaEngine.calculateEtaFromSavedReadiness === 'function'){
+        return {
+          fn: EtaEngine.calculateEtaFromSavedReadiness,
+          name: 'calculateEtaFromSavedReadiness'
+        };
+      }
+      return null;
+    }
+
+    function formatHours(hours){
+      if (hours == null || !Number.isFinite(hours)) return ETA_TEMP_UNAVAILABLE;
+      if (hours <= 0.5) return 'Ready';
+      if (hours < 24) return `${Math.round(hours)}h`;
+      const days = hours / 24;
+      return Math.abs(days - Math.round(days)) < 0.16 ? `${Math.round(days)}d` : `${days.toFixed(1)}d`;
+    }
+
+    function normalizeEtaEngineResult(raw, threshold){
+      if (!raw || typeof raw !== 'object'){
+        return {
+          ok: false,
+          status: 'error',
+          text: ETA_TEMP_UNAVAILABLE,
+          hours: null,
+          reason: 'eta-engine-returned-empty',
+          threshold
+        };
+      }
+
+      const status = safeStr(raw.status || raw.code || raw.result || '');
+      const hours =
+        safeNum(raw.hours, null) ??
+        safeNum(raw.etaHours, null) ??
+        safeNum(raw.totalHours, null);
+
+      const text = safeStr(raw.text || raw.label || raw.displayText || '');
+
+      if (String(status).toLowerCase() === 'ready'){
+        return {
+          ...raw,
+          ok: true,
+          status: 'ready',
+          hours: 0,
+          text: 'Ready'
+        };
+      }
+
+      if (hours != null){
+        return {
+          ...raw,
+          ok: true,
+          status: safeStr(raw.status || 'ok'),
+          hours,
+          text: text || formatHours(hours)
+        };
+      }
+
+      return {
+        ...raw,
+        ok: false,
+        status: safeStr(raw.status || 'error'),
+        hours: null,
+        text: text || ETA_TEMP_UNAVAILABLE,
+        threshold
+      };
+    }
+
+    async function runEtaEngine(payload, threshold, savedReadiness){
+      const engine = findEtaEngineFunction();
+      if (!engine){
+        return {
+          ok: false,
+          status: 'error',
+          text: ETA_TEMP_UNAVAILABLE,
+          hours: null,
+          reason: 'eta-engine-export-not-found',
+          availableExports: Object.keys(EtaEngine || {}),
+          engineName: null
+        };
+      }
+
+      try{
+        const raw = await Promise.resolve(engine.fn({
+          threshold,
+          savedReadiness,
+          field: payload.field,
+          latestDoc: payload.latestDoc,
+          weatherDoc: payload.weatherDoc,
+          fieldDoc: payload.fieldDoc,
+          historyRows: payload.historyRows,
+          forecastRows: payload.forecastRows,
+          mergedRows: payload.mergedRows,
+          fieldParams: payload.fieldParams
+        }));
+
+        const normalized = normalizeEtaEngineResult(raw, threshold);
+        normalized.engineName = engine.name;
+        normalized.raw = raw;
+        return normalized;
+      }catch(err){
+        return {
+          ok: false,
+          status: 'error',
+          text: ETA_TEMP_UNAVAILABLE,
+          hours: null,
+          reason: 'eta-engine-threw',
+          error: safeStr(err && (err.message || err.code || err)),
+          engineName: engine.name
+        };
+      }
+    }
+
+    function renderFromPayload(payload, run, savedReadiness, etaResult, threshold){
+      els.lookupDebug.textContent = Array.isArray(payload.tried) ? payload.tried.join(' | ') : '—';
+      els.fieldDocDebug.textContent = pretty(payload.fieldDoc);
+      els.latestDocDebug.textContent = pretty(payload.latestDoc);
+      els.weatherDebug.textContent = pretty({
+        weatherDoc: payload.weatherDoc,
+        historyRowsPreview: payload.historyRows.slice(0, 12),
+        forecastRowsPreview: payload.forecastRows.slice(0, 12),
+        mergedRowsPreview: payload.mergedRows.slice(-20)
+      });
+
+      setText(els.fieldTitle, payload.field.name || payload.field.fieldName || payload.field.id);
+      setText(
+        els.fieldSub,
+        [payload.field.id ? `ID ${payload.field.id}` : '', payload.field.county || '', payload.field.state || ''].filter(Boolean).join(' • ') || 'Field loaded'
+      );
+
+      setText(els.readinessValue, savedReadiness != null ? String(savedReadiness) : '—');
+      setText(els.etaValue, etaResult && etaResult.text ? etaResult.text : ETA_TEMP_UNAVAILABLE);
+      setText(els.etaSub, etaResult && etaResult.ok ? `Threshold ${threshold}` : `Threshold ${threshold} • debug below`);
+      setText(els.etaStatusValue, safeStr(etaResult && etaResult.status) || '—');
+      setText(els.etaHoursValue, safeNum(etaResult && etaResult.hours, null) != null ? String(etaResult.hours) : '—');
+      setText(els.forecastUsableValue, `${payload.forecastDiag.usable}/${payload.forecastDiag.total}`);
+
+      setText(els.fieldSource, payload.fieldDoc ? (payload.fieldDoc.source || '—') : '—');
+      setText(els.latestSource, payload.latestDoc ? payload.latestDoc.source : '—');
+      setText(
+        els.weatherSource,
+        payload.historyRows.length || payload.forecastRows.length
+          ? `history:${payload.historyRows.length} forecast:${payload.forecastRows.length}`
+          : (payload.weatherDoc ? (payload.weatherDoc.source || 'doc only') : 'none')
+      );
+
+      setText(els.histCount, payload.historyRows.length);
+      setText(els.fcstCount, payload.forecastRows.length);
+      setText(els.mergedCount, payload.mergedRows.length);
+      setText(els.seedSource, run && safeStr(run.seedSource) ? run.seedSource : '—');
+      setText(els.storageFinal, run && safeNum(run.storageFinal, null) != null ? Number(run.storageFinal).toFixed(2) : '—');
+      setText(els.surfaceStorageFinal, run && safeNum(run.surfaceStorageFinal, null) != null ? Number(run.surfaceStorageFinal).toFixed(2) : '—');
+
+      els.etaDebug.textContent = pretty({
+        threshold,
+        authDebug: getAuthDebug(),
+        savedReadiness,
+        etaEngineResult: etaResult,
+        exactForecastRowsSentToEtaEngine: payload.forecastRows
+      });
+
+      els.modelDebug.textContent = pretty({
+        field: payload.field,
+        fieldParams: payload.fieldParams,
+        run,
+        savedReadiness,
+        etaEngineResult: etaResult
+      });
+
+      renderTraceRows(run && run.trace);
+
+      const statusKind = etaResult && etaResult.ok ? 'ok' : 'err';
+      setStatus(
+        els.runStatus,
+        `Run finished.\nInput: ${payload.inputKey}\nResolved field id: ${payload.field.id}\nField: ${payload.field.name || payload.field.id}\nHistory rows: ${payload.historyRows.length}\nForecast rows: ${payload.forecastRows.length}\nReadiness: ${savedReadiness != null ? savedReadiness : '—'}\nETA: ${safeStr(etaResult && etaResult.text) || ETA_TEMP_UNAVAILABLE}\nETA status: ${safeStr(etaResult && etaResult.status) || '—'}`,
+        statusKind
+      );
+    }
+
+    async function runDevTest(){
+      const inputKey = safeStr(els.fieldKeyInput.value);
+      const threshold = safeNum(els.thresholdInput.value, 85);
+
+      if (!inputKey){
+        setStatus(els.runStatus, 'Enter a field id first.', 'err');
+        return;
+      }
+
+      resetOutput();
+      setStatus(els.runStatus, `Running dev test for ${inputKey}…`);
+      els.runBtn.disabled = true;
+
+      try{
+        requireSignedIn();
+
+        const payload = await fetchResolvedPayload(inputKey);
+        const deps = getDeps(payload);
+        const run = await Promise.resolve(runField(payload.field, deps));
+        const savedReadiness = deriveSavedReadiness(payload.latestDoc, payload.fieldDoc, payload.weatherDoc, run);
+
+        let etaResult = null;
+        if (savedReadiness != null && savedReadiness >= threshold){
+          etaResult = {
+            ok: true,
+            status: 'ready',
+            hours: 0,
+            text: 'Ready',
+            currentReadiness: savedReadiness,
+            reason: 'saved-readiness-already-meets-threshold'
+          };
+        } else {
+          etaResult = await runEtaEngine(payload, threshold, savedReadiness);
+        }
+
+        renderFromPayload(payload, run, savedReadiness, etaResult, threshold);
+      }catch(err){
+        const msg = err && err.message ? err.message : String(err || 'Unknown error');
+        setStatus(els.runStatus, msg, 'err');
+        if (els.err){
+          els.err.hidden = false;
+          els.err.textContent = msg;
+        }
+        if (!els.lookupDebug.textContent || els.lookupDebug.textContent === '—'){
+          els.lookupDebug.textContent = msg;
+        }
+        els.modelDebug.textContent = pretty({ error: msg });
+        els.etaDebug.textContent = pretty({ error: msg, authDebug: getAuthDebug() });
+        renderTraceRows([]);
+      }finally{
+        els.runBtn.disabled = false;
+      }
+    }
+
+    async function copyUrl(){
+      const url = getUrlForCopy();
+      try{
+        await navigator.clipboard.writeText(url);
+        setStatus(els.runStatus, 'Copied URL:\n' + url, 'ok');
+      }catch(_){
+        setStatus(els.runStatus, 'Copy failed. Use this URL:\n' + url);
+      }
+    }
+
+    function wireButtons(){
+      els.runBtn.addEventListener('click', ()=>{ runDevTest(); });
+      els.copyUrlBtn.addEventListener('click', copyUrl);
+
+      els.fieldKeyInput.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          runDevTest();
+        }
+      });
+
+      els.thresholdInput.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          runDevTest();
+        }
+      });
+    }
+
+    async function boot(){
+      try{
+        applyUrlToInputs();
+        wireButtons();
+
+        setStatus(els.bootStatus, 'Dev page booted. Waiting for Firebase + auth…');
+
+        readyCtx = await ready;
+        db = getFirestore();
+        auth = getAuth();
+
+        setStatus(
+          els.bootStatus,
+          `Dev page booted. Firebase is ready.\nAuth debug:\n${pretty(getAuthDebug())}`,
+          'ok'
+        );
+
+        const autoKey = safeStr(els.fieldKeyInput.value);
+        if (autoKey && auth?.currentUser){
+          await runDevTest();
+        } else if (!autoKey) {
+          setStatus(els.runStatus, 'Ready. Enter field id and run the dev test.');
+        } else {
+          setStatus(els.runStatus, `Ready, but not signed in yet.\n\nAuth debug:\n${pretty(getAuthDebug())}`, 'err');
+        }
+      }catch(err){
+        const msg = err && err.message ? err.message : String(err || 'Boot failed');
+        setStatus(els.bootStatus, msg, 'err');
+        setStatus(els.runStatus, msg, 'err');
+        if (els.err){
+          els.err.hidden = false;
+          els.err.textContent = msg;
+        }
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

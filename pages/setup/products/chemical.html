@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Setup → Products → Chemical</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Standard includes (ABSOLUTE paths) -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  
+
+  <!-- ✅ Blanket permission UI -->
+  <script src="/js/shared/permissions/perm-ui.js"></script>
+
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure fv-shell -->
+  <script>(function(){
+    if(!customElements.get('fv-shell')){
+      const s=document.createElement('script');
+      s.src='/js/core/shell/fv-shell.js'; s.defer=true;
+      document.head.appendChild(s);
+    }
+  })();</script>
+
+  <!-- Firebase config -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <style>
+    .page{max-width:1100px;margin:0 auto;padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;}
+    .page-title{margin:0 0 8px 0;}
+    .page-sub{margin:0 0 14px 0;color:var(--muted,#67706B);}
+
+    .alert{display:none;margin:0 0 12px 0;border:1px solid #c62828;background:#fdecea;color:#8a1c1c;
+      border-radius:12px;padding:12px 14px;font-weight:700}
+    .alert.show{display:block}
+
+    .section{border:1px solid var(--border);border-radius:14px;background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));overflow:hidden;}
+    .section-head{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:center;
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);}
+    .section-head .icon{width:24px;height:24px;color:#2F6C3C;display:grid;place-items:center;}
+    .section-head .icon svg{width:22px;height:22px;display:block;}
+    .section-body{padding:16px;display:grid;gap:14px;}
+
+    .grid-2{display:grid;gap:10px;grid-template-columns:1fr 1fr;}
+    .grid-3{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr;}
+    @media(max-width:880px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+    .field label{display:block;font-weight:800;margin:0 0 6px 0;}
+    .input,.select,.textarea{width:100%;font:inherit;font-size:16px;color:var(--text);
+      background:var(--card-surface,var(--surface));border:1px solid var(--border);
+      border-radius:10px;padding:12px;outline:none;}
+    .textarea{min-height:96px;resize:vertical;}
+    .help{font-size:13px;color:var(--muted,#67706B);}
+
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:148px;
+      padding:12px 16px;border-radius:12px;border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));font-weight:800;color:var(--text);cursor:pointer;}
+    .btn-primary{border-color:transparent;background:#2F6C3C;color:#fff;}
+    .btn-danger{border-color:#b3261e;color:#b3261e;background:var(--surface);}
+    .btn-quiet{min-width:auto;padding:8px 12px}
+    .btn[disabled]{opacity:.45; cursor:not-allowed;}
+
+    /* List */
+    .list-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);gap:10px;flex-wrap:wrap}
+    .list-title{font-size:clamp(18px,2.6vw,22px);font-weight:800;}
+    .list-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .list{padding:14px 16px;display:grid;gap:12px;}
+    .item{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--card-surface,var(--surface));
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .pill{font-size:12px;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted,#67706B);background:var(--surface)}
+    .pill-arch{border-color:#b3261e;color:#b3261e;}
+    .name{font-weight:800}
+    .view{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;color:var(--text) !important;}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.42);z-index:9999;transition:opacity .15s;opacity:0;}
+    .modal[open]{display:grid;opacity:1;}
+    .dialog{width:min(760px,92vw);max-height:85vh;display:flex;flex-direction:column;background:var(--surface);color:var(--text);
+      border-radius:14px;border:1px solid var(--border);box-shadow:0 16px 36px rgba(0,0,0,.28);}
+    .dialog-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .dialog-body{padding:14px;display:grid;gap:12px;overflow:auto}
+    .dialog-footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--border)}
+    .left-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .closex{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;color:var(--text) !important;}
+
+    .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 72px);transform:translateX(-50%);
+      background:#2F6C3C;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:99999;display:none;}
+    .toast.show{display:block;animation:fadeout 3.6s forwards;}
+    @keyframes fadeout{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <!-- Page visibility -->
+    <div class="page container" data-perm="setup-prod-chemical:view">
+      <h1 class="page-title">Chemical Setup</h1>
+      <p class="page-sub">Add crop-protection products (herbicides, fungicides, insecticides, adjuvants). Track crop fit, formulation, density, and labeled rates.</p>
+
+      <div id="alert" class="alert" role="alert"></div>
+
+      <!-- Create form -->
+      <section class="section" data-perm="setup-prod-chemical:add">
+        <header class="section-head">
+          <div class="icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 6l1 0l0 7a4 4 0 1 1 -2 0l0 -7z" />
+              <path d="M7 6l10 0" />
+            </svg>
+          </div>
+          <div>
+            <strong>New Chemical Product</strong>
+            <div class="help">Company + product + category and crop fit. Add formulation, density, label rates, REI/PHI, RUP.</div>
+          </div>
+        </header>
+
+        <div class="section-body">
+          <div class="grid-3">
+            <div class="field">
+              <label for="company">Company (optional)</label>
+              <input id="company" class="input" placeholder="e.g., Bayer, Syngenta, Corteva">
+            </div>
+            <div class="field">
+              <label for="product">Product Name</label>
+              <input id="product" class="input" placeholder="e.g., Harness, Enlist One, Liberty, Zidua">
+            </div>
+            <div class="field">
+              <label for="category">Product Category</label>
+              <select id="category" class="select">
+                <option value="">—</option>
+                <option value="herbicide">Herbicide</option>
+                <option value="fungicide">Fungicide</option>
+                <option value="insecticide">Insecticide</option>
+                <option value="adjuvant">Adjuvant</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field">
+              <label for="cropfit">Crop Fit</label>
+              <select id="cropfit" class="select">
+                <option value="">—</option>
+                <option value="corn">Corn</option>
+                <option value="soybean">Soybean</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ai">Active Ingredient(s)</label>
+              <input id="ai" class="input" placeholder="e.g., acetochlor + atrazine">
+            </div>
+            <div class="field">
+              <label for="moa">MOA Group(s)</label>
+              <input id="moa" class="input" placeholder="WSSA/HRAC groups, e.g., 4 + 9 + 15">
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field">
+              <label for="form">Formulation</label>
+              <select id="form" class="select">
+                <option value="">—</option>
+                <option>EC (Emulsifiable Concentrate)</option>
+                <option>SC (Suspension/Flowable)</option>
+                <option>SL (Soluble Liquid)</option>
+                <option>WG / WDG (Water-dispersible granule)</option>
+                <option>WP (Wettable Powder)</option>
+                <option>CS (Capsule Suspension)</option>
+                <option>SE (Suspo-emulsion)</option>
+                <option>OD / ME (Oil Dispersion/Micro-encaps.)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="density">Product Density (optional)</label>
+              <div class="grid-2">
+                <input id="density" class="input" inputmode="decimal" placeholder="e.g., 10.3">
+                <select id="densUnit" class="select">
+                  <option>lb/gal</option>
+                  <option>g/mL</option>
+                </select>
+              </div>
+              <div class="help">Needed for gal↔lb conversions in mixes.</div>
+            </div>
+            <div class="field">
+              <label for="carrier">Carrier Volume (optional)</label>
+              <div class="grid-2">
+                <input id="carrier" class="input" inputmode="decimal" placeholder="e.g., 15">
+                <select id="carrierUnit" class="select">
+                  <option>gal/ac</option>
+                  <option>L/ha</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field">
+              <label for="rate">Labeled Rate</label>
+              <div class="grid-2">
+                <input id="rate" class="input" inputmode="decimal" placeholder="e.g., 2">
+                <select id="rateUnit" class="select">
+                  <option>oz/ac</option><option>pt/ac</option><option>qt/ac</option><option>gal/ac</option><option>lb/ac</option>
+                </select>
+              </div>
+              <div class="help">Use a typical single-pass rate; note min/max in Notes if needed.</div>
+            </div>
+            <div class="field">
+              <label for="rei">REI / PHI</label>
+              <div class="grid-2">
+                <input id="rei" class="input" inputmode="numeric" placeholder="REI hrs">
+                <input id="phi" class="input" inputmode="numeric" placeholder="PHI days">
+              </div>
+            </div>
+            <div class="field">
+              <label for="rup">Restricted Use?</label>
+              <select id="rup" class="select">
+                <option value="">—</option>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="notes">Notes</label>
+            <textarea id="notes" class="textarea" placeholder="Premix partners, residual, surfactant needs, tank-mix cautions, etc."></textarea>
+          </div>
+
+          <div class="actions">
+            <button id="clear" class="btn" type="button">Clear</button>
+            <button id="save" class="btn btn-primary" type="button">Save Chemical</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- List -->
+      <div class="list-head">
+        <div class="list-title">Chemical Products</div>
+        <div class="list-tools">
+          <input id="q" class="input" placeholder="Search company / product / category / crop fit">
+          <button id="reload" class="btn btn-quiet" type="button">Reload</button>
+        </div>
+        <div class="help" id="counts">0 active</div>
+      </div>
+      <div id="list" class="list">
+        <div class="help">No chemicals yet.</div>
+      </div>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <!-- Edit Modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
+      <div class="dialog-head">
+        <h3 id="mdTitle">View / Edit Chemical</h3>
+        <button id="mdClose" class="closex" type="button">Back</button>
+      </div>
+
+      <div class="dialog-body" id="mdBody" data-perm="setup-prod-chemical:edit">
+        <div class="grid-3">
+          <div class="field">
+            <label for="edit_company">Company</label>
+            <input id="edit_company" class="input" placeholder="Company">
+          </div>
+          <div class="field">
+            <label for="edit_product">Product Name</label>
+            <input id="edit_product" class="input" placeholder="Product name">
+          </div>
+          <div class="field">
+            <label for="edit_category">Product Category</label>
+            <select id="edit_category" class="select">
+              <option value="herbicide">Herbicide</option>
+              <option value="fungicide">Fungicide</option>
+              <option value="insecticide">Insecticide</option>
+              <option value="adjuvant">Adjuvant</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label for="edit_cropfit">Crop Fit</label>
+            <select id="edit_cropfit" class="select">
+              <option value="">—</option>
+              <option value="corn">Corn</option>
+              <option value="soybean">Soybean</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="edit_ai">Active Ingredient(s)</label>
+            <input id="edit_ai" class="input" placeholder="e.g., acetochlor + atrazine">
+          </div>
+          <div class="field">
+            <label for="edit_moa">MOA Group(s)</label>
+            <input id="edit_moa" class="input" placeholder="e.g., 4 + 9 + 15">
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label for="edit_form">Formulation</label>
+            <select id="edit_form" class="select">
+              <option value="">—</option>
+              <option>EC (Emulsifiable Concentrate)</option>
+              <option>SC (Suspension/Flowable)</option>
+              <option>SL (Soluble Liquid)</option>
+              <option>WG / WDG (Water-dispersible granule)</option>
+              <option>WP (Wettable Powder)</option>
+              <option>CS (Capsule Suspension)</option>
+              <option>SE (Suspo-emulsion)</option>
+              <option>OD / ME (Oil Dispersion/Micro-encaps.)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="edit_density">Product Density</label>
+            <div class="grid-2">
+              <input id="edit_density" class="input" inputmode="decimal" placeholder="value">
+              <select id="edit_densUnit" class="select">
+                <option>lb/gal</option>
+                <option>g/mL</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="edit_carrier">Carrier Volume</label>
+            <div class="grid-2">
+              <input id="edit_carrier" class="input" inputmode="decimal" placeholder="value">
+              <select id="edit_carrierUnit" class="select">
+                <option>gal/ac</option>
+                <option>L/ha</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label for="edit_rate">Labeled Rate</label>
+            <div class="grid-2">
+              <input id="edit_rate" class="input" inputmode="decimal" placeholder="value">
+              <select id="edit_rateUnit" class="select">
+                <option>oz/ac</option><option>pt/ac</option><option>qt/ac</option><option>gal/ac</option><option>lb/ac</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="edit_rei">REI / PHI</label>
+            <div class="grid-2">
+              <input id="edit_rei" class="input" inputmode="numeric" placeholder="REI hrs">
+              <input id="edit_phi" class="input" inputmode="numeric" placeholder="PHI days">
+            </div>
+          </div>
+          <div class="field">
+            <label for="edit_rup">Restricted Use?</label>
+            <select id="edit_rup" class="select">
+              <option value="">—</option>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="edit_notes">Notes</label>
+          <input id="edit_notes" class="input" placeholder="Notes">
+        </div>
+
+        <div class="field" id="statusRow" style="align-self:end">
+          <span class="pill" id="statusPill">Active</span>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <div class="left-btns">
+          <button id="mdArchive" class="btn btn-quiet" type="button" data-perm="setup-prod-chemical:edit">Archive</button>
+          <button id="mdDelete" class="btn btn-danger" type="button" data-perm="setup-prod-chemical:delete">Delete</button>
+        </div>
+        <button id="mdSave" class="btn btn-primary" type="button" data-perm="setup-prod-chemical:edit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      setDoc,
+      deleteDoc,
+      doc,
+      getDoc,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    const $ = id => document.getElementById(id);
+    const toast = $("toast"), alertBox = $("alert");
+    const listBox = $("list"), countsEl = $("counts"), q = $("q");
+
+    const showToast = (msg="Saved.")=>{
+      toast.textContent = msg;
+      toast.classList.remove("show");
+      toast.style.display = 'block';
+      void toast.offsetWidth;
+      toast.classList.add("show");
+      setTimeout(()=>{ toast.classList.remove("show"); toast.style.display='none'; }, 3600);
+    };
+    const showError = (msg)=>{
+      alertBox.textContent = msg; alertBox.classList.add('show');
+      clearTimeout(showError._t); showError._t = setTimeout(()=> alertBox.classList.remove('show'), 8000);
+    };
+    const esc = s => String(s||"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+    const cap = s => s ? (String(s)[0].toUpperCase()+String(s).slice(1)) : s;
+
+    const canNow = (k)=> (window.FV && typeof window.FV.can === 'function') ? window.FV.can(k) : true;
+
+    const COLL = 'productsChemical';
+    let db = null;
+    let items = [];
+    let editId = null;
+
+    function validateCreate(){
+      if(!$("product").value.trim()) return "Enter a product name.";
+      if(!$("category").value) return "Choose a product category.";
+      if(!$("cropfit").value) return "Select crop fit (Corn/Soybean/Both).";
+      return "";
+    }
+
+    function buildPayload(prefix=""){
+      const g = (id)=> $(prefix + id);
+      return {
+        company: g("company").value.trim(),
+        product: g("product").value.trim(),
+        category: g("category").value,
+        cropfit: g("cropfit").value,
+        ai: g("ai").value.trim(),
+        moa: g("moa").value.trim(),
+        form: g("form").value,
+        density: g("density").value.trim(),
+        densUnit: g("densUnit").value,
+        carrier: g("carrier").value.trim(),
+        carrierUnit: g("carrierUnit").value,
+        rate: g("rate").value.trim(),
+        rateUnit: g("rateUnit").value,
+        rei: g("rei").value.trim(),
+        phi: g("phi").value.trim(),
+        rup: g("rup").value,
+        notes: g("notes").value.trim()
+      };
+    }
+
+    function newPayload(){
+      return {
+        ...buildPayload(""),
+        status: "active",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+    }
+
+    function clearCreate(){
+      ["company","product","category","cropfit","ai","moa","form","density","densUnit","carrier","carrierUnit","rate","rateUnit","rei","phi","rup","notes"].forEach(id=>{
+        const el=$(id); if(!el) return;
+        if(el.tagName==="SELECT") el.selectedIndex=0; else el.value="";
+      });
+    }
+
+    $("clear").addEventListener("click", clearCreate);
+
+    $("save").addEventListener("click", async ()=>{
+      if(!canNow('setup-prod-chemical:add')) { alert("You don't have permission to add chemical products."); return; }
+      const err=validateCreate(); if(err){ alert(err); return; }
+      try{
+        await addDoc(collection(db, COLL), newPayload());
+        clearCreate();
+        showToast("Chemical saved.");
+        await loadAll();
+        window.scrollTo({top:0,behavior:"smooth"});
+      }catch(e){
+        console.error(e);
+        showError("Save failed: " + (e?.message||e));
+      }
+    });
+
+    async function loadAll(){
+      try{
+        const snap = await getDocs(collection(db, COLL));
+        const raw = [];
+        snap.forEach(d=>{
+          const r = d.data() || {};
+          raw.push({
+            id: d.id,
+            company: r.company || "",
+            product: r.product || "",
+            category: r.category || "",
+            cropfit: r.cropfit || "",
+            ai: r.ai || "",
+            moa: r.moa || "",
+            form: r.form || "",
+            density: r.density || "", densUnit: r.densUnit || "",
+            carrier: r.carrier || "", carrierUnit: r.carrierUnit || "",
+            rate: r.rate || "", rateUnit: r.rateUnit || "",
+            rei: r.rei || "", phi: r.phi || "",
+            rup: r.rup || "",
+            notes: r.notes || "",
+            status: r.status || "active"
+          });
+        });
+
+        items = raw.sort((a,b)=>{
+          const sa = a.status==='archived', sb = b.status==='archived';
+          if (sa !== sb) return sa - sb;
+          const s1 = (a.product||"").localeCompare(b.product||"", undefined, {sensitivity:'base'});
+          if (s1) return s1;
+          return (a.company||"").localeCompare(b.company||"", undefined, {sensitivity:'base'});
+        });
+
+        renderList();
+      }catch(e){
+        console.error(e);
+        showError("Load failed: " + (e?.message||e));
+      }
+    }
+
+    function renderList(){
+      const term = (q.value||"").trim().toLowerCase();
+      const rows = items.filter(x=>{
+        const hay = [x.company, x.product, x.category, x.cropfit, x.ai, x.moa, x.form, x.notes].join(" ").toLowerCase();
+        return !term || hay.includes(term);
+      });
+
+      const activeCount = rows.filter(x=>x.status!=="archived").length;
+      countsEl.textContent = `${activeCount} active`;
+
+      if(!rows.length){
+        listBox.innerHTML = '<div class="help">No chemicals found.</div>';
+        return;
+      }
+
+      listBox.innerHTML = "";
+      rows.forEach(it=>{
+        const pills = [
+          it.company ? `<span class="pill">${esc(it.company)}</span>` : "",
+          it.category ? `<span class="pill">${esc(cap(it.category))}</span>` : "",
+          it.cropfit ? `<span class="pill">${esc(cap(it.cropfit))}</span>` : "",
+          it.form ? `<span class="pill">${esc(it.form)}</span>` : "",
+          it.rate ? `<span class="pill">${esc(it.rate)} ${esc(it.rateUnit||'')}</span>` : "",
+          it.rup ? `<span class="pill">RUP: ${esc(cap(it.rup))}</span>` : "",
+          it.status==="archived" ? `<span class="pill pill-arch">Archived</span>` : ""
+        ].filter(Boolean).join(" ");
+
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="name">${esc(it.product || "(Unnamed)")}</div>
+            ${pills}
+          </div>
+          <button class="view" type="button" data-perm="setup-prod-chemical:view">View / Edit</button>
+        `;
+        row.querySelector(".view").addEventListener("click", ()=> openEdit(it.id));
+        listBox.appendChild(row);
+      });
+    }
+
+    q.addEventListener("input", ()=> renderList());
+    $("reload").addEventListener("click", loadAll);
+
+    const modal = $("modal");
+    const mdClose = $("mdClose"), mdSave = $("mdSave"), mdDelete = $("mdDelete"), mdArchive = $("mdArchive");
+    const statusPill = $("statusPill");
+
+    function openModal(){ modal.setAttribute('open',''); modal.setAttribute('aria-hidden','false'); $("edit_product").focus(); }
+    function closeModal(){ modal.removeAttribute('open'); modal.setAttribute('aria-hidden','true'); editId=null; }
+
+    function setVal(id, v){ const el=$(id); if(el) el.value = v ?? ""; }
+    function setSel(id, v){ const el=$(id); if(el) el.value = v ?? ""; }
+
+    function fillEdit(it){
+      setVal('edit_company', it.company);
+      setVal('edit_product', it.product);
+      setSel('edit_category', it.category);
+      setSel('edit_cropfit', it.cropfit);
+      setVal('edit_ai', it.ai);
+      setVal('edit_moa', it.moa);
+      setSel('edit_form', it.form);
+      setVal('edit_density', it.density);
+      setSel('edit_densUnit', it.densUnit || "lb/gal");
+      setVal('edit_carrier', it.carrier);
+      setSel('edit_carrierUnit', it.carrierUnit || "gal/ac");
+      setVal('edit_rate', it.rate);
+      setSel('edit_rateUnit', it.rateUnit || "oz/ac");
+      setVal('edit_rei', it.rei);
+      setVal('edit_phi', it.phi);
+      setSel('edit_rup', it.rup);
+      setVal('edit_notes', it.notes);
+
+      statusPill.textContent = it.status==="archived" ? "Archived" : "Active";
+      statusPill.className = "pill" + (it.status==="archived" ? " pill-arch" : "");
+      mdArchive.textContent = it.status==="archived" ? "Unarchive" : "Archive";
+    }
+
+    async function openEdit(id){
+      try{
+        const snap = await getDoc(doc(db, COLL, id));
+        if(!snap.exists()){ alert("Chemical not found."); return; }
+        const r = snap.data() || {};
+        const it = {
+          id: snap.id,
+          company: r.company || "",
+          product: r.product || "",
+          category: r.category || "",
+          cropfit: r.cropfit || "",
+          ai: r.ai || "",
+          moa: r.moa || "",
+          form: r.form || "",
+          density: r.density || "", densUnit: r.densUnit || "",
+          carrier: r.carrier || "", carrierUnit: r.carrierUnit || "",
+          rate: r.rate || "", rateUnit: r.rateUnit || "",
+          rei: r.rei || "", phi: r.phi || "",
+          rup: r.rup || "",
+          notes: r.notes || "",
+          status: r.status || "active"
+        };
+        editId = id;
+        fillEdit(it);
+        openModal();
+      }catch(e){
+        console.error(e);
+        showError("Load failed: " + (e?.message||e));
+      }
+    }
+
+    mdClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modal.hasAttribute('open')) closeModal(); });
+
+    function validateEdit(){
+      if(!$("edit_product").value.trim()) return "Enter a product name.";
+      if(!$("edit_category").value) return "Choose a product category.";
+      if(!$("edit_cropfit").value) return "Select crop fit (Corn/Soybean/Both).";
+      return "";
+    }
+
+    mdSave.addEventListener('click', async ()=>{
+      if(!canNow('setup-prod-chemical:edit')) { alert("You don't have permission to edit chemical products."); return; }
+      if(!editId) return;
+
+      const err = validateEdit();
+      if(err){ alert(err); return; }
+
+      try{
+        await setDoc(doc(db, COLL, editId), {
+          ...buildPayload("edit_"),
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+
+        showToast("Changes saved.");
+        closeModal();
+        await loadAll();
+      }catch(e){
+        console.error(e);
+        showError("Update failed: " + (e?.message||e));
+      }
+    });
+
+    mdArchive.addEventListener('click', async ()=>{
+      if(!canNow('setup-prod-chemical:edit')) { alert("You don't have permission to archive/unarchive chemical products."); return; }
+      if(!editId) return;
+
+      try{
+        const snap = await getDoc(doc(db, COLL, editId));
+        if(!snap.exists()){ alert("Chemical not found."); return; }
+        const cur = snap.data() || {};
+        const next = (cur.status === "archived") ? "active" : "archived";
+
+        await setDoc(doc(db, COLL, editId), { status: next, updatedAt: serverTimestamp() }, { merge:true });
+
+        showToast(next==="archived" ? "Product archived." : "Product unarchived.");
+        closeModal();
+        await loadAll();
+      }catch(e){
+        console.error(e);
+        showError("Archive toggle failed: " + (e?.message||e));
+      }
+    });
+
+    mdDelete.addEventListener('click', async ()=>{
+      if(!canNow('setup-prod-chemical:delete')) { alert("You don't have permission to delete chemical products."); return; }
+      if(!editId) return;
+
+      try{
+        const snap = await getDoc(doc(db, COLL, editId));
+        if(!snap.exists()){ alert("Chemical not found."); return; }
+        const cur = snap.data() || {};
+        const nm = String(cur.product || "(Unnamed)").trim();
+
+        if(!confirm(`Delete chemical "${nm}"? This cannot be undone.`)) return;
+
+        await deleteDoc(doc(db, COLL, editId));
+        showToast("Product deleted.");
+        closeModal();
+        await loadAll();
+      }catch(e){
+        console.error(e);
+        showError("Delete failed: " + (e?.message||e));
+      }
+    });
+
+    (async function boot(){
+      try{
+        await ready;
+        db = getFirestore();
+        await loadAll();
+      }catch(e){
+        console.error(e);
+        showError(e?.message || "Failed to initialize Firebase.");
+      }
+    })();
+  </script>
+
+  <script nomodule>(function(){ /* no-op */ })();</script>
+</body>
+</html>

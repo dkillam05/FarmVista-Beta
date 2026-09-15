@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • StarFire Location Update</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- Absolute paths (required) -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <!-- Theme + app CSS -->
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure fv-shell -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max:900px;
+      --page-bottom-gap:72px;
+
+      --combo-gap:4px;
+      --combo-radius:12px;
+      --combo-btn-radius:10px;
+      --combo-shadow:0 12px 26px rgba(0,0,0,.18);
+      --combo-item-pad:10px 8px;
+
+      --combo-max-h:360px;
+    }
+
+    body{ background:var(--app-bg,var(--surface)); }
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap))!important;
+      box-sizing:border-box;
+      display:grid;
+      gap:16px;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+    }
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    }
+    .hero-head .icon{
+      width:24px;height:24px;
+      display:grid;place-items:center;
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+    .muted{ color:var(--muted,#67706B); }
+
+    .body{
+      padding:16px;
+      display:grid;
+      gap:16px;
+    }
+
+    .field{ position:relative; }
+    .field label{
+      display:block;
+      font-weight:800;
+      margin:0 0 6px;
+    }
+
+    .buttonish,
+    .input{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:var(--combo-btn-radius);
+      padding:12px;
+      outline:none;
+      box-sizing:border-box;
+    }
+    .buttonish{
+      padding-right:42px;
+      text-align:left;
+      cursor:pointer;
+      position:relative;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .buttonish.has-caret::after{
+      content:"";
+      position:absolute;
+      right:14px;
+      top:50%;
+      width:0;
+      height:0;
+      border-left:6px solid transparent;
+      border-right:6px solid transparent;
+      border-top:7px solid var(--muted,#67706B);
+      transform:translateY(-50%);
+      pointer-events:none;
+    }
+
+    .combo{ position:relative; }
+    .combo .combo-anchor{
+      position:relative;
+      display:inline-block;
+      width:100%;
+    }
+
+    .combo-panel{
+      position:absolute;
+      left:0; right:0;
+      top:calc(100% + var(--combo-gap));
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--combo-radius);
+      box-shadow:var(--combo-shadow);
+      padding:8px;
+      display:none;
+      z-index:400;
+      max-height:var(--combo-max-h);
+      overflow:hidden;
+    }
+    .combo-panel.show{
+      display:flex;
+      flex-direction:column;
+      gap:0;
+    }
+
+    .combo-panel .search{
+      padding:4px 2px 8px;
+      flex:0 0 auto;
+    }
+    .combo-panel .search input{
+      width:100%;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:var(--combo-btn-radius);
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+    }
+
+    .combo-panel .list{
+      flex:1 1 auto;
+      min-height:120px;
+      overflow:auto;
+      border-top:1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      padding-bottom:10px;
+    }
+
+    .combo-item{
+      padding:var(--combo-item-pad);
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+    }
+    .combo-item:hover{ background:rgba(0,0,0,.04); }
+    .combo-item:last-child{ border-bottom:none; }
+    .combo-empty{
+      padding:var(--combo-item-pad);
+      color:#67706B;
+    }
+
+    .status{
+      font-size:0.8rem;
+      color:var(--muted,#67706B);
+      margin-top:4px;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .chip{
+      font-size:0.8rem;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      white-space:nowrap;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:8px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:150px;
+      min-height:48px;
+      padding:10px 16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:800;
+      cursor:pointer;
+      text-decoration:none;
+      color:var(--text);
+    }
+    .btn-primary{
+      background:var(--green,#3B7E46);
+      border-color:transparent;
+      color:#fff;
+    }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+    .error{
+      color:#b00020;
+      font-size:0.85rem;
+      margin-top:4px;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
+      transform:translateX(-50%);
+      background:#2F6C3C;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;
+      display:none;
+      font-size:0.9rem;
+    }
+    .toast.show{ display:block; animation:fadeout 4.2s forwards; }
+    @keyframes fadeout{
+      0%{opacity:1}
+      85%{opacity:1}
+      100%{opacity:0}
+    }
+
+    .loanBox{
+      border:1px dashed var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:rgba(47,108,60,.04);
+      display:none;
+    }
+    .loanBox.show{ display:block; }
+    .loanHint{
+      margin-top:6px;
+      font-size:0.8rem;
+      color:var(--muted,#67706B);
+    }
+
+    @media (max-width: 640px){
+      :root{ --combo-max-h:420px; }
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🛰️</div>
+          <div>
+            <h1>Select StarFire Receiver</h1>
+            <p class="muted">Pick which globe you’re updating. Shows model and last six of the serial number only.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="field combo">
+            <label for="sfBtn">StarFire Receiver</label>
+            <div class="combo-anchor">
+              <button id="sfBtn" class="buttonish has-caret" type="button">— Select StarFire —</button>
+              <div class="combo-panel" id="sfPanel" role="listbox" aria-label="StarFire list">
+                <div class="search"><input id="sfSearch" type="search" placeholder="Search…"></div>
+                <div class="list" id="sfList"></div>
+              </div>
+            </div>
+            <div id="sfStatus" class="status">Loading…</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">📍</div>
+          <div>
+            <h1>Location</h1>
+            <p class="muted">Where this globe is currently mounted.</p>
+          </div>
+        </header>
+        <div class="body">
+          <div class="chips">
+            <span class="chip" id="locMounted">Mounted On: —</span>
+            <span class="chip" id="locSince">Since: —</span>
+            <span class="chip" id="locDuration">Duration: —</span>
+          </div>
+          <div id="locHelp" class="status">Select a StarFire receiver above.</div>
+        </div>
+      </section>
+
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🔁</div>
+          <div>
+            <h1>Assign New Location</h1>
+            <p class="muted">Send this globe to a machine, an RTK tower, back to storage, or loan it out.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="field combo">
+            <label for="locBtn">New Location</label>
+            <div class="combo-anchor">
+              <button id="locBtn" class="buttonish has-caret" type="button">— Select location —</button>
+              <div class="combo-panel" id="locPanel" role="listbox" aria-label="Location list">
+                <div class="search"><input id="locSearch" type="search" placeholder="Search…"></div>
+                <div class="list" id="locList"></div>
+              </div>
+            </div>
+            <div id="locCount" class="status">Loading GPS-capable equipment and RTK towers…</div>
+          </div>
+
+          <div id="loanBox" class="loanBox" aria-live="polite">
+            <div class="field">
+              <label for="loanTo">Whom is it loaned to?</label>
+              <input id="loanTo" class="input" type="text" maxlength="20" placeholder="Type name (max 20)"/>
+              <div class="loanHint">This will show as: <strong>Loaned Out (Name)</strong> everywhere the location is displayed.</div>
+            </div>
+          </div>
+
+          <div class="field combo">
+            <label for="empBtn">Who is moving it?</label>
+            <div class="combo-anchor">
+              <button id="empBtn" class="buttonish has-caret" type="button">— Select employee —</button>
+              <div class="combo-panel" id="empPanel" role="listbox" aria-label="Employee list">
+                <div class="list" id="empList"></div>
+              </div>
+            </div>
+            <div class="status">Defaults to the logged-in user if found in employees.</div>
+          </div>
+
+          <div class="field">
+            <label for="moveDate">Move Date</label>
+            <input id="moveDate" class="input" type="date"/>
+            <div class="status">Defaults to today.</div>
+          </div>
+
+          <div id="formError" class="error" hidden></div>
+
+          <div class="actions">
+            <button id="btnSave" class="btn btn-primary" type="button">Save Move</button>
+            <button id="btnCancel" class="btn" type="button">Cancel</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      getAuth,
+      collection,
+      getDocs,
+      addDoc,
+      doc,
+      updateDoc,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, m =>
+      ({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])
+    );
+
+    const state = {
+      db: null,
+      auth: null,
+      receivers: [],
+      equipment: [],
+      rtkTowers: [],
+      employees: [],
+      receiver: null,
+      currentLoc: null,
+      newLoc: null,
+      mover: null,
+
+      occupiedEquipmentIds: new Set(),
+      occupiedEquipmentLabels: new Set(),
+      occupiedRTKIds: new Set(),
+      occupiedRTKNames: new Set()
+    };
+
+    const qs = new URLSearchParams(location.search);
+    const qsId = qs.get('id') || '';
+    const STARFIRE_LIST_URL = '/pages/equipment/equipment-starfire.html';
+
+    const last6 = v => String(v||"").slice(-6);
+    const norm = s => String(s ?? "").toLowerCase().replace(/\s+/g," ").trim();
+
+    function normalizeReceiverLocType(raw){
+      const t = String(raw || "").toLowerCase().trim();
+      if(!t) return "";
+      if(t === "storage" || t === "loaned" || t === "rtk" || t === "equipment" || t === "missing" || t === "broken") return t;
+      // ✅ legacy / messy: implement/truck/tractor/etc all count as equipment-mounted
+      return "equipment";
+    }
+
+    function labelStarFire(row){
+      const model = row.modelName || row.model || row.name || "StarFire";
+      const ls = last6(row.serial || row.sn || "");
+      return ls ? `${model} (#${ls})` : model;
+    }
+
+    function labelEquipment(row){
+      const make = row.makeName || row.make || "";
+      const model = row.modelName || row.model || row.name || "";
+      const mm = [make, model].filter(Boolean).join(" ").trim() || "Unit";
+      const ls = last6(row.serial || "");
+      return ls ? `${mm} (#${ls})` : mm;
+    }
+
+    function labelRTK(row){
+      const name = (row?.name || row?.towerName || row?.label || row?.id || "").toString().trim();
+      return name ? `RTK Tower (${name})` : "RTK Tower";
+    }
+
+    function normalizeRTKNameMaybe(raw){
+      const s = String(raw || "").trim();
+      if(!s) return "";
+      const m = s.match(/^rtk\s*tower\s*\((.+)\)\s*$/i);
+      if(m) return norm(m[1]);
+      const m2 = s.match(/^rtk\s*tower\s+(.+)$/i);
+      if(m2) return norm(m2[1]);
+      return norm(s);
+    }
+
+    function itemKey(it){
+      const t = (it?.type || "").toString();
+      const id = (it?.id || "").toString();
+      return it?.key || `${t}:${id}`;
+    }
+
+    const todayISO = ()=>{
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${da}`;
+    };
+
+    const toast = (msg="Saved.", ms=4200)=>{
+      const t = $("toast");
+      if(!t) return;
+      t.textContent = msg;
+      t.classList.remove("show");
+      void t.offsetWidth;
+      t.classList.add("show");
+      setTimeout(()=>t.classList.remove("show"), ms);
+    };
+
+    function daysSince(iso){
+      if(!iso) return null;
+      const d = new Date(iso);
+      if(Number.isNaN(d.getTime())) return null;
+      const now = new Date();
+      const diffMs = now - d;
+      if(diffMs < 0) return 0;
+      return Math.floor(diffMs / (1000*60*60*24));
+    }
+
+    function cleanLoanName(v){
+      const s = String(v ?? "").trim();
+      return s.length > 20 ? s.slice(0,20) : s;
+    }
+
+    function loanedLabel(name){
+      const n = cleanLoanName(name);
+      return n ? `Loaned Out (${n})` : "Loaned Out";
+    }
+
+    function isTruthyFlag(v){
+      if(v === true) return true;
+      if(v === 1) return true;
+      const s = String(v ?? "").toLowerCase().trim();
+      return s === "true" || s === "1" || s === "yes" || s === "y";
+    }
+
+    function isEligibleStarfireMount(eq){
+      return (
+        isTruthyFlag(eq?.starfireCapable) ||
+        isTruthyFlag(eq?.gpsCapable) ||
+        isTruthyFlag(eq?.starfire) ||
+        isTruthyFlag(eq?.extras?.starfireCapable) ||
+        isTruthyFlag(eq?.extras?.gpsCapable)
+      );
+    }
+
+    function numCssPx(v){
+      const n = parseFloat(String(v||"").trim());
+      return Number.isFinite(n) ? n : 0;
+    }
+    function getFooterHeightPx(){
+      const root = getComputedStyle(document.documentElement);
+      const v = root.getPropertyValue('--ftr-h');
+      const h = numCssPx(v);
+      return h || 42;
+    }
+    function fitPanelToViewport({ btn, panel }){
+      if(!btn || !panel) return;
+      const rect = btn.getBoundingClientRect();
+
+      const footerH = getFooterHeightPx();
+      const gap = 6;
+      const safeB = 10;
+
+      const avail = Math.floor(window.innerHeight - footerH - safeB - rect.bottom - gap);
+      const target = Math.min(420, Math.max(260, avail));
+      panel.style.maxHeight = `${target}px`;
+    }
+
+    function closeAllCombos(exceptPanel=null){
+      document.querySelectorAll('.combo-panel.show').forEach(p=>{
+        if(p!==exceptPanel) p.classList.remove('show');
+      });
+    }
+    document.addEventListener('click', ()=> closeAllCombos());
+    document.addEventListener('keydown', e=>{
+      if(e.key==='Escape') closeAllCombos();
+    });
+    window.addEventListener('resize', ()=>{
+      const open = document.querySelector('.combo-panel.show');
+      if(open){
+        const btn = open.closest('.combo-anchor')?.querySelector('button.buttonish');
+        if(btn) fitPanelToViewport({ btn, panel: open });
+      }
+    }, { passive:true });
+
+    function makeCombo({ btn, panel, list, searchInput=null, items=[], searchable=false, formatter=x=>String(x.label||x.name||x), onPick }) {
+      if(!btn || !panel || !list) return;
+
+      panel.addEventListener('click', e=> e.stopPropagation());
+      panel.addEventListener('mousedown', e=> e.stopPropagation());
+
+      let DATA = items || [];
+
+      function render(q=""){
+        const qq = (q||"").toLowerCase();
+        const rows = (DATA || []).filter(x=>{
+          const label = formatter(x).toLowerCase();
+          return !qq || label.includes(qq);
+        });
+        list.innerHTML = rows.length
+          ? rows.map(x=>`<div class="combo-item" data-id="${esc(String(itemKey(x)))}">${esc(formatter(x))}</div>`).join('')
+          : `<div class="combo-empty">(no matches)</div>`;
+      }
+
+      function open(){
+        closeAllCombos(panel);
+        fitPanelToViewport({ btn, panel });
+        panel.classList.add('show');
+        render("");
+
+        if(searchable && searchInput){
+          searchInput.value="";
+          searchInput.focus();
+        }
+      }
+      function close(){ panel.classList.remove('show'); }
+
+      btn.addEventListener('click', e=>{
+        e.stopPropagation();
+        panel.classList.contains('show') ? close() : open();
+      });
+
+      list.addEventListener('mousedown', e=>{
+        const row = e.target.closest('.combo-item');
+        if(!row) return;
+        const it = (DATA || []).find(x => String(itemKey(x)) === row.dataset.id);
+        if(!it) return;
+        onPick?.(it);
+        close();
+      });
+
+      if(searchable && searchInput){
+        searchInput.addEventListener('input', e=>render(e.target.value));
+      }
+
+      return {
+        setItems(arr){
+          DATA = arr || [];
+          render("");
+        }
+      };
+    }
+
+    async function loadStarFireReceivers(){
+      const db = state.db;
+      const snap = await getDocs(collection(db,'equipment'));
+
+      const list = [];
+      const occEqIds = new Set();
+      const occEqLabels = new Set();
+      const occRtkIds = new Set();
+      const occRtkNames = new Set();
+
+      snap.forEach(d=>{
+        const x = d.data() || {};
+        const type = String(x.type||'').toLowerCase();
+        if(type !== 'starfire') return;
+        if(String(x.status||'active').toLowerCase() === 'archived') return;
+
+        list.push({ id:d.id, ...x });
+
+        const locTypeRaw = String(x.starfireCurrentLocationType || "").toLowerCase();
+        const locType = normalizeReceiverLocType(locTypeRaw);
+        const locId = x.starfireCurrentLocationId || x.starfireMountedOnId || null;
+        const locName = String(x.starfireCurrentLocationName || "").trim();
+
+        if(locType === "rtk"){
+          if(locId) occRtkIds.add(String(locId));
+          if(locName) occRtkNames.add(normalizeRTKNameMaybe(locName));
+          return;
+        }
+
+        if(locType === "storage" || locType === "loaned" || locType === "missing" || locType === "broken") return;
+
+        // ✅ equipment-mounted (includes legacy implement/truck/tractor/etc)
+        if(locId) occEqIds.add(String(locId));
+        if(locName && norm(locName) !== norm("In Storage") && !/^loaned out/i.test(locName)){
+          occEqLabels.add(norm(locName));
+        }
+      });
+
+      list.sort((a,b)=> labelStarFire(a).localeCompare(labelStarFire(b)));
+
+      state.receivers = list;
+      state.occupiedEquipmentIds = occEqIds;
+      state.occupiedEquipmentLabels = occEqLabels;
+      state.occupiedRTKIds = occRtkIds;
+      state.occupiedRTKNames = occRtkNames;
+
+      $("sfStatus").textContent = `${list.length} StarFire receiver(s) found.`;
+      return list;
+    }
+
+    async function loadEquipment(){
+      const db = state.db;
+      const snap = await getDocs(collection(db,'equipment'));
+
+      const list = [];
+      const occupiedIds = state.occupiedEquipmentIds || new Set();
+      const occupiedLabels = state.occupiedEquipmentLabels || new Set();
+
+      snap.forEach(d=>{
+        const x = d.data() || {};
+
+        if(String(x.type||"").toLowerCase() === "starfire") return;
+        if(String(x.status||'active').toLowerCase() === 'archived') return;
+
+        if(!isEligibleStarfireMount(x)) return;
+
+        if(occupiedIds.has(String(d.id))) return;
+
+        const thisLabel = norm(labelEquipment({ id:d.id, ...x }));
+        if(thisLabel && occupiedLabels.has(thisLabel)) return;
+
+        list.push({ id:d.id, type:"equipment", key:`equipment:${d.id}`, ...x });
+      });
+
+      list.sort((a,b)=> labelEquipment(a).localeCompare(labelEquipment(b)));
+      state.equipment = list;
+      return list;
+    }
+
+    async function loadRTKTowers(){
+      const db = state.db;
+      const snap = await getDocs(collection(db,'rtkTowers'));
+
+      const list = [];
+      const occIds = state.occupiedRTKIds || new Set();
+      const occNames = state.occupiedRTKNames || new Set();
+
+      snap.forEach(d=>{
+        const x = d.data() || {};
+
+        if(occIds.has(String(d.id))) return;
+
+        const towerName = normalizeRTKNameMaybe(x.name || x.towerName || x.label || d.id);
+        if(towerName && occNames.has(towerName)) return;
+
+        list.push({ id:d.id, type:"rtk", key:`rtk:${d.id}`, ...x });
+      });
+
+      list.sort((a,b)=> labelRTK(a).localeCompare(labelRTK(b)));
+      state.rtkTowers = list;
+      return list;
+    }
+
+    async function loadEmployees(){
+      const db = state.db;
+      const snap = await getDocs(collection(db,'employees'));
+      const list = [];
+      snap.forEach(d=>{
+        const x = d.data() || {};
+        list.push({
+          id: d.id,
+          name: x.name || x.displayName || x.fullName || x.email || d.id,
+          email: x.email || d.id
+        });
+      });
+      list.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+      state.employees = list;
+      return list;
+    }
+
+    function syncLoanUIForSelection(){
+      const box = $("loanBox");
+      const inp = $("loanTo");
+      const loc = state.newLoc;
+      const isLoan = (loc && String(loc.type||"").toLowerCase() === "loaned");
+      box.classList.toggle("show", !!isLoan);
+
+      if(isLoan){
+        inp.value = cleanLoanName(inp.value);
+        setTimeout(()=> inp.focus(), 0);
+      }else{
+        inp.value = "";
+      }
+    }
+
+    function parseLoanNameFromLocationName(name){
+      const s = String(name || "").trim();
+      const m = s.match(/^Loaned Out\s*\((.{1,20})\)\s*$/i);
+      return m ? String(m[1]).trim() : "";
+    }
+
+    async function loadCurrentLocation(receiver){
+      state.currentLoc = null;
+      $("locMounted").textContent  = "Mounted On: —";
+      $("locSince").textContent    = "Since: —";
+      $("locDuration").textContent = "Duration: —";
+      $("locHelp").textContent     = "Loading location…";
+
+      if(!receiver){
+        $("locHelp").textContent = "Select a StarFire receiver above.";
+        return;
+      }
+
+      const x = receiver;
+
+      // ✅ normalize legacy types to equipment
+      const rawType = normalizeReceiverLocType(x.starfireCurrentLocationType);
+
+      const loanTo = cleanLoanName(x.starfireLoanedToName || parseLoanNameFromLocationName(x.starfireCurrentLocationName));
+
+      let label = x.starfireCurrentLocationName || "In Storage";
+      if(rawType === "loaned"){
+        label = loanedLabel(loanTo);
+      }else if(rawType === "missing"){
+        label = "Unknown/Missing";
+      }else if(rawType === "broken"){
+        label = "Broken/Needs Repaired";
+      }
+
+      const sinceISO = x.starfireCurrentLocationSince || null;
+
+      const locType = String(
+        rawType ||
+        (label === "In Storage" ? "storage" : "equipment")
+      ).toLowerCase();
+
+      state.currentLoc = {
+        type: locType,
+        id: (locType === "storage" || locType === "loaned" || locType === "missing" || locType === "broken") ? locType : (x.starfireCurrentLocationId || null),
+        label,
+        sinceISO,
+        loanTo: (locType === "loaned") ? loanTo : ""
+      };
+
+      $("locMounted").textContent = `Mounted On: ${label}`;
+      $("locSince").textContent   = `Since: ${sinceISO || "—"}`;
+      const days = daysSince(sinceISO);
+      $("locDuration").textContent = `Duration: ${days==null ? "—" : (days===0 ? "Today" : `${days} day${days===1?"":"s"}`)}`;
+      $("locHelp").textContent = "";
+    }
+
+    let sfCombo, locCombo, empCombo;
+
+    function initCombos(){
+      sfCombo = makeCombo({
+        btn: $("sfBtn"),
+        panel: $("sfPanel"),
+        list: $("sfList"),
+        searchInput: $("sfSearch"),
+        searchable: true,
+        formatter: labelStarFire,
+        onPick: async it=>{
+          state.receiver = it;
+          $("sfBtn").textContent = labelStarFire(it);
+          await loadCurrentLocation(it);
+        }
+      });
+
+      locCombo = makeCombo({
+        btn: $("locBtn"),
+        panel: $("locPanel"),
+        list: $("locList"),
+        searchInput: $("locSearch"),
+        searchable: true,
+        formatter: x=>{
+          if(x.type === "storage") return "In Storage";
+          if(x.type === "missing") return "Unknown/Missing";
+          if(x.type === "broken") return "Broken/Needs Repaired";
+          if(x.type === "loaned") return "Loaned Out";
+          if(x.type === "rtk") return labelRTK(x);
+          return labelEquipment(x);
+        },
+        onPick: it=>{
+          state.newLoc = it;
+
+          if(it.type === "storage") $("locBtn").textContent = "In Storage";
+          else if(it.type === "missing") $("locBtn").textContent = "Unknown/Missing";
+          else if(it.type === "broken") $("locBtn").textContent = "Broken/Needs Repaired";
+          else if(it.type === "loaned") $("locBtn").textContent = "Loaned Out";
+          else if(it.type === "rtk") $("locBtn").textContent = labelRTK(it);
+          else $("locBtn").textContent = labelEquipment(it);
+
+          syncLoanUIForSelection();
+        }
+      });
+
+      empCombo = makeCombo({
+        btn: $("empBtn"),
+        panel: $("empPanel"),
+        list: $("empList"),
+        searchable: false,
+        formatter: x => x.name,
+        onPick: it=>{
+          state.mover = it;
+          $("empBtn").textContent = it.name;
+        }
+      });
+    }
+
+    function hydrateCombos(){
+      if(sfCombo) sfCombo.setItems(state.receivers);
+
+      if(locCombo){
+        const storage = { id:"storage", type:"storage", key:"storage:storage", name:"In Storage" };
+        const missing = { id:"missing", type:"missing", key:"missing:missing", name:"Unknown / Missing" };
+        const broken  = { id:"broken",  type:"broken",  key:"broken:broken",  name:"Broken/Needs Repaired" };
+        const loaned  = { id:"loaned",  type:"loaned",  key:"loaned:loaned",  name:"Loaned Out" };
+
+        const items = [storage, missing, broken, loaned, ...state.equipment, ...state.rtkTowers];
+        locCombo.setItems(items);
+
+        const eqN = state.equipment?.length || 0;
+        const rtkN = state.rtkTowers?.length || 0;
+        $("locCount").textContent = `${eqN} eligible unit(s), ${rtkN} available RTK tower(s), plus "In Storage", "Unknown/Missing", "Broken/Needs Repaired", and "Loaned Out".`;
+      }
+
+      if(empCombo) empCombo.setItems(state.employees);
+    }
+
+    function autoDefaults(){
+      $("moveDate").value = todayISO();
+
+      const auth = state.auth;
+      const meEmail = (auth.currentUser?.email || "").toLowerCase();
+      const mine = state.employees.find(e => (e.email || "").toLowerCase() === meEmail);
+      if(mine){
+        state.mover = mine;
+        $("empBtn").textContent = mine.name;
+      }else if(state.employees[0]){
+        state.mover = state.employees[0];
+        $("empBtn").textContent = state.employees[0].name;
+      }
+
+      if(qsId){
+        const match = state.receivers.find(r => r.id === qsId);
+        if(match){
+          state.receiver = match;
+          $("sfBtn").textContent = labelStarFire(match);
+          loadCurrentLocation(match);
+        }
+      }
+    }
+
+    async function saveMove(){
+      const errEl = $("formError");
+      errEl.hidden = true;
+      errEl.textContent = "";
+
+      const receiver = state.receiver;
+      if(!receiver){
+        errEl.textContent = "Select a StarFire receiver first.";
+        errEl.hidden = false;
+        return;
+      }
+      const loc = state.newLoc;
+      if(!loc){
+        errEl.textContent = "Select a new location.";
+        errEl.hidden = false;
+        return;
+      }
+      const mover = state.mover;
+      if(!mover){
+        errEl.textContent = "Select who is moving it.";
+        errEl.hidden = false;
+        return;
+      }
+
+      const moveDate = $("moveDate").value || todayISO();
+      const db = state.db;
+      const auth = state.auth;
+      const me = auth.currentUser;
+
+      // ✅ normalize outgoing type to match grid page: storage/missing/broken/loaned/rtk/equipment
+      const toType = (loc.type || "equipment").toLowerCase();
+
+      let loanTo = "";
+      if(toType === "loaned"){
+        loanTo = cleanLoanName($("loanTo").value);
+        if(!loanTo){
+          errEl.textContent = "Enter whom it is loaned to (max 20 characters).";
+          errEl.hidden = false;
+          $("loanTo").focus();
+          return;
+        }
+      }
+
+      const toName = (toType === "storage") ? "In Storage"
+                   : (toType === "missing") ? "Unknown / Missing"
+                   : (toType === "broken") ? "Broken/Needs Repaired"
+                   : (toType === "loaned") ? loanedLabel(loanTo)
+                   : (toType === "rtk") ? labelRTK(loc)
+                   : labelEquipment(loc);
+
+      const toId   = (toType === "storage" || toType === "loaned" || toType === "missing" || toType === "broken") ? null : loc.id;
+
+      const cur = state.currentLoc;
+      const fromName = cur?.label || "In Storage";
+      const fromId   = (cur?.type && cur.type !== "storage" && cur.type !== "loaned" && cur.type !== "missing" && cur.type !== "broken" && cur?.id && cur.id !== "storage") ? cur.id : null;
+
+      const movedBy = {
+        employeeId: mover.id,
+        name: mover.name || me?.displayName || me?.email || "Unknown",
+        email: mover.email || me?.email || null
+      };
+
+      const payload = {
+        type: "starfireMove",
+        receiverId: receiver.id,
+        receiverLabel: labelStarFire(receiver),
+        fromLocationId: fromId,
+        fromLocationName: fromName,
+        toLocationId: toId,
+        toLocationName: toName,
+        toLocationType: toType,
+        toLoanedToName: (toType === "loaned") ? loanTo : null,
+        moveDate,
+        movedBy,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      const btn = $("btnSave");
+      btn.disabled = true;
+
+      try{
+        await addDoc(collection(db,"starfireMoves"), payload);
+
+        const ref = doc(db,"equipment", receiver.id);
+
+        const receiverUpdate = {
+          starfireCurrentLocationId: toId,
+          starfireCurrentLocationName: toName,
+          starfireCurrentLocationType: toType,
+          starfireCurrentLocationSince: moveDate,
+          updatedAt: serverTimestamp()
+        };
+
+        if(toType === "loaned"){
+          receiverUpdate.starfireLoanedToName = loanTo;
+        }else{
+          receiverUpdate.starfireLoanedToName = null;
+        }
+
+        await updateDoc(ref, receiverUpdate);
+
+        toast("Location updated.");
+
+        receiver.starfireCurrentLocationId = toId;
+        receiver.starfireCurrentLocationName = toName;
+        receiver.starfireCurrentLocationType = toType;
+        receiver.starfireCurrentLocationSince = moveDate;
+        receiver.starfireLoanedToName = (toType === "loaned") ? loanTo : null;
+
+        await loadCurrentLocation(receiver);
+
+        setTimeout(()=>{ window.location.href = STARFIRE_LIST_URL; }, 900);
+      }catch(err){
+        console.error("saveMove error", err);
+        errEl.textContent = err.message || "Error saving move.";
+        errEl.hidden = false;
+      }finally{
+        btn.disabled = false;
+      }
+    }
+
+    (async()=>{
+      try{
+        $("sfStatus").textContent = "Waiting for Firebase…";
+        await ready;
+
+        state.db = getFirestore();
+        state.auth = getAuth();
+
+        initCombos();
+
+        const receivers = await loadStarFireReceivers();
+
+        await Promise.all([
+          loadEquipment(),
+          loadRTKTowers(),
+          loadEmployees()
+        ]);
+
+        hydrateCombos();
+        autoDefaults();
+
+        $("loanTo").addEventListener("input", ()=>{
+          const v = cleanLoanName($("loanTo").value);
+          if($("loanTo").value !== v) $("loanTo").value = v;
+        });
+
+        syncLoanUIForSelection();
+
+        if(!receivers.length){
+          $("sfStatus").textContent = "No StarFire receivers found.";
+        }
+      }catch(err){
+        console.error("StarFire location init error:", err);
+        $("sfStatus").textContent = "Could not connect to database.";
+        $("locCount").textContent = "Could not load locations.";
+      }
+
+      $("btnSave").addEventListener("click", saveMove);
+      $("btnCancel").addEventListener("click", ()=>{
+        window.location.href = STARFIRE_LIST_URL;
+      });
+    })();
+  </script>
+</body>
+</html>

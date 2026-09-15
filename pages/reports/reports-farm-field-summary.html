@@ -1,0 +1,1816 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Farm &amp; Field Summary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <style>
+    :root{
+      --card-max: 1200px;
+      --page-bottom-gap: 72px;
+      --accent: #2F6C3C;
+
+      /* ✅ scroll offset so detail lands nicely below FV header */
+      --details-scroll-offset: 92px;
+    }
+
+    body{ background: var(--app-bg, var(--surface)); }
+
+    .wrap{
+      max-width: var(--card-max);
+      margin: 0 auto;
+      padding: clamp(14px,3vw,22px);
+      padding-bottom: calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap)) !important;
+      box-sizing:border-box;
+      overflow: visible;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:120px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-weight:800;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      color:var(--text) !important;
+      background:var(--card-surface,var(--surface));
+      font-size:0.9rem;
+      gap:6px;
+      white-space:nowrap;
+    }
+    .btn-quiet{ min-width:auto; padding-inline:10px; }
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff !important; /* ✅ white text on green */
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow: visible;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+      border-bottom:1px solid var(--border);
+      border-top-left-radius:14px;
+      border-top-right-radius:14px;
+    }
+    .hero-head .icon{
+      width:24px;
+      height:24px;
+      color:var(--accent);
+      display:grid;
+      place-items:center;
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+    .muted{ color:var(--muted,#67706B); }
+
+    .body{
+      padding:16px;
+      display:grid;
+      gap:14px;
+      overflow: visible;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    .toolbar-left{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+    .page-header-meta{ font-size:0.9rem; opacity:0.8; }
+
+    /* ✅ Filters look EXACTLY like Field Maintenance page */
+    .filters{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      margin-top:4px;
+      position: relative;
+      z-index: 50;
+    }
+    .filter-field{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:160px;
+      flex:1 1 180px;
+      font-size:0.8rem;
+      min-width:0;
+    }
+    .filter-label{
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      opacity:0.78;
+    }
+
+    .filter-select{
+      width:100%;
+      height:34px;
+      line-height:34px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:0 10px;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      font-size:0.9rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      box-sizing:border-box;
+      position:relative;
+      z-index:60;
+      display:block;
+    }
+    .filter-select option{ white-space: nowrap; }
+
+    .filter-input{
+      width:100%;
+      max-width:100%;
+      min-width:0;
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:6px 10px;
+      font-size:0.9rem;
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      min-height:34px;
+      position: relative;
+      z-index: 60;
+    }
+    .filter-input::placeholder{ color:var(--muted,#9CA3AF); }
+
+    .filters-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+      width:100%;
+    }
+    .filters-row-secondary{ margin-top:6px; }
+    .field-wide{ flex:2 1 320px; }
+
+    @media (max-width: 520px){
+      .filters-row-secondary{ margin-top:6px; }
+      .filters-row-secondary .filter-field{
+        flex: 1 1 100%;
+        width: 100%;
+      }
+      .filters-row-secondary #filterClear{
+        flex: 1 1 100%;
+        width: 100%;
+      }
+    }
+
+    .bar{ display:flex; align-items:center; gap:10px; }
+    .search{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:10px 12px;
+      flex:1 1 auto;
+      min-height:34px;
+    }
+    .search svg{ opacity:0.6; flex-shrink:0; }
+    .search input{
+      flex:1;
+      background:transparent;
+      border:0;
+      outline:none;
+      font:inherit;
+      color:var(--text);
+      min-width:0;
+    }
+
+    /* List cards (same vibe) */
+    .wo-list{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+
+    .wo-empty{
+      padding:14px 16px;
+      border-radius:12px;
+      border:1px dashed var(--border);
+      background:var(--card-surface, var(--surface));
+      font-size:0.95rem;
+      opacity:0.9;
+    }
+
+    .wo-card{
+      position:relative;
+      border-radius:10px;
+      border:1px solid var(--card-border, var(--border));
+      background:var(--card-surface, var(--surface));
+      box-shadow:var(--shadow-soft, var(--shadow));
+      padding:12px 14px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      cursor:pointer;
+      transition:transform .06s, box-shadow .12s, border-color .12s, background .12s;
+      z-index: 1;
+    }
+    .wo-card:active{
+      transform:scale(.995);
+      box-shadow:var(--shadow);
+    }
+
+    .wo-row-top{ display:flex; align-items:flex-start; gap:10px; }
+    .wo-main{ flex:1 1 auto; min-width:0; }
+
+    .wo-title{
+      font-weight:800;
+      font-size:0.98rem;
+      line-height:1.3;
+    }
+    .wo-sub{
+      font-size:0.86rem;
+      opacity:0.9;
+      margin-top:2px;
+    }
+
+    .wo-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 10px;
+      margin-top:4px;
+      font-size:0.8rem;
+      opacity:0.92;
+    }
+
+    .wo-meta span{
+      display:inline-flex;
+      align-items:flex-start;
+      gap:6px;
+      padding:2px 7px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      max-width:100%;
+    }
+    .wo-meta span > span.wo-meta-label{
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      font-size:0.72rem;
+      opacity:0.85;
+      margin-top:1px;
+    }
+    .wo-meta .wo-meta-val{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:56ch;
+    }
+    @media (max-width:520px){
+      .wo-meta .wo-meta-val{ max-width:30ch; }
+    }
+
+    /* Detail panel */
+    .wo-detail-panel{
+      margin-top:10px;
+      border-radius:10px;
+      border:1px solid var(--card-border, var(--border));
+      background:var(--card-surface, var(--surface));
+      box-shadow:var(--shadow-soft, var(--shadow));
+      padding:14px 16px 12px;
+      display:none;
+      flex-direction:column;
+      gap:8px;
+      scroll-margin-top: var(--details-scroll-offset);
+    }
+
+    .wo-detail-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .wo-detail-title{ font-weight:900; font-size:1rem; }
+
+    .wo-detail-close{
+      border:none;
+      outline:none;
+      border-radius:999px;
+      padding:4px 9px;
+      font-size:0.8rem;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      cursor:pointer;
+      color:var(--text);
+    }
+
+    .wo-detail-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:8px 16px;
+      font-size:0.9rem;
+      margin-top:4px;
+    }
+    @media (min-width:700px){
+      .wo-detail-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    }
+    .wo-detail-item-label{
+      font-size:0.78rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+      margin-bottom:1px;
+    }
+    .wo-detail-item-value{ font-size:0.94rem; }
+
+    .fields-block{
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px solid var(--border);
+      font-size:1.0rem;
+    }
+    .fields-label{
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      opacity:0.7;
+      margin-bottom:6px;
+    }
+
+    .field-table{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background:color-mix(in srgb, var(--surface) 85%, var(--border) 15%);
+      box-shadow:var(--shadow-soft, var(--shadow));
+    }
+    .field-row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:6px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
+      cursor:pointer;
+    }
+    .field-row:last-child{ border-bottom:none; }
+    .field-row:hover{
+      background:color-mix(in srgb, var(--surface) 86%, var(--border) 14%);
+    }
+
+    .field-name{
+      font-weight:900;
+      font-size:0.95rem;
+      line-height:1.2;
+      min-width:0;
+    }
+    .field-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 8px;
+      margin-top:2px;
+      font-size:0.8rem;
+      opacity:0.92;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:flex-start;
+      gap:6px;
+      padding:2px 7px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      max-width:100%;
+    }
+    .chip strong{
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      font-size:0.72rem;
+      opacity:0.85;
+      margin-top:1px;
+    }
+
+    .wo-detail-footer{
+      margin-top:10px;
+      font-size:0.82rem;
+      opacity:0.85;
+    }
+    .wo-detail-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 8px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--surface) 70%, var(--border) 30%);
+      font-size:0.8rem;
+      margin-left:6px;
+      white-space:nowrap;
+    }
+
+    .rtk-summary{
+      margin-top:6px;
+      font-size:0.8rem;
+      opacity:0;
+      transition:opacity .16s ease;
+    }
+    .rtk-summary--show{ opacity:0.9; }
+
+    .bottom-actions{ margin-top:16px; display:flex; justify-content:flex-end; }
+
+    #fv-print-frame{
+      position:fixed;
+      right:0;
+      bottom:0;
+      width:0;
+      height:0;
+      border:0;
+      visibility:hidden;
+    }
+
+    /* Field modal (popup) */
+    .field-modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:100000;
+      padding:16px;
+    }
+    .field-modal.show{ display:flex; }
+    .field-backdrop{
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,.65);
+    }
+    .field-sheet{
+      position:relative;
+      max-width:min(980px, 95vw);
+      max-height:90vh;
+      background:var(--surface);
+      border-radius:14px;
+      border:1px solid var(--border);
+      box-shadow:0 20px 40px rgba(0,0,0,.45);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:1;
+      overflow:hidden;
+    }
+    .field-sheet-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      padding-bottom:8px;
+      border-bottom:1px solid var(--border);
+    }
+    .field-sheet-title{
+      font-weight:900;
+      font-size:1rem;
+      line-height:1.2;
+      margin:0;
+    }
+    .field-sheet-sub{
+      margin-top:4px;
+      font-size:0.86rem;
+      opacity:0.85;
+    }
+    .field-sheet-body{
+      overflow:auto;
+      padding-right:2px;
+    }
+    .field-info-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:10px 14px;
+      font-size:0.92rem;
+    }
+    @media (min-width:720px){
+      .field-info-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    }
+    .fi{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card-surface,var(--surface));
+      padding:10px 10px 9px;
+    }
+    .fi .k{
+      font-size:0.76rem;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      opacity:0.72;
+      font-weight:800;
+      margin-bottom:3px;
+    }
+    .fi .v{
+      font-weight:700;
+      word-break:break-word;
+      line-height:1.25;
+      white-space:pre-line;
+    }
+    .field-sheet-actions{
+      display:flex;
+      justify-content:flex-end;
+      padding-top:8px;
+      border-top:1px solid var(--border);
+    }
+  </style>
+
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection, getDocs,
+      doc, getDoc
+    } from '/js/core/firebase/firebase-init.js';
+
+    import { NAV_MENU } from '/js/shared/navigation/menu.js';
+
+    const CONFIG = {
+      FARM_COLLECTION:  'farms',
+      FIELD_COLLECTION: 'fields',
+      TOWER_COLLECTION: 'rtkTowers',
+      COMPANY_DOC_PATH: ['company','main']
+    };
+
+    const $  = (sel, root=document) => root.querySelector(sel);
+
+    const STATE = {
+      db: null,
+      company: null,
+
+      farms: [],
+      filteredFarms: null,
+      selectedFarmId: null,
+
+      farmNameMap: new Map(),
+      countyOptions: [],
+      towerMap: new Map(),
+
+      filters: {
+        county: 'all',
+        farm: 'all',
+        flag: 'all', // all | hel | crp | tiled
+        q: ''
+      }
+    };
+
+    // Field modal refs
+    let fieldModal = null;
+    let fieldModalBackdrop = null;
+    let fieldModalClose = null;
+    let fieldModalTitle = null;
+    let fieldModalSub = null;
+    let fieldModalBody = null;
+
+    function escapeHtml(str){
+      return String(str || '').replace(/[&<>"']/g, m => (
+        { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]
+      ));
+    }
+
+    function nnum(x){
+      const v = Number(x);
+      return Number.isFinite(v) ? v : 0;
+    }
+
+    function fmt(n, digits=0){
+      const v = Number(n);
+      if(!Number.isFinite(v)) return (0).toLocaleString();
+      return v.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+    }
+
+    function toDateMaybe(ts){
+      if(!ts) return null;
+      try{
+        if(ts.toDate) return ts.toDate();
+        if(ts && typeof ts === 'object' && ts.__time__){
+          const d = new Date(ts.__time__);
+          return Number.isFinite(d.getTime()) ? d : null;
+        }
+        if(ts && typeof ts === 'object' && typeof ts.seconds === 'number'){
+          const d = new Date(ts.seconds * 1000);
+          return Number.isFinite(d.getTime()) ? d : null;
+        }
+        if(typeof ts === 'string' || typeof ts === 'number'){
+          const d = new Date(ts);
+          return Number.isFinite(d.getTime()) ? d : null;
+        }
+      }catch(_){}
+      return null;
+    }
+
+    function formatDateTime(ts){
+      const d = toDateMaybe(ts);
+      if(!d) return '';
+      try{ return d.toLocaleString(); }catch{ return ''; }
+    }
+
+    function isActiveStatus(d){
+      const s = String(d?.status || 'active').toLowerCase();
+      return s !== 'archived' && s !== 'inactive' && s !== 'deleted';
+    }
+
+    function fieldIsActive(fd){
+      const s = String(fd?.status || 'active').toLowerCase();
+      return s !== 'archived' && s !== 'inactive' && s !== 'deleted';
+    }
+
+    /* ✅ Boolean flags drive inclusion. */
+    function fieldHasHEL(fd){ return fd?.hasHEL === true; }
+    function fieldHasCRP(fd){ return fd?.hasCRP === true; }
+    function fieldHasTiled(fd){ return fd?.hasPatternTiled === true; } // field stores hasPatternTiled
+
+    function computeFarmMetrics(fields){
+      const activeFields = fields.filter(f => fieldIsActive(f.data));
+      const fieldCount = activeFields.length;
+
+      const tillable = activeFields.reduce((sum,f)=> sum + nnum(f.data?.tillable ?? f.data?.tillableAcres ?? f.data?.acres), 0);
+
+      const helFields = activeFields.filter(f => fieldHasHEL(f.data));
+      const crpFields = activeFields.filter(f => fieldHasCRP(f.data));
+      const tiledFields = activeFields.filter(f => fieldHasTiled(f.data));
+
+      const helCount = helFields.length;
+      const crpCount = crpFields.length;
+      const tiledCount = tiledFields.length;
+
+      const helAcres = helFields.reduce((sum,f)=> sum + nnum(f.data?.helAcres), 0);
+      const crpAcres = crpFields.reduce((sum,f)=> sum + nnum(f.data?.crpAcres), 0);
+
+      // Tiled acres = FULL tillable acres for fields where hasPatternTiled === true
+      const tiledAcres = tiledFields.reduce((sum,f)=> sum + nnum(f.data?.tillable ?? f.data?.tillableAcres ?? f.data?.acres), 0);
+
+      const counties = new Set(activeFields.map(f => f.data?.county).filter(Boolean));
+
+      return { fieldCount, tillable, helCount, helAcres, crpCount, crpAcres, tiledCount, tiledAcres, counties, activeFields };
+    }
+
+    function getWorkingFarms(){
+      return (STATE.filteredFarms && STATE.filteredFarms.length)
+        ? STATE.filteredFarms
+        : STATE.farms;
+    }
+
+    function getFieldsForFlag(fields, flag){
+      const f = String(flag || 'all').toLowerCase();
+      if(f === 'hel') return fields.filter(x => fieldHasHEL(x.data));
+      if(f === 'crp') return fields.filter(x => fieldHasCRP(x.data));
+      if(f === 'tiled') return fields.filter(x => fieldHasTiled(x.data));
+      return fields;
+    }
+
+    function computeFilteredTotalsForFlag(farms, flag){
+      const out = { farmCount: 0, fieldCount: 0, acres: 0 };
+      const f = String(flag || 'all').toLowerCase();
+      out.farmCount = farms.length;
+
+      for(const farm of farms){
+        const fields = (farm.metrics?.activeFields || farm.fields || []);
+        const filteredFields = getFieldsForFlag(fields, flag);
+
+        if(f === 'all'){
+          out.fieldCount += (farm.metrics?.fieldCount || 0);
+          out.acres += nnum(farm.metrics?.tillable);
+        }else if(f === 'hel'){
+          out.fieldCount += filteredFields.length;
+          out.acres += filteredFields.reduce((s,x)=> s + nnum(x.data?.helAcres), 0);
+        }else if(f === 'crp'){
+          out.fieldCount += filteredFields.length;
+          out.acres += filteredFields.reduce((s,x)=> s + nnum(x.data?.crpAcres), 0);
+        }else if(f === 'tiled'){
+          out.fieldCount += filteredFields.length;
+          out.acres += filteredFields.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0);
+        }
+      }
+
+      return out;
+    }
+
+    /* ✅ Smooth auto-scroll to details */
+    function scrollToDetails(){
+      const panel = $('#farmDetails');
+      if(!panel || panel.style.display === 'none') return;
+
+      try{ panel.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(_e){}
+
+      requestAnimationFrame(() => {
+        const offset = Number(getComputedStyle(document.documentElement).getPropertyValue('--details-scroll-offset').replace('px','')) || 92;
+        const y = panel.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop || 0) - offset;
+        window.scrollTo({ top: Math.max(0, y), behavior:'smooth' });
+      });
+    }
+
+    function focusDetails(){
+      const panel = $('#farmDetails');
+      if(!panel || panel.style.display === 'none') return;
+      try{ panel.focus({ preventScroll:true }); }catch(_e){}
+    }
+
+    function renderMeta(){
+      const metaEl = $('#reportMeta');
+      const farms = getWorkingFarms();
+      const flag = ($('#filterFlag')?.value || 'all');
+      const f = String(flag || 'all').toLowerCase();
+
+      const totals = computeFilteredTotalsForFlag(farms, flag);
+
+      const label =
+        (f === 'hel') ? 'HEL' :
+        (f === 'crp') ? 'CRP' :
+        (f === 'tiled') ? 'Tiled' :
+        'Tillable';
+
+      if(metaEl){
+        metaEl.textContent =
+          `${totals.farmCount} farm${totals.farmCount===1?'':'s'} • ` +
+          `${totals.fieldCount} field${totals.fieldCount===1?'':'s'} • ` +
+          `${label} ${fmt(totals.acres,2)} ac`;
+      }
+    }
+
+    function renderList(){
+      const listEl  = $('.wo-list');
+      const emptyEl = $('.wo-empty');
+
+      listEl.innerHTML = '';
+
+      const farms = getWorkingFarms();
+      const flag = ($('#filterFlag')?.value || 'all');
+      const fflag = String(flag || 'all').toLowerCase();
+
+      if(!farms.length){
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'No farms found or matching the current filters.';
+        renderMeta();
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+
+      for(const farm of farms){
+        const d = farm.data || {};
+        const mAll = farm.metrics || { fieldCount:0, tillable:0, helCount:0, helAcres:0, crpCount:0, crpAcres:0, tiledCount:0, tiledAcres:0, counties:new Set(), activeFields:[] };
+
+        const farmName = d.name || 'Unnamed farm';
+
+        const fieldsForCard = getFieldsForFlag(mAll.activeFields || [], flag);
+        const fieldCount = (fflag === 'all') ? mAll.fieldCount : fieldsForCard.length;
+
+        const countyLabel = (mAll.counties && mAll.counties.size)
+          ? `${mAll.counties.size} count${mAll.counties.size===1?'y':'ies'} • ${fieldCount} field${fieldCount===1?'':'s'}`
+          : `${fieldCount} field${fieldCount===1?'':'s'}`;
+
+        const cardTillable = (fflag === 'all')
+          ? mAll.tillable
+          : fieldsForCard.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0);
+
+        const cardHelAcres = (fflag === 'hel')
+          ? fieldsForCard.reduce((s,x)=> s + nnum(x.data?.helAcres), 0)
+          : mAll.helAcres;
+
+        const cardCrpAcres = (fflag === 'crp')
+          ? fieldsForCard.reduce((s,x)=> s + nnum(x.data?.crpAcres), 0)
+          : mAll.crpAcres;
+
+        const cardTiledAcres = (fflag === 'tiled')
+          ? fieldsForCard.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0)
+          : mAll.tiledAcres;
+
+        const helFldCount = (fflag === 'hel') ? fieldsForCard.length : mAll.helCount;
+        const crpFldCount = (fflag === 'crp') ? fieldsForCard.length : mAll.crpCount;
+        const tiledFldCount = (fflag === 'tiled') ? fieldsForCard.length : mAll.tiledCount;
+
+        const card = document.createElement('article');
+        card.className = 'wo-card';
+        card.dataset.id = farm.id;
+
+        card.innerHTML = `
+          <div class="wo-row-top">
+            <div class="wo-main">
+              <div class="wo-title">${escapeHtml(farmName)}</div>
+              <div class="wo-sub">${escapeHtml(countyLabel)}</div>
+              <div class="wo-meta">
+                <span><span class="wo-meta-label">Tillable</span> <span class="wo-meta-val">${fmt(cardTillable,2)} ac</span></span>
+                <span><span class="wo-meta-label">HEL</span> <span class="wo-meta-val">${helFldCount} fld · ${fmt(cardHelAcres,2)} ac</span></span>
+                <span><span class="wo-meta-label">CRP</span> <span class="wo-meta-val">${crpFldCount} fld · ${fmt(cardCrpAcres,2)} ac</span></span>
+                <span><span class="wo-meta-label">Tiled</span> <span class="wo-meta-val">${tiledFldCount} fld · ${fmt(cardTiledAcres,2)} ac</span></span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          STATE.selectedFarmId = farm.id;
+          renderDetails({ scroll:true, focus:true });
+        });
+
+        listEl.appendChild(card);
+      }
+
+      renderMeta();
+    }
+
+    function clearDetails(){
+      const panel = $('.wo-detail-panel');
+      panel.style.display = 'none';
+      panel.dataset.id = '';
+      $('.wo-detail-title', panel).textContent = 'Farm Details';
+      $('.wo-detail-grid', panel).innerHTML = '';
+      $('#fieldsBody').innerHTML = '';
+      $('.wo-detail-footer', panel).innerHTML = '';
+    }
+
+    function renderDetails(opts = {}){
+      const { scroll=false, focus=false } = opts;
+
+      const panel = $('.wo-detail-panel');
+      const farm = getWorkingFarms().find(x => x.id === STATE.selectedFarmId) || STATE.farms.find(x => x.id === STATE.selectedFarmId);
+
+      if(!farm){
+        clearDetails();
+        return;
+      }
+
+      const flag = ($('#filterFlag')?.value || 'all');
+      const d = farm.data || {};
+      const farmName = d.name || 'Unnamed farm';
+
+      const fieldsAll = Array.isArray(farm.fields) ? farm.fields.slice() : [];
+      const activeFields = fieldsAll.filter(f => fieldIsActive(f.data));
+      activeFields.sort((a,b)=> String(a.data?.name||'').localeCompare(String(b.data?.name||'')));
+
+      const detailFields = getFieldsForFlag(activeFields, flag);
+      const m = farm.metrics || computeFarmMetrics(fieldsAll);
+
+      panel.dataset.id = farm.id;
+      $('.wo-detail-title', panel).textContent = farmName;
+
+      const status = d.status ? String(d.status) : 'active';
+
+      const grid = $('.wo-detail-grid', panel);
+      grid.innerHTML = `
+        <div>
+          <div class="wo-detail-item-label">Status</div>
+          <div class="wo-detail-item-value">${escapeHtml(status)}</div>
+        </div>
+        <div>
+          <div class="wo-detail-item-label">Fields</div>
+          <div class="wo-detail-item-value">${m.fieldCount}</div>
+        </div>
+        <div>
+          <div class="wo-detail-item-label">Tillable acres</div>
+          <div class="wo-detail-item-value">${fmt(m.tillable,2)} ac</div>
+        </div>
+        <div>
+          <div class="wo-detail-item-label">Counties</div>
+          <div class="wo-detail-item-value">${m.counties && m.counties.size ? escapeHtml(Array.from(m.counties).sort().join(', ')) : '—'}</div>
+        </div>
+        <div>
+          <div class="wo-detail-item-label">HEL</div>
+          <div class="wo-detail-item-value">${m.helCount} field${m.helCount===1?'':'s'} · ${fmt(m.helAcres,2)} ac</div>
+        </div>
+        <div>
+          <div class="wo-detail-item-label">CRP</div>
+          <div class="wo-detail-item-value">${m.crpCount} field${m.crpCount===1?'':'s'} · ${fmt(m.crpAcres,2)} ac</div>
+        </div>
+        <div>
+          <div class="wo-detail-item-label">Tiled</div>
+          <div class="wo-detail-item-value">${m.tiledCount} field${m.tiledCount===1?'':'s'} · ${fmt(m.tiledAcres,2)} ac</div>
+        </div>
+      `;
+
+      const body = $('#fieldsBody');
+      body.innerHTML = '';
+
+      if(!detailFields.length){
+        const msg =
+          (String(flag) === 'hel') ? 'No HEL fields in this farm.' :
+          (String(flag) === 'crp') ? 'No CRP fields in this farm.' :
+          (String(flag) === 'tiled') ? 'No Tiled fields in this farm.' :
+          'No active fields found for this farm.';
+        body.innerHTML = `<div class="wo-empty" style="margin-top:6px;">${escapeHtml(msg)}</div>`;
+      }else{
+        const table = document.createElement('div');
+        table.className = 'field-table';
+
+        table.innerHTML = detailFields.map(f => {
+          const fd = f.data || {};
+          const name = fd.name || 'Unnamed field';
+          const county = fd.county || '';
+          const state  = fd.state || '';
+          const loc = [county, state].filter(Boolean).join(', ');
+          const till = nnum(fd.tillable ?? fd.tillableAcres ?? fd.acres);
+
+          const hasHEL = fieldHasHEL(fd);
+          const hasCRP = fieldHasCRP(fd);
+          const hasTLD = fieldHasTiled(fd);
+
+          const chips = [];
+          chips.push(`<span class="chip"><strong>Till</strong> <span class="wo-meta-val">${fmt(till,2)} ac</span></span>`);
+          if(loc) chips.push(`<span class="chip"><span class="wo-meta-val">${escapeHtml(loc)}</span></span>`);
+          if(hasHEL) chips.push(`<span class="chip"><strong>HEL</strong> <span class="wo-meta-val">${fmt(nnum(fd.helAcres),2)} ac</span></span>`);
+          if(hasCRP) chips.push(`<span class="chip"><strong>CRP</strong> <span class="wo-meta-val">${fmt(nnum(fd.crpAcres),2)} ac</span></span>`);
+          if(hasTLD) chips.push(`<span class="chip"><strong>Tiled</strong> <span class="wo-meta-val">${fmt(till,2)} ac</span></span>`);
+
+          return `
+            <div class="field-row" data-field-id="${escapeHtml(f.id)}">
+              <div class="field-name">${escapeHtml(name)}</div>
+              <div class="field-chips">${chips.join('')}</div>
+            </div>
+          `;
+        }).join('');
+
+        body.appendChild(table);
+
+        Array.from(table.querySelectorAll('.field-row')).forEach(row => {
+          row.addEventListener('click', () => {
+            const fid = row.getAttribute('data-field-id') || '';
+            const found = detailFields.find(x => x.id === fid) || null;
+            if(found) openFieldModal(found);
+          });
+        });
+      }
+
+      const footer = $('.wo-detail-footer', panel);
+      footer.innerHTML = `
+        <span class="wo-detail-pill">${m.fieldCount} field${m.fieldCount===1?'':'s'}</span>
+        <span class="wo-detail-pill">${fmt(m.tillable,2)} tillable ac</span>
+        <span class="wo-detail-pill">HEL ${fmt(m.helAcres,2)} ac</span>
+        <span class="wo-detail-pill">CRP ${fmt(m.crpAcres,2)} ac</span>
+        <span class="wo-detail-pill">Tiled ${fmt(m.tiledAcres,2)} ac</span>
+      `;
+
+      panel.style.display = 'flex';
+
+      if(scroll){
+        requestAnimationFrame(() => {
+          scrollToDetails();
+          if(focus) focusDetails();
+        });
+      }
+    }
+
+    function showSummaryToast(farm){
+      const toast = $('#summaryToast');
+      if(!toast || !farm) return;
+
+      const d = farm.data || {};
+      const name = d.name || 'Unnamed farm';
+      const m = farm.metrics || computeFarmMetrics(farm.fields || []);
+
+      toast.textContent = `${name}: ${m.fieldCount} field${m.fieldCount===1?'':'s'} • ${fmt(m.tillable,2)} tillable ac • HEL ${fmt(m.helAcres,2)} • CRP ${fmt(m.crpAcres,2)} • Tiled ${fmt(m.tiledAcres,2)}`;
+      toast.classList.add('rtk-summary--show');
+      setTimeout(()=> toast.classList.remove('rtk-summary--show'), 3500);
+    }
+
+    function setSelectOptions(selectEl, optionsHtml, currentValue){
+      if(!selectEl) return;
+      selectEl.innerHTML = optionsHtml;
+      if(currentValue != null){
+        const exists = Array.from(selectEl.options).some(o => o.value === currentValue);
+        selectEl.value = exists ? currentValue : (selectEl.options[0]?.value || 'all');
+      }
+    }
+
+    function hydrateCountyDropdown(){
+      const sel = $('#filterCounty');
+      const cur = sel?.value || 'all';
+      const opts = [
+        `<option value="all">All counties</option>`,
+        ...STATE.countyOptions.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`)
+      ].join('');
+      setSelectOptions(sel, opts, cur);
+    }
+
+    function hydrateFarmDropdown(){
+      const sel = $('#filterFarm');
+      const cur = sel?.value || 'all';
+      const county = ($('#filterCounty')?.value || 'all');
+
+      let farms = STATE.farms.slice();
+      if(county !== 'all'){
+        farms = farms.filter(f => f.metrics?.counties && f.metrics.counties.has(county));
+      }
+
+      const opts = [
+        `<option value="all">All farms</option>`,
+        ...farms.map(f => {
+          const name = f.data?.name || 'Unnamed farm';
+          return `<option value="${escapeHtml(f.id)}">${escapeHtml(name)}</option>`;
+        })
+      ].join('');
+
+      const stillOk = (cur === 'all') || farms.some(f => f.id === cur);
+      setSelectOptions(sel, opts, stillOk ? cur : 'all');
+    }
+
+    function getFilters(){
+      return {
+        county: ($('#filterCounty')?.value || 'all'),
+        farm:   ($('#filterFarm')?.value || 'all'),
+        flag:   ($('#filterFlag')?.value || 'all'),
+        q:      ( ($('#filterSearch')?.value || '').trim().toLowerCase() )
+      };
+    }
+
+    function applyFilters(){
+      const { county, farm, flag, q } = getFilters();
+
+      const filtered = [];
+
+      for(const f of STATE.farms){
+        if(farm !== 'all' && f.id !== farm) continue;
+        if(county !== 'all' && !(f.metrics?.counties && f.metrics.counties.has(county))) continue;
+
+        if(flag !== 'all'){
+          const hasHel = (f.metrics?.helCount || 0) > 0;
+          const hasCrp = (f.metrics?.crpCount || 0) > 0;
+          const hasTiled = (f.metrics?.tiledCount || 0) > 0;
+          if(flag === 'hel' && !hasHel) continue;
+          if(flag === 'crp' && !hasCrp) continue;
+          if(flag === 'tiled' && !hasTiled) continue;
+        }
+
+        if(q){
+          const d = f.data || {};
+          const hay = [];
+          hay.push(d.name, d.status);
+
+          (f.fields || []).forEach(x => {
+            const fd = x.data || {};
+            if(!fieldIsActive(fd)) return;
+            hay.push(fd.name, fd.county, fd.state);
+            if(fd.hasHEL) hay.push('hel');
+            if(fd.hasCRP) hay.push('crp');
+            if(fd.hasPatternTiled) hay.push('tiled');
+            const towerId = fd.rtkTowerId || '';
+            if(towerId) hay.push(towerId);
+          });
+
+          const big = hay.filter(Boolean).join(' ').toLowerCase();
+          if(!big.includes(q)) continue;
+        }
+
+        filtered.push(f);
+      }
+
+      STATE.filteredFarms = filtered;
+      renderList();
+      clearDetails();
+      renderMeta();
+
+      if(STATE.selectedFarmId){
+        renderDetails({ scroll:false, focus:false });
+      }
+    }
+
+    async function loadCompanyHeader(){
+      if (STATE.company) return STATE.company;
+      try{
+        const [col,id] = CONFIG.COMPANY_DOC_PATH;
+        const ref = doc(STATE.db, col, id);
+        const snap = await getDoc(ref);
+        const d = snap.exists() ? (snap.data() || {}) : {};
+        const name = d.name || '';
+        const address = [
+          d.addressStreet || '',
+          [d.addressCity, d.addressState].filter(Boolean).join(', '),
+          d.addressZip || ''
+        ].filter(Boolean).join(' · ');
+        const phone = d.phone || '';
+        const email = d.email || '';
+        STATE.company = { name, address, phone, email };
+      }catch(e){
+        console.warn('[farm-field-summary] failed to load company header', e);
+        STATE.company = { name:'', address:'', phone:'', email:'' };
+      }
+      return STATE.company;
+    }
+
+    function summarizeFilters(){
+      const { county, farm, flag, q } = getFilters();
+
+      const farmLabel = (farm !== 'all')
+        ? (STATE.farmNameMap.get(farm) || 'Selected farm')
+        : 'All farms';
+
+      const countyLabel = (county !== 'all') ? county : 'All counties';
+
+      const flagLabel =
+        (flag === 'hel') ? 'HEL Acres' :
+        (flag === 'crp') ? 'CRP Acres' :
+        (flag === 'tiled') ? 'Tiled' :
+        'All Acres';
+
+      const searchLabel = q ? `Search: "${q}"` : 'No text filter';
+
+      return `${countyLabel} • ${farmLabel} • ${flagLabel} • ${searchLabel}`;
+    }
+
+    function buildPrintHtml({ company, runStr, runDateOnly, filterSummary, farms, flag }){
+      const farmCount = farms.length;
+
+      const f = String(flag || 'all').toLowerCase();
+
+      const flagTxt =
+        (f === 'hel') ? 'HEL Acres' :
+        (f === 'crp') ? 'CRP Acres' :
+        (f === 'tiled') ? 'Tiled' :
+        'All Acres';
+
+      // ✅ dynamic columns:
+      // Always: Field, County/State, Tillable
+      // Then: only the selected flag column (HEL or CRP or Tiled). For All Acres: show HEL+CRP+Tiled.
+      const extraCols = (f === 'all') ? ['HEL','CRP','Tiled'] : (f === 'hel') ? ['HEL'] : (f === 'crp') ? ['CRP'] : (f === 'tiled') ? ['Tiled'] : [];
+      const extraColCount = extraCols.length;
+      const colspan = 3 + extraColCount;
+
+      // Summary numbers based on filtered set
+      let fieldCount = 0;
+      let tillable = 0;
+      let helAcres = 0;
+      let crpAcres = 0;
+      let tiledAcres = 0;
+
+      farms.forEach(fr=>{
+        const fields = (fr.metrics?.activeFields || fr.fields || []);
+        const fieldsFor = getFieldsForFlag(fields, flag);
+
+        if(f === 'all'){
+          fieldCount += (fr.metrics?.fieldCount || 0);
+          tillable += nnum(fr.metrics?.tillable);
+          helAcres += nnum(fr.metrics?.helAcres);
+          crpAcres += nnum(fr.metrics?.crpAcres);
+          tiledAcres += nnum(fr.metrics?.tiledAcres);
+        }else if(f === 'hel'){
+          fieldCount += fieldsFor.length;
+          helAcres += fieldsFor.reduce((s,x)=> s + nnum(x.data?.helAcres), 0);
+          tillable += fieldsFor.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0);
+        }else if(f === 'crp'){
+          fieldCount += fieldsFor.length;
+          crpAcres += fieldsFor.reduce((s,x)=> s + nnum(x.data?.crpAcres), 0);
+          tillable += fieldsFor.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0);
+        }else if(f === 'tiled'){
+          fieldCount += fieldsFor.length;
+          tiledAcres += fieldsFor.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0);
+          tillable += tiledAcres;
+        }
+      });
+
+      function thForExtra(){
+        return extraCols.map(c => `<th style="width:${Math.floor(35/Math.max(1,extraCols.length))}%">${c}</th>`).join('');
+      }
+
+      function tdForExtra(fd, till){
+        const hel = fieldHasHEL(fd) ? nnum(fd.helAcres) : 0;
+        const crp = fieldHasCRP(fd) ? nnum(fd.crpAcres) : 0;
+        const tld = fieldHasTiled(fd) ? till : 0;
+
+        if(f === 'all'){
+          return `
+            <td>${fieldHasHEL(fd) ? escapeHtml(fmt(hel,2)) : ''}</td>
+            <td>${fieldHasCRP(fd) ? escapeHtml(fmt(crp,2)) : ''}</td>
+            <td>${fieldHasTiled(fd) ? escapeHtml(fmt(tld,2)) : ''}</td>
+          `;
+        }
+        if(f === 'hel'){
+          return `<td>${fieldHasHEL(fd) ? escapeHtml(fmt(hel,2)) : ''}</td>`;
+        }
+        if(f === 'crp'){
+          return `<td>${fieldHasCRP(fd) ? escapeHtml(fmt(crp,2)) : ''}</td>`;
+        }
+        if(f === 'tiled'){
+          return `<td>${fieldHasTiled(fd) ? escapeHtml(fmt(tld,2)) : ''}</td>`;
+        }
+        return '';
+      }
+
+      return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Farm & Field Summary</title>
+  <style>
+    :root{
+      --fv-green:#3B7E46;
+      --fv-border:#D1D5DB;
+      --fv-text:#111827;
+      --fv-muted:#6B7280;
+      --fv-bg:#F3F4F6;
+    }
+    *{box-sizing:border-box;}
+    html,body{
+      margin:0;padding:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--fv-text);
+      background:var(--fv-bg);
+    }
+    body{display:flex;justify-content:center;padding:24px 12px;}
+    .page{
+      width:100%;
+      max-width:900px;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 10px 30px rgba(15,23,42,0.15);
+      padding:24px 28px 28px;
+    }
+    .report-header{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:16px;
+      align-items:center;
+      border-bottom:2px solid var(--fv-green);
+      padding-bottom:14px;
+      margin-bottom:18px;
+    }
+    .report-logo{
+      width:64px;height:64px;border-radius:16px;
+      border:1px solid var(--fv-border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:26px;font-weight:800;color:#fff;
+      background:radial-gradient(circle at 30% 0%, #4CAF50, var(--fv-green));
+    }
+    .company-name{font-size:18px;font-weight:800;margin:0 0 2px;}
+    .company-line{font-size:12px;color:var(--fv-muted);margin:0;}
+    .report-meta-top{text-align:right;font-size:11px;color:var(--fv-muted);}
+    .report-meta-top strong{color:var(--fv-text);}
+    .report-title{font-size:20px;font-weight:800;margin:4px 0 4px;letter-spacing:0.02em;text-transform:uppercase;}
+    .report-summary-strip{
+      margin-top:12px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:linear-gradient(90deg, rgba(59,126,70,0.08), transparent);
+      border:1px solid rgba(59,126,70,0.20);
+      font-size:11px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 16px;
+    }
+    .summary-pill{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+    .summary-label{text-transform:uppercase;letter-spacing:0.08em;font-weight:600;font-size:10px;color:var(--fv-muted);}
+    .summary-value{font-weight:600;font-size:11px;}
+    .section{margin-top:18px;}
+    .section-title{font-size:13px;text-transform:uppercase;letter-spacing:0.12em;color:var(--fv-muted);margin:0 0 8px;}
+    .farm-block{margin-top:12px;}
+    .farm-title{font-size:13px;font-weight:800;margin:0 0 4px;}
+    .farm-sub{font-size:11px;color:var(--fv-muted);margin:0 0 6px;}
+    .table-wrap{
+      margin-top:6px;
+      border-radius:10px;
+      border:1px solid var(--fv-border);
+      overflow:hidden;
+    }
+    table{width:100%;border-collapse:collapse;font-size:11px;}
+    thead{background:#F9FAFB;}
+    th,td{padding:6px 8px;border-bottom:1px solid #E5E7EB;text-align:left;vertical-align:top;}
+    th{
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      font-size:10px;
+      color:#4B5563;
+      border-bottom:1px solid #D1D5DB;
+    }
+    tr:nth-child(even) td{background:#F9FAFB;}
+    .report-footer{
+      margin-top:18px;
+      padding-top:8px;
+      border-top:1px solid #D1D5DB;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:10px;
+      color:#6B7280;
+    }
+    @media print{
+      html,body{background:#fff;padding:0;}
+      body{box-shadow:none;}
+      .page{max-width:none;border-radius:0;box-shadow:none;padding:12mm 14mm;}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="report-header">
+      <div class="report-logo"><span>DF</span></div>
+      <div class="company-block">
+        <p class="company-name">${escapeHtml(company.name || '')}</p>
+        <p class="company-line">
+          ${company.address ? escapeHtml(company.address) + '<br>' : ''}
+          ${company.phone ? 'Phone: ' + escapeHtml(company.phone) : ''}${company.phone && company.email ? ' · ' : ''}
+          ${company.email ? 'Email: ' + escapeHtml(company.email) : ''}
+        </p>
+      </div>
+      <div class="report-meta-top">
+        <div><strong>Farm &amp; Field Summary</strong></div>
+        <div>Generated: ${escapeHtml(runStr)}</div>
+        <div>Prepared by: ${escapeHtml(company.name || 'FarmVista')}</div>
+      </div>
+    </header>
+
+    <section>
+      <h1 class="report-title">Farm &amp; Field Summary</h1>
+
+      <div class="report-summary-strip">
+        <div class="summary-pill">
+          <span class="summary-label">Filters</span>
+          <span class="summary-value">${escapeHtml(filterSummary)}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="summary-label">Flag</span>
+          <span class="summary-value">${escapeHtml(flagTxt)}</span>
+        </div>
+        <div class="summary-pill"><span class="summary-label">Farms</span><span class="summary-value">${fmt(farmCount,0)}</span></div>
+        <div class="summary-pill"><span class="summary-label">Fields</span><span class="summary-value">${fmt(fieldCount,0)}</span></div>
+        <div class="summary-pill"><span class="summary-label">Tillable</span><span class="summary-value">${fmt(tillable,2)} ac</span></div>
+        ${f === 'hel' ? `<div class="summary-pill"><span class="summary-label">HEL</span><span class="summary-value">${fmt(helAcres,2)} ac</span></div>` : ``}
+        ${f === 'crp' ? `<div class="summary-pill"><span class="summary-label">CRP</span><span class="summary-value">${fmt(crpAcres,2)} ac</span></div>` : ``}
+        ${f === 'tiled' ? `<div class="summary-pill"><span class="summary-label">Tiled</span><span class="summary-value">${fmt(tiledAcres,2)} ac</span></div>` : ``}
+        ${f === 'all' ? `<div class="summary-pill"><span class="summary-label">HEL</span><span class="summary-value">${fmt(helAcres,2)} ac</span></div>` : ``}
+        ${f === 'all' ? `<div class="summary-pill"><span class="summary-label">CRP</span><span class="summary-value">${fmt(crpAcres,2)} ac</span></div>` : ``}
+        ${f === 'all' ? `<div class="summary-pill"><span class="summary-label">Tiled</span><span class="summary-value">${fmt(tiledAcres,2)} ac</span></div>` : ``}
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Detail by Farm</h2>
+
+      ${farms.map(fr => {
+        const d = fr.data || {};
+        const farmName = d.name || 'Unnamed farm';
+
+        const fields = (fr.fields || []).filter(x => fieldIsActive(x.data))
+          .sort((a,b)=> String(a.data?.name||'').localeCompare(String(b.data?.name||'')));
+
+        const showFields = getFieldsForFlag(fields, flag);
+
+        const rows = showFields.map(x => {
+          const fd = x.data || {};
+          const loc = [fd.county, fd.state].filter(Boolean).join(', ');
+          const till = nnum(fd.tillable ?? fd.tillableAcres ?? fd.acres);
+
+          return `
+            <tr>
+              <td>${escapeHtml(fd.name || 'Unnamed field')}</td>
+              <td>${escapeHtml(loc)}</td>
+              <td>${till ? escapeHtml(fmt(till,2)) : ''}</td>
+              ${tdForExtra(fd, till)}
+            </tr>
+          `;
+        }).join('');
+
+        const emptyRowMsg =
+          (f === 'hel') ? 'No HEL fields in this farm.' :
+          (f === 'crp') ? 'No CRP fields in this farm.' :
+          (f === 'tiled') ? 'No Tiled fields in this farm.' :
+          'No active fields in this farm.';
+
+      const emptyRowHtml =
+  '<tr><td colspan="' + colspan + '" style="padding:10px 8px;color:#6B7280;">' +
+  escapeHtml(emptyRowMsg) +
+  '</td></tr>';
+
+        // Per-farm subtotal line (only the filtered column besides the always-on columns)
+        const farmTill = showFields.reduce((s,x)=> s + nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres), 0);
+        const farmHel  = showFields.reduce((s,x)=> s + (fieldHasHEL(x.data) ? nnum(x.data?.helAcres) : 0), 0);
+        const farmCrp  = showFields.reduce((s,x)=> s + (fieldHasCRP(x.data) ? nnum(x.data?.crpAcres) : 0), 0);
+        const farmTld  = showFields.reduce((s,x)=> s + (fieldHasTiled(x.data) ? nnum(x.data?.tillable ?? x.data?.tillableAcres ?? x.data?.acres) : 0), 0);
+
+        let subRight = '';
+        if(f === 'hel') subRight = 'HEL ' + fmt(farmHel,2) + ' ac';
+        else if(f === 'crp') subRight = 'CRP ' + fmt(farmCrp,2) + ' ac';
+        else if(f === 'tiled') subRight = 'Tiled ' + fmt(farmTld,2) + ' ac';
+        else subRight = 'HEL ' + fmt(fr.metrics?.helAcres || 0,2) + ' • CRP ' + fmt(fr.metrics?.crpAcres || 0,2) + ' • Tiled ' + fmt(fr.metrics?.tiledAcres || 0,2);
+
+        return `
+          <div class="farm-block">
+            <div class="farm-title">${escapeHtml(farmName)}</div>
+            <p class="farm-sub">
+              ${showFields.length} field${showFields.length===1?'':'s'} · ${fmt(farmTill,2)} tillable ac · ${escapeHtml(subRight)}
+            </p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:34%">Field</th>
+                    <th style="width:26%">County / State</th>
+                    <th style="width:14%">Tillable</th>
+                    ${thForExtra()}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows || emptyRowHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </section>
+
+    <footer class="report-footer">
+      <div>${escapeHtml(company.name || 'FarmVista Report')}</div>
+      <div>FarmVista Report • ${escapeHtml(runDateOnly || '')}</div>
+    </footer>
+  </div>
+</body>
+</html>`;
+    }
+
+    async function handlePrintClick(){
+      const farms = getWorkingFarms();
+      if(!farms.length){
+        alert('No farms match the current filters to print.');
+        return;
+      }
+
+      const company = await loadCompanyHeader();
+      const now = new Date();
+      const runStr = now.toLocaleString();
+      const runDateOnly = now.toLocaleDateString();
+      const filterSummary = summarizeFilters();
+      const flag = ($('#filterFlag')?.value || 'all');
+
+      const html = buildPrintHtml({ company, runStr, runDateOnly, filterSummary, farms, flag });
+
+      let iframe = document.getElementById('fv-print-frame');
+      if(!iframe){
+        iframe = document.createElement('iframe');
+        iframe.id = 'fv-print-frame';
+        document.body.appendChild(iframe);
+      }
+
+      const win = iframe.contentWindow || iframe.contentDocument;
+      const docu = iframe.contentDocument || iframe.contentWindow.document;
+
+      docu.open();
+      docu.write(html);
+      docu.close();
+
+      setTimeout(() => {
+        try{ win.focus(); win.print(); }
+        catch(err){
+          console.warn('[farm-field-summary] iframe print failed, falling back to window.print()', err);
+          window.print();
+        }
+      }, 400);
+    }
+
+    async function loadData(){
+      const db = STATE.db;
+
+      const farmSnap = await getDocs(collection(db, CONFIG.FARM_COLLECTION));
+      const activeFarms = farmSnap.docs
+        .map(s => ({ id: s.id, data: s.data() || {} }))
+        .filter(f => isActiveStatus(f.data));
+
+      STATE.farmNameMap = new Map();
+      activeFarms.forEach(f => STATE.farmNameMap.set(f.id, f.data?.name || 'Unnamed farm'));
+
+      const fieldSnap = await getDocs(collection(db, CONFIG.FIELD_COLLECTION));
+      const activeFields = fieldSnap.docs
+        .map(s => ({ id: s.id, data: s.data() || {} }))
+        .filter(f => fieldIsActive(f.data));
+
+      try{
+        const towerSnap = await getDocs(collection(db, CONFIG.TOWER_COLLECTION));
+        STATE.towerMap = new Map();
+        towerSnap.docs.forEach(s => {
+          STATE.towerMap.set(s.id, s.data() || {});
+        });
+      }catch(e){
+        console.warn('[farm-field-summary] rtkTowers load failed', e);
+        STATE.towerMap = new Map();
+      }
+
+      const fieldsByFarm = new Map();
+      activeFields.forEach(f => {
+        const fid = f.data?.farmId || null;
+        if(!fid) return;
+        if(!fieldsByFarm.has(fid)) fieldsByFarm.set(fid, []);
+        fieldsByFarm.get(fid).push(f);
+      });
+
+      const farms = activeFarms.map(f => {
+        const fields = fieldsByFarm.get(f.id) || [];
+        const metrics = computeFarmMetrics(fields);
+        return { id: f.id, data: f.data, fields, metrics };
+      });
+
+      farms.sort((a,b)=> String(a.data?.name||'').localeCompare(String(b.data?.name||'')));
+
+      const countySet = new Set();
+      farms.forEach(f => f.metrics?.counties?.forEach(c => countySet.add(c)));
+      STATE.countyOptions = Array.from(countySet).sort();
+
+      STATE.farms = farms;
+    }
+
+    function wireFilterEvents(){
+      const countySel = $('#filterCounty');
+      const farmSel = $('#filterFarm');
+      const flagSel = $('#filterFlag');
+      const searchEl = $('#filterSearch');
+      const clearBtn = $('#filterClear');
+
+      if(countySel){
+        countySel.addEventListener('change', () => {
+          hydrateFarmDropdown();
+          applyFilters();
+        });
+      }
+      if(farmSel){
+        farmSel.addEventListener('change', () => applyFilters());
+      }
+      if(flagSel){
+        flagSel.addEventListener('change', () => applyFilters());
+      }
+      if(searchEl){
+        searchEl.addEventListener('input', () => applyFilters());
+      }
+      if(clearBtn){
+        clearBtn.addEventListener('click', () => location.reload());
+      }
+    }
+
+    function openFieldModal(fieldObj){
+      const fd = fieldObj?.data || {};
+      const farmName = STATE.farmNameMap.get(fd.farmId) || '';
+      const title = fd.name || 'Field';
+      const loc = [fd.county, fd.state].filter(Boolean).join(', ');
+      const till = nnum(fd.tillable ?? fd.tillableAcres ?? fd.acres);
+
+      const hasHEL = fieldHasHEL(fd);
+      const hasCRP = fieldHasCRP(fd);
+      const hasTLD = fieldHasTiled(fd);
+
+      const towerId = fd.rtkTowerId || '';
+      const tower = towerId ? (STATE.towerMap.get(towerId) || {}) : null;
+
+      const towerName = tower?.name || (towerId || '—');
+      const networkId = tower?.networkId != null ? String(tower.networkId) : '—';
+      const freq = tower?.frequencyMHz != null ? (String(tower.frequencyMHz) + ' MHz') : '—';
+
+      const rtkBlock = `${towerName}\nNetwork ${networkId}\n${freq}`;
+      const countyVal = fd.county ? (fd.county + (fd.state ? `, ${fd.state}` : '')) : (fd.state || '—');
+
+      fieldModalTitle.textContent = title;
+      fieldModalSub.textContent = farmName ? `${farmName}${loc ? ' • ' + loc : ''}` : (loc || '');
+
+      const items = [
+        ['Tillable Acres', fmt(till,2) + ' ac'],
+        ['HEL', hasHEL ? (fmt(nnum(fd.helAcres),2) + ' ac') : '—'],
+        ['CRP', hasCRP ? (fmt(nnum(fd.crpAcres),2) + ' ac') : '—'],
+        ['Tiled', hasTLD ? (fmt(till,2) + ' ac') : '—'],
+        ['County', countyVal || '—'],
+        ['RTK', rtkBlock],
+        ['Drainage Index', (fd.drainageIndex != null ? String(fd.drainageIndex) : '—')],
+        ['Soil Wetness', (fd.soilWetness != null ? String(fd.soilWetness) : '—')]
+      ];
+
+      fieldModalBody.innerHTML = `
+        <div class="field-info-grid">
+          ${items.map(([k,v]) => `
+            <div class="fi">
+              <div class="k">${escapeHtml(k)}</div>
+              <div class="v">${escapeHtml(v)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      fieldModal.classList.add('show');
+    }
+
+    function closeFieldModal(){
+      if(!fieldModal) return;
+      fieldModal.classList.remove('show');
+      if(fieldModalBody) fieldModalBody.innerHTML = '';
+    }
+
+    (async function boot(){
+      await ready;
+      STATE.db = getFirestore();
+
+      const shell = document.querySelector('fv-shell');
+      if(shell) shell.nav = NAV_MENU;
+
+      fieldModal = document.getElementById('fieldModal');
+      fieldModalBackdrop = document.getElementById('fieldModalBackdrop');
+      fieldModalClose = document.getElementById('fieldModalClose');
+      fieldModalTitle = document.getElementById('fieldModalTitle');
+      fieldModalSub = document.getElementById('fieldModalSub');
+      fieldModalBody = document.getElementById('fieldModalBody');
+
+      if(fieldModalBackdrop) fieldModalBackdrop.addEventListener('click', closeFieldModal);
+      if(fieldModalClose) fieldModalClose.addEventListener('click', closeFieldModal);
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape') closeFieldModal();
+      });
+
+      const backBtn = $('#btnBack');
+      if(backBtn){
+        backBtn.addEventListener('click', () => {
+          location.href = '/pages/reports/reports-predefined.html';
+        });
+      }
+
+      $('#detailClose').addEventListener('click', () => {
+        const farm = getWorkingFarms().find(x => x.id === STATE.selectedFarmId) || STATE.farms.find(x => x.id === STATE.selectedFarmId);
+        STATE.selectedFarmId = null;
+        clearDetails();
+        if(farm) showSummaryToast(farm);
+      });
+
+      try{
+        await loadData();
+        hydrateCountyDropdown();
+        hydrateFarmDropdown();
+        wireFilterEvents();
+        applyFilters();
+      }catch(err){
+        console.error('Error loading Farm & Field summary:', err);
+        const emptyEl = $('.wo-empty');
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = 'Error loading farms/fields. Check console or Firestore rules.';
+        const metaEl = $('#reportMeta');
+        if(metaEl) metaEl.textContent = 'Error loading report';
+      }
+
+      const printTop = $('#btnPrint');
+      const printBottom = $('#btnPrintBottom');
+      if(printTop) printTop.addEventListener('click', handlePrintClick);
+      if(printBottom) printBottom.addEventListener('click', handlePrintClick);
+    })();
+  </script>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+      <section class="hero">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🧾</div>
+          <div>
+            <h1>Farm &amp; Field Summary</h1>
+            <p class="muted">
+              Farm and field totals with HEL, CRP, Tiled, and RTK info.
+            </p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <button id="btnBack" type="button" class="btn btn-quiet">← Back to Reports</button>
+              <button id="btnPrint" type="button" class="btn btn-primary">Print / Save PDF</button>
+            </div>
+            <div class="page-header-meta" id="reportMeta">Loading report…</div>
+          </div>
+
+          <div class="filters" aria-label="Farm & field filters">
+            <div class="filters-row">
+              <div class="filter-field">
+                <label class="filter-label" for="filterCounty">County</label>
+                <select id="filterCounty" class="filter-select">
+                  <option value="all">All counties</option>
+                </select>
+              </div>
+
+              <div class="filter-field">
+                <label class="filter-label" for="filterFlag">Flag</label>
+                <select id="filterFlag" class="filter-select">
+                  <option value="all">All Acres</option>
+                  <option value="hel">HEL Acres</option>
+                  <option value="crp">CRP Acres</option>
+                  <option value="tiled">Tiled</option>
+                </select>
+              </div>
+
+              <div class="filter-field field-wide">
+                <label class="filter-label" for="filterFarm">Farm</label>
+                <select id="filterFarm" class="filter-select">
+                  <option value="all">All farms</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filters-row filters-row-secondary">
+              <div class="filter-field">
+                <label class="filter-label">Search</label>
+                <div class="bar">
+                  <div class="search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <input id="filterSearch" type="search" placeholder="Search" autocomplete="off"/>
+                  </div>
+                </div>
+              </div>
+
+              <button id="filterClear" type="button" class="btn btn-quiet">Clear filters</button>
+            </div>
+          </div>
+
+          <div id="summaryToast" class="rtk-summary" aria-live="polite"></div>
+
+          <section aria-label="Farms">
+            <div class="wo-empty">Loading farms…</div>
+            <div class="wo-list"></div>
+          </section>
+
+          <section id="farmDetails" class="wo-detail-panel" aria-label="Farm details" tabindex="-1">
+            <div class="wo-detail-header">
+              <div class="wo-detail-title">Farm Details</div>
+              <button type="button" id="detailClose" class="wo-detail-close">Close</button>
+            </div>
+
+            <div class="wo-detail-grid"></div>
+
+            <div class="fields-block">
+              <div class="fields-label">Fields in this farm (active)</div>
+              <div id="fieldsBody"></div>
+            </div>
+
+            <div class="wo-detail-footer"></div>
+          </section>
+
+          <div class="bottom-actions">
+            <button id="btnPrintBottom" type="button" class="btn btn-primary">Print / Save PDF</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <iframe id="fv-print-frame"></iframe>
+
+    <!-- Field details modal -->
+    <div id="fieldModal" class="field-modal" role="dialog" aria-modal="true" aria-label="Field details">
+      <div id="fieldModalBackdrop" class="field-backdrop"></div>
+      <div class="field-sheet">
+        <div class="field-sheet-head">
+          <div style="min-width:0;">
+            <div id="fieldModalTitle" class="field-sheet-title">Field</div>
+            <div id="fieldModalSub" class="field-sheet-sub"></div>
+          </div>
+        </div>
+
+        <div id="fieldModalBody" class="field-sheet-body"></div>
+
+        <div class="field-sheet-actions">
+          <button id="fieldModalClose" type="button" class="btn btn-quiet">Close</button>
+        </div>
+      </div>
+    </div>
+  </fv-shell>
+</body>
+</html>

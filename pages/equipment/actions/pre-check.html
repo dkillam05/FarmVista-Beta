@@ -1,0 +1,2411 @@
+<!-- =========================================================
+/pages/equipment/actions/pre-check.html  (FULL FILE)
+Pre-Check Templates (Builder Only — No Year) + WO Builder Card
+Rev: 2025-12-17k
+
+NEW in this rev (Phase 2):
+- Adds a SECOND hero card (does NOT change the existing builder card).
+- When a template is selected AND it has items:
+   • Loads ACTIVE equipment for the current category (?type=tractor, etc.)
+   • Multi-select picker (fast pick 10+)
+   • Creates one Work Order per selected equipment using the template items
+
+IMPORTANT:
+- Work Orders collection name is set to COL_WO = 'equipment_work_orders'.
+  If your WO collection is named differently, change that constant ONLY.
+- No Firestore composite-index queries are introduced; equipment/WOs are created, equipment list is loaded via safe client filtering.
+========================================================= -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>FarmVista • Pre-Check Template Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#3B7E46"/>
+
+  <!-- PWA + icons (absolute paths) -->
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
+
+  <!-- Theme + global CSS -->
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
+
+  <!-- Ensure fv-shell (global header/footer/menu) -->
+  <script>
+    (function(){
+      if(!customElements.get('fv-shell')){
+        const s=document.createElement('script');
+        s.src='/js/core/shell/fv-shell.js';
+        s.defer=true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max: 1100px;
+      --page-bottom-gap: 110px;
+      --brand: var(--green,#3B7E46);
+      --danger:#b00020;
+
+      --ctl-h:48px;
+      --ctl-pad-x:12px;
+      --ctl-pad-y:12px;
+      --ctl-radius:12px;
+    }
+
+    .wrap{
+      max-width:var(--card-max);
+      margin:0 auto;
+      padding:clamp(14px,3vw,22px);
+      padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + var(--page-bottom-gap));
+      display:grid;
+      gap:14px; /* space between hero cards */
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+      contain:layout paint;
+    }
+     /* WO Hero must NOT paint-clip, or the dropdown can’t escape */
+#heroWO.hero{
+  overflow: visible !important;
+  contain: none !important;   /* <-- this is the key */
+}
+#heroWO .body,
+#heroWO .picker{
+  overflow: visible !important;
+}
+#heroWO .picker-panel{
+  z-index: 5; /* stays behind footer */
+}
+
+    .hero-head{
+      display:grid;
+      grid-template-columns:36px 1fr;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
+    }
+    .hero-head .icon{
+      width:24px; height:24px;
+      display:grid; place-items:center;
+      color:var(--brand);
+      font-size:18px;
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.2vw,26px);
+      line-height:1.2;
+    }
+    .muted{ color:var(--muted,#67706B); margin:4px 0 0 0; }
+
+    .body{ padding:16px; display:grid; gap:14px; }
+
+    .row{
+      display:grid;
+      gap:10px;
+      grid-template-columns:1fr 1fr;
+      align-items:end;
+    }
+    @media (max-width:900px){
+      .row{ grid-template-columns:1fr; }
+    }
+
+    .field label{
+      display:block;
+      font-weight:800;
+      margin:0 0 6px 0;
+    }
+
+    .input,.select,.textarea{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:var(--ctl-radius);
+      padding:var(--ctl-pad-y) var(--ctl-pad-x);
+      box-sizing:border-box;
+      outline:none;
+      min-width:0;
+    }
+    .input,.select{ height:var(--ctl-h); line-height:calc(var(--ctl-h) - 2px); }
+    .textarea{ min-height:110px; resize:vertical; line-height:1.35; }
+
+    .tpl-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-weight:1000;
+      cursor:pointer;
+      color:var(--text)!important;
+      text-decoration:none;
+      -webkit-appearance:none;
+      appearance:none;
+      min-width:150px;
+      user-select:none;
+    }
+    .btn-primary{
+      border-color:transparent;
+      background:var(--brand);
+      color:#fff!important;
+    }
+    .btn-quiet{
+      background:transparent;
+      color:var(--text)!important;
+    }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    @media (max-width:520px){
+      .tpl-actions .btn{ flex:1 1 220px; min-width:0; }
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:var(--surface);
+      font-weight:900;
+      font-size:13px;
+      color:var(--text);
+      max-width:100%;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .panel{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      overflow:hidden;
+    }
+    .panel-head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .tplname-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1 1 auto;
+      min-width:0;
+    }
+    .tplname-title{
+      font-weight:1000;
+      font-size:16px;
+      line-height:1.2;
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .tplname-btn{
+      border:none;
+      background:transparent;
+      padding:0;
+      margin:0;
+      font:inherit;
+      font-weight:1000;
+      cursor:pointer;
+      color:var(--text);
+      text-align:left;
+      min-width:0;
+    }
+    .tplname-btn:disabled{
+      cursor:default;
+      opacity:.75;
+    }
+    .tplname-help{
+      margin:0;
+      font-size:12px;
+      color:var(--muted,#67706B);
+      font-weight:800;
+    }
+
+    .panel-body{
+      padding:12px 14px;
+      display:grid;
+      gap:10px;
+    }
+
+    .panel-top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    @media (max-width:520px){
+      .panel-top-actions .btn{ flex:1 1 220px; min-width:0; }
+    }
+
+    .list{ display:grid; gap:8px; }
+
+    .item{
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card-surface,var(--surface));
+      overflow:hidden;
+    }
+    .item-top{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .item .txt{
+      flex:1 1 auto;
+      min-width:0;
+    }
+    .item .txt .label{
+      font-weight:1000;
+      margin:0;
+    }
+    .item .txt .sub{
+      margin:4px 0 0 0;
+      font-size:13px;
+      color:var(--muted,#67706B);
+      white-space:pre-wrap;
+    }
+
+    .empty{
+      padding:14px;
+      border:1px dashed var(--border);
+      border-radius:12px;
+      color:var(--muted,#67706B);
+      background:var(--surface);
+    }
+
+    .main-expand{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px dashed var(--border);
+      display:none;
+      gap:8px;
+    }
+    .item.open .main-expand{ display:grid; }
+    .hint-row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .hint-row .grow{ flex:1 1 auto; min-width:220px; }
+    .hint-help{
+      font-size:13px;
+      color:var(--muted,#67706B);
+      margin:0;
+    }
+    @media (max-width:520px){
+      .hint-row .grow{ min-width:0; }
+    }
+
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100000; }
+    .modal.show{ display:flex; }
+    .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
+
+    .sheet{
+      position:relative;
+      width:min(100vw, 760px);
+      max-width:92vw;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:0 20px 40px rgba(0,0,0,.35);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      max-height:90vh;
+      overflow-x:hidden;
+    }
+
+    .sheet header{
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      font-weight:1000;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--text);
+      flex:0 0 auto;
+      min-width:0;
+    }
+
+    .sheet header .close{
+      border:none;
+      background:transparent;
+      font:inherit;
+      font-weight:1000;
+      cursor:pointer;
+      padding:8px 10px;
+      border-radius:10px;
+      color:var(--text);
+    }
+    .sheet header .close:hover{ background:var(--hover,rgba(0,0,0,.06)); }
+
+    .sheet .content{
+      padding:12px 14px;
+      display:grid;
+      gap:12px;
+      overflow:auto;
+      overflow-x:hidden;
+      min-width:0;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      min-width:0;
+    }
+    .grid2 > *{ min-width:0; }
+    @media (max-width:720px){
+      .grid2{ grid-template-columns:1fr; }
+    }
+
+    .counter{
+      font-size:12px;
+      color:var(--muted,#67706B);
+      font-weight:900;
+      text-align:right;
+      margin-top:6px;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
+      transform:translateX(-50%);
+      background:var(--brand);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      box-shadow:0 6px 20px rgba(0,0,0,.25);
+      z-index:99999;
+      display:none;
+      font-weight:1000;
+    }
+    .toast.show{ display:block; animation:fadeout 4s forwards; }
+@keyframes fadeout{ 0%{opacity:1} 82%{opacity:1} 100%{opacity:0} }
+
+/* =========================================
+   Picker scroll lock (Phase 2 fix)
+   ========================================= */
+body.fv-lock-scroll{
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+    .bottom-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .rename-row{
+      display:none;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .rename-row.show{ display:flex; }
+    .rename-row .input{ min-width:260px; }
+    @media (max-width:520px){
+      .rename-row{ width:100%; }
+      .rename-row .input{ flex:1 1 240px; min-width:0; }
+      .rename-row .btn{ flex:1 1 140px; min-width:0; }
+    }
+
+    /* ============================
+   Phase 2: Equipment Multi-Select
+   ============================ */
+
+    /* Allow the dropdown panel to extend OUTSIDE the WO hero card (not clipped) */
+    #heroWO{
+      overflow: visible;
+    }
+    #heroWO .body,
+    #heroWO .picker{
+      overflow: visible;
+    }
+
+    .wo-card{ display:none; }
+    .wo-card.show{ display:block; }
+
+    .picker{
+      position:relative;
+    }
+
+    .picker-box{
+      min-height:var(--ctl-h);
+      border:1px solid var(--border);
+      border-radius:var(--ctl-radius);
+      background:var(--card-surface,var(--surface));
+      padding:8px 10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      cursor:pointer;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:var(--surface);
+      font-weight:900;
+      font-size:13px;
+      color:var(--text);
+      max-width:100%;
+    }
+    .chip .x{
+      border:none;
+      background:transparent;
+      font:inherit;
+      font-weight:1000;
+      cursor:pointer;
+      padding:0 2px;
+      color:var(--muted,#67706B);
+    }
+
+    .picker-placeholder{
+      color:var(--muted,#67706B);
+      font-weight:900;
+      padding:6px 4px;
+    }
+
+    .picker-caret{
+      margin-left:auto;
+      font-weight:1000;
+      color:var(--muted,#67706B);
+      padding:0 4px;
+    }
+
+    .picker-panel{
+      position:absolute;
+      left:0;
+      right:0;
+      top:calc(100% + 6px);
+
+      /* Keep it behind the footer while still visible outside the hero */
+      z-index:5;
+
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:0 16px 34px rgba(0,0,0,.18);
+      overflow:hidden;
+      display:none;
+    }
+    .picker-panel.open{ display:block; }
+
+    /* Optional: feels nicer on desktop */
+    #heroWO .picker-panel{ margin-bottom: 16px; }
+
+    /* Give the open list breathing room above the footer */
+    #heroWO .picker-list{
+      padding-bottom: calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 16px);
+    }
+
+    .picker-panel-head{
+      padding:10px;
+      border-bottom:1px solid var(--border);
+      display:grid;
+      gap:8px;
+    }
+
+    .picker-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .picker-actions .btn{
+      min-width:auto;
+      padding:8px 10px;
+      border-radius:10px;
+      font-weight:1000;
+    }
+
+    .picker-list{
+      max-height:300px;
+      overflow:auto;
+      padding:8px;
+      display:grid;
+      gap:6px;
+    }
+
+    .pick-row{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 10px;
+      background:var(--card-surface,var(--surface));
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      cursor:pointer;
+    }
+    .pick-row:hover{ background:var(--hover,rgba(0,0,0,.04)); }
+
+    .pick-dot{
+      width:18px; height:18px;
+      border-radius:6px;
+      border:2px solid var(--border);
+      flex:0 0 auto;
+      margin-top:2px;
+      display:grid;
+      place-items:center;
+      font-weight:1000;
+      font-size:12px;
+      color:var(--brand);
+    }
+    .pick-row.selected .pick-dot{
+      border-color: var(--brand);
+      background: rgba(59,126,70,.10);
+    }
+
+    .pick-text{ flex:1 1 auto; min-width:0; }
+    .pick-title{ margin:0; font-weight:1000; }
+    .pick-sub{ margin:4px 0 0 0; font-size:12px; color:var(--muted,#67706B); }
+
+    @media (max-width:520px){
+      .picker-panel{ position:fixed; left:10px; right:10px; top:90px; }
+      .picker-list{ max-height:55vh; }
+    }
+  </style>
+</head>
+
+<body>
+  <fv-shell>
+    <div class="wrap">
+
+      <!-- =======================
+           HERO 1 (existing builder)
+           ======================= -->
+      <section class="hero" id="heroBuilder">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🧰</div>
+          <div>
+            <h1 id="hTitle">Pre-Check Template Builder</h1>
+            <p class="muted" id="hSub">Create templates and build the list of items. (Checking items off happens later in Work Orders.)</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="row">
+            <div class="field" id="implTypeWrap" style="display:none;">
+              <label for="implementType">Implement Type</label>
+              <select id="implementType" class="select"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="templateSel">Template</label>
+            <select id="templateSel" class="select"></select>
+
+            <div class="tpl-actions">
+              <button id="btnNewTemplate" class="btn btn-primary" type="button">New Template</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div class="tplname-wrap">
+                <div class="tplname-title">
+                  <button id="tplNameBtn" class="tplname-btn" type="button" disabled title="Select a template to rename">
+                    — Select a template —
+                  </button>
+                  <span class="pill" id="pillMeta">—</span>
+                </div>
+
+                <p class="tplname-help" id="tplNameHelp" style="display:none;">
+                  Tap the template name to rename it.
+                </p>
+
+                <div class="rename-row" id="renameRow">
+                  <input id="renameInput" class="input" maxlength="60" placeholder="Template name…"/>
+                  <button id="btnRenameSave" class="btn btn-primary" type="button" style="min-width:auto;">Save</button>
+                  <button id="btnRenameCancel" class="btn btn-quiet" type="button" style="min-width:auto;">Cancel</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-body">
+              <div class="panel-top-actions">
+                <button id="btnAddItem" class="btn btn-primary" type="button" disabled>Add Item</button>
+              </div>
+
+              <div id="itemsEmptyMain" class="empty">Select a template to view its items.</div>
+              <div id="itemsMain" class="list" style="display:none;"></div>
+            </div>
+          </div>
+
+          <div id="err" style="display:none; color:var(--danger); font-weight:1000;"></div>
+
+          <div class="bottom-actions">
+            <button id="btnCancel" class="btn btn-quiet" type="button">Cancel</button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =======================
+           HERO 2 (NEW — WO Builder)
+           ======================= -->
+      <section class="hero wo-card" id="heroWO">
+        <header class="hero-head">
+          <div class="icon" aria-hidden="true">🧾</div>
+          <div>
+            <h1>Create Work Orders From Template</h1>
+            <p class="muted" id="woSub">Pick active equipment and create pre-season inspection work orders.</p>
+          </div>
+        </header>
+
+        <div class="body">
+          <div class="field">
+            <label for="equipSearch">Active Equipment</label>
+
+            <div class="picker" id="equipPicker">
+              <div class="picker-box" id="equipPickerBox" role="button" aria-haspopup="listbox" aria-expanded="false">
+                <div id="equipChips" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;"></div>
+                <div class="picker-placeholder" id="equipPlaceholder">Select equipment…</div>
+                <div class="picker-caret" aria-hidden="true">▾</div>
+              </div>
+
+              <div class="picker-panel" id="equipPanel">
+  <div class="picker-panel-head">
+
+    <!-- Close (X) -->
+    <button id="equipPickerClose"
+            type="button"
+            aria-label="Close equipment picker"
+            style="
+              position:absolute;
+              top:8px;
+              right:8px;
+              border:none;
+              background:transparent;
+              padding:6px;
+              border-radius:8px;
+              cursor:pointer;">
+      <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+        <line x1="5" y1="5" x2="19" y2="19"/>
+        <line x1="19" y1="5" x2="5" y2="19"/>
+      </svg>
+    </button>
+
+    <input id="equipSearch" class="input" placeholder="Search equipment…" />
+    <div class="picker-actions">
+      <button id="btnEquipSelectAll" class="btn" type="button">Select All</button>
+      <button id="btnEquipClear" class="btn btn-quiet" type="button">Clear</button>
+      <span class="pill" id="equipCountPill">0 selected</span>
+    </div>
+  </div>
+
+  <div class="picker-list" id="equipList" role="listbox" aria-multiselectable="true"></div>
+</div>
+
+            <p class="hint-help" style="margin:8px 0 0 0;">
+              This creates one Work Order per selected unit using the template items.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body" style="gap:12px;">
+              <div class="panel-top-actions" style="justify-content:flex-end;">
+                <button id="btnCreateWO" class="btn btn-primary" type="button" disabled>Create Work Orders</button>
+              </div>
+
+              <div class="empty" id="woHint">
+                Select equipment above, then tap <b>Create Work Orders</b>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Template modal -->
+    <div id="tplModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="tplTitle">
+      <div class="backdrop" data-close></div>
+      <div class="sheet">
+        <header>
+          <div id="tplTitle">New Template</div>
+          <button class="close" type="button" data-close>Close</button>
+        </header>
+        <div class="content">
+          <div class="grid2">
+            <div class="field">
+              <label for="tplName" class="req">Template Name</label>
+              <input id="tplName" class="input" placeholder="e.g., Spring Startup" maxlength="60"/>
+            </div>
+            <div class="field">
+              <label>Applies To</label>
+              <div class="pill" id="tplApplies">—</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="tplCreate" class="btn btn-primary" type="button">Create Template</button>
+            <button id="tplCancel" class="btn btn-quiet" type="button" data-close>Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items modal -->
+    <div id="itemsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="itemsTitle">
+      <div class="backdrop" data-close></div>
+      <div class="sheet">
+        <header>
+          <div id="itemsTitle">Add Items</div>
+          <button class="close" type="button" data-close>Close</button>
+        </header>
+        <div class="content">
+          <div class="field">
+            <label for="bankPick">Add Item</label>
+
+            <div class="grid2">
+              <div>
+                <select id="bankPick" class="select"></select>
+                <p class="hint-help" style="margin:6px 0 0 0;">
+                  Pick from the global list, or choose “Add New…” to create a new one.
+                </p>
+              </div>
+
+              <div id="newBankWrap" style="display:none;">
+                <input id="newBankText"
+                       class="input"
+                       placeholder="Add new item…"
+                       maxlength="48"
+                       spellcheck="true"
+                       autocorrect="on"
+                       autocomplete="on"
+                       autocapitalize="words"
+                       inputmode="text"/>
+                <div class="counter"><span id="newBankCount">0</span>/48</div>
+              </div>
+            </div>
+
+            <div class="actions" style="gap:8px; margin-top:10px;">
+              <button id="btnAddFromBank" class="btn btn-primary" type="button" style="min-width:auto;">Add</button>
+            </div>
+          </div>
+
+          <div id="itemsEmpty" class="empty">No items yet. Add your first line above.</div>
+          <div id="itemsList" class="list" style="display:none;"></div>
+
+          <div class="actions" style="justify-content:flex-end;">
+            <button id="btnCloseItems" class="btn btn-quiet" type="button" data-close>Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
+  </fv-shell>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection, doc, setDoc, updateDoc, getDoc, getDocs,
+      query, where, limit,
+      serverTimestamp
+    } from '/js/core/firebase/firebase-init.js';
+
+    const $ = (id)=>document.getElementById(id);
+    const qs = new URLSearchParams(location.search);
+    const TYPE = String(qs.get('type') || 'tractor').toLowerCase();
+
+    const COL_TPL  = 'seasonal_precheck_templates';
+    const COL_BANK = 'seasonal_precheck_item_bank';
+    const COL_EQUIP = 'equipment';
+    const COL_WO = 'equipmentWorkOrders'; // <-- CHANGE ONLY THIS if your WO collection name differs
+
+    const BANK_MAX = 48;
+    const HINT_MAX = 90;
+    const TPL_MAX  = 60;
+
+    let db = null;
+    let currentTemplateId = null;
+    let currentTemplate = null;
+    let currentItems = [];
+
+    let bankItems = [];
+    let bankLoadedAt = 0;
+
+    // Phase 2 state
+    let equipAll = [];          // [{id, type, status, name, makeName, modelName, year, serial, implementType}]
+    let equipActive = [];       // filtered by TYPE + status active (+ implementType if implement)
+    let equipSelected = new Set(); // ids
+    let equipPanelOpen = false;
+
+    function showToast(msg="Saved."){
+      const t=$("toast");
+      t.textContent = msg;
+      t.classList.remove("show");
+      t.style.display='block';
+      void t.offsetWidth;
+      t.classList.add("show");
+      setTimeout(()=>{ t.classList.remove("show"); t.style.display='none'; }, 3800);
+    }
+
+    function setErr(msg){
+      const el=$("err");
+      if(!msg){
+        el.style.display='none';
+        el.textContent='';
+        return;
+      }
+      el.style.display='block';
+      el.textContent = msg;
+    }
+
+    function niceType(type){
+      return type ? type[0].toUpperCase()+type.slice(1) : 'Equipment';
+    }
+
+    /* Display labels for implement types (value stays raw for filtering) */
+    function implementTypeLabel(raw){
+      const v = String(raw||'').trim();
+      if(!v) return '';
+      const key = v.toLowerCase().trim().replace(/\s+/g,'-');
+      const MAP = {
+        'planter': 'Planter',
+        'tillage': 'Tillage',
+        'grain-cart': 'Grain Cart',
+        'corn-head': 'Corn Head',
+        'draper-head': 'Draper Head',
+        'auger': 'Auger',
+        'conveyor': 'Conveyor',
+        'other': 'Other'
+      };
+      if(MAP[key]) return MAP[key];
+
+      // Fallback: title-case words split on hyphens/spaces, preserve acronyms
+      const parts = v.replace(/\s+/g,' ').split(/[-\s]+/).filter(Boolean);
+      const titled = parts.map(w=>{
+        if(w.length <= 4 && w.toUpperCase() === w && /[A-Z]/.test(w)) return w;
+        const lower = w.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      }).join(' ');
+      return titled || v;
+    }
+
+    function applyHeader(){
+      $("hTitle").textContent = `${niceType(TYPE)} • Pre-Check Template Builder`;
+      $("hSub").textContent = `Create templates and build the item list for ${niceType(TYPE)}${TYPE==='implement' ? ' (by implement type)' : ''}.`;
+      $("pillMeta").textContent = '—';
+    }
+
+    async function loadImplementTypes(){
+      const wrap = $("implTypeWrap");
+      const sel  = $("implementType");
+      if(TYPE !== 'implement'){
+        wrap.style.display='none';
+        sel.innerHTML='';
+        return;
+      }
+
+      wrap.style.display='block';
+      sel.innerHTML = `<option value="">— All Implement Types —</option>`;
+
+      try{
+        // index-free: read equipment and filter client-side
+        const snap = await getDocs(collection(db, COL_EQUIP));
+        const set = new Set();
+        snap.forEach(d=>{
+          const v=d.data()||{};
+          if(String(v.type||'').toLowerCase() !== 'implement') return;
+          const t = String(v.implementType||'').trim();
+          if(t) set.add(t);
+        });
+
+        const arr = [...set].sort((a,b)=>a.localeCompare(b));
+        arr.forEach(t=>{
+          const o=document.createElement('option');
+          o.value=t;                       // raw value stays the same
+          o.textContent=implementTypeLabel(t); // pretty label in UI
+          sel.appendChild(o);
+        });
+      }catch(e){
+        console.warn('implementType load failed:', e);
+      }
+    }
+
+    function tplAppliesText(){
+      const implRaw = (TYPE==='implement') ? ($("implementType").value || '') : '';
+      const impl = (TYPE==='implement')
+        ? (implRaw ? implementTypeLabel(implRaw) : 'All Types')
+        : null;
+
+      return TYPE==='implement'
+        ? `${niceType(TYPE)} • ${impl}`
+        : `${niceType(TYPE)}`;
+    }
+
+    function readFilters(){
+      const implementType = (TYPE==='implement')
+        ? (String($("implementType").value||'').trim() || null)
+        : null;
+      return { implementType };
+    }
+
+    function clampStr(s, max){
+      const t = String(s||'');
+      return t.length > max ? t.slice(0, max) : t;
+    }
+
+    function toTitleCasePreserveSpaces(raw){
+      const s = String(raw ?? '');
+      if(!s) return '';
+      const parts = s.split(/(\s+)/);
+      return parts.map(tok=>{
+        if(/^\s+$/.test(tok)) return tok;
+        if(!tok) return tok;
+        if(tok.length <= 4 && tok.toUpperCase() === tok && /[A-Z]/.test(tok)) return tok;
+        const lower = tok.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      }).join('');
+    }
+
+    function toTitleCaseFinal(s){
+      const raw = String(s||'').trim().replace(/\s+/g,' ');
+      if(!raw) return '';
+      return raw.split(' ').map(w=>{
+        if(!w) return '';
+        if(w.length <= 4 && w.toUpperCase() === w && /[A-Z]/.test(w)) return w;
+        const lower = w.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      }).join(' ');
+    }
+
+    function normalizeLabelLower(s){
+      return String(s||'').trim().toLowerCase();
+    }
+
+    function byTitle(a,b){ return String(a.title||'').localeCompare(String(b.title||'')); }
+    function byLabel(a,b){ return String(a.label||'').localeCompare(String(b.label||'')); }
+    function byOrder(a,b){ return (Number(a.order||0) - Number(b.order||0)); }
+
+    function setRenameMode(on){
+      const row = $("renameRow");
+      const btn = $("tplNameBtn");
+      const help = $("tplNameHelp");
+      if(on){
+        row.classList.add('show');
+        btn.style.display = 'none';
+        help.style.display = 'none';
+        $("renameInput").value = currentTemplate?.title || '';
+        setTimeout(()=>$("renameInput").focus(), 30);
+      }else{
+        row.classList.remove('show');
+        btn.style.display = '';
+        help.style.display = (currentTemplateId ? '' : 'none');
+      }
+    }
+
+    async function doRenameTemplate(newNameRaw){
+      if(!currentTemplateId || !currentTemplate) return;
+      let next = toTitleCaseFinal(newNameRaw);
+      next = clampStr(next, TPL_MAX).trim();
+      if(!next) return;
+      if(next === currentTemplate.title) return;
+
+      await updateDoc(doc(db, COL_TPL, currentTemplateId),{
+        title: next,
+        titleLower: next.toLowerCase(),
+        updatedAt: serverTimestamp()
+      });
+
+      showToast('Renamed');
+      await refreshTemplates(true);
+      $("templateSel").value = currentTemplateId;
+      await loadTemplateAndItems(currentTemplateId, false);
+    }
+
+    function setTemplateUIState(){
+      const selId = String(currentTemplateId || $("templateSel")?.value || '').trim();
+      const has = !!selId;
+
+      $("btnAddItem").disabled = !has;
+
+      const nameBtn = $("tplNameBtn");
+      if(!has){
+        nameBtn.disabled = true;
+        nameBtn.textContent = '— Select a template —';
+        nameBtn.title = 'Select a template to rename';
+        $("tplNameHelp").style.display = 'none';
+      }else{
+        nameBtn.disabled = false;
+        nameBtn.textContent = currentTemplate?.title || '(Untitled)';
+        nameBtn.title = 'Tap to rename template';
+        $("tplNameHelp").style.display = '';
+      }
+    }
+
+    // ---------------------------
+    // INDEX-FREE READS (unchanged)
+    // ---------------------------
+    async function queryTemplates(){
+      const { implementType } = readFilters();
+      const qRef = query(
+        collection(db, COL_TPL),
+        where('equipmentType','==',TYPE),
+        where('archived','==',false)
+      );
+      const snap = await getDocs(qRef);
+
+      const all = [];
+      snap.forEach(d=>{
+        const v=d.data()||{};
+        all.push({
+          id:d.id,
+          title:String(v.title||'').trim() || '(Untitled)',
+          equipmentType:String(v.equipmentType||TYPE),
+          implementType: v.implementType ? String(v.implementType) : null
+        });
+      });
+
+      let out = all;
+      if(TYPE==='implement' && implementType){
+        out = out.filter(t => (t.implementType||null) === implementType);
+      }
+      out.sort(byTitle);
+      return out;
+    }
+
+    async function loadItems(templateId){
+      const snap = await getDocs(
+        collection(db, COL_TPL, templateId, 'items')
+      );
+
+      const out = [];
+      snap.forEach(d=>{
+        const v = d.data() || {};
+
+        // Treat missing archived as ACTIVE
+        if(v.archived === true) return;
+
+        out.push({
+          id: d.id,
+          bankId: v.bankId ? String(v.bankId) : null,
+          label: String(v.label || '').trim(),
+          order: Number(v.order || 0),
+          archived: false,
+          notesHint: String(v.notesHint || '').trim() || ''
+        });
+      });
+
+      out.sort((a,b)=>a.order - b.order);
+      return out;
+    }
+
+    async function loadBank(force=false){
+      const now = Date.now();
+      if(!force && bankItems.length && (now - bankLoadedAt) < 60_000) return bankItems;
+
+      const qRef = query(
+        collection(db, COL_BANK),
+        where('archived','==',false)
+      );
+      const snap = await getDocs(qRef);
+
+      const out=[];
+      snap.forEach(d=>{
+        const v=d.data()||{};
+        const label = String(v.label||'').trim();
+        if(!label) return;
+        out.push({
+          id:d.id,
+          label,
+          labelLower: String(v.labelLower||'').trim() || label.toLowerCase()
+        });
+      });
+
+      out.sort(byLabel);
+      bankItems = out;
+      bankLoadedAt = now;
+      return bankItems;
+    }
+
+    function renderTemplateSelect(templates, keepSelection=false){
+      const sel = $("templateSel");
+      const prior = keepSelection ? (sel.value || '') : '';
+
+      sel.innerHTML = '';
+      const o0=document.createElement('option');
+      o0.value='';
+      o0.textContent = templates.length ? '— Select Template —' : '— No templates yet —';
+      sel.appendChild(o0);
+
+      templates.forEach(t=>{
+        const o=document.createElement('option');
+        o.value=t.id;
+        if(TYPE==='implement'){
+          const it = t.implementType ? ` (${implementTypeLabel(t.implementType)})` : '';
+          o.textContent = `${t.title}${it}`;
+        }else{
+          o.textContent = t.title;
+        }
+        sel.appendChild(o);
+      });
+
+      if(keepSelection && prior && templates.some(t=>t.id===prior)){
+        sel.value = prior;
+      }else{
+        sel.value = '';
+        currentTemplateId = null;
+        currentTemplate = null;
+        currentItems = [];
+      }
+
+      $("pillMeta").textContent = '—';
+      renderItemsMain();
+      setTemplateUIState();
+      setRenameMode(false);
+
+      syncWOCardVisibility(); // Phase 2: show/hide card
+    }
+
+    async function refreshTemplates(keepSelection=false){
+      setErr(null);
+      try{
+        const templates = await queryTemplates();
+        renderTemplateSelect(templates, keepSelection);
+      }catch(e){
+        console.error(e);
+        setErr('Failed to load templates.');
+        renderTemplateSelect([], false);
+      }
+    }
+
+    async function loadTemplateAndItems(templateId, resetRename=true){
+      currentTemplateId = String(templateId || '').trim() || null;
+      if(!templateId){
+        currentTemplateId = null;
+        currentTemplate = null;
+        currentItems = [];
+        $("pillMeta").textContent = '—';
+        renderItemsMain();
+        setTemplateUIState();
+        if(resetRename) setRenameMode(false);
+        syncWOCardVisibility();
+        return;
+      }
+
+      try{
+        const tSnap = await getDoc(doc(db, COL_TPL, templateId));
+        if(!tSnap.exists()){
+          showToast('Template not found');
+          await refreshTemplates(false);
+          return;
+        }
+
+        const v = tSnap.data()||{};
+        currentTemplateId = templateId;
+        currentTemplate = {
+          id: templateId,
+          title: String(v.title||'').trim() || '(Untitled)',
+          equipmentType: String(v.equipmentType||TYPE),
+          implementType: v.implementType ? String(v.implementType) : null
+        };
+
+        currentItems = await loadItems(templateId);
+        $("pillMeta").textContent = tplAppliesText();
+
+        renderItemsMain();
+        setTemplateUIState();
+        if(resetRename) setRenameMode(false);
+
+        syncWOCardVisibility(); // Phase 2: show/hide card + load equipment when needed
+      }catch(e){
+        console.error(e);
+        setErr('Failed to load template/items.');
+      }
+    }
+
+    function renderItemsMain(){
+      const list = $("itemsMain");
+      const empty = $("itemsEmptyMain");
+
+      const selId = String(currentTemplateId || $("templateSel")?.value || '').trim();
+
+      // If dropdown has no template selected
+      if(!selId){
+        empty.textContent = 'Select a template to view its items.';
+        empty.style.display = 'block';
+        list.style.display = 'none';
+        list.innerHTML = '';
+        return;
+      }
+
+      const items = currentItems.filter(x=>!x.archived).slice().sort(byOrder);
+
+      if(!items.length){
+        empty.textContent = 'No items yet. Tap “Add Item” to add your first line.';
+        empty.style.display = 'block';
+        list.style.display = 'none';
+        list.innerHTML = '';
+        return;
+      }
+
+      list.innerHTML = '';
+      items.forEach((it, idx)=>{
+        const row=document.createElement('div');
+        row.className='item';
+
+        const top=document.createElement('div');
+        top.className='item-top';
+
+        const txt=document.createElement('div');
+        txt.className='txt';
+
+        const p=document.createElement('p');
+        p.className='label';
+        p.textContent = `${idx+1}. ${it.label || '(blank)'}`;
+        txt.appendChild(p);
+
+        const sub=document.createElement('p');
+        sub.className='sub';
+        sub.textContent = it.notesHint ? it.notesHint : 'Tap to add a short note…';
+        txt.appendChild(sub);
+
+        top.appendChild(txt);
+        row.appendChild(top);
+
+        const expand=document.createElement('div');
+        expand.className='main-expand';
+
+        const hintRow=document.createElement('div');
+        hintRow.className='hint-row';
+
+        const hintInp=document.createElement('input');
+        hintInp.className='input grow';
+        hintInp.placeholder='Short note (optional)…';
+        hintInp.maxLength = HINT_MAX;
+        hintInp.value = it.notesHint || '';
+
+        const saveBtn=document.createElement('button');
+        saveBtn.className='btn btn-primary';
+        saveBtn.type='button';
+        saveBtn.style.minWidth='auto';
+        saveBtn.textContent='Save Note';
+
+        saveBtn.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          try{
+            setErr(null);
+            await saveNotesHint(it.id, hintInp.value);
+            sub.textContent = (hintInp.value||'').trim() ? (hintInp.value||'').trim() : 'Tap to add a short note…';
+            row.classList.remove('open');
+          }catch(err){
+            console.error(err);
+            setErr('Save note failed.');
+          }
+        });
+
+        hintRow.append(hintInp, saveBtn);
+
+        const help=document.createElement('p');
+        help.className='hint-help';
+        help.textContent = `Example: “Record on dipstick / replace if dirty” (max ${HINT_MAX} chars).`;
+
+        expand.append(hintRow, help);
+        row.appendChild(expand);
+
+        row.addEventListener('click', ()=>{
+          list.querySelectorAll('.item.open').forEach(el=>{ if(el!==row) el.classList.remove('open'); });
+          row.classList.toggle('open');
+          if(row.classList.contains('open')){
+            setTimeout(()=>hintInp.focus(), 30);
+          }
+        });
+
+        list.appendChild(row);
+      });
+
+      empty.style.display = 'none';
+      list.style.display = 'grid';
+    }
+
+    function openModal(id){
+      const el=$(id);
+      el.classList.add('show');
+      document.body.style.overflow='hidden';
+    }
+    function closeModal(id){
+      const el=$(id);
+      el.classList.remove('show');
+      document.body.style.overflow='';
+    }
+    document.querySelectorAll('[data-close]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const m = el.closest('.modal');
+        if(m) m.classList.remove('show');
+        document.body.style.overflow='';
+      });
+    });
+
+    function renderBankPick(){
+      const sel = $("bankPick");
+      sel.innerHTML = '';
+
+      const o0=document.createElement('option');
+      o0.value='';
+      o0.textContent='— Select from list —';
+      sel.appendChild(o0);
+
+      bankItems.slice().sort(byLabel).forEach(it=>{
+        const o=document.createElement('option');
+        o.value=it.id;
+        o.textContent=it.label;
+        sel.appendChild(o);
+      });
+
+      const oNew=document.createElement('option');
+      oNew.value='__new__';
+      oNew.textContent='Add New…';
+      sel.appendChild(oNew);
+
+      sel.value = '';
+      syncNewBankUI();
+    }
+
+    function syncNewBankUI(){
+      const isNew = $("bankPick").value === '__new__';
+      $("newBankWrap").style.display = isNew ? '' : 'none';
+      $("btnAddFromBank").textContent = isNew ? 'Create + Add' : 'Add';
+      if(isNew){
+        setTimeout(()=>$("newBankText").focus(), 40);
+      }
+    }
+
+    async function ensureBankItem(labelRaw){
+      let label = toTitleCaseFinal(labelRaw);
+      label = clampStr(label, BANK_MAX);
+      label = label.trim();
+      if(!label) return null;
+
+      const labelLower = normalizeLabelLower(label);
+
+      const hit = bankItems.find(x => x.labelLower === labelLower);
+      if(hit) return hit;
+
+      try{
+        const snap = await getDocs(query(collection(db, COL_BANK), where('labelLower','==',labelLower), limit(1)));
+        if(!snap.empty){
+          const d = snap.docs[0];
+          const v = d.data()||{};
+          const out = { id:d.id, label: String(v.label||label).trim(), labelLower: String(v.labelLower||labelLower).trim() || labelLower };
+          bankItems.push(out);
+          bankItems.sort(byLabel);
+          return out;
+        }
+      }catch{}
+
+      const ref = doc(collection(db, COL_BANK));
+      await setDoc(ref, {
+        label,
+        labelLower,
+        archived:false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      const created = { id: ref.id, label, labelLower };
+      bankItems.push(created);
+      bankItems.sort(byLabel);
+      return created;
+    }
+
+    function nextOrder(){
+      const max = currentItems.reduce((m,x)=>Math.max(m, x.order||0), 0) || 0;
+      return max + 10;
+    }
+
+    async function addTemplateItemFromBank(bankId, label){
+      if(!currentTemplateId) return;
+
+      const labelLower = normalizeLabelLower(label);
+      if(currentItems.some(x => normalizeLabelLower(x.label) === labelLower && !x.archived)){
+        showToast('Already in list');
+        return;
+      }
+
+      const ref = doc(collection(db, COL_TPL, currentTemplateId, 'items'));
+      await setDoc(ref, {
+        bankId: bankId || null,
+        label,
+        labelLower,
+        order: nextOrder(),
+        notesHint: '',
+        archived:false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      currentItems = await loadItems(currentTemplateId);
+      showToast('Added');
+      renderItemsEditor();
+      renderItemsMain();
+      syncWOCardVisibility();
+    }
+
+    async function archiveItem(itemId){
+      if(!currentTemplateId || !itemId) return;
+      await updateDoc(doc(db, COL_TPL, currentTemplateId, 'items', itemId), {
+        archived:true,
+        updatedAt: serverTimestamp()
+      });
+      currentItems = await loadItems(currentTemplateId);
+      showToast('Removed');
+      renderItemsEditor();
+      renderItemsMain();
+      syncWOCardVisibility();
+    }
+
+    async function reorderItem(itemId, dir){
+      const items = currentItems.filter(x=>!x.archived).slice().sort(byOrder);
+      const idx = items.findIndex(x=>x.id===itemId);
+      if(idx<0) return;
+      const target = idx + dir;
+      if(target<0 || target>=items.length) return;
+
+      const a = items[idx];
+      const b = items[target];
+
+      const aOrder = a.order || 0;
+      const bOrder = b.order || 0;
+
+      await Promise.all([
+        updateDoc(doc(db, COL_TPL, currentTemplateId, 'items', a.id), { order: bOrder, updatedAt: serverTimestamp() }),
+        updateDoc(doc(db, COL_TPL, currentTemplateId, 'items', b.id), { order: aOrder, updatedAt: serverTimestamp() })
+      ]);
+
+      currentItems = await loadItems(currentTemplateId);
+      renderItemsEditor();
+      renderItemsMain();
+      showToast('Reordered');
+    }
+
+    async function saveNotesHint(itemId, hintRaw){
+      const hint = clampStr(String(hintRaw||'').trim(), HINT_MAX);
+      await updateDoc(doc(db, COL_TPL, currentTemplateId, 'items', itemId), {
+        notesHint: hint,
+        updatedAt: serverTimestamp()
+      });
+      const it = currentItems.find(x=>x.id===itemId);
+      if(it) it.notesHint = hint;
+      showToast('Saved note');
+      renderItemsMain();
+    }
+
+    function renderItemsEditor(){
+      const items = currentItems.filter(x=>!x.archived).slice().sort(byOrder);
+      const empty = $("itemsEmpty");
+      const list = $("itemsList");
+
+      if(!items.length){
+        empty.style.display='block';
+        list.style.display='none';
+        list.innerHTML='';
+        return;
+      }
+
+      empty.style.display='none';
+      list.style.display='grid';
+      list.innerHTML='';
+
+      items.forEach((it, i)=>{
+        const row=document.createElement('div');
+        row.className='item';
+        row.dataset.id = it.id;
+
+        const top=document.createElement('div');
+        top.className='item-top';
+
+        const txt=document.createElement('div');
+        txt.className='txt';
+
+        const p=document.createElement('p');
+        p.className='label';
+        p.textContent = it.label || '(blank)';
+        txt.appendChild(p);
+
+        const sub=document.createElement('p');
+        sub.className='sub';
+        sub.textContent = it.notesHint ? it.notesHint : 'Click to add a short note…';
+        txt.appendChild(sub);
+
+        const right=document.createElement('div');
+        right.className='right';
+
+        const up=document.createElement('button');
+        up.className='btn';
+        up.type='button';
+        up.style.minWidth='auto';
+        up.style.padding='8px 10px';
+        up.style.borderRadius='10px';
+        up.textContent='↑';
+        up.disabled = (i===0);
+        up.addEventListener('click', (e)=>{ e.stopPropagation(); reorderItem(it.id, -1); });
+
+        const dn=document.createElement('button');
+        dn.className='btn';
+        dn.type='button';
+        dn.style.minWidth='auto';
+        dn.style.padding='8px 10px';
+        dn.style.borderRadius='10px';
+        dn.textContent='↓';
+        dn.disabled = (i===items.length-1);
+        dn.addEventListener('click', (e)=>{ e.stopPropagation(); reorderItem(it.id, +1); });
+
+        const rm=document.createElement('button');
+        rm.className='btn danger';
+        rm.type='button';
+        rm.style.minWidth='auto';
+        rm.style.padding='8px 10px';
+        rm.style.borderRadius='10px';
+        rm.textContent='Remove';
+        rm.addEventListener('click', (e)=>{ e.stopPropagation(); archiveItem(it.id); });
+
+        right.append(up, dn, rm);
+        top.append(txt, right);
+        row.appendChild(top);
+
+        const expand=document.createElement('div');
+        expand.className='main-expand';
+
+        const hintRow=document.createElement('div');
+        hintRow.className='hint-row';
+
+        const hintInp=document.createElement('input');
+        hintInp.className='input grow';
+        hintInp.placeholder='Short note (optional)…';
+        hintInp.maxLength = HINT_MAX;
+        hintInp.value = it.notesHint || '';
+
+        const saveBtn=document.createElement('button');
+        saveBtn.className='btn btn-primary';
+        saveBtn.type='button';
+        saveBtn.style.minWidth='auto';
+        saveBtn.textContent='Save';
+
+        saveBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          saveNotesHint(it.id, hintInp.value);
+        });
+
+        hintRow.append(hintInp, saveBtn);
+
+        const help=document.createElement('p');
+        help.className='hint-help';
+        help.textContent = `Example: “Record on dipstick / replace if dirty” (max ${HINT_MAX} chars).`;
+
+        expand.append(hintRow, help);
+        row.appendChild(expand);
+
+        row.addEventListener('click', ()=>{
+          list.querySelectorAll('.item.open').forEach(el=>{ if(el!==row) el.classList.remove('open'); });
+          row.classList.toggle('open');
+          if(row.classList.contains('open')){
+            setTimeout(()=>hintInp.focus(), 40);
+          }
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    async function createTemplate(){
+      let name = toTitleCaseFinal($("tplName").value || '');
+      name = clampStr(name, TPL_MAX).trim();
+      if(!name){ alert('Enter a template name.'); return; }
+
+      const { implementType } = readFilters();
+      const ref = doc(collection(db, COL_TPL));
+      const data = {
+        equipmentType: TYPE,
+        title: name,
+        titleLower: name.toLowerCase(),
+        archived: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      if(TYPE==='implement' && implementType) data.implementType = implementType;
+
+      await setDoc(ref, data);
+      showToast('Template created');
+      closeModal('tplModal');
+
+      await refreshTemplates(false);
+      $("templateSel").value = ref.id;
+      await loadTemplateAndItems(ref.id, true);
+    }
+
+    // ======================================================
+    // PHASE 2: ACTIVE EQUIPMENT + MULTI-SELECT + WO CREATION
+    // ======================================================
+
+    function statusIsActive(v){
+      const s = String(v||'').trim().toLowerCase();
+      return s === 'active';
+    }
+
+    function serialLast6(serial){
+      const s = String(serial||'').trim();
+      if(!s) return '';
+      return s.length <= 6 ? s : s.slice(-6);
+    }
+
+    function equipmentDisplayName(e){
+      // Prefer existing e.name, but append last6 if we can (useful)
+      const base = String(e.name || '').trim();
+      const last6 = serialLast6(e.serial);
+      if(base && last6){
+        // If base already contains (#...), don't double it
+        if(base.includes('(#')) return base;
+        return `${base} (#${last6})`;
+      }
+      if(base) return base;
+
+      const mk = String(e.makeName||'').trim();
+      const md = String(e.modelName||'').trim();
+      if(mk && md && last6) return `${mk} ${md} (#${last6})`;
+      if(mk && md) return `${mk} ${md}`;
+      return e.id || '(equipment)';
+    }
+
+    async function loadActiveEquipmentIfNeeded(){
+      // Load once per page (then filter dynamically by type/implementType)
+      if(equipAll.length) return;
+
+      const snap = await getDocs(collection(db, COL_EQUIP));
+      const out = [];
+      snap.forEach(d=>{
+        const v = d.data() || {};
+        out.push({
+          id: d.id,
+          type: String(v.type||'').toLowerCase(),
+          status: v.status,
+          name: v.name || '',
+          makeName: v.makeName || v.make || '',
+          modelName: v.modelName || v.model || '',
+          year: v.year || null,
+          serial: v.serial || '',
+          implementType: v.implementType ? String(v.implementType) : null
+        });
+      });
+      equipAll = out;
+    }
+
+    function filterActiveEquipment(){
+      const { implementType } = readFilters();
+
+      equipActive = equipAll
+        .filter(e => String(e.type||'').toLowerCase() === TYPE)
+        .filter(e => statusIsActive(e.status))
+        .filter(e => {
+          if(TYPE !== 'implement') return true;
+          if(!implementType) return true;
+          return String(e.implementType||'') === implementType; // raw compare
+        })
+        .sort((a,b)=>equipmentDisplayName(a).localeCompare(equipmentDisplayName(b)));
+    }
+
+    function syncWOCardVisibility(){
+      const hasTemplate = !!currentTemplateId;
+      const hasItems = Array.isArray(currentItems) && currentItems.filter(x=>!x.archived).length > 0;
+
+      const hero = $("heroWO");
+      if(hasTemplate && hasItems){
+        hero.classList.add('show');
+
+        // Update subtitle to include template name
+        const tn = currentTemplate?.title || '(Template)';
+        $("woSub").textContent = `Template: ${tn} — Pick active ${niceType(TYPE)} and create pre-season inspection work orders.`;
+
+        // If we haven't loaded equipment yet, load now
+        (async()=>{
+          try{
+            await loadActiveEquipmentIfNeeded();
+            filterActiveEquipment();
+            renderEquipPanel(); // build list
+            renderEquipChips();
+            syncWOButtons();
+          }catch(e){
+            console.error(e);
+            // Keep card visible, but show no list
+            $("equipList").innerHTML = `<div class="empty">Failed to load equipment.</div>`;
+          }
+        })();
+
+      }else{
+        hero.classList.remove('show');
+        closeEquipPanel();
+        equipSelected.clear();
+        renderEquipChips();
+        syncWOButtons();
+      }
+    }
+
+    function setBgScrollLock(on){
+  document.body.classList.toggle('fv-lock-scroll', !!on);
+}
+
+function openEquipPanel(){
+  equipPanelOpen = true;
+
+  // lock background scroll
+  setBgScrollLock(true);
+
+  $("equipPanel").classList.add('open');
+  $("equipPickerBox").setAttribute('aria-expanded','true');
+
+  // reset search + render list
+  $("equipSearch").value = '';
+  renderEquipPanel();
+
+  setTimeout(()=>$("equipSearch").focus(), 30);
+}
+
+function closeEquipPanel(){
+  equipPanelOpen = false;
+
+  $("equipPanel").classList.remove('open');
+  $("equipPickerBox").setAttribute('aria-expanded','false');
+
+  // unlock background scroll
+  setBgScrollLock(false);
+}
+
+    function toggleEquipPanel(){
+      if(equipPanelOpen) closeEquipPanel();
+      else openEquipPanel();
+    }
+
+    function renderEquipChips(){
+      const chips = $("equipChips");
+      const ph = $("equipPlaceholder");
+      chips.innerHTML = '';
+
+      const ids = [...equipSelected];
+      if(!ids.length){
+        ph.style.display = '';
+      }else{
+        ph.style.display = 'none';
+      }
+
+      // Render up to 6 chips, then "+N more"
+      const maxChips = 6;
+      const showIds = ids.slice(0, maxChips);
+      showIds.forEach(id=>{
+        const e = equipActive.find(x=>x.id===id) || equipAll.find(x=>x.id===id);
+        const label = e ? equipmentDisplayName(e) : id;
+
+        const c = document.createElement('span');
+        c.className = 'chip';
+        c.title = label;
+        c.textContent = label;
+
+        const x = document.createElement('button');
+        x.className = 'x';
+        x.type = 'button';
+        x.textContent = '×';
+        x.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          equipSelected.delete(id);
+          renderEquipChips();
+          renderEquipPanel();
+          syncWOButtons();
+        });
+
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+
+      if(ids.length > maxChips){
+        const more = document.createElement('span');
+        more.className = 'chip';
+        more.textContent = `+${ids.length - maxChips} more`;
+        chips.appendChild(more);
+      }
+
+      $("equipCountPill").textContent = `${ids.length} selected`;
+    }
+
+    function renderEquipPanel(){
+      const q = String($("equipSearch").value||'').trim().toLowerCase();
+      const list = $("equipList");
+      list.innerHTML = '';
+
+      const filtered = equipActive.filter(e=>{
+        if(!q) return true;
+        const hay = `${equipmentDisplayName(e)} ${e.makeName||''} ${e.modelName||''} ${e.serial||''}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      if(!filtered.length){
+        list.innerHTML = `<div class="empty">No active ${niceType(TYPE)} found.</div>`;
+        renderEquipChips();
+        return;
+      }
+
+      filtered.forEach(e=>{
+        const row = document.createElement('div');
+        row.className = 'pick-row' + (equipSelected.has(e.id) ? ' selected' : '');
+        row.setAttribute('role','option');
+        row.setAttribute('aria-selected', equipSelected.has(e.id) ? 'true' : 'false');
+
+        const dot = document.createElement('div');
+        dot.className = 'pick-dot';
+        dot.textContent = equipSelected.has(e.id) ? '✓' : '';
+
+        const txt = document.createElement('div');
+        txt.className = 'pick-text';
+
+        const title = document.createElement('p');
+        title.className = 'pick-title';
+        title.textContent = equipmentDisplayName(e);
+
+        const sub = document.createElement('p');
+        sub.className = 'pick-sub';
+        const yr = e.year ? ` • ${e.year}` : '';
+        const it = (TYPE==='implement' && e.implementType) ? ` • ${implementTypeLabel(e.implementType)}` : '';
+        sub.textContent = `${String(e.makeName||'').trim()} ${String(e.modelName||'').trim()}${yr}${it}`.trim() || '—';
+
+        txt.append(title, sub);
+        row.append(dot, txt);
+
+        row.addEventListener('click', (ev)=>{
+          ev.stopPropagation(); // keep dropdown open
+          if(equipSelected.has(e.id)) equipSelected.delete(e.id);
+          else equipSelected.add(e.id);
+          renderEquipChips();
+          renderEquipPanel();
+          syncWOButtons();
+        });
+
+        list.appendChild(row);
+      });
+
+      renderEquipChips();
+    }
+
+    function syncWOButtons(){
+      const ids = equipSelected.size;
+      const canCreate = !!currentTemplateId && ids > 0 && currentItems.filter(x=>!x.archived).length > 0;
+      $("btnCreateWO").disabled = !canCreate;
+    }
+
+    function getUserDisplay(){
+      // Try to get display name/email from your global context if present
+      const email = window.FVUserContext?.get?.()?.email
+        || window.FVUserContext?.get?.()?.userEmail
+        || window.FVUserContext?.get?.()?.uid
+        || window.FV?.user?.email
+        || '';
+      const name = window.FVUserContext?.get?.()?.name
+        || window.FVUserContext?.get?.()?.displayName
+        || window.FV?.user?.displayName
+        || '';
+      return {
+        email: String(email||'').trim(),
+        name: String(name||'').trim()
+      };
+    }
+
+    async function createWorkOrdersFromTemplate(){
+      if(!currentTemplateId) return;
+      const items = currentItems.filter(x=>!x.archived).slice().sort(byOrder);
+      if(!items.length) return;
+
+      const ids = [...equipSelected];
+      if(!ids.length) return;
+
+      const { email, name } = getUserDisplay();
+      const whoName = name || (email ? email : 'FarmVista');
+      const templateTitle = currentTemplate?.title || 'Pre-Season Inspection';
+
+      // Build lineItems from template items
+const templateLineItems = items.map(it => ({
+  completed: false,
+  completedAt: null,
+  completedByEmployeeId: null,
+  completedByEmployeeName: null,
+
+  // NOTES: comes from the template item's saved notesHint (your UI "Save Note")
+  notes: String(it.notesHint || '').trim(),
+
+  origin: 'precheck_template',
+  partsNeeded: null,
+  serviceRequestId: null,
+
+  // SERVICE TOPIC: use the template item's label (from the bank when you added it)
+  serviceTopic: String(it.label || '').trim() || 'inspection',
+  serviceTopicOther: null,
+
+  // OPTIONAL but highly recommended (so you can trace what item it was)
+  precheckTemplateItemId: it.id || null,
+  precheckBankId: it.bankId || null,
+
+  submittedByName: whoName
+}));
+
+
+      // Create one WO per equipment
+      let created = 0;
+
+      for(const equipId of ids){
+        const e = equipActive.find(x=>x.id===equipId) || equipAll.find(x=>x.id===equipId);
+        if(!e) continue;
+
+        const mk = String(e.makeName||'').trim();
+        const md = String(e.modelName||'').trim();
+        const last6 = serialLast6(e.serial) || '';
+        const equipName = (mk && md && last6) ? `${mk} ${md} (#${last6})` : (equipmentDisplayName(e) || '');
+
+        const woRef = doc(collection(db, COL_WO));
+        await setDoc(woRef, {
+          // Core status fields (matching your examples)
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          completedAt: null,
+          completedByEmployeeId: null,
+          completedByEmployeeName: null,
+          completionMeter: null,
+          meterLabel: null,
+          meterType: null,
+          summaryNotes: null,
+
+          // Equipment snapshot fields (matching your examples)
+          equipmentId: e.id,
+          equipmentType: TYPE,
+          equipmentMake: mk || null,
+          equipmentModel: md || null,
+          equipmentName: equipName || null,
+          equipmentSerialLast6: last6 || null,
+
+          // Template linkage
+          precheckTemplateId: currentTemplateId,
+          precheckTemplateTitle: templateTitle,
+
+          // Work order content
+          lineItems: templateLineItems.map(x=>({ ...x })) // deep copy
+        });
+
+        created++;
+      }
+
+      showToast(`Created ${created} Work Orders`);
+      syncWOButtons();
+
+      // bounce back after toast starts
+      setTimeout(()=>{
+        if(document.referrer){
+          history.back();
+        }else{
+          location.assign('/index.html');
+        }
+      }, 1200);
+    }
+
+    // ---------------------------
+    // Wiring
+    // ---------------------------
+    function wire(){
+      $("implementType").addEventListener('change', async ()=>{
+        $("tplApplies").textContent = tplAppliesText();
+        await refreshTemplates(false);
+
+        // Re-filter equipment if card is showing
+        if($("heroWO").classList.contains('show')){
+          filterActiveEquipment();
+          equipSelected.clear();
+          renderEquipPanel();
+          renderEquipChips();
+          syncWOButtons();
+        }
+      });
+
+      $("templateSel").addEventListener('change', async ()=>{
+        const id = String($("templateSel").value || '').trim();
+
+        // Immediately reflect selection in UI even before async loads finish
+        currentTemplateId = id || null;
+        setTemplateUIState();
+        renderItemsMain();
+        syncWOCardVisibility();
+
+        await loadTemplateAndItems(id, true);
+      });
+
+      $("btnNewTemplate").addEventListener('click', ()=>{
+        $("tplName").value = '';
+        $("tplApplies").textContent = tplAppliesText();
+        openModal('tplModal');
+        setTimeout(()=>$("tplName").focus(), 60);
+      });
+
+      $("tplName").addEventListener('input', ()=>{
+        const el = $("tplName");
+        const before = el.value;
+        const start = el.selectionStart || 0;
+        const end   = el.selectionEnd || 0;
+
+        const tc = toTitleCasePreserveSpaces(before);
+        const cl = clampStr(tc, TPL_MAX);
+
+        if(cl !== before){
+          el.value = cl;
+          const delta = cl.length - before.length;
+          const ns = Math.max(0, Math.min(cl.length, start + delta));
+          const ne = Math.max(0, Math.min(cl.length, end + delta));
+          try{ el.setSelectionRange(ns, ne); }catch{}
+        }
+      });
+
+      $("tplCreate").addEventListener('click', async ()=>{
+        try{ setErr(null); await createTemplate(); }
+        catch(e){ console.error(e); setErr('Template create failed.'); }
+      });
+
+      $("tplNameBtn").addEventListener('click', ()=>{
+        if(!currentTemplateId) return;
+        setRenameMode(true);
+      });
+
+      $("renameInput").addEventListener('input', ()=>{
+        const el = $("renameInput");
+        const before = el.value;
+        const start = el.selectionStart || 0;
+        const end   = el.selectionEnd || 0;
+
+        const tc = toTitleCasePreserveSpaces(before);
+        const cl = clampStr(tc, TPL_MAX);
+
+        if(cl !== before){
+          el.value = cl;
+          const delta = cl.length - before.length;
+          const ns = Math.max(0, Math.min(cl.length, start + delta));
+          const ne = Math.max(0, Math.min(cl.length, end + delta));
+          try{ el.setSelectionRange(ns, ne); }catch{}
+        }
+      });
+
+      $("btnRenameCancel").addEventListener('click', ()=> setRenameMode(false));
+
+      $("btnRenameSave").addEventListener('click', async ()=>{
+        try{
+          setErr(null);
+          await doRenameTemplate($("renameInput").value);
+          setRenameMode(false);
+        }catch(e){
+          console.error(e);
+          setErr('Rename failed.');
+        }
+      });
+
+      $("renameInput").addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          $("btnRenameSave").click();
+        }
+        if(e.key === 'Escape'){
+          e.preventDefault();
+          $("btnRenameCancel").click();
+        }
+      });
+
+      $("btnAddItem").addEventListener('click', async ()=>{
+        if(!currentTemplateId) return;
+
+        $("itemsTitle").textContent = `Add Items • ${currentTemplate?.title || ''}`;
+
+        try{
+          setErr(null);
+          await loadBank(true);
+          renderBankPick();
+        }catch(e){
+          console.error(e);
+          setErr('Failed to load item bank.');
+          return;
+        }
+
+        $("newBankText").value = '';
+        $("newBankCount").textContent = '0';
+        renderItemsEditor();
+        openModal('itemsModal');
+      });
+
+      $("bankPick").addEventListener('change', syncNewBankUI);
+
+      $("newBankText").addEventListener('input', ()=>{
+        const el = $("newBankText");
+        const before = el.value;
+        const start = el.selectionStart || 0;
+        const end   = el.selectionEnd || 0;
+
+        const tc = toTitleCasePreserveSpaces(before);
+        const cl = clampStr(tc, BANK_MAX);
+
+        if(cl !== before){
+          el.value = cl;
+          const delta = cl.length - before.length;
+          const ns = Math.max(0, Math.min(cl.length, start + delta));
+          const ne = Math.max(0, Math.min(cl.length, end + delta));
+          try{ el.setSelectionRange(ns, ne); }catch{}
+        }
+
+        $("newBankCount").textContent = String((el.value||'').length);
+      });
+
+      $("newBankText").addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          $("btnAddFromBank").click();
+        }
+      });
+
+      $("btnAddFromBank").addEventListener('click', async ()=>{
+        if(!currentTemplateId){ return; }
+
+        try{
+          setErr(null);
+          const pick = $("bankPick").value || '';
+          if(!pick){
+            alert('Pick an item (or Add New…).');
+            return;
+          }
+
+          if(pick === '__new__'){
+            const raw = $("newBankText").value || '';
+            const created = await ensureBankItem(raw);
+            if(!created){
+              alert('Enter a new item name.');
+              return;
+            }
+
+            await loadBank(true);
+            renderBankPick();
+            $("bankPick").value = created.id;
+            syncNewBankUI();
+
+            $("newBankText").value = '';
+            $("newBankCount").textContent = '0';
+
+            await addTemplateItemFromBank(created.id, created.label);
+            return;
+          }
+
+          const hit = bankItems.find(x=>x.id===pick);
+          if(!hit){
+            alert('That item was not found. Close/reopen the modal.');
+            return;
+          }
+          await addTemplateItemFromBank(hit.id, hit.label);
+
+        }catch(e){
+          console.error(e);
+          setErr('Add item failed.');
+        }
+      });
+
+      $("btnCancel").addEventListener('click', ()=>{
+        if(document.referrer){
+          history.back();
+        }else{
+          location.assign('/index.html');
+        }
+      });
+
+      // Phase 2: picker open/close + search
+      $("equipPickerBox").addEventListener('click', toggleEquipPanel);
+
+      // keep dropdown open when clicking inside the panel
+      $("equipPanel").addEventListener('click', (ev)=>ev.stopPropagation());
+
+// X button closes picker
+$("equipPickerClose").addEventListener('click', (ev)=>{
+  ev.stopPropagation();
+  closeEquipPanel();
+});
+
+      document.addEventListener('click', (e)=>{
+  const box = $("equipPicker");
+  if(!equipPanelOpen) return;
+  if(box && !box.contains(e.target)){
+    closeEquipPanel();
+  }
+});
+
+// HARD scroll-lock (iOS/PWA safe):
+// While picker is open, block background scroll gestures unless they start inside the picker panel.
+const blockBgScroll = (ev)=>{
+  if(!equipPanelOpen) return;
+
+  // allow scrolling INSIDE the panel/list
+  if(ev.target && ev.target.closest && ev.target.closest('#equipPanel')) return;
+
+  // otherwise block the gesture
+  ev.preventDefault();
+};
+
+// touch (iOS)
+document.addEventListener('touchmove', blockBgScroll, { passive:false });
+
+// wheel / trackpad (desktop)
+document.addEventListener('wheel', blockBgScroll, { passive:false });
+
+$("equipSearch").addEventListener('input', renderEquipPanel);
+
+      $("btnEquipSelectAll").addEventListener('click', ()=>{
+        equipActive.forEach(e=>equipSelected.add(e.id));
+        renderEquipChips();
+        renderEquipPanel();
+        syncWOButtons();
+      });
+      $("btnEquipClear").addEventListener('click', ()=>{
+        equipSelected.clear();
+        renderEquipChips();
+        renderEquipPanel();
+        syncWOButtons();
+      });
+
+      $("btnCreateWO").addEventListener('click', async ()=>{
+        try{
+          $("btnCreateWO").disabled = true;
+          await createWorkOrdersFromTemplate();
+        }catch(e){
+          console.error(e);
+          setErr('Failed to create work orders.');
+        }finally{
+          syncWOButtons();
+        }
+      });
+
+      setTemplateUIState();
+      renderItemsMain();
+      syncWOCardVisibility();
+    }
+
+    // replace stub with the real function reference (so hoisting isn't confusing)
+    renderEquipPanel = function(){
+      const q = String($("equipSearch").value||'').trim().toLowerCase();
+      const list = $("equipList");
+      list.innerHTML = '';
+
+      const filtered = equipActive.filter(e=>{
+        if(!q) return true;
+        const hay = `${equipmentDisplayName(e)} ${e.makeName||''} ${e.modelName||''} ${e.serial||''}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      if(!filtered.length){
+        list.innerHTML = `<div class="empty">No active ${niceType(TYPE)} found.</div>`;
+        renderEquipChips();
+        return;
+      }
+
+      filtered.forEach(e=>{
+        const row = document.createElement('div');
+        row.className = 'pick-row' + (equipSelected.has(e.id) ? ' selected' : '');
+        row.setAttribute('role','option');
+        row.setAttribute('aria-selected', equipSelected.has(e.id) ? 'true' : 'false');
+
+        const dot = document.createElement('div');
+        dot.className = 'pick-dot';
+        dot.textContent = equipSelected.has(e.id) ? '✓' : '';
+
+        const txt = document.createElement('div');
+        txt.className = 'pick-text';
+
+        const title = document.createElement('p');
+        title.className = 'pick-title';
+        title.textContent = equipmentDisplayName(e);
+
+        const sub = document.createElement('p');
+        sub.className = 'pick-sub';
+        const yr = e.year ? ` • ${e.year}` : '';
+        const it = (TYPE==='implement' && e.implementType) ? ` • ${implementTypeLabel(e.implementType)}` : '';
+        sub.textContent = `${String(e.makeName||'').trim()} ${String(e.modelName||'').trim()}${yr}${it}`.trim() || '—';
+
+        txt.append(title, sub);
+        row.append(dot, txt);
+
+        row.addEventListener('click', (ev)=>{
+          ev.stopPropagation(); // keep dropdown open
+          if(equipSelected.has(e.id)) equipSelected.delete(e.id);
+          else equipSelected.add(e.id);
+          renderEquipChips();
+          renderEquipPanel();
+          syncWOButtons();
+        });
+
+        list.appendChild(row);
+      });
+
+      renderEquipChips();
+    };
+
+    (async()=>{
+      await ready;
+      db = getFirestore();
+
+      applyHeader();
+      await loadImplementTypes();
+
+      $("tplApplies").textContent = tplAppliesText();
+
+      try{ await loadBank(false); }catch{}
+
+      await refreshTemplates(false);
+      wire();
+    })();
+  </script>
+</body>
+</html>

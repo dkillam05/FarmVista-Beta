@@ -1,0 +1,2603 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Grain Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+  <script src="/js/grain/inventory/grain-capacity.js"></script>
+
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+
+  <script src="/js/core/version/version.js" defer></script>
+  <script src="/js/core/core.js" defer></script>
+  <script src="/js/core/shell/fv-shell.js" defer></script>
+
+  <style>
+    :root{
+      --fv-green:#3B7E46;
+      --fv-green-dark:#326d3c;
+      --fv-red:#b3261e;
+      --page-max:1500px;
+    }
+
+    *{box-sizing:border-box}
+
+    .inventory-page{
+      max-width:var(--page-max) !important;
+      margin:0 auto !important;
+      padding-bottom:110px !important;
+    }
+
+    .muted{color:var(--muted,#87908a)}
+    .perm-hidden{display:none !important}
+
+    .page-heading-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:18px;
+    }
+
+    .page-heading-copy{min-width:0}
+    .page-title{margin-bottom:6px}
+
+    .page-sub{
+      margin:0;
+      max-width:950px;
+      line-height:1.45;
+      opacity:.76;
+    }
+
+    .workspace-section{margin-top:20px}
+
+    .inventory-card{
+      overflow:hidden;
+      background:var(--surface,#fff);
+      color:var(--text,inherit);
+      border:1px solid var(--border,#d4d4d4);
+      border-radius:14px;
+      box-shadow:var(--shadow,0 1px 3px rgba(0,0,0,.08));
+    }
+
+    .inventory-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:18px 20px;
+      border-bottom:1px solid var(--border,#d4d4d4);
+    }
+
+    /* Section colors mirror the Grain Contracts workflow headers so each
+       inventory area is visually separated at a glance. */
+    #fv-active-hauling-jobs-section .inventory-head{
+      background:linear-gradient(90deg,rgba(79,113,143,.13),transparent 58%);
+    }
+
+    #active-harvest-section .inventory-head{
+      background:linear-gradient(90deg,rgba(59,126,70,.13),transparent 58%);
+    }
+
+    #grain-bins-section .inventory-head{
+      background:linear-gradient(90deg,rgba(154,103,0,.11),transparent 58%);
+    }
+
+    #grain-bags-section .inventory-head{
+      background:linear-gradient(90deg,rgba(126,87,194,.11),transparent 58%);
+    }
+
+    .inventory-title{
+      margin:0;
+      font-size:1.18rem;
+      font-weight:800;
+    }
+
+    .inventory-sub{
+      margin-top:4px;
+      font-size:.9rem;
+      line-height:1.4;
+      opacity:.70;
+    }
+
+    .inventory-body{
+      padding:18px 20px;
+    }
+
+    .inventory-kpis{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    @media(min-width:900px){
+      .inventory-kpis.bin-kpis,
+      .inventory-kpis.bag-kpis{
+        grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      }
+    }
+
+    .crop-kpi-group{display:contents}
+
+    .mini-kpi{
+      min-width:0;
+      padding:14px;
+      border:1px solid var(--border,#d4d4d4);
+      border-radius:12px;
+      background:var(--surface,#fff);
+      box-shadow:var(--shadow,0 1px 3px rgba(0,0,0,.05));
+    }
+
+    .mini-kpi-label{
+      font-size:.8rem;
+      opacity:.70;
+      margin-bottom:5px;
+      font-weight:500;
+    }
+
+    .mini-kpi-value{
+      font-size:1.28rem;
+      font-weight:800;
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .inventory-toolbar{
+      display:grid;
+      grid-template-columns:minmax(160px,220px) minmax(250px,1fr);
+      gap:12px;
+      align-items:end;
+      margin-bottom:16px;
+    }
+
+    .filter-field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+
+    .filter-field label{
+      font-size:.84rem;
+      font-weight:700;
+      opacity:.80;
+    }
+
+    .select,
+    .search{
+      width:100%;
+      min-height:42px;
+      padding:8px 10px;
+      border:1px solid var(--border,#c8c8c8);
+      border-radius:9px;
+      background:var(--surface,#fff);
+      color:inherit;
+      font:inherit;
+    }
+
+    .table-wrap{
+      width:100%;
+      overflow-x:auto;
+      border:1px solid var(--border,#d4d4d4);
+      border-radius:10px;
+    }
+
+    .inventory-table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1040px;
+    }
+
+    .inventory-table th{
+      padding:10px 12px;
+      background:var(--surface-2,#f3f3f3);
+      border-bottom:1px solid var(--border,#d4d4d4);
+      font-size:.78rem;
+      font-weight:800;
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    .inventory-table td{
+      padding:11px 12px;
+      border-bottom:1px solid var(--border,#e1e1e1);
+      font-size:.88rem;
+      vertical-align:middle;
+      text-align:center;
+    }
+
+    .inventory-table tbody tr:last-child td{border-bottom:0}
+
+    .inventory-table tbody tr[data-clickable="1"]{cursor:pointer}
+    .inventory-table tbody tr[data-clickable="1"]:hover{background:var(--surface-2,rgba(0,0,0,.04))}
+
+    .harvest-row{cursor:pointer}
+    .harvest-row:hover{background:var(--surface-2,rgba(0,0,0,.04))}
+    .harvest-row td:first-child{font-weight:800}
+
+    .harvest-drill-table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:700px;
+    }
+
+    .harvest-drill-table th,
+    .harvest-drill-table td{
+      padding:10px 12px;
+      border-bottom:1px solid var(--border,#e1e1e1);
+      text-align:center;
+      font-size:.86rem;
+    }
+
+    .harvest-drill-table th{
+      background:var(--surface-2,#f3f3f3);
+      font-size:.76rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .harvest-drill-table td:first-child,
+    .harvest-drill-table th:first-child{text-align:left}
+
+    .harvest-field-row{cursor:pointer;font-weight:700}
+    .harvest-field-row:hover{background:var(--surface-2,rgba(0,0,0,.04))}
+
+    .ticket-link{
+      color:var(--fv-green);
+      font-weight:800;
+      text-decoration:none;
+    }
+
+    .ticket-link:hover{text-decoration:underline}
+
+    button.ticket-link{appearance:none;-webkit-appearance:none;border:0;padding:0;background:none;font:inherit;cursor:pointer}
+    button.ticket-link:disabled{color:inherit;opacity:1;cursor:default;text-decoration:none}
+    #ticket-image-modal-backdrop{z-index:13000}
+    .ticket-image-modal{width:min(920px,96vw);max-height:94vh}
+    .ticket-image-modal-body{display:flex;align-items:center;justify-content:center;overflow:auto;background:var(--surface-2,#f4f4f4);padding:12px}
+    .ticket-image-modal-img{display:block;max-width:100%;max-height:calc(94vh - 82px);height:auto;object-fit:contain}
+
+    .drill-back{
+      margin-bottom:12px;
+    }
+
+    .site-row{font-weight:800}
+
+    .site-row td:first-child,
+    .child-row td:first-child{
+      text-align:left;
+    }
+
+    .child-row{background:rgba(59,126,70,.035)}
+
+    .child-name{
+      padding-left:34px !important;
+      font-weight:700;
+    }
+
+    .child-name::before{
+      content:"↳ ";
+      color:var(--muted,#87908a);
+    }
+
+    .num-cell{
+      text-align:center !important;
+      white-space:nowrap;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .grade-na{opacity:.60;font-weight:600}
+    .grade-live{font-weight:800}
+
+    .crop-pill,
+    .loads-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:28px;
+      padding:5px 9px;
+      border-radius:999px;
+      font-size:.76rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .crop-pill{
+      background:rgba(59,126,70,.14);
+      color:#2d6937;
+    }
+
+    [data-theme="dark"] .crop-pill{color:#b9e4bf}
+
+    .loads-pill{
+      min-width:38px;
+      background:var(--surface-2,#f3f3f3);
+      border:1px solid var(--border,#d4d4d4);
+    }
+
+    .chev{
+      display:inline-block;
+      width:21px;
+      opacity:.65;
+      font-weight:800;
+    }
+
+    .empty-row{
+      padding:32px 20px !important;
+      text-align:center !important;
+      opacity:.68;
+    }
+
+    .inventory-foot{
+      margin-top:12px;
+      font-size:.82rem;
+      line-height:1.45;
+      opacity:.68;
+    }
+
+    /* Modal — matches Grain Contracts */
+    .modal-backdrop{
+      position:fixed;
+      z-index:12000;
+      inset:0;
+      display:none;
+      align-items:flex-start;
+      justify-content:center;
+      padding:20px;
+      overflow:auto;
+      background:rgba(0,0,0,.50);
+    }
+
+    .modal-backdrop.open{display:flex}
+
+    .modal{
+      width:min(760px,100%);
+      margin:auto;
+      max-height:none;
+      overflow:hidden;
+      background:var(--surface,#fff);
+      color:inherit;
+      border:0;
+      border-radius:16px;
+      box-shadow:0 18px 55px rgba(0,0,0,.30);
+    }
+
+    .modal-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 20px;
+      border-bottom:1px solid var(--border,#ddd);
+    }
+
+    .modal-title{
+      font-size:1.25rem;
+      font-weight:800;
+    }
+
+    .modal-close{
+      width:40px;
+      height:40px;
+      border:0;
+      border-radius:10px;
+      background:var(--surface-2,#eee);
+      color:inherit;
+      font-size:1.25rem;
+      cursor:pointer;
+    }
+
+    .modal-body{padding:20px}
+
+    .detail-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .detail-box{
+      min-width:0;
+      padding:12px;
+      border:0;
+      border-radius:10px;
+      background:var(--surface-2,#f2f2f2);
+    }
+
+    .detail-label{
+      font-size:.74rem;
+      opacity:.65;
+      margin-bottom:4px;
+      font-weight:500;
+    }
+
+    .detail-value{
+      margin-top:0;
+      font-size:1rem;
+      font-weight:800;
+      overflow-wrap:anywhere;
+    }
+
+    .edit-section{
+      margin-top:18px;
+      padding-top:18px;
+      border-top:1px solid var(--border,#ddd);
+    }
+
+    .edit-title{
+      margin-bottom:12px;
+      font-size:1rem;
+      font-weight:800;
+    }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+      min-width:0;
+    }
+
+    .field label{
+      margin:0;
+      font-size:.9rem;
+      font-weight:700;
+      opacity:1;
+    }
+
+    .field input,
+    .field select{
+      width:100%;
+      min-height:46px;
+      padding:10px 12px;
+      border:1px solid var(--border,#c8c8c8);
+      border-radius:10px;
+      background:var(--surface,#fff);
+      color:inherit;
+      font:inherit;
+    }
+
+    .modal-actions{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+      margin-top:18px;
+      padding-top:16px;
+      border-top:1px solid var(--border,#ddd);
+    }
+
+    .btn{
+      min-height:44px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:9px 16px;
+      border:0;
+      border-radius:10px;
+      background:var(--surface-2,#ececec);
+      color:inherit;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .btn.primary{
+      background:var(--fv-green);
+      color:#fff;
+    }
+
+    .btn.primary:hover,
+    .btn.primary:focus{
+      background:var(--fv-green-dark);
+      color:#fff;
+    }
+
+    .modal-msg{
+      margin-top:10px;
+      font-size:.86rem;
+      font-weight:700;
+    }
+
+    .modal-msg.error{color:var(--fv-red)}
+    .modal-msg.success{color:#2f6e39}
+
+    @media(max-width:800px){
+      .inventory-toolbar{grid-template-columns:1fr 1fr}
+      .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media(max-width:560px){
+      .inventory-page{padding-bottom:80px !important}
+
+      .inventory-head{
+        align-items:flex-start;
+        flex-direction:column;
+        padding:16px;
+      }
+
+      .inventory-body{padding:14px}
+
+      .inventory-kpis,
+      .inventory-kpis.bin-kpis,
+      .inventory-kpis.bag-kpis,
+      .inventory-toolbar,
+      .detail-grid,
+      .form-grid{
+        grid-template-columns:1fr;
+      }
+
+      .modal-backdrop{padding:0}
+
+      .modal{
+        width:100%;
+        min-height:100vh;
+        border-radius:0;
+      }
+
+      .modal-actions{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+      }
+
+      .modal-actions .btn{width:100%}
+    }
+
+    /* ==========================================================
+       MOBILE PORTRAIT — REQUIRE LANDSCAPE
+       Matches the Grain Contracts phone behavior.
+    ========================================================== */
+    .fv-rotate-device{
+      display:none;
+    }
+
+    @media (orientation:portrait) and (max-width:600px){
+      .inventory-page{
+        visibility:hidden;
+      }
+
+      .fv-rotate-device{
+        position:fixed;
+        top:92px;
+        bottom:0;
+        left:0;
+        right:0;
+        z-index:50;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:24px;
+        background:var(--surface,#fff);
+        color:inherit;
+        text-align:center;
+      }
+
+      .fv-rotate-device-card{
+        width:min(420px,100%);
+      }
+
+      .fv-rotate-device-icon{
+        width:72px;
+        height:72px;
+        margin:0 auto 20px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:20px;
+        background:rgba(59,126,70,.12);
+        color:var(--fv-green);
+        font-size:42px;
+        line-height:1;
+        font-weight:800;
+      }
+
+      .fv-rotate-device-title{
+        margin:0 0 10px;
+        font-size:1.65rem;
+        font-weight:800;
+      }
+
+      .fv-rotate-device-copy{
+        margin:0;
+        font-size:1rem;
+        line-height:1.45;
+        opacity:.72;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="fv-rotate-device" aria-hidden="true">
+    <div class="fv-rotate-device-card">
+      <div class="fv-rotate-device-icon">↻</div>
+      <h1 class="fv-rotate-device-title">Rotate Your Phone</h1>
+      <p class="fv-rotate-device-copy">
+        Grain Inventory needs a wider screen.
+        Turn your phone sideways to continue.
+      </p>
+    </div>
+  </div>
+
+<fv-shell>
+  <main class="page container inventory-page">
+    <div class="page-heading-row">
+      <div class="page-heading-copy">
+        <h1 class="page-title">Grain Inventory</h1>
+        <p class="page-sub">
+          Current grain in bins and field bags. Click a site or field to see the individual storage units and grain quality.
+        </p>
+      </div>
+    </div>
+
+        <!-- =========================================================
+         ACTIVE FIELD HARVEST
+    ========================================================== -->
+
+    <section class="workspace-section">
+      <div
+        class="inventory-card"
+        id="active-harvest-section"
+      >
+
+        <div class="inventory-head">
+          <div>
+            <h2 class="inventory-title">
+              Active Harvest
+            </h2>
+
+            <div class="inventory-sub">
+              Grain hauled during active harvest. Field-assigned loads roll into these crop totals; click a crop to see the field breakdown and individual tickets.
+            </div>
+          </div>
+        </div>
+
+
+        <div class="inventory-body">
+
+          <div class="table-wrap">
+
+            <table class="inventory-table">
+
+              <thead>
+                <tr>
+                  <th>Crop</th>
+                  <th class="num-cell">Bushels Hauled</th>
+                  <th class="num-cell">Loads Hauled</th>
+                  <th class="num-cell">Avg Moisture</th>
+                  <th class="num-cell">Avg FM</th>
+                  <th class="num-cell">Avg Damage</th>
+                </tr>
+              </thead>
+
+              <tbody id="active-harvest-tbody">
+
+                <tr>
+                  <td colspan="6" class="empty-row">
+                    Loading active harvest…
+                  </td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+
+          <div class="inventory-foot">
+            Totals include every non-voided Active Harvest ticket, including tickets assigned to a specific field. Grain quality is weighted by each ticket's net bushels.
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <section class="workspace-section">
+    <div class="inventory-card" id="grain-bins-section">
+      <div class="inventory-head">
+        <div>
+          <h2 class="inventory-title">Grain Bin Inventory</h2>
+          <div class="inventory-sub">Only bin sites with grain on hand are shown.</div>
+        </div>
+      </div>
+
+      <div class="inventory-body">
+        <div class="inventory-kpis bin-kpis">
+          <div class="mini-kpi">
+            <div class="mini-kpi-label">Sites With Grain</div>
+            <div class="mini-kpi-value" id="bin-site-count">—</div>
+          </div>
+          <div class="mini-kpi">
+            <div class="mini-kpi-label">Bins With Grain</div>
+            <div class="mini-kpi-value" id="bin-count">—</div>
+          </div>
+          <div id="bin-crop-kpis" class="crop-kpi-group"></div>
+        </div>
+
+      <div class="inventory-toolbar">
+        <div class="filter-field">
+          <label for="bin-crop">Crop</label>
+          <select id="bin-crop" class="select">
+          <option value="all">All Crops</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="bin-search">Search</label>
+          <input id="bin-search" class="search" type="search" placeholder="Search bin site…" />
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Site / Bin</th>
+              <th>Crop</th>
+              <th class="num-cell">On Hand</th>
+              <th class="num-cell">Loads Hauled</th>
+              <th class="num-cell">Avg Moisture</th>
+              <th class="num-cell">Avg FM</th>
+              <th class="num-cell">Avg Damage</th>
+            </tr>
+          </thead>
+          <tbody id="bin-tbody">
+            <tr><td colspan="7" class="empty-row">Loading grain bins…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inventory-foot">
+        Grain quality is weighted by each linked grain ticket's net bushels. N/A means no ticketed loads have been hauled from that location yet.
+      </div>
+      </div>
+    </div>
+    </section>
+
+    <section class="workspace-section">
+    <div class="inventory-card" id="grain-bags-section">
+      <div class="inventory-head">
+        <div>
+          <h2 class="inventory-title">Grain Bag Inventory</h2>
+          <div class="inventory-sub">Only fields that currently have grain bags with grain are shown.</div>
+        </div>
+      </div>
+
+      <div class="inventory-body">
+        <div class="inventory-kpis bag-kpis">
+          <div class="mini-kpi">
+            <div class="mini-kpi-label">Fields With Grain</div>
+            <div class="mini-kpi-value" id="bag-field-count">—</div>
+          </div>
+          <div class="mini-kpi">
+            <div class="mini-kpi-label">Full Bags</div>
+            <div class="mini-kpi-value" id="bag-full-count">—</div>
+          </div>
+          <div class="mini-kpi">
+            <div class="mini-kpi-label">Partial Bags</div>
+            <div class="mini-kpi-value" id="bag-partial-count">—</div>
+          </div>
+          <div id="bag-crop-kpis" class="crop-kpi-group"></div>
+        </div>
+
+      <div class="inventory-toolbar">
+        <div class="filter-field">
+          <label for="bag-crop">Crop</label>
+          <select id="bag-crop" class="select">
+          <option value="all">All Crops</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="bag-search">Search</label>
+          <input id="bag-search" class="search" type="search" placeholder="Search field…" />
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Field / Bag</th>
+              <th>Crop</th>
+              <th class="num-cell">Full Bags</th>
+              <th class="num-cell">Partial Bags</th>
+              <th class="num-cell">Estimated On Hand</th>
+              <th class="num-cell">Loads Hauled</th>
+              <th class="num-cell">Avg Moisture</th>
+              <th class="num-cell">Avg FM</th>
+              <th class="num-cell">Avg Damage</th>
+            </tr>
+          </thead>
+          <tbody id="bag-tbody">
+            <tr><td colspan="9" class="empty-row">Loading grain bags…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inventory-foot">
+        Click a field to expand its bags. Click an individual bag row to view or edit its current grain information.
+      </div>
+      </div>
+    </div>
+    </section>
+  </main>
+</fv-shell>
+
+<div class="modal-backdrop" id="harvest-modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="harvest-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="harvest-modal-title">Active Harvest</div>
+        <div class="inventory-sub" id="harvest-modal-subtitle"></div>
+      </div>
+      <button type="button" class="modal-close" id="harvest-modal-close" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="harvest-modal-summary" class="detail-grid"></div>
+      <div id="harvest-modal-content"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="harvest-modal-done">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="ticket-image-modal-backdrop" aria-hidden="true">
+  <div class="modal ticket-image-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-image-modal-title">
+    <div class="modal-head">
+      <div class="modal-title" id="ticket-image-modal-title">Grain Ticket</div>
+      <button type="button" class="modal-close" id="ticket-image-modal-close" aria-label="Close ticket image">×</button>
+    </div>
+    <div class="modal-body ticket-image-modal-body">
+      <img id="ticket-image-modal-img" class="ticket-image-modal-img" alt="Saved grain ticket image" />
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="edit-modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="edit-modal-title">Inventory Detail</div>
+        <div class="inventory-sub" id="edit-modal-subtitle"></div>
+      </div>
+      <button type="button" class="modal-close" id="edit-modal-close" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-box">
+          <div class="detail-label">Current Inventory</div>
+          <div class="detail-value" id="modal-onhand">—</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">Ticketed Loads Hauled</div>
+          <div class="detail-value" id="modal-loads">—</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">Weighted Moisture</div>
+          <div class="detail-value" id="modal-moisture">N/A</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">Weighted FM</div>
+          <div class="detail-value" id="modal-fm">N/A</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">Weighted Damage</div>
+          <div class="detail-value" id="modal-damage">N/A</div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">Crop</div>
+          <div class="detail-value" id="modal-crop">—</div>
+        </div>
+      </div>
+
+      <div class="edit-section" id="bin-edit-section" hidden>
+        <div class="edit-title">Edit Bin</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="edit-bin-crop">Crop</label>
+            <select id="edit-bin-crop">
+              <option value="">—</option>
+              <option value="Corn">Corn</option>
+              <option value="Soybeans">Soybeans</option>
+              <option value="Wheat">Wheat</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="edit-bin-onhand">Bushels On Hand</label>
+            <input id="edit-bin-onhand" type="number" min="0" step="0.01" />
+          </div>
+        </div>
+      </div>
+
+      <div class="edit-section" id="bag-edit-section" hidden>
+        <div class="edit-title">Edit Grain Bag</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="edit-bag-crop">Crop</label>
+            <select id="edit-bag-crop">
+              <option value="">—</option>
+              <option value="Corn">Corn</option>
+              <option value="Soybeans">Soybeans</option>
+              <option value="Wheat">Wheat</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="edit-bag-full">Full Bags</label>
+            <input id="edit-bag-full" type="number" min="0" step="1" />
+          </div>
+          <div class="field">
+            <label for="edit-bag-partial-feet">Partial Bag Feet Remaining</label>
+            <input id="edit-bag-partial-feet" type="number" min="0" step="0.01" />
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-msg" class="modal-msg"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" id="modal-cancel">Close</button>
+        <button type="button" class="btn primary" id="modal-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    ready,
+    getAuth,
+    onAuthStateChanged,
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    collection,
+    getDocs,
+    query,
+    where,
+    serverTimestamp
+  } from "/js/core/firebase/firebase-init.js";
+
+  await ready;
+
+  const db = getFirestore();
+  const auth = getAuth();
+
+  const KEY_GRAIN_KPI = "cap-kpi-grain";
+
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    bins: [],
+    bagFields: [],
+    ticketsById: new Map(),
+    binMovements: [],
+    bagEvents: [],
+    productsById: new Map(),
+    bagMovementByKey: new Map(),
+    openBinSites: new Set(),
+    openBagFields: new Set(),
+    editTarget: null,
+    canEdit: true
+  };
+
+  function clean(v){
+    return String(v ?? "").trim();
+  }
+
+  function norm(v){
+    return clean(v).toLowerCase();
+  }
+
+  function num(v, fallback=null){
+    if(v === null || v === undefined || v === "") return fallback;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function esc(v){
+    return clean(v)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function cropKey(v){
+    const c = norm(v);
+    if(["soy","soybean","soybeans","beans","sb"].includes(c)) return "soybeans";
+    if(["corn","maize"].includes(c)) return "corn";
+    if(["wheat","winter wheat","spring wheat"].includes(c)) return "wheat";
+    return c;
+  }
+
+  function cropLabel(v){
+    const c = cropKey(v);
+    if(c === "corn") return "Corn";
+    if(c === "soybeans") return "Soybeans";
+    if(c === "wheat") return "Wheat";
+    return clean(v) || "—";
+  }
+
+  function setCropSelectValue(selectEl, value){
+    if(!selectEl) return;
+
+    const key = cropKey(value);
+
+    if(key === "corn"){
+      selectEl.value = "Corn";
+      return;
+    }
+
+    if(key === "soybeans"){
+      selectEl.value = "Soybeans";
+      return;
+    }
+
+    if(key === "wheat"){
+      selectEl.value = "Wheat";
+      return;
+    }
+
+    const label = cropLabel(value);
+    if(label && label !== "—"){
+      let option = [...selectEl.options].find(opt => cropKey(opt.value) === key);
+      if(!option){
+        option = document.createElement("option");
+        option.value = label;
+        option.textContent = label;
+        selectEl.appendChild(option);
+      }
+      selectEl.value = option.value;
+      return;
+    }
+
+    selectEl.value = "";
+  }
+
+  function fmtBu(v){
+    const n = num(v,0);
+    return `${Math.round(n).toLocaleString("en-US")} bu`;
+  }
+
+  function cropSortKey(label){
+    const key = cropKey(label);
+    const order = {corn:1,soybeans:2,wheat:3};
+    return [order[key] || 99, cropLabel(label)];
+  }
+
+  function sortCropLabels(labels){
+    return [...labels].sort((a,b) => {
+      const ak = cropSortKey(a);
+      const bk = cropSortKey(b);
+      return ak[0] - bk[0] || ak[1].localeCompare(bk[1]);
+    });
+  }
+
+  function renderCropKpis(containerId, totals, suffix="On Hand"){
+    const el = $(containerId);
+    if(!el) return;
+
+    const entries = sortCropLabels(
+      [...totals.keys()].filter(label => num(totals.get(label),0) > 0.01)
+    );
+
+    if(!entries.length){
+      el.innerHTML = `
+        <div class="mini-kpi">
+          <div class="mini-kpi-label">Bushels On Hand</div>
+          <div class="mini-kpi-value">0 bu</div>
+        </div>
+      `;
+      return;
+    }
+
+    el.innerHTML = entries.map(label => `
+      <div class="mini-kpi">
+        <div class="mini-kpi-label">${esc(cropLabel(label))} ${esc(suffix)}</div>
+        <div class="mini-kpi-value">${fmtBu(totals.get(label))}</div>
+      </div>
+    `).join("");
+  }
+
+  function refreshCropFilter(selectId, cropLabels){
+    const select = $(selectId);
+    if(!select) return;
+
+    const previous = cropKey(select.value || "all");
+    const unique = new Map();
+
+    cropLabels.forEach(label => {
+      const key = cropKey(label);
+      if(!key || key === "—" || key === "all") return;
+      if(!unique.has(key)) unique.set(key,cropLabel(label));
+    });
+
+    const labels = sortCropLabels([...unique.values()]);
+    select.innerHTML = `<option value="all">All Crops</option>` + labels.map(label => {
+      const key = cropKey(label);
+      return `<option value="${esc(key)}">${esc(cropLabel(label))}</option>`;
+    }).join("");
+
+    select.value = [...select.options].some(o => o.value === previous) ? previous : "all";
+  }
+
+  function fmtGrade(v){
+    const n = num(v,null);
+    return n === null ? "N/A" : `${n.toFixed(2)}%`;
+  }
+
+  function gradeClass(v){
+    return num(v,null) === null ? "grade-na" : "grade-live";
+  }
+
+  function uniqueById(items){
+    const seen = new Set();
+    return items.filter(item => {
+      const id = clean(item?.id);
+      if(!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
+
+  function gradeSummary(tickets){
+    const unique = uniqueById(tickets || []);
+    let wMo=0, sMo=0, wFm=0, sFm=0, wDa=0, sDa=0;
+
+    unique.forEach(t => {
+      const weight = num(t.netBushels,0);
+      if(!(weight > 0)) return;
+
+      const mo = num(t.moisture,null);
+      const fm = num(t.foreignMaterial,null);
+      const da = num(t.damage,null);
+
+      if(mo !== null){ sMo += mo * weight; wMo += weight; }
+      if(fm !== null){ sFm += fm * weight; wFm += weight; }
+      if(da !== null){ sDa += da * weight; wDa += weight; }
+    });
+
+    return {
+      loads: unique.length,
+      moisture: wMo > 0 ? sMo / wMo : null,
+      fm: wFm > 0 ? sFm / wFm : null,
+      damage: wDa > 0 ? sDa / wDa : null
+    };
+  }
+
+function ticketsFromIds(ids){
+  return [...new Set((ids || []).map(clean).filter(Boolean))]
+    .map(id => state.ticketsById.get(id))
+    .filter(ticket => ticket && ticket.voided !== true);
+}
+
+    /* ============================================================
+     ACTIVE FIELD HARVEST
+
+     Direct field → truck → elevator grain.
+
+     This is harvest tracking only.
+     It does NOT represent stored inventory and does not change:
+       • bin inventory
+       • grain bag inventory
+
+     Totals come directly from non-voided grain tickets whose
+     grainSourceType is active_field_harvest.
+  ============================================================ */
+
+  function activeHarvestTicketsForCrop(
+    crop
+  ){
+
+    const wantedCrop =
+      cropKey(
+        crop
+      );
+
+
+    return [
+      ...state.ticketsById.values()
+    ]
+      .filter(
+        ticket =>
+          ticket &&
+          ticket.voided !== true &&
+          (
+            norm(
+              ticket.grainSourceType
+            ) ===
+              "active_field_harvest" ||
+            norm(
+              ticket.grainSourceType
+            ) ===
+              "field"
+          ) &&
+          cropKey(
+            ticket.crop
+          ) ===
+            wantedCrop &&
+          num(
+            ticket.netBushels,
+            0
+          ) >
+            0
+      );
+
+  }
+
+
+  function activeHarvestSummary(
+    crop
+  ){
+
+    const tickets =
+      activeHarvestTicketsForCrop(
+        crop
+      );
+
+
+    const bushels =
+      tickets.reduce(
+        (
+          total,
+          ticket
+        ) =>
+          total +
+          Math.max(
+            0,
+            num(
+              ticket.netBushels,
+              0
+            )
+          ),
+        0
+      );
+
+
+    const grades =
+      gradeSummary(
+        tickets
+      );
+
+
+    return {
+
+      crop:
+        cropLabel(
+          crop
+        ),
+
+      bushels,
+
+      loads:
+        grades.loads,
+
+      moisture:
+        grades.moisture,
+
+      fm:
+        grades.fm,
+
+      damage:
+        grades.damage
+
+    };
+
+  }
+
+
+  function activeHarvestFieldInfo(ticket){
+    const sourceType = norm(ticket?.grainSourceType);
+    const sourceScope = norm(ticket?.grainSourceScope);
+
+    /*
+      Support both the corrected Active Harvest + field model and
+      older tickets that were saved with grainSourceType = "field".
+      Some legacy records only carried the field in the generic
+      grainSourceId / grainSourceName fields, so use those only when
+      the source is known to be field-based.
+    */
+    const sourceValue = norm(ticket?.grainSourceValue);
+
+    /*
+      Current source identity is authoritative. Old fieldId/fieldName values
+      can remain on historical records after an edit, so they must NOT by
+      themselves make a generic Active Harvest ticket look field-scoped.
+    */
+    const fieldBased =
+      sourceType === "field" ||
+      sourceScope === "field" ||
+      sourceValue.startsWith("field:") ||
+      sourceValue.includes("active_field_harvest:field:");
+
+    const fieldId = clean(
+      ticket?.grainSourceFieldId ||
+      ticket?.fieldId ||
+      ticket?.grainSource?.fieldId ||
+      ticket?.sourceFieldId ||
+      (fieldBased ? ticket?.grainSourceId : "")
+    );
+
+    const fieldName = clean(
+      ticket?.grainSourceFieldName ||
+      ticket?.fieldName ||
+      ticket?.grainSource?.fieldName ||
+      ticket?.sourceFieldName ||
+      (fieldBased ? ticket?.grainSourceName : "")
+    );
+
+    return {
+      id: fieldId,
+      name: fieldName || (fieldId ? "Unknown Field" : "Active Harvest (No Field)")
+    };
+  }
+
+  function ticketDateValue(ticket){
+    return clean(
+      ticket?.ticketDate ||
+      ticket?.date ||
+      ticket?.deliveryDate ||
+      ""
+    );
+  }
+
+  function ticketNumberValue(ticket){
+    return clean(
+      ticket?.ticketNumber ||
+      ticket?.ticketNo ||
+      ticket?.number ||
+      ticket?.scaleTicketNumber ||
+      ""
+    ) || ticket.id.slice(0,8);
+  }
+
+  function driverValue(ticket){
+    return clean(
+      ticket?.driverName ||
+      ticket?.driver ||
+      ticket?.submittedByName ||
+      ticket?.submittedBy ||
+      ""
+    ) || "—";
+  }
+
+  function ticketImageValue(ticket){
+    return clean(
+      ticket?.ticketImageUrl ||
+      ticket?.imageUrl ||
+      ticket?.photoUrl ||
+      ""
+    );
+  }
+
+  function openHarvestTicketImage(ticket){
+    const imageUrl = ticketImageValue(ticket);
+    if(!imageUrl){
+      window.alert("No saved ticket image is available for this ticket.");
+      return;
+    }
+    const backdrop=$("ticket-image-modal-backdrop");
+    const image=$("ticket-image-modal-img");
+    const title=$("ticket-image-modal-title");
+    if(!backdrop || !image || !title) return;
+    title.textContent=`Grain Ticket ${ticketNumberValue(ticket)}`;
+    image.alt=`Saved image for grain ticket ${ticketNumberValue(ticket)}`;
+    image.src=imageUrl;
+    backdrop.classList.add("open");
+    backdrop.setAttribute("aria-hidden","false");
+    document.body.style.overflow="hidden";
+  }
+
+  function closeHarvestTicketImage(){
+    const backdrop=$("ticket-image-modal-backdrop");
+    const image=$("ticket-image-modal-img");
+    if(!backdrop) return;
+    backdrop.classList.remove("open");
+    backdrop.setAttribute("aria-hidden","true");
+    if(image) image.removeAttribute("src");
+    document.body.style.overflow=$("harvest-modal-backdrop")?.classList.contains("open") ? "hidden" : "";
+  }
+
+  function activeHarvestFieldGroups(crop){
+    const groups = new Map();
+
+    activeHarvestTicketsForCrop(crop).forEach(ticket => {
+      const field = activeHarvestFieldInfo(ticket);
+      const key = field.id || `name:${norm(field.name)}`;
+
+      if(!groups.has(key)){
+        groups.set(key,{
+          key,
+          fieldId:field.id,
+          fieldName:field.name,
+          tickets:[]
+        });
+      }
+
+      groups.get(key).tickets.push(ticket);
+    });
+
+    return [...groups.values()]
+      .map(group => {
+        group.bushels = group.tickets.reduce(
+          (sum,ticket) => sum + Math.max(0,num(ticket.netBushels,0)),
+          0
+        );
+        group.grades = gradeSummary(group.tickets);
+        return group;
+      })
+      .sort((a,b) => {
+        const aGeneric = !a.fieldId && norm(a.fieldName) === "active harvest (no field)";
+        const bGeneric = !b.fieldId && norm(b.fieldName) === "active harvest (no field)";
+        if(aGeneric !== bGeneric) return aGeneric ? 1 : -1;
+        return a.fieldName.localeCompare(b.fieldName,undefined,{numeric:true,sensitivity:"base"});
+      });
+  }
+
+  function harvestSummaryBoxes(crop,tickets){
+    const bushels = tickets.reduce(
+      (sum,ticket) => sum + Math.max(0,num(ticket.netBushels,0)),
+      0
+    );
+    const grades = gradeSummary(tickets);
+
+    return `
+      <div class="detail-box">
+        <div class="detail-label">Bushels Hauled</div>
+        <div class="detail-value">${fmtBu(bushels)}</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-label">Loads Hauled</div>
+        <div class="detail-value">${grades.loads.toLocaleString("en-US")}</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-label">Avg Moisture</div>
+        <div class="detail-value">${fmtGrade(grades.moisture)}</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-label">Avg FM</div>
+        <div class="detail-value">${fmtGrade(grades.fm)}</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-label">Avg Damage</div>
+        <div class="detail-value">${fmtGrade(grades.damage)}</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-label">Crop</div>
+        <div class="detail-value">${esc(cropLabel(crop))}</div>
+      </div>
+    `;
+  }
+
+  function openHarvestModal(){
+    $("harvest-modal-backdrop").classList.add("open");
+    $("harvest-modal-backdrop").setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeHarvestModal(){
+    $("harvest-modal-backdrop").classList.remove("open");
+    $("harvest-modal-backdrop").setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+  }
+
+  function showHarvestCrop(crop){
+    const label = cropLabel(crop);
+    const tickets = activeHarvestTicketsForCrop(crop);
+    const groups = activeHarvestFieldGroups(crop);
+
+    $("harvest-modal-title").textContent = `${label} • Active Harvest`;
+    $("harvest-modal-subtitle").textContent =
+      "Field totals roll into the Active Harvest crop total. Select a field to see its individual loads.";
+    $("harvest-modal-summary").innerHTML = harvestSummaryBoxes(label,tickets);
+
+    if(!groups.length){
+      $("harvest-modal-content").innerHTML =
+        `<div class="empty-row">No ${esc(label)} Active Harvest tickets yet.</div>`;
+      openHarvestModal();
+      return;
+    }
+
+    $("harvest-modal-content").innerHTML = `
+      <div class="table-wrap">
+        <table class="harvest-drill-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Bushels</th>
+              <th>Loads</th>
+              <th>Avg Moisture</th>
+              <th>Avg FM</th>
+              <th>Avg Damage</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groups.map(group => `
+              <tr class="harvest-field-row" data-harvest-field="${esc(group.key)}">
+                <td>${esc(group.fieldName)}</td>
+                <td>${fmtBu(group.bushels)}</td>
+                <td><span class="loads-pill">${group.grades.loads}</span></td>
+                <td class="${gradeClass(group.grades.moisture)}">${fmtGrade(group.grades.moisture)}</td>
+                <td class="${gradeClass(group.grades.fm)}">${fmtGrade(group.grades.fm)}</td>
+                <td class="${gradeClass(group.grades.damage)}">${fmtGrade(group.grades.damage)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("harvest-modal-content").querySelectorAll("[data-harvest-field]").forEach(row => {
+      row.addEventListener("click",() => {
+        const group = groups.find(item => item.key === row.dataset.harvestField);
+        if(group) showHarvestField(label,group);
+      });
+    });
+
+    openHarvestModal();
+  }
+
+  function showHarvestField(crop,group){
+    const tickets = [...group.tickets].sort((a,b) =>
+      ticketDateValue(b).localeCompare(ticketDateValue(a)) ||
+      ticketNumberValue(a).localeCompare(ticketNumberValue(b),undefined,{numeric:true,sensitivity:"base"})
+    );
+
+    $("harvest-modal-title").textContent = group.fieldName;
+    $("harvest-modal-subtitle").textContent = `${crop} • Active Harvest load tickets`;
+    $("harvest-modal-summary").innerHTML = harvestSummaryBoxes(crop,tickets);
+
+    $("harvest-modal-content").innerHTML = `
+      <button type="button" class="btn drill-back" id="harvest-field-back">← Back to fields</button>
+      <div class="table-wrap">
+        <table class="harvest-drill-table">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Date</th>
+              <th>Driver</th>
+              <th>Bushels</th>
+              <th>Moisture</th>
+              <th>FM</th>
+              <th>Damage</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tickets.map(ticket => `
+              <tr>
+                <td>
+                  <button type="button" class="ticket-link harvest-ticket-image" data-ticket-image="${esc(ticket.id)}" ${ticketImageValue(ticket) ? "" : "disabled"}>
+                    ${esc(ticketNumberValue(ticket))}
+                  </button>
+                </td>
+                <td>${esc(ticketDateValue(ticket) || "—")}</td>
+                <td>${esc(driverValue(ticket))}</td>
+                <td>${fmtBu(ticket.netBushels)}</td>
+                <td class="${gradeClass(ticket.moisture)}">${fmtGrade(ticket.moisture)}</td>
+                <td class="${gradeClass(ticket.foreignMaterial)}">${fmtGrade(ticket.foreignMaterial)}</td>
+                <td class="${gradeClass(ticket.damage)}">${fmtGrade(ticket.damage)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("harvest-field-back").addEventListener("click",() => showHarvestCrop(crop));
+
+    $("harvest-modal-content").querySelectorAll("[data-ticket-image]").forEach(button => {
+      button.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const ticket = state.ticketsById.get(button.dataset.ticketImage);
+        if(ticket) openHarvestTicketImage(ticket);
+      });
+    });
+  }
+
+  function renderActiveHarvest(){
+
+    const tbody =
+      $(
+        "active-harvest-tbody"
+      );
+
+
+    if (
+      !tbody
+    ){
+      return;
+    }
+
+
+    /*
+      FarmVista intentionally always displays both primary
+      harvest crops, even before the first load is hauled.
+    */
+    const rows = [
+
+      activeHarvestSummary(
+        "Corn"
+      ),
+
+      activeHarvestSummary(
+        "Soybeans"
+      )
+
+    ];
+
+
+    tbody.innerHTML =
+      rows
+        .map(
+          row => `
+
+            <tr class="harvest-row" data-harvest-crop="${esc(cropKey(row.crop))}">
+
+              <td>
+                <span class="crop-pill">
+                  ${esc(row.crop)}
+                </span>
+              </td>
+
+              <td class="num-cell">
+                ${fmtBu(row.bushels)}
+              </td>
+
+              <td class="num-cell">
+                <span class="loads-pill">
+                  ${row.loads.toLocaleString("en-US")}
+                </span>
+              </td>
+
+              <td class="num-cell ${gradeClass(row.moisture)}">
+                ${fmtGrade(row.moisture)}
+              </td>
+
+              <td class="num-cell ${gradeClass(row.fm)}">
+                ${fmtGrade(row.fm)}
+              </td>
+
+              <td class="num-cell ${gradeClass(row.damage)}">
+                ${fmtGrade(row.damage)}
+              </td>
+
+            </tr>
+
+          `
+        )
+        .join(
+          ""
+        );
+
+    tbody.querySelectorAll("[data-harvest-crop]").forEach(row => {
+      row.addEventListener("click",() => showHarvestCrop(row.dataset.harvestCrop));
+    });
+
+  }
+
+  function binTickets(siteId, binIndex=null){
+    const ids = state.binMovements
+      .filter(m =>
+        clean(m.siteId) === clean(siteId) &&
+        norm(m.direction || "out") === "out" &&
+        (binIndex === null || Number(m.binIndex) === Number(binIndex))
+      )
+      .map(m => m.grainTicketId);
+
+    return ticketsFromIds(ids);
+  }
+
+  function bagTicketsForSource(sourceId){
+    const ids = [];
+
+    state.bagEvents.forEach(ev => {
+      if(norm(ev.type) !== "pickup") return;
+      if(!ev.grainTicketId) return;
+
+      const applied = Array.isArray(ev.appliedTo) ? ev.appliedTo : [];
+      if(applied.some(a => clean(a.refPutDownId) === clean(sourceId))){
+        ids.push(ev.grainTicketId);
+      }
+    });
+
+    return ticketsFromIds(ids);
+  }
+
+  function bagTicketsForField(fieldId, fieldName){
+    const ids = [];
+    state.bagEvents.forEach(ev => {
+      if(norm(ev.type) !== "pickup") return;
+      if(!ev.grainTicketId) return;
+
+      const sameId = fieldId && clean(ev?.field?.id) === clean(fieldId);
+      const sameName = !fieldId && norm(ev?.field?.name) === norm(fieldName);
+
+      if(sameId || sameName) ids.push(ev.grainTicketId);
+    });
+    return ticketsFromIds(ids);
+  }
+
+  function makeBagKey(brand, diameterFt, lengthFt){
+    return `${norm(brand)}|${num(diameterFt,0)}|${num(lengthFt,0)}`;
+  }
+
+  function parseDocIdFromRef(ref){
+    if(!ref) return "";
+    try{
+      if(typeof ref.id === "string" && ref.id) return ref.id;
+    }catch(_){}
+    const parts = String(ref || "").split("/").filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : "";
+  }
+
+  function estimateBuPerFoot(diameterFt){
+    const d = num(diameterFt,0);
+    if(d >= 12) return 60;
+    if(d >= 11) return 50;
+    if(d >= 10) return 39;
+    if(d >= 9) return 30;
+    if(d > 0) return 25;
+    return 0;
+  }
+
+  function cropFactorFromCorn(cropType){
+    try{
+      const api = window.FVGrainCapacity || null;
+      if(api && typeof api.getFactor === "function"){
+        const factor = Number(api.getFactor(cropType));
+        if(Number.isFinite(factor) && factor > 0) return factor;
+      }
+    }catch(_){}
+    return 1;
+  }
+
+  function resolveBagProduct(sku){
+    const skuId = clean(sku?.id);
+    if(skuId && state.productsById.has(skuId)){
+      return state.productsById.get(skuId);
+    }
+
+    const key = makeBagKey(
+      sku?.brand,
+      num(sku?.diameterFt, num(sku?.diameter,0)),
+      num(sku?.sizeFeet, num(sku?.lengthFt,0))
+    );
+
+    const movement = state.bagMovementByKey.get(key);
+    const productId = parseDocIdFromRef(movement?.productRef);
+    return productId && state.productsById.has(productId)
+      ? state.productsById.get(productId)
+      : null;
+  }
+
+  function bagCapacityInfo(ev){
+    const sku = ev?.bagSku || {};
+    const product = resolveBagProduct(sku);
+
+    const lengthFt = num(
+      product?.lengthFt,
+      num(sku?.sizeFeet, num(sku?.lengthFt,0))
+    );
+
+    const cornBuPerBag = num(product?.bushels,0);
+    let cornBuPerFoot = 0;
+
+    if(cornBuPerBag > 0 && lengthFt > 0){
+      cornBuPerFoot = cornBuPerBag / lengthFt;
+    }else{
+      cornBuPerFoot = estimateBuPerFoot(
+        num(sku?.diameterFt, num(sku?.diameter,0))
+      );
+    }
+
+    return {
+      lengthFt,
+      cropBuPerFoot: cornBuPerFoot * cropFactorFromCorn(ev.cropType || ev.crop || "")
+    };
+  }
+
+  function bagCurrentFeet(ev){
+    const { lengthFt } = bagCapacityInfo(ev);
+    if(!(lengthFt > 0)) return 0;
+
+    const counts = ev?.counts || {};
+    const full = Math.max(0,num(counts.full,0));
+    const partial = Math.max(0,num(counts.partial,0));
+
+    let partialFeetTotal = 0;
+    const pf = Array.isArray(ev?.partialFeet)
+      ? ev.partialFeet
+      : Array.isArray(counts?.partialFeet)
+        ? counts.partialFeet
+        : [];
+
+    if(pf.length){
+      partialFeetTotal = pf.reduce((sum,v) => sum + Math.max(0,num(v,0)),0);
+    }else if(partial > 0){
+      partialFeetTotal = partial * 0.5 * lengthFt;
+    }
+
+    return full * lengthFt + partialFeetTotal;
+  }
+
+  function bagBushels(ev){
+    const cap = bagCapacityInfo(ev);
+    if(!(cap.cropBuPerFoot > 0)) return 0;
+    return Math.max(0,bagCurrentFeet(ev) * cap.cropBuPerFoot);
+  }
+
+  function hasBagGrain(ev){
+    if(norm(ev.type) !== "putdown") return false;
+    if(norm(ev.status) === "pickedup") return false;
+    return bagBushels(ev) > 0.01;
+  }
+
+  function hasPermObj(p){
+    return p && typeof p === "object" && (
+      Object.prototype.hasOwnProperty.call(p,"view") ||
+      Object.prototype.hasOwnProperty.call(p,"add") ||
+      Object.prototype.hasOwnProperty.call(p,"edit") ||
+      Object.prototype.hasOwnProperty.call(p,"delete")
+    );
+  }
+
+  function canFromPermValue(val, action){
+    if(val == null) return false;
+    if(val === true) return true;
+    if(val === false) return false;
+
+    if(typeof val === "object"){
+      if(typeof val.on === "boolean") return !!val.on;
+      if(hasPermObj(val)){
+        const a = norm(action || "view");
+        if(typeof val[a] === "boolean") return !!val[a];
+        return !!(val.view || val.add || val.edit || val.delete);
+      }
+    }
+    return false;
+  }
+
+  function deepClone(obj){
+    try{ return JSON.parse(JSON.stringify(obj || {})); }
+    catch{ return {}; }
+  }
+
+  function mergePerms(base, overrides){
+    const out = deepClone(base || {});
+    const ov = overrides && typeof overrides === "object" ? overrides : {};
+    Object.keys(ov).forEach(k => out[k] = ov[k]);
+    return out;
+  }
+
+  async function resolvePermissions(user){
+    if(!user?.email) return {known:false, perms:null};
+
+    try{
+      const empSnap = await getDoc(doc(db,"employees",clean(user.email).toLowerCase()));
+      if(!empSnap.exists()) return {known:false, perms:null};
+
+      const emp = empSnap.data() || {};
+      const permissionGroup = clean(emp.permissionGroup);
+      const overrides =
+        (emp.overrides?.perms && typeof emp.overrides.perms === "object" ? emp.overrides.perms : null) ||
+        (emp.overrides && typeof emp.overrides === "object" ? emp.overrides : null) ||
+        (emp.perms && typeof emp.perms === "object" ? emp.perms : null) ||
+        {};
+
+      let basePerms = null;
+
+      if(permissionGroup){
+        const roleSnap = await getDoc(doc(db,"accountRoles",permissionGroup));
+        if(roleSnap.exists()){
+          const d = roleSnap.data() || {};
+          basePerms = d.perms && typeof d.perms === "object" ? d.perms : {};
+        }else{
+          const qy = query(collection(db,"accountRoles"),where("name","==",permissionGroup));
+          const ss = await getDocs(qy);
+          if(!ss.empty){
+            const d = ss.docs[0].data() || {};
+            basePerms = d.perms && typeof d.perms === "object" ? d.perms : {};
+          }
+        }
+      }
+
+      if(!basePerms) return {known:false, perms:null};
+      return {known:true, perms:mergePerms(basePerms,overrides)};
+    }catch(err){
+      console.warn("[grain inventory] permission resolver failed",err);
+      return {known:false, perms:null};
+    }
+  }
+
+  function applyPermissions(result){
+    if(!result?.known){
+      state.canEdit = true;
+      return;
+    }
+
+    const view = canFromPermValue(result.perms?.[KEY_GRAIN_KPI],"view");
+    state.canEdit = canFromPermValue(result.perms?.[KEY_GRAIN_KPI],"edit");
+
+    if(!view){
+      $("active-harvest-section")?.classList.add("perm-hidden");
+      $("grain-bins-section")?.classList.add("perm-hidden");
+      $("grain-bags-section")?.classList.add("perm-hidden");
+    }
+  }
+
+  function buildBinInventory(siteSnapshot){
+    const sites = [];
+
+    siteSnapshot.forEach(ds => {
+      const d = ds.data() || {};
+      const bins = Array.isArray(d.bins) ? d.bins : [];
+
+      const grainBins = bins
+        .map((b,index) => ({
+          siteId:ds.id,
+          siteName:clean(d.name) || "Unnamed Site",
+          siteData:d,
+          bin:b || {},
+          binIndex:index,
+          binNumber:b?.num ?? (index + 1),
+          crop:cropLabel(b?.lastCropType || b?.cropType || b?.crop),
+          onHand:Math.max(0,num(b?.onHand,0))
+        }))
+        .filter(x => x.onHand > 0);
+
+      if(!grainBins.length) return;
+
+      const totalBu = grainBins.reduce((sum,b) => sum + b.onHand,0);
+      const siteTickets = binTickets(ds.id,null);
+      const grades = gradeSummary(siteTickets);
+      const cropNames = [...new Set(grainBins.map(b => b.crop).filter(v => v && v !== "—"))];
+
+      sites.push({
+        id:ds.id,
+        name:clean(d.name) || "Unnamed Site",
+        data:d,
+        bins:grainBins.map(b => ({
+          ...b,
+          grades:gradeSummary(binTickets(ds.id,b.binIndex))
+        })),
+        totalBu,
+        crop:cropNames.length === 1 ? cropNames[0] : cropNames.join(" / ") || "—",
+        grades
+      });
+    });
+
+    sites.sort((a,b) => a.name.localeCompare(b.name));
+    return sites;
+  }
+
+  function buildBagInventory(){
+    const open = state.bagEvents.filter(hasBagGrain);
+    const byField = new Map();
+
+    open.forEach(ev => {
+      const fieldId = clean(ev?.field?.id);
+      const fieldName = clean(ev?.field?.name) || "Unknown Field";
+      const key = fieldId || `name:${norm(fieldName)}`;
+
+      if(!byField.has(key)){
+        byField.set(key,{
+          id:key,
+          fieldId,
+          name:fieldName,
+          bags:[]
+        });
+      }
+
+      const sku = ev.bagSku || {};
+      const b = {
+        id:ev.id,
+        raw:ev,
+        fieldId,
+        fieldName,
+        crop:cropLabel(
+          ev.cropType ||
+          ev.crop ||
+          ev.cropName ||
+          ev.grainType ||
+          ""
+        ),
+        brand:clean(sku.brand),
+        diameterFt:num(sku.diameterFt,num(sku.diameter,0)),
+        lengthFt:num(sku.sizeFeet,num(sku.lengthFt,0)),
+        bushels:bagBushels(ev),
+        currentFeet:bagCurrentFeet(ev),
+        fullBags:Math.max(0,num(ev?.counts?.full,0)),
+        partialBags:Math.max(0,num(ev?.counts?.partial,0)),
+        grades:gradeSummary(bagTicketsForSource(ev.id))
+      };
+
+      byField.get(key).bags.push(b);
+    });
+
+    const fields = [...byField.values()].map(field => {
+      field.bags.sort((a,b) => {
+        const an = `${a.crop} ${a.brand} ${a.id}`;
+        const bn = `${b.crop} ${b.brand} ${b.id}`;
+        return an.localeCompare(bn);
+      });
+
+      field.totalBu = field.bags.reduce((sum,b) => sum + b.bushels,0);
+      field.totalFullBags = field.bags.reduce((sum,b) => sum + b.fullBags,0);
+      field.totalPartialBags = field.bags.reduce((sum,b) => sum + b.partialBags,0);
+
+      const crops = [...new Set(field.bags.map(b => b.crop).filter(v => v && v !== "—"))];
+      field.crop = crops.length === 1 ? crops[0] : crops.join(" / ") || "—";
+      field.grades = gradeSummary(bagTicketsForField(field.fieldId,field.name));
+      return field;
+    });
+
+    fields.sort((a,b) => a.name.localeCompare(b.name));
+    return fields;
+  }
+
+  function binPassesFilters(site){
+    const crop = cropKey($("bin-crop").value);
+    const search = norm($("bin-search").value);
+
+    const cropOk = crop === "all" || site.bins.some(b => cropKey(b.crop) === crop);
+    const searchOk = !search || norm(site.name).includes(search);
+    return cropOk && searchOk;
+  }
+
+  function bagPassesFilters(field){
+    const crop = cropKey($("bag-crop").value);
+    const search = norm($("bag-search").value);
+
+    const cropOk = crop === "all" || field.bags.some(b => cropKey(b.crop) === crop);
+    const searchOk = !search || norm(field.name).includes(search);
+    return cropOk && searchOk;
+  }
+
+  function gradeCells(grades){
+    return `
+      <td class="num-cell"><span class="loads-pill">${grades.loads}</span></td>
+      <td class="num-cell ${gradeClass(grades.moisture)}">${fmtGrade(grades.moisture)}</td>
+      <td class="num-cell ${gradeClass(grades.fm)}">${fmtGrade(grades.fm)}</td>
+      <td class="num-cell ${gradeClass(grades.damage)}">${fmtGrade(grades.damage)}</td>
+    `;
+  }
+
+  function renderBins(){
+    const tbody = $("bin-tbody");
+    const crop = cropKey($("bin-crop").value);
+    const filteredSites = state.bins.filter(binPassesFilters);
+
+    let visibleBins = 0;
+    const cropTotals = new Map();
+
+    filteredSites.forEach(site => {
+      site.bins.forEach(b => {
+        if(crop === "all" || cropKey(b.crop) === crop){
+          visibleBins += 1;
+          const label = cropLabel(b.crop);
+          cropTotals.set(label,(cropTotals.get(label) || 0) + b.onHand);
+        }
+      });
+    });
+
+    $("bin-site-count").textContent = filteredSites.length.toLocaleString("en-US");
+    $("bin-count").textContent = visibleBins.toLocaleString("en-US");
+    renderCropKpis("bin-crop-kpis",cropTotals,"On Hand");
+
+    if(!filteredSites.length){
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No bin sites with grain match this filter.</td></tr>`;
+      return;
+    }
+
+    let html = "";
+
+    filteredSites.forEach(site => {
+      const isOpen = state.openBinSites.has(site.id);
+
+      const siteBins = site.bins.filter(b => crop === "all" || cropKey(b.crop) === crop);
+      const siteBu = siteBins.reduce((s,b) => s + b.onHand,0);
+      const siteGradeTickets = ticketsFromIds(
+        state.binMovements
+          .filter(m =>
+            clean(m.siteId) === clean(site.id) &&
+            norm(m.direction || "out") === "out" &&
+            siteBins.some(b => Number(b.binIndex) === Number(m.binIndex))
+          )
+          .map(m => m.grainTicketId)
+      );
+      const siteGrades = gradeSummary(siteGradeTickets);
+      const siteCrop = [...new Set(siteBins.map(b => b.crop).filter(Boolean))].join(" / ") || "—";
+
+      html += `
+        <tr class="site-row" data-clickable="1" data-bin-site="${esc(site.id)}">
+          <td><span class="chev">${isOpen ? "▼" : "▶"}</span>${esc(site.name)}</td>
+          <td><span class="crop-pill">${esc(siteCrop)}</span></td>
+          <td class="num-cell">${fmtBu(siteBu)}</td>
+          ${gradeCells(siteGrades)}
+        </tr>
+      `;
+
+      if(isOpen){
+        siteBins.forEach(b => {
+          html += `
+            <tr class="child-row" data-clickable="1" data-bin-edit="${esc(site.id)}|${b.binIndex}">
+              <td class="child-name">Bin ${esc(b.binNumber)}</td>
+              <td><span class="crop-pill">${esc(b.crop)}</span></td>
+              <td class="num-cell">${fmtBu(b.onHand)}</td>
+              ${gradeCells(b.grades)}
+            </tr>
+          `;
+        });
+      }
+    });
+
+    tbody.innerHTML = html;
+
+    tbody.querySelectorAll("[data-bin-site]").forEach(row => {
+      row.addEventListener("click",() => {
+        const id = row.dataset.binSite;
+        if(state.openBinSites.has(id)) state.openBinSites.delete(id);
+        else state.openBinSites.add(id);
+        renderBins();
+      });
+    });
+
+    tbody.querySelectorAll("[data-bin-edit]").forEach(row => {
+      row.addEventListener("click",event => {
+        event.stopPropagation();
+        const [siteId,indexText] = row.dataset.binEdit.split("|");
+        openBinModal(siteId,Number(indexText));
+      });
+    });
+  }
+
+  function bagDescriptor(b){
+    const parts = [];
+    if(b.brand) parts.push(b.brand);
+    if(b.diameterFt) parts.push(`${b.diameterFt}'`);
+    if(b.lengthFt) parts.push(`${b.lengthFt}'`);
+    return parts.length ? parts.join(" • ") : `Bag ${b.id.slice(0,8)}`;
+  }
+
+  function renderBags(){
+    const tbody = $("bag-tbody");
+    const crop = cropKey($("bag-crop").value);
+    const filteredFields = state.bagFields.filter(bagPassesFilters);
+
+    let totalFullBags = 0;
+    let totalPartialBags = 0;
+    const cropTotals = new Map();
+
+    filteredFields.forEach(field => {
+      field.bags.forEach(b => {
+        if(crop === "all" || cropKey(b.crop) === crop){
+          totalFullBags += Math.max(0,num(b.fullBags,0));
+          totalPartialBags += Math.max(0,num(b.partialBags,0));
+          const label = cropLabel(b.crop);
+          cropTotals.set(label,(cropTotals.get(label) || 0) + b.bushels);
+        }
+      });
+    });
+
+    $("bag-field-count").textContent = filteredFields.length.toLocaleString("en-US");
+    $("bag-full-count").textContent = totalFullBags.toLocaleString("en-US");
+    $("bag-partial-count").textContent = totalPartialBags.toLocaleString("en-US");
+    renderCropKpis("bag-crop-kpis",cropTotals,"On Hand");
+
+    if(!filteredFields.length){
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-row">No grain bag fields with grain match this filter.</td></tr>`;
+      return;
+    }
+
+    let html = "";
+
+    filteredFields.forEach(field => {
+      const isOpen = state.openBagFields.has(field.id);
+      const bags = field.bags.filter(b => crop === "all" || cropKey(b.crop) === crop);
+      const fieldBu = bags.reduce((s,b) => s + b.bushels,0);
+      const fieldCrop = [...new Set(bags.map(b => b.crop).filter(Boolean))].join(" / ") || "—";
+
+      const sourceIds = new Set(bags.map(b => b.id));
+      const ticketIds = [];
+      state.bagEvents.forEach(ev => {
+        if(norm(ev.type) !== "pickup" || !ev.grainTicketId) return;
+        const applied = Array.isArray(ev.appliedTo) ? ev.appliedTo : [];
+        if(applied.some(a => sourceIds.has(clean(a.refPutDownId)))){
+          ticketIds.push(ev.grainTicketId);
+        }
+      });
+
+      const grades = gradeSummary(ticketsFromIds(ticketIds));
+
+      html += `
+        <tr class="site-row" data-clickable="1" data-bag-field="${esc(field.id)}">
+          <td><span class="chev">${isOpen ? "▼" : "▶"}</span>${esc(field.name)}</td>
+          <td><span class="crop-pill">${esc(fieldCrop)}</span></td>
+          <td class="num-cell">${bags.reduce((s,b) => s + b.fullBags,0).toLocaleString("en-US")}</td>
+          <td class="num-cell">${bags.reduce((s,b) => s + b.partialBags,0).toLocaleString("en-US")}</td>
+          <td class="num-cell">${fmtBu(fieldBu)}</td>
+          ${gradeCells(grades)}
+        </tr>
+      `;
+
+      if(isOpen){
+        bags.forEach(b => {
+          html += `
+            <tr class="child-row" data-clickable="1" data-bag-edit="${esc(b.id)}">
+              <td class="child-name">${esc(bagDescriptor(b))}</td>
+              <td><span class="crop-pill">${esc(b.crop)}</span></td>
+              <td class="num-cell">${b.fullBags.toLocaleString("en-US")}</td>
+              <td class="num-cell">${b.partialBags.toLocaleString("en-US")}</td>
+              <td class="num-cell">${fmtBu(b.bushels)}</td>
+              ${gradeCells(b.grades)}
+            </tr>
+          `;
+        });
+      }
+    });
+
+    tbody.innerHTML = html;
+
+    tbody.querySelectorAll("[data-bag-field]").forEach(row => {
+      row.addEventListener("click",() => {
+        const id = row.dataset.bagField;
+        if(state.openBagFields.has(id)) state.openBagFields.delete(id);
+        else state.openBagFields.add(id);
+        renderBags();
+      });
+    });
+
+    tbody.querySelectorAll("[data-bag-edit]").forEach(row => {
+      row.addEventListener("click",event => {
+        event.stopPropagation();
+        openBagModal(row.dataset.bagEdit);
+      });
+    });
+  }
+
+  function openModal(){
+    $("edit-modal-backdrop").classList.add("open");
+    $("edit-modal-backdrop").setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+    $("modal-msg").textContent = "";
+    $("modal-msg").className = "modal-msg";
+    $("modal-save").hidden = !state.canEdit;
+  }
+
+  function closeModal(){
+    $("edit-modal-backdrop").classList.remove("open");
+    $("edit-modal-backdrop").setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+    state.editTarget = null;
+  }
+
+  function fillGradeDetail(grades){
+    $("modal-loads").textContent = String(grades.loads);
+    $("modal-moisture").textContent = fmtGrade(grades.moisture);
+    $("modal-fm").textContent = fmtGrade(grades.fm);
+    $("modal-damage").textContent = fmtGrade(grades.damage);
+  }
+
+  function openBinModal(siteId,binIndex){
+    const site = state.bins.find(s => s.id === siteId);
+    const b = site?.bins.find(x => Number(x.binIndex) === Number(binIndex));
+    if(!site || !b) return;
+
+    state.editTarget = {type:"bin",siteId,binIndex};
+
+    $("edit-modal-title").textContent = `${site.name} • Bin ${b.binNumber}`;
+    $("edit-modal-subtitle").textContent = "Current bin inventory and grain quality";
+    $("modal-onhand").textContent = fmtBu(b.onHand);
+    $("modal-crop").textContent = b.crop;
+    fillGradeDetail(b.grades);
+
+    $("bin-edit-section").hidden = false;
+    $("bag-edit-section").hidden = true;
+
+    setCropSelectValue($("edit-bin-crop"),b.crop);
+    $("edit-bin-onhand").value = String(b.onHand);
+
+    openModal();
+  }
+
+  function openBagModal(sourceId){
+    let bag = null;
+    let field = null;
+
+    for(const f of state.bagFields){
+      const found = f.bags.find(b => b.id === sourceId);
+      if(found){ bag = found; field = f; break; }
+    }
+    if(!bag || !field) return;
+
+    const ev = bag.raw;
+    const counts = ev.counts || {};
+    const partialFeetArr = Array.isArray(ev.partialFeet)
+      ? ev.partialFeet
+      : Array.isArray(counts.partialFeet)
+        ? counts.partialFeet
+        : [];
+    const partialFeet = partialFeetArr.reduce((s,v) => s + Math.max(0,num(v,0)),0);
+
+    state.editTarget = {type:"bag",sourceId};
+
+    $("edit-modal-title").textContent = `${field.name} • ${bagDescriptor(bag)}`;
+    $("edit-modal-subtitle").textContent = "Current field bag inventory and grain quality";
+    $("modal-onhand").textContent = fmtBu(bag.bushels);
+    $("modal-crop").textContent = bag.crop;
+    fillGradeDetail(bag.grades);
+
+    $("bin-edit-section").hidden = true;
+    $("bag-edit-section").hidden = false;
+
+    setCropSelectValue(
+      $("edit-bag-crop"),
+      bag.raw?.cropType ||
+      bag.raw?.crop ||
+      bag.raw?.cropName ||
+      bag.raw?.grainType ||
+      bag.crop
+    );
+
+    $("edit-bag-full").value = String(Math.max(0,num(counts.full,0)));
+    $("edit-bag-partial-feet").value = String(partialFeet);
+
+    openModal();
+  }
+
+  async function saveEdit(){
+    if(!state.editTarget || !state.canEdit) return;
+
+    const btn = $("modal-save");
+    const msg = $("modal-msg");
+    btn.disabled = true;
+    msg.textContent = "";
+    msg.className = "modal-msg";
+
+    try{
+      if(state.editTarget.type === "bin"){
+        const siteId = state.editTarget.siteId;
+        const binIndex = Number(state.editTarget.binIndex);
+        const onHand = num($("edit-bin-onhand").value,null);
+        const crop = clean($("edit-bin-crop").value);
+
+        if(onHand === null || onHand < 0) throw new Error("Enter a valid bushel amount.");
+
+        const ref = doc(db,"binSites",siteId);
+        const snap = await getDoc(ref);
+        if(!snap.exists()) throw new Error("Bin site no longer exists.");
+
+        const d = snap.data() || {};
+        const bins = Array.isArray(d.bins) ? [...d.bins] : [];
+        const old = bins[binIndex] || {};
+
+        bins[binIndex] = {
+          ...old,
+          onHand,
+          lastCropType: crop || old.lastCropType || null,
+          lastUpdatedMs: Date.now()
+        };
+
+        await setDoc(ref,{bins},{merge:true});
+      }
+
+      if(state.editTarget.type === "bag"){
+        const sourceId = state.editTarget.sourceId;
+        const crop = clean($("edit-bag-crop").value);
+        const full = num($("edit-bag-full").value,null);
+        const partialFeet = num($("edit-bag-partial-feet").value,null);
+
+        if(full === null || full < 0 || !Number.isInteger(full)){
+          throw new Error("Full bags must be a whole number of 0 or more.");
+        }
+        if(partialFeet === null || partialFeet < 0){
+          throw new Error("Partial bag feet must be 0 or more.");
+        }
+
+        let bag = null;
+        for(const f of state.bagFields){
+          bag = f.bags.find(b => b.id === sourceId) || bag;
+          if(bag) break;
+        }
+        if(!bag) throw new Error("Grain bag no longer exists.");
+
+        const cap = bagCapacityInfo(bag.raw);
+        if(cap.lengthFt > 0 && partialFeet >= cap.lengthFt){
+          throw new Error(`Partial feet must be less than one full bag length (${cap.lengthFt} ft).`);
+        }
+
+        const partialArray = partialFeet > 0 ? [Number(partialFeet.toFixed(2))] : [];
+        const hasGrain = full > 0 || partialFeet > 0;
+
+        await updateDoc(doc(db,"grain_bag_events",sourceId),{
+          cropType: crop || bag.raw.cropType || bag.raw.crop || null,
+          crop: crop || bag.raw.crop || bag.raw.cropType || null,
+          "counts.full": full,
+          "counts.partial": partialFeet > 0 ? 1 : 0,
+          "counts.partialFeet": partialArray,
+          partialFeet: partialArray,
+          status: hasGrain ? null : "pickedUp",
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      msg.textContent = "Saved.";
+      msg.className = "modal-msg success";
+
+      await loadAll();
+      setTimeout(closeModal,350);
+    }catch(err){
+      console.error("[grain inventory] save edit failed",err);
+      msg.textContent = err?.message || "Could not save changes.";
+      msg.className = "modal-msg error";
+    }finally{
+      btn.disabled = false;
+    }
+  }
+
+  async function loadAll(){
+    $("active-harvest-tbody").innerHTML =
+      `<tr><td colspan="6" class="empty-row">Loading active harvest…</td></tr>`;
+
+    $("bin-tbody").innerHTML =
+      `<tr><td colspan="7" class="empty-row">Loading grain bins…</td></tr>`;
+
+    $("bag-tbody").innerHTML =
+      `<tr><td colspan="9" class="empty-row">Loading grain bags…</td></tr>`;
+
+    try{
+      const [
+        siteSnapshot,
+        ticketSnapshot,
+        binMovementSnapshot,
+        bagEventSnapshot,
+        bagMovementSnapshot,
+        productSnapshot
+      ] = await Promise.all([
+        getDocs(collection(db,"binSites")),
+        getDocs(collection(db,"grain_tickets")),
+        getDocs(collection(db,"binMovements")),
+        getDocs(collection(db,"grain_bag_events")),
+        getDocs(collection(db,"inventoryGrainBagMovements")),
+        getDocs(collection(db,"productsGrainBags"))
+      ]);
+
+      state.ticketsById = new Map(
+        ticketSnapshot.docs.map(ds => [ds.id,{id:ds.id,...(ds.data() || {})}])
+      );
+
+      state.binMovements = binMovementSnapshot.docs.map(ds => ({
+        id:ds.id,
+        ...(ds.data() || {})
+      }));
+
+      state.bagEvents = bagEventSnapshot.docs.map(ds => ({
+        id:ds.id,
+        ...(ds.data() || {})
+      }));
+
+      state.productsById = new Map(
+        productSnapshot.docs.map(ds => [ds.id,ds.data() || {}])
+      );
+
+      state.bagMovementByKey = new Map();
+      bagMovementSnapshot.forEach(ds => {
+        const d = ds.data() || {};
+        const key = makeBagKey(d.brand,d.diameterFt,d.lengthFt);
+        if(!key) return;
+
+        const existing = state.bagMovementByKey.get(key);
+        const existingMs = existing?.updatedAt?.toDate ? existing.updatedAt.toDate().getTime() : num(existing?.updatedAt,0);
+        const newMs = d?.updatedAt?.toDate ? d.updatedAt.toDate().getTime() : num(d?.updatedAt,0);
+
+        if(!existing || newMs >= existingMs){
+          state.bagMovementByKey.set(key,d);
+        }
+      });
+
+      state.bins = buildBinInventory(siteSnapshot);
+      state.bagFields = buildBagInventory();
+
+      refreshCropFilter(
+        "bin-crop",
+        state.bins.flatMap(site => site.bins.map(b => b.crop))
+      );
+
+      refreshCropFilter(
+        "bag-crop",
+        state.bagFields.flatMap(field => field.bags.map(b => b.crop))
+      );
+
+      renderActiveHarvest();
+      renderBins();
+      renderBags();
+    }catch(err){
+      console.error("[grain inventory] load failed",err);
+      $("bin-tbody").innerHTML = `<tr><td colspan="7" class="empty-row">Grain bin inventory could not be loaded.</td></tr>`;
+      $("bag-tbody").innerHTML = `<tr><td colspan="9" class="empty-row">Grain bag inventory could not be loaded.</td></tr>`;
+    }
+  }
+
+  $("bin-crop").addEventListener("change",renderBins);
+  $("bin-search").addEventListener("input",renderBins);
+  $("bag-crop").addEventListener("change",renderBags);
+  $("bag-search").addEventListener("input",renderBags);
+
+  $("harvest-modal-close").addEventListener("click",closeHarvestModal);
+  $("harvest-modal-done").addEventListener("click",closeHarvestModal);
+  $("harvest-modal-backdrop").addEventListener("click",event => {
+    if(event.target === $("harvest-modal-backdrop")) closeHarvestModal();
+  });
+
+  $("edit-modal-close").addEventListener("click",closeModal);
+  $("modal-cancel").addEventListener("click",closeModal);
+  $("modal-save").addEventListener("click",saveEdit);
+
+  $("edit-modal-backdrop").addEventListener("click",event => {
+    if(event.target === $("edit-modal-backdrop")) closeModal();
+  });
+
+  document.addEventListener("keydown",event => {
+    if(event.key !== "Escape") return;
+
+    if($("harvest-modal-backdrop").classList.contains("open")){
+      closeHarvestModal();
+      return;
+    }
+
+    if($("edit-modal-backdrop").classList.contains("open")){
+      closeModal();
+    }
+  });
+
+  onAuthStateChanged(auth,async user => {
+    applyPermissions(await resolvePermissions(user));
+  });
+
+  document.addEventListener("fv:grain-inventory-posted",loadAll);
+
+  await loadAll();
+
+
+  $("ticket-image-modal-close")?.addEventListener("click",closeHarvestTicketImage);
+  $("ticket-image-modal-backdrop")?.addEventListener("click",event=>{
+    if(event.target === $("ticket-image-modal-backdrop")) closeHarvestTicketImage();
+  });
+  document.addEventListener("keydown",event=>{
+    if(event.key === "Escape" && $("ticket-image-modal-backdrop")?.classList.contains("open")) closeHarvestTicketImage();
+  });
+</script>
+
+<noscript>
+  <div class="container">
+    <div class="card">JavaScript is required for Grain Inventory.</div>
+  </div>
+</noscript>
+  <script src="/js/grain/tickets/images/grain-ticket-image-download.js?v=20260909-5"></script>
+</body>
+</html>

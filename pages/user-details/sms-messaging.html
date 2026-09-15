@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+
+  <title>FarmVista • SMS Messaging</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+
+  <meta
+    name="theme-color"
+    content="#3B7E46"
+  />
+
+  <link
+    rel="icon"
+    href="/assets/icons/icon-192.png"
+  />
+
+  <style>
+
+    :root {
+      --green:#3B7E46;
+      --gold:#D0C542;
+      --bg:#f5f7f5;
+      --surface:#ffffff;
+      --text:#171917;
+      --muted:#68716b;
+      --border:#d9ddd9;
+    }
+
+    * {
+      box-sizing:border-box;
+    }
+
+    html,
+    body {
+      margin:0;
+      padding:0;
+      min-height:100%;
+      background:var(--bg);
+      color:var(--text);
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    .site-header {
+      background:var(--green);
+      color:#fff;
+      border-bottom:3px solid var(--gold);
+    }
+
+    .site-header-inner {
+      max-width:900px;
+      margin:0 auto;
+      padding:
+        calc(14px + env(safe-area-inset-top,0px))
+        20px
+        14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .site-logo {
+      width:38px;
+      height:38px;
+      border-radius:8px;
+      object-fit:cover;
+    }
+
+    .site-brand {
+      font-size:21px;
+      font-weight:800;
+      line-height:1.1;
+    }
+
+    .site-sub {
+      font-size:12px;
+      opacity:.9;
+      margin-top:2px;
+    }
+
+    .page {
+      padding:
+        28px
+        18px
+        calc(40px + env(safe-area-inset-bottom,0px));
+    }
+
+    .legal-wrap {
+      max-width:900px;
+      margin:0 auto;
+    }
+
+    .page-title {
+      margin:0 0 6px;
+      font-size:30px;
+      line-height:1.15;
+    }
+
+    .legal-date {
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:18px;
+    }
+
+    .legal-card {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:24px;
+      box-shadow:
+        0 4px 18px
+        rgba(0,0,0,.04);
+    }
+
+    .legal-card h2 {
+      margin-top:28px;
+      margin-bottom:8px;
+      font-size:19px;
+    }
+
+    .legal-card h2:first-of-type {
+      margin-top:0;
+    }
+
+    .legal-card p {
+      line-height:1.65;
+      margin:0 0 14px;
+    }
+
+    .legal-card ul {
+      margin:0 0 16px 22px;
+      padding:0;
+      line-height:1.65;
+    }
+
+    .legal-card li {
+      margin-bottom:8px;
+    }
+
+    .legal-important {
+      padding:14px 16px;
+      border-radius:12px;
+      border:1px solid var(--green);
+      background:rgba(59,126,70,.08);
+      margin:16px 0;
+      line-height:1.6;
+    }
+
+    .legal-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:24px;
+      padding-top:20px;
+      border-top:1px solid var(--border);
+    }
+
+    .legal-btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:11px 15px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      text-decoration:none;
+      font-weight:800;
+      color:var(--text);
+      background:var(--surface);
+    }
+
+    .legal-btn.primary {
+      background:var(--green);
+      color:#fff;
+      border-color:var(--green);
+    }
+
+    .site-footer {
+      max-width:900px;
+      margin:20px auto 0;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    @media (max-width:600px) {
+
+      .page {
+        padding-left:14px;
+        padding-right:14px;
+      }
+
+      .legal-card {
+        padding:18px;
+      }
+
+      .page-title {
+        font-size:27px;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <header class="site-header">
+
+    <div class="site-header-inner">
+
+      <img
+        class="site-logo"
+        src="/assets/icons/icon-192.png"
+        alt="FarmVista"
+      />
+
+      <div>
+
+        <div class="site-brand">
+          FarmVista
+        </div>
+
+        <div class="site-sub">
+          Agricultural Operations
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <main class="page">
+
+    <div class="legal-wrap">
+
+      <h1 class="page-title">
+        SMS Messaging
+      </h1>
+
+      <div class="legal-date">
+        Effective Date: August 19, 2026
+      </div>
+
+
+      <div class="legal-card">
+
+        <h2>
+          FarmVista SMS Messaging Program
+        </h2>
+
+        <p>
+          FarmVista uses SMS text messaging to provide
+          agricultural and operational communications to users
+          who provide a mobile phone number and affirmatively
+          consent to receive FarmVista text messages.
+        </p>
+
+        <p>
+          FarmVista SMS messages are operational communications.
+          FarmVista does not use this SMS program for third-party
+          marketing or promotional advertising.
+        </p>
+
+
+        <h2>
+          Who May Opt In
+        </h2>
+
+        <p>
+          FarmVista SMS messaging is intended for authorized
+          FarmVista users, including employees and subcontracted
+          agricultural drivers who may receive FarmVista
+          work-related communications.
+        </p>
+
+
+        <h2>
+          How Users Opt In
+        </h2>
+
+        <p>
+          Users opt in through the authenticated
+          <strong>User Details</strong>
+          page inside the FarmVista application.
+        </p>
+
+        <p>
+          The user's mobile phone number is displayed in the
+          FarmVista profile section.
+        </p>
+
+        <p>
+          Below the FarmVista Notifications section is a separate
+          <strong>SMS Messaging</strong>
+          section containing a
+          <strong>FarmVista Text Messages</strong>
+          toggle.
+        </p>
+
+        <div class="legal-important">
+
+          <strong>
+            The FarmVista Text Messages toggle is OFF by default.
+          </strong>
+
+          <br /><br />
+
+          Providing or saving a mobile phone number does not
+          automatically enroll the user in FarmVista SMS messaging.
+
+          <br /><br />
+
+          The user must actively turn the SMS toggle ON to provide
+          affirmative consent.
+
+        </div>
+
+        <p>
+          Before the user turns the toggle ON, the following
+          disclosure is shown directly on the User Details page:
+        </p>
+
+        <div class="legal-important">
+
+          By turning this on, I agree to receive work-related SMS
+          messages from FarmVista, including grain load dispatch
+          notifications, grain ticket scan links, and authentication
+          messages. Message frequency varies. Message and data rates
+          may apply. Reply STOP to opt out or HELP for help. Consent
+          is not a condition of purchasing goods or services.
+
+        </div>
+
+        <p>
+          The disclosure provides links to the FarmVista
+          Terms and Conditions and Privacy Policy.
+        </p>
+
+        <p>
+          When the user actively turns the SMS toggle ON, FarmVista
+          records the consent status, the mobile number associated
+          with the consent, the consent source, and the consent
+          timestamp.
+        </p>
+
+        <p>
+          A publicly accessible example of this consent screen is
+          available here:
+        </p>
+
+        <p>
+          <a
+            href="/pages/user-details/sms-consent-example.html"
+          >
+            FarmVista SMS Consent Example
+          </a>
+        </p>
+
+
+        <h2>
+          Types of Messages
+        </h2>
+
+        <p>
+          FarmVista SMS messages may include:
+        </p>
+
+        <ul>
+
+          <li>
+            Grain load assignments and dispatch notifications.
+          </li>
+
+          <li>
+            Load numbers and crop information.
+          </li>
+
+          <li>
+            Buyer, customer, or delivery destination information.
+          </li>
+
+          <li>
+            Grain ticket submission or scanning instructions.
+          </li>
+
+          <li>
+            Secure links associated with assigned FarmVista work.
+          </li>
+
+          <li>
+            Authentication messages for approved FarmVista users.
+          </li>
+
+          <li>
+            Other FarmVista agricultural or operational
+            notifications relevant to the user.
+          </li>
+
+        </ul>
+
+
+        <h2>
+          Message Frequency
+        </h2>
+
+        <p>
+          Message frequency varies.
+        </p>
+
+        <p>
+          The number of messages received depends on the number
+          of FarmVista loads, assignments, jobs, alerts,
+          authentication requests, or other operational activities
+          associated with the user.
+        </p>
+
+
+        <h2>
+          Message and Data Rates
+        </h2>
+
+        <p>
+          Message and data rates may apply depending on the
+          user's wireless carrier and mobile plan.
+        </p>
+
+
+        <h2>
+          Consent Is Optional
+        </h2>
+
+        <p>
+          Consent to receive FarmVista SMS messages is optional
+          and is not a condition of purchasing goods or services.
+        </p>
+
+        <p>
+          Providing a mobile phone number alone does not constitute
+          consent to FarmVista SMS messaging.
+        </p>
+
+
+        <h2>
+          Opt Out
+        </h2>
+
+        <p>
+          Users may disable FarmVista SMS messaging by turning the
+          FarmVista Text Messages toggle OFF on the User Details page.
+        </p>
+
+        <div class="legal-important">
+
+          Users may also stop receiving FarmVista SMS messages at
+          any time by replying
+          <strong>STOP</strong>
+          to a FarmVista text message.
+
+        </div>
+
+        <p>
+          After opting out, the user may receive a confirmation
+          message indicating that SMS messaging has been stopped.
+        </p>
+
+
+        <h2>
+          Help
+        </h2>
+
+        <div class="legal-important">
+
+          For FarmVista SMS messaging assistance, reply
+          <strong>HELP</strong>
+          to a FarmVista text message.
+
+        </div>
+
+
+        <h2>
+          Mobile Information and Privacy
+        </h2>
+
+        <div class="legal-important">
+
+          <strong>
+            Mobile phone numbers, SMS consent, and SMS opt-in
+            information will not be sold or shared with third
+            parties or affiliates for marketing or promotional
+            purposes.
+          </strong>
+
+        </div>
+
+        <p>
+          FarmVista may use service providers as necessary to
+          deliver messages and operate FarmVista services.
+        </p>
+
+        <p>
+          Additional information about how FarmVista handles
+          personal information is available in the FarmVista
+          Privacy Policy.
+        </p>
+
+
+        <h2>
+          Terms
+        </h2>
+
+        <p>
+          Use of FarmVista SMS messaging is also subject to the
+          FarmVista Terms and Conditions.
+        </p>
+
+
+        <div class="legal-actions">
+
+          <a
+            class="legal-btn primary"
+            href="/pages/login/index.html"
+          >
+            FarmVista Login
+          </a>
+
+          <a
+            class="legal-btn"
+            href="/pages/user-details/sms-consent-example.html"
+          >
+            SMS Consent Example
+          </a>
+
+          <a
+            class="legal-btn"
+            href="/pages/user-details/privacy-policy.html"
+          >
+            Privacy Policy
+          </a>
+
+          <a
+            class="legal-btn"
+            href="/pages/user-details/terms-and-conditions.html"
+          >
+            Terms and Conditions
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <div class="site-footer">
+        © 2026 FarmVista
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+</html>

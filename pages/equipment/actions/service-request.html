@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FarmVista • Submit Service Request</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#3B7E46" />
+
+  <script src="/js/core/theme/theme-boot.js"></script>
+
+  <!-- ABSOLUTE PATHS -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+
+  <!-- IMPORTANT: match hub – load Firebase CONFIG first -->
+  <script src="/js/core/firebase/firebase-config.js"></script>
+
+  <!-- Ensure fv-shell -->
+  <script>
+    (function () {
+      if (!customElements.get('fv-shell')) {
+        const s = document.createElement('script');
+        s.src = '/js/core/shell/fv-shell.js';
+        s.defer = true;
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+
+  <style>
+    :root{
+      --card-max: 900px;
+      --accent: #2F6C3C;
+    }
+    body{
+      background: var(--app-bg, var(--surface));
+      margin:0;
+    }
+    #btnSubmit,
+    #btnSubmit *,
+    #btnSubmit:disabled,
+    #btnSubmit:disabled *{
+      color:#fff !important;
+    }
+    .wrap{
+      max-width: var(--card-max);
+      margin: 0 auto;
+      padding: clamp(14px,3vw,22px);
+      padding-bottom: calc(env(safe-area-inset-bottom,0px) + 72px) !important;
+      box-sizing:border-box;
+    }
+
+    .hero{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08));
+      overflow:hidden;
+    }
+    .hero-head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
+    }
+    .hero-head h1{
+      margin:0;
+      font-size:clamp(20px,3.1vw,26px);
+      line-height:1.2;
+    }
+    .muted{
+      color:var(--muted,#67706B);
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .body{
+      padding:16px;
+      display:grid;
+      gap:16px;
+    }
+
+    .eq-summary{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-soft,var(--surface));
+      padding:14px;
+      display:grid;
+      gap:6px;
+    }
+    .eq-title{
+      font-weight:800;
+      font-size:16px;
+      margin:0;
+    }
+    .eq-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:4px;
+    }
+    .chip{
+      font-size:12px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:4px 10px;
+      background:var(--surface);
+    }
+
+    .form-card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:14px;
+      display:grid;
+      gap:14px;
+    }
+
+    .form-row{
+      display:grid;
+      gap:6px;
+    }
+    .row-two{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:720px){
+      .row-two{ grid-template-columns:1fr; }
+    }
+
+    .fm-row-label,
+    .form-row label{
+      display:block;
+      font-weight:800;
+      margin:0 0 4px 0;
+      font-size:13px;
+    }
+
+    .req-badge{
+      font-size:11px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      padding:2px 6px;
+      border-radius:999px;
+      background:color-mix(in srgb,var(--accent) 12%, transparent);
+      color:var(--accent);
+      margin-left:6px;
+    }
+
+    .input,
+    .select,
+    .textarea{
+      width:100%;
+      font:inherit;
+      font-size:15px;
+      font-weight:400;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      outline:none;
+      box-sizing:border-box;
+    }
+    .textarea{
+      min-height:110px;
+      resize:vertical;
+    }
+    .input-readonly[readonly]{
+      cursor:default;
+      background:var(--card-surface,var(--surface));
+    }
+
+    .helper{
+      font-size:12px;
+      color:var(--muted,#67706B);
+    }
+
+    .ta-wrap{ position:relative; }
+    .textarea.fm-notes{ padding-right:52px; }
+
+    .mic-btn{
+      position:absolute;
+      right:10px;
+      bottom:10px;
+      width:36px;
+      height:36px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--surface);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+    .mic-btn[disabled]{ opacity:.6; cursor:not-allowed; }
+    .mic-svg{ width:18px; height:18px; display:block; }
+    .mic-active{
+      background:#2F6C3C;
+      color:#fff;
+      border-color:#2F6C3C;
+    }
+
+    /* ============================
+       TASK LIST (multi-add)
+       ============================ */
+    .task-list{
+      display:grid;
+      gap:12px;
+    }
+    .task-card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+      padding:12px;
+      display:grid;
+      gap:12px;
+    }
+    .task-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .task-title{
+      font-weight:900;
+      font-size:14px;
+      margin:0;
+    }
+    .task-mini-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .btn-mini{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn-mini-danger{
+      border-color:color-mix(in srgb,#b3261e 30%, var(--border));
+      color:#b3261e;
+      background:color-mix(in srgb,#b3261e 5%, var(--surface));
+    }
+    .btn-mini[disabled]{ opacity:.6; cursor:not-allowed; }
+
+    .details-wrap{
+      display:grid;
+      gap:12px;
+      padding-top:2px;
+    }
+
+    /* collapsible "Additional info" area */
+    .toggle-row{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:10px;
+    }
+    .btn-secondary{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:44px;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      box-sizing:border-box;
+      text-decoration:none;
+    }
+    .btn-secondary[aria-expanded="true"]{
+      background:color-mix(in srgb,var(--accent) 10%, var(--surface));
+      border-color:color-mix(in srgb,var(--accent) 30%, var(--border));
+    }
+
+    /* file input + thumbs */
+    input[type="file"].file-input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      font-size:0.9rem;
+      color:var(--text);
+      box-sizing:border-box;
+    }
+    input[type="file"].file-input::file-selector-button{
+      border:none;
+      border-radius:999px;
+      padding:4px 12px;
+      margin-right:10px;
+      background:var(--surface);
+      color:var(--text);
+      font-size:0.85rem;
+      cursor:pointer;
+    }
+    .thumbs{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:6px;
+    }
+    .thumb{
+      width:72px;
+      height:72px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--card-surface,var(--surface));
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      font-size:11px;
+      text-align:center;
+      padding:4px;
+      box-sizing:border-box;
+    }
+    .thumb img{
+      max-width:100%;
+      max-height:100%;
+      display:block;
+    }
+    .muted-line{
+      font-size:13px;
+      color:var(--muted,#67706B);
+      margin-top:4px;
+    }
+
+    /* ============================
+       ACTION BUTTONS (FIXED MOBILE)
+       - equal widths
+       - centered
+       - stacked cleanly on small screens
+       ============================ */
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:6px;
+      justify-content:flex-end;
+      width:100%;
+      box-sizing:border-box;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:148px;
+      min-height:48px;
+      padding:12px 16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      font-weight:800;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      color:var(--text);
+      background:var(--card-surface,var(--surface));
+      box-sizing:border-box;
+    }
+    .btn-primary{
+      border-color:transparent;
+      background:#2F6C3C;
+      color:#fff;
+    }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+    /* Mobile: full-width, same size, perfectly aligned */
+    @media (max-width:560px){
+      .actions{
+        display:grid;
+        grid-template-columns:1fr;
+        justify-content:stretch;
+        align-items:stretch;
+        gap:10px;
+      }
+      .actions .btn{
+        width:100%;
+        min-width:0;
+      }
+    }
+
+    .status-banner{
+      font-size:13px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--surface-soft,var(--surface));
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .status-banner .emo{
+      font-size:18px;
+      line-height:1.1;
+    }
+
+    .success-card{
+      border:1px solid color-mix(in srgb,var(--accent) 30%, transparent);
+      background:color-mix(in srgb,var(--accent) 6%, var(--surface));
+      border-radius:12px;
+      padding:12px 14px;
+      display:grid;
+      gap:4px;
+      margin-top:4px;
+      font-size:13px;
+    }
+    .success-card h2{
+      margin:0;
+      font-size:16px;
+      font-weight:900;
+    }
+    .success-card p{
+      margin:0;
+      color:var(--muted,#67706B);
+    }
+
+    .error{
+      border:1px solid #b3261e;
+      background:#fff;
+      color:#b3261e;
+      border-radius:10px;
+      padding:10px 12px;
+      display:none;
+    }
+    .error.show{ display:block; }
+
+    [hidden]{ display:none !important; }
+
+    /* kill blue links/highlights */
+    .wrap, .wrap * { -webkit-tap-highlight-color: transparent; }
+    .wrap a, .wrap a:visited, .wrap a:active, .wrap a:hover {
+      color:inherit;
+      text-decoration:none;
+    }
+  </style>
+</head>
+<body>
+  <fv-shell>
+    <div class="wrap" id="content">
+      <section class="hero">
+        <header class="hero-head">
+          <h1>Submit Service Request</h1>
+          <p class="muted" id="subtitle">Tell the shop what needs attention on this unit.</p>
+        </header>
+
+        <div class="body">
+          <div id="err" class="error"></div>
+
+          <!-- Equipment summary (still loads, but hidden by default for “in-field fast add”) -->
+          <div class="eq-summary" id="eqSummary" hidden>
+            <h2 class="eq-title" id="eqTitle"></h2>
+            <div class="eq-chips">
+              <span class="chip" id="eqType"></span>
+              <span class="chip" id="eqSerial" hidden></span>
+            </div>
+          </div>
+
+          <!-- Status / errors -->
+          <div class="status-banner" id="statusBanner" hidden>
+            <div class="emo" id="statusIcon">ℹ️</div>
+            <div id="statusText"></div>
+          </div>
+
+          <!-- Main form -->
+          <form class="form-card" id="serviceForm" novalidate>
+            <!-- Hidden identity/date (keep logic, hide clutter) -->
+            <input id="submittedBy" type="hidden">
+            <input id="submittedUid" type="hidden">
+            <input id="submittedEmail" type="hidden">
+            <input id="dateSubmittedIso" type="hidden">
+
+            <!-- Tasks -->
+            <div class="form-row">
+              <div class="fm-row-label">Service tasks</div>
+              <div class="task-list" id="taskList"></div>
+
+              <div class="toggle-row">
+                <button id="btnAddTask" type="button" class="btn-secondary">+ Add another task</button>
+                <div class="helper" id="taskHint">Add as many as you want (10+). Remove any task if you messed up.</div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+              <button id="btnCancel" type="button" class="btn">Cancel</button>
+              <button id="btnSubmit" type="submit" class="btn btn-primary">Submit Request</button>
+            </div>
+
+            <!-- Success message -->
+            <div class="success-card" id="successCard" hidden>
+              <h2>Service request submitted</h2>
+              <p id="successMsg">
+                Your request has been saved and will show up in the service approval queue.
+                You’ll be returned to the equipment hub in a moment.
+              </p>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </fv-shell>
+
+  <script type="module">
+    import {
+      ready,
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp,
+      doc,
+      getDoc,
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL,
+      updateDoc
+    } from '/js/core/firebase/firebase-init.js';
+
+    const $ = id => document.getElementById(id);
+
+    const qs = new URLSearchParams(location.search);
+    const equipmentId = qs.get('id') || qs.get('equipmentId') || '';
+    const from        = (qs.get('from') || '').toLowerCase();
+
+    let DB = null;
+
+    /* ---------------------- helpers ---------------------- */
+
+    const TOPIC_OPTIONS = [
+      { v:"", label:"Select a topic…" },
+      { v:"engine", label:"Engine / Powertrain" },
+      { v:"hydraulics", label:"Hydraulics" },
+      { v:"electrical", label:"Electrical / Wiring" },
+      { v:"driveline", label:"Driveline / Transmission" },
+      { v:"tires_tracks", label:"Tires / Tracks / Undercarriage" },
+      { v:"precision", label:"Precision / GPS / StarFire" },
+      { v:"cab_controls", label:"Cab Controls / Displays" },
+      { v:"leaks", label:"Leaks / Fluids" },
+      { v:"scheduled_service", label:"Scheduled Service / Oil Change" },
+      { v:"inspection", label:"Pre-Season Inspection" },
+      { v:"other", label:"Other (describe below)" }
+    ];
+
+    const showErr = msg => {
+      const box = $("err");
+      box.textContent = msg || "";
+      box.classList.toggle("show", !!msg);
+    };
+
+    function setStatus(msg, icon='ℹ️'){
+      const banner = $('statusBanner');
+      const text   = $('statusText');
+      const ico    = $('statusIcon');
+      if(!banner || !text || !ico) return;
+      text.textContent = msg || '';
+      ico.textContent  = icon || 'ℹ️';
+      banner.hidden = !msg;
+    }
+
+    const last6 = v => String(v || '').slice(-6);
+
+    function formatLocalDate(d = new Date()){
+      const dt = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+      return dt.toISOString().slice(0,10);
+    }
+    function prettyDateFromIso(dStr){
+      if(!dStr) return "";
+      const d = new Date(dStr);
+      if(Number.isNaN(d.getTime())) return dStr;
+      return d.toLocaleDateString();
+    }
+
+    function titleCase(s){
+      return String(s||"").replace(/\s+/g," ").trim().split(" ")
+        .filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
+    }
+    function nameFromEmail(email){
+      const local = String(email||"").split("@")[0]||"";
+      if(!local) return "";
+      if(/[._-]/.test(local)){
+        return titleCase(local.replace(/[0-9]+/g," ").split(/[._-]+/).join(" "));
+      }
+      const spaced = local.replace(/([a-z])([A-Z])/g,"$1 $2");
+      return titleCase(spaced || local);
+    }
+
+    function uid(){
+      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    /* -------- Submitted by / date (hidden, but required) -------- */
+
+    function setSubmittedByNow(){
+      const hidName = $("submittedBy");
+      const hidUid = $("submittedUid");
+      const hidEmail = $("submittedEmail");
+      let label = "";
+
+      try{
+        const ctx = window.FVUserContext && window.FVUserContext.get && window.FVUserContext.get();
+        if(ctx){
+          if(ctx.displayName || ctx.email) label = ctx.displayName || ctx.email || "";
+          if(ctx.uid && !hidUid.value) hidUid.value = ctx.uid;
+          if(ctx.email && !hidEmail.value) hidEmail.value = ctx.email;
+        }
+      }catch{}
+
+      if(!label){
+        try{
+          const u = window.firebaseAuth && window.firebaseAuth.currentUser;
+          if(u){
+            label = u.displayName || u.email || "";
+            if(u.uid && !hidUid.value) hidUid.value = u.uid;
+            if(u.email && !hidEmail.value) hidEmail.value = u.email;
+          }
+        }catch{}
+      }
+
+      if(label && label.includes("@")) label = nameFromEmail(label);
+      label = titleCase(label || "");
+      if(label){
+        hidName.value = label;
+        return true;
+      }
+      hidName.value = "FarmVista User";
+      return false;
+    }
+
+    function setupAuth(){
+      let tries = 30;
+      const timer = setInterval(()=>{
+        if(setSubmittedByNow() || --tries<=0) clearInterval(timer);
+      }, 200);
+    }
+
+    function setupDate(){
+      const todayIso = formatLocalDate();
+      $("dateSubmittedIso").value = todayIso;
+    }
+
+    /* -------- mic dictation (per-task) -------- */
+
+    function wireMic(btn, ta){
+      if(!btn || !ta) return;
+
+      const ok = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+      if(!ok){
+        btn.style.display = "none";
+        return;
+      }
+
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.interimResults = true;
+      rec.continuous = false;
+
+      let active = false;
+      let baseText = "";
+
+      const setMic = on=>{
+        btn.classList.toggle("mic-active", on);
+        btn.setAttribute("aria-label", on ? "Stop dictation" : "Start dictation");
+      };
+
+      btn.addEventListener("click", ()=>{
+        if(!active){
+          baseText = ta.value ? (ta.value + " ") : "";
+          try{ rec.start(); active=true; setMic(true); }catch{}
+        }else{
+          try{ rec.stop(); rec.abort(); }catch{}
+          active=false; setMic(false);
+        }
+      });
+
+      rec.onresult = ev=>{
+        let txt = "";
+        for(let i=ev.resultIndex;i<ev.results.length;i++){
+          txt += ev.results[i][0].transcript;
+        }
+        ta.value = baseText + txt;
+      };
+      rec.onend = ()=>{ active=false; setMic(false); };
+      rec.onerror = ()=>{ active=false; setMic(false); };
+    }
+
+    /* ---------------- Files: preview + upload (per-task) ---------------- */
+
+    function setupFiles(input, thumbs, hint){
+      if(!input) return;
+
+      input.addEventListener("change", ()=>{
+        const files = Array.from(input.files || []);
+        thumbs.innerHTML = "";
+
+        if(!files.length){
+          thumbs.setAttribute("aria-hidden","true");
+          hint.textContent = "";
+          hint.setAttribute("aria-hidden","true");
+          return;
+        }
+
+        files.forEach(f=>{
+          const wrap = document.createElement("div");
+          wrap.className = "thumb";
+
+          if(f.type && f.type.startsWith("image/")){
+            const img = document.createElement("img");
+            img.alt = f.name;
+            wrap.appendChild(img);
+            const reader = new FileReader();
+            reader.onload = e=>{ img.src = e.target.result; };
+            reader.readAsDataURL(f);
+          }else{
+            wrap.textContent = (f.name || "file").split(".").pop().toUpperCase();
+          }
+          thumbs.appendChild(wrap);
+        });
+
+        thumbs.removeAttribute("aria-hidden");
+        hint.textContent = files.length === 1 ? "1 file selected" : `${files.length} files selected`;
+        hint.removeAttribute("aria-hidden");
+      });
+    }
+
+    async function uploadRequestFiles(docId, inputEl){
+      const files = Array.from(inputEl?.files || []);
+      if(!files.length){
+        return { urls: [], count: 0 };
+      }
+
+      // Storage optional – follow same pattern as maintenance
+      if(!window.FV_HAS_STORAGE){
+        console.warn("[svc-req] Storage flag FV_HAS_STORAGE is false; skipping uploads.");
+        return { urls: [], count: files.length };
+      }
+
+      const storage = getStorage();
+      if(!storage){
+        console.warn("[svc-req] getStorage() returned null; skipping uploads.");
+        return { urls: [], count: files.length };
+      }
+
+      const urls = [];
+      let index = 0;
+
+      for(const file of files){
+        try{
+          const cleanName = (file.name || "file").replace(/\s+/g,"-");
+          const path = `equipmentServiceRequests/${docId}/${Date.now()}-${index}-${cleanName}`;
+          const fileRef = ref(storage, path);
+          await uploadBytes(fileRef, file);
+          const url = await getDownloadURL(fileRef);
+          urls.push(url);
+          index++;
+        }catch(err){
+          console.error("[svc-req] single file upload failed", err);
+        }
+      }
+
+      try{
+        const refDoc = doc(DB, "equipmentServiceRequests", docId);
+        await updateDoc(refDoc, {
+          attachmentUrls: urls,
+          attachmentCount: urls.length,
+          updatedAt: serverTimestamp()
+        });
+      }catch(err){
+        console.error("[svc-req] updateDoc with attachment URLs failed", err);
+      }
+
+      return { urls, count: urls.length };
+    }
+
+    /* ------------------ equipment load ------------------ */
+
+    async function loadEquipment(){
+      if(!equipmentId){
+        setStatus('No equipment ID provided in the link.', '⚠️');
+        $('subtitle').textContent = 'Missing equipment id.';
+        return null;
+      }
+
+      try{
+        const ref  = doc(DB, 'equipment', equipmentId);
+        console.info('[svc-req] loading equipment', equipmentId);
+        const snap = await getDoc(ref);
+
+        if(!snap.exists()){
+          setStatus('Equipment record not found. Check the QR or link and try again.', '⚠️');
+          $('subtitle').textContent = 'Equipment not found.';
+          console.warn('[svc-req] equipment not found', equipmentId);
+          return null;
+        }
+
+        const d = snap.data() || {};
+        const makeModel = [d.makeName, d.modelName].filter(Boolean).join(' ');
+        const ls = last6(d.serial);
+        const title = makeModel
+          ? `${makeModel}${ls ? ` (#${ls})` : ''}`
+          : (d.name || `Unit ${equipmentId.slice(0,6)}`);
+
+        $('eqTitle').textContent = title;
+        $('eqType').textContent =
+          (d.type ? String(d.type).charAt(0).toUpperCase() + String(d.type).slice(1) : 'Equipment');
+        if(ls){
+          $('eqSerial').textContent = `SN #${ls}`;
+          $('eqSerial').hidden = false;
+        }
+
+        // Keep hidden by default (fast add). If you ever want it visible,
+        // just remove this line:
+        $('eqSummary').hidden = true;
+
+        setStatus('', 'ℹ️');
+        return { id: equipmentId, data: d, title, serialLast6: ls };
+      }catch(e){
+        console.error('[svc-req] loadEquipment error', e);
+        setStatus('Error loading equipment. Try re-opening from the QR scan or lookup.', '⚠️');
+        $('subtitle').textContent = 'Error loading equipment.';
+        return null;
+      }
+    }
+
+    /* ------------------ task builder ------------------ */
+
+    const STATE = {
+      tasks: [] // [{id, el, refs...}]
+    };
+
+    function buildTopicSelect(selectEl){
+      selectEl.innerHTML = "";
+      for(const opt of TOPIC_OPTIONS){
+        const o = document.createElement("option");
+        o.value = opt.v;
+        o.textContent = opt.label;
+        selectEl.appendChild(o);
+      }
+    }
+
+    function makeTaskCard(taskIndex){
+      const taskId = uid();
+
+      const card = document.createElement("div");
+      card.className = "task-card";
+      card.dataset.taskId = taskId;
+
+      card.innerHTML = `
+        <div class="task-head">
+          <div class="task-title">Task ${taskIndex + 1}</div>
+          <div class="task-mini-actions">
+            <button type="button" class="btn-mini btn-mini-danger" data-act="remove">Remove</button>
+          </div>
+        </div>
+
+        <!-- Topic (always visible) -->
+        <div class="form-row">
+          <label>
+            Service topic
+            <span class="req-badge">Required</span>
+          </label>
+          <select class="select" data-role="topic" required></select>
+          <p class="helper">
+            Keep this list clean. If “Other” is truly needed, describe it clearly in the notes.
+          </p>
+        </div>
+
+        <!-- If "Other" topic -->
+        <div class="form-row" data-role="topicOtherRow" hidden>
+          <label>If “Other”, what’s the main topic?</label>
+          <input class="input" data-role="topicOther" type="text" maxlength="120"
+            placeholder="Example: Rear axle vibration, cab door seal, etc.">
+        </div>
+
+        <!-- Notes (hidden until topic picked) -->
+        <div class="details-wrap" data-role="details" hidden>
+          <div class="form-row">
+            <label>
+              Notes for shop
+              <span class="req-badge">Required</span>
+            </label>
+            <div class="ta-wrap">
+              <textarea
+                class="textarea fm-notes"
+                data-role="notes"
+                placeholder="Describe the issue, when it happens, any warning lights, and how urgent it is."></textarea>
+              <button type="button" class="mic-btn" data-role="mic" aria-label="Start dictation">
+                <svg class="mic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H9v2h6v-2h-2v-3.08A7 7 0 0 0 19 11h-2z"/>
+                </svg>
+              </button>
+            </div>
+            <p class="helper">
+              Example: “Rattle in front right at 1,800–2,000 RPM under load, no codes, started 12/3 after chisel.”
+            </p>
+          </div>
+
+          <!-- Additional info toggle -->
+          <div class="form-row">
+            <button type="button" class="btn-secondary" data-role="toggleMore" aria-expanded="false">
+              Additional info
+            </button>
+            <div class="helper">Tap if you need parts, photos, files, or extra details.</div>
+          </div>
+
+          <!-- Additional info content -->
+          <div class="details-wrap" data-role="more" hidden>
+            <div class="form-row">
+              <label>Parts needed (if known)</label>
+              <textarea
+                class="textarea"
+                data-role="partsNeeded"
+                placeholder="Filter kits, bearings, hoses, tires/tracks, DEF sensor, etc. List part numbers if you have them."></textarea>
+            </div>
+
+            <div class="form-row">
+              <label>Photos & files</label>
+              <input
+                class="file-input"
+                data-role="attachments"
+                type="file"
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+              <div class="thumbs" data-role="thumbs" aria-hidden="true"></div>
+              <div class="muted-line" data-role="fileHint" aria-hidden="true"></div>
+              <p class="helper">
+                Attach photos of warning lights, leaks, wear points, or upload related documents (inspection reports, service quotes, etc.).
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const topicSel = card.querySelector('[data-role="topic"]');
+      const topicOtherRow = card.querySelector('[data-role="topicOtherRow"]');
+      const topicOther = card.querySelector('[data-role="topicOther"]');
+      const details = card.querySelector('[data-role="details"]');
+      const notes = card.querySelector('[data-role="notes"]');
+      const micBtn = card.querySelector('[data-role="mic"]');
+      const toggleMore = card.querySelector('[data-role="toggleMore"]');
+      const moreWrap = card.querySelector('[data-role="more"]');
+      const attachments = card.querySelector('[data-role="attachments"]');
+      const thumbs = card.querySelector('[data-role="thumbs"]');
+      const fileHint = card.querySelector('[data-role="fileHint"]');
+      const removeBtn = card.querySelector('[data-act="remove"]');
+
+      buildTopicSelect(topicSel);
+
+      // Topic change: reveal notes + keep other box working
+      const onTopicChange = ()=>{
+        const v = (topicSel.value || "").trim();
+
+        // show/hide other topic
+        topicOtherRow.hidden = (v !== "other");
+
+        // only show the main “details” (notes + additional info) after a topic is picked
+        const shouldShowDetails = !!v;
+        details.hidden = !shouldShowDetails;
+
+        // if they picked a topic, focus notes (fast in-field entry)
+        if(shouldShowDetails){
+          // small delay helps iOS scroll into view
+          setTimeout(()=>{ notes?.focus(); }, 50);
+        }
+      };
+      topicSel.addEventListener("change", onTopicChange);
+      onTopicChange();
+
+      // Additional info toggle
+      toggleMore.addEventListener("click", ()=>{
+        const expanded = toggleMore.getAttribute("aria-expanded") === "true";
+        toggleMore.setAttribute("aria-expanded", expanded ? "false" : "true");
+        moreWrap.hidden = expanded;
+      });
+
+      // Mic wiring
+      wireMic(micBtn, notes);
+
+      // Files wiring (only inside Additional info)
+      setupFiles(attachments, thumbs, fileHint);
+
+      return {
+        id: taskId,
+        el: card,
+        refs: { topicSel, topicOtherRow, topicOther, details, notes, attachments, toggleMore, moreWrap, removeBtn }
+      };
+    }
+
+    function renumberTasks(){
+      const list = $("taskList");
+      const cards = Array.from(list.querySelectorAll(".task-card"));
+      cards.forEach((c, idx)=>{
+        const t = c.querySelector(".task-title");
+        if(t) t.textContent = `Task ${idx + 1}`;
+      });
+
+      // disable remove if only 1 task
+      const onlyOne = cards.length <= 1;
+      cards.forEach(c=>{
+        const btn = c.querySelector('[data-act="remove"]');
+        if(btn) btn.disabled = onlyOne;
+      });
+    }
+
+    function addTask(){
+      const list = $("taskList");
+      const t = makeTaskCard(STATE.tasks.length);
+      STATE.tasks.push(t);
+      list.appendChild(t.el);
+
+      // remove handler
+      t.refs.removeBtn.addEventListener("click", ()=>{
+        removeTask(t.id);
+      });
+
+      renumberTasks();
+      return t;
+    }
+
+    function removeTask(taskId){
+      const idx = STATE.tasks.findIndex(t=>t.id === taskId);
+      if(idx < 0) return;
+      if(STATE.tasks.length <= 1) return;
+
+      const t = STATE.tasks[idx];
+      try{ t.el.remove(); }catch{}
+      STATE.tasks.splice(idx, 1);
+      renumberTasks();
+    }
+
+    /* ------------------ navigation ------------------ */
+
+    function goBackToHub(){
+      if(history.length > 1){
+        history.back();
+        return;
+      }
+      if(equipmentId){
+        location.href =
+          `/pages/equipment/actions/hub.html?id=${encodeURIComponent(equipmentId)}${from ? `&from=${encodeURIComponent(from)}` : ''}`;
+      }else{
+        location.href = '/pages/equipment/equipment-tractors.html';
+      }
+    }
+
+    /* ------------------ submit ------------------ */
+
+    function validateTasks(){
+      for(let i=0;i<STATE.tasks.length;i++){
+        const t = STATE.tasks[i];
+        const topic = (t.refs.topicSel.value || "").trim();
+        const notes = (t.refs.notes.value || "").trim();
+        const other = (t.refs.topicOther.value || "").trim();
+
+        if(!topic){
+          showErr(`Task ${i+1}: Service topic is required.`);
+          t.refs.topicSel.focus();
+          return null;
+        }
+        if(topic === "other" && !other){
+          showErr(`Task ${i+1}: Please fill in the “Other” topic box.`);
+          t.refs.topicOther.focus();
+          return null;
+        }
+        if(!notes){
+          showErr(`Task ${i+1}: Notes for shop are required.`);
+          t.refs.notes.focus();
+          return null;
+        }
+      }
+
+      if(!$('submittedBy').value){
+        showErr('Unable to detect user. Please re-login.');
+        return null;
+      }
+
+      return true;
+    }
+
+    function countFiles(inputEl){
+      return inputEl && inputEl.files ? inputEl.files.length : 0;
+    }
+
+    function makeBatchId(){
+      return `svc-${Date.now()}-${Math.random().toString(16).slice(2,8)}`;
+    }
+
+    function setupActions(equipmentMeta){
+      const form      = $('serviceForm');
+      const btnSubmit = $('btnSubmit');
+      const btnCancel = $('btnCancel');
+      const success   = $('successCard');
+      const successMsg= $('successMsg');
+
+      btnCancel.addEventListener('click', (evt)=>{
+        evt.preventDefault();
+        goBackToHub();
+      });
+
+      form.addEventListener('submit', async (evt)=>{
+        evt.preventDefault();
+        if(btnSubmit.disabled) return;
+
+        success.hidden = true;
+        setStatus('');
+        showErr('');
+
+        if(!validateTasks()) return;
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Submitting…';
+
+        const batchId = makeBatchId();
+
+        try{
+          const now = new Date();
+          const requestedDate = formatLocalDate(now);
+
+          let okCount = 0;
+          let uploadedTotal = 0;
+          let storageSkipped = 0;
+
+          for(let i=0;i<STATE.tasks.length;i++){
+            const t = STATE.tasks[i];
+
+            const topic = (t.refs.topicSel.value || '').trim();
+            const topicOtherText = (t.refs.topicOther.value || '').trim();
+            const notes = (t.refs.notes.value || '').trim();
+            const parts = (t.el.querySelector('[data-role="partsNeeded"]')?.value || '').trim();
+
+            const rawCount = countFiles(t.refs.attachments);
+
+            const payload = {
+              equipmentId: equipmentMeta?.id || equipmentId || null,
+              equipmentName: equipmentMeta?.title || null,
+              equipmentType: equipmentMeta?.data?.type || null,
+              equipmentMake: equipmentMeta?.data?.makeName || null,
+              equipmentModel: equipmentMeta?.data?.modelName || null,
+              equipmentSerialLast6: equipmentMeta?.serialLast6 || null,
+
+              serviceTopic: topic,
+              serviceTopicOther: topic === 'other' && topicOtherText ? topicOtherText : null,
+              notes,
+              partsNeeded: parts || null,
+
+              status: 'needs approved',
+              requestedDate,
+
+              // multi-task batch linking
+              batchId,
+              batchIndex: i,
+              batchCount: STATE.tasks.length,
+
+              attachmentCount: rawCount, // corrected after upload if Storage works
+              createdAt: serverTimestamp(),
+              submittedBy: {
+                uid: $('submittedUid').value || null,
+                name: $('submittedBy').value || null,
+                email: $('submittedEmail').value || null
+              }
+            };
+
+            const docRef = await addDoc(collection(DB,'equipmentServiceRequests'), payload);
+            okCount++;
+
+            // Upload attachments for THIS task/doc
+            if(rawCount){
+              let uploadInfo = null;
+              try{
+                uploadInfo = await uploadRequestFiles(docRef.id, t.refs.attachments);
+              }catch(e){
+                console.error('[svc-req] attachment upload failed', e);
+              }
+
+              if(uploadInfo && uploadInfo.count){
+                uploadedTotal += uploadInfo.count;
+              }else{
+                // files selected but no upload result usually means Storage unavailable
+                storageSkipped += rawCount;
+              }
+            }
+          }
+
+          let extra = '';
+          if(uploadedTotal){
+            extra += uploadedTotal === 1 ? ' 1 attachment uploaded.' : ` ${uploadedTotal} attachments uploaded.`;
+          }
+          if(storageSkipped){
+            extra += ' Some attachments not uploaded (Storage unavailable).';
+          }
+
+          setStatus('Service request submitted.', '✅');
+          successMsg.textContent =
+            `${okCount} task${okCount===1?'':'s'} saved and will show up in the service approval queue.` +
+            extra + ' You’ll be returned to the equipment hub in a moment.';
+          success.hidden = false;
+
+          setTimeout(()=>{ goBackToHub(); }, 1500);
+        }catch(e){
+          console.error('[svc-req] submit error', e);
+          showErr('Error submitting request. Check your connection and try again.');
+        }finally{
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Submit Request';
+        }
+      });
+    }
+
+    /* ---------------------- boot ---------------------- */
+
+    (async function boot(){
+      await ready;
+      DB = getFirestore();
+
+      setupAuth();
+      setupDate();
+
+      // Start with ONE task visible (fast in-field: topic only until they pick)
+      addTask();
+
+      $("btnAddTask").addEventListener("click", ()=>{
+        const t = addTask();
+        // keep it fast: scroll new task into view and focus topic
+        setTimeout(()=>{
+          t.el.scrollIntoView({ behavior:"smooth", block:"start" });
+          t.refs.topicSel.focus();
+        }, 50);
+      });
+
+      const eqMeta = await loadEquipment();
+      setupActions(eqMeta);
+    })().catch(e=>{
+      console.error('[svc-req] init fatal', e);
+      showErr('Unexpected error loading page.');
+    });
+  </script>
+</body>
+</html>
