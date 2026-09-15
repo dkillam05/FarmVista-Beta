@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/beta-pages-path-fix.yml'
+      - 'beta-run-marker.txt'
 
 permissions:
   contents: write
@@ -23,12 +24,10 @@ jobs:
         run: |
           from pathlib import Path
           import re
-
           ROOT = Path('.')
           PREFIX = '/FarmVista-Beta/'
           TEXT_EXTS = {'.html','.js','.css','.json','.webmanifest','.md','.txt','.xml'}
           SKIP = {'.git', '.github'}
-
           changed = []
           for p in ROOT.rglob('*'):
               if not p.is_file() or any(part in SKIP for part in p.parts):
@@ -40,20 +39,15 @@ jobs:
               except Exception:
                   continue
               old = s
-
               s = re.sub(r'<base\s+href=["\']/["\']\s*/?>', '<base href="/FarmVista-Beta/">', s, flags=re.I)
-
               for folder in ('js','assets','pages','scan','farms','marketing','docs'):
                   s = re.sub(r'(?<![A-Za-z0-9_./-])/(' + folder + r')/', PREFIX + r'\1/', s)
               for fname in ('manifest.webmanifest','serviceworker.js','index.html'):
                   s = re.sub(r'(?<![A-Za-z0-9_./-])/' + re.escape(fname), PREFIX + fname, s)
-
               s = s.replace('/FarmVista-Beta/FarmVista-Beta/', '/FarmVista-Beta/')
-
               if s != old:
                   p.write_text(s, encoding='utf-8')
                   changed.append(str(p))
-
           print(f'Updated {len(changed)} files')
           for f in changed:
               print(f)
