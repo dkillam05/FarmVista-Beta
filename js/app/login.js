@@ -783,11 +783,13 @@ async function selectFarm(
   }
 
 
+  // Beta must always load the farm config from this GitHub Pages repository.
+  // Platform lookup paths are production-root-relative and are not safe here.
   const configPath =
-    String(
-      farm?.configPath ||
-      `/FarmVista-Beta/farms/${farmKey}.json`
-    ).trim();
+    new URL(
+      `farms/${encodeURIComponent(farmKey)}.json`,
+      document.baseURI || location.href
+    ).pathname;
 
 
   const response =
