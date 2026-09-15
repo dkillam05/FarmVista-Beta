@@ -18,38 +18,18 @@ jobs:
         with:
           ref: main
 
-      - name: Make platform farm config paths Beta-safe
-        shell: python
+      - name: Make farm config path Beta-safe
         run: |
+          python - <<'PY'
           from pathlib import Path
-
           p = Path('js/app/login.js')
           s = p.read_text()
-
-          old = '''  const configPath =
-    String(
-      farm?.configPath ||
-      `/FarmVista-Beta/farms/${farmKey}.json`
-    ).trim();
-'''
-
-          new = '''  // The platform lookup was built for the production site and may
-  // return a root-relative configPath such as /farms/dowson.json.
-  // On GitHub Pages that would incorrectly request dkillam05.github.io/farms/...
-  // instead of this Beta repository. Always resolve farm configs inside the
-  // Beta app so authentication uses the same farm Firebase config as production.
-  const configPath =
-    new URL(
-      `farms/${encodeURIComponent(farmKey)}.json`,
-      document.baseURI || location.href
-    ).pathname;
-'''
-
+          old = "  const configPath =\n    String(\n      farm?.configPath ||\n      `/FarmVista-Beta/farms/${farmKey}.json`\n    ).trim();\n"
+          new = "  // Beta must always load the farm config from this GitHub Pages repository.\n  // Platform lookup paths are production-root-relative and are not safe here.\n  const configPath =\n    new URL(\n      `farms/${encodeURIComponent(farmKey)}.json`,\n      document.baseURI || location.href\n    ).pathname;\n"
           if old not in s:
-              raise SystemExit('Expected selectFarm configPath block was not found; no changes committed.')
-
-          s = s.replace(old, new, 1)
-          p.write_text(s)
+              raise SystemExit('Expected selectFarm configPath block was not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
 
       - name: Commit Beta login fix
         run: |
