@@ -1,4 +1,4 @@
-// /js/dashboard/weather/dash-weather-modal.js
+// /FarmVista-Beta/js/dashboard/weather/dash-weather-modal.js
 // Rev: 2026-09-11-weather-single-render-v4
 //
 // Dashboard weather card -> modal wiring.

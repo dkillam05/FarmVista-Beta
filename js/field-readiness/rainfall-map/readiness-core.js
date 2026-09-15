@@ -1,5 +1,5 @@
 /* ======================================================================
-   /js/field-readiness/rainfall-map/readiness-core.js
+   /FarmVista-Beta/js/field-readiness/rainfall-map/readiness-core.js
    FULL FILE REBUILD
    REV: 2026-03-15a-map-readiness-centralized-fallback
 
@@ -10,12 +10,12 @@
    - keep model fallback for fields missing centralized docs
 ====================================================================== */
 
-import { buildWxCtx } from '/js/field-readiness/state.js';
+import { buildWxCtx } from '/FarmVista-Beta/js/field-readiness/state.js';
 import {
   ensureFRModules,
   buildFRDeps,
   runFieldReadiness
-} from '/js/field-readiness/formula.js';
+} from '/FarmVista-Beta/js/field-readiness/formula.js';
 
 const FR_LATEST_COLLECTION = 'field_readiness_latest';
 

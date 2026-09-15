@@ -18,7 +18,7 @@
 
 (() => {
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/pages/grain/grain-ticket-detail.html')) return;
+  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html')) return;
 
   const clean = value => String(value == null ? '' : value).trim();
 
@@ -142,7 +142,7 @@
 */
 (() => {
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/pages/grain/grain-ticket-detail.html')) return;
+  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html')) return;
   if (window.__FV_TICKET_DETAIL_SAVED_ASSIGNMENTS_20260911_V2) return;
   window.__FV_TICKET_DETAIL_SAVED_ASSIGNMENTS_20260911_V2 = true;
 
@@ -153,7 +153,7 @@
     if (!ticketId) return null;
 
     try {
-      const firebase = await import('/js/core/firebase/firebase-init.js');
+      const firebase = await import('/FarmVista-Beta/js/core/firebase/firebase-init.js');
       await firebase.ready;
 
       const db = firebase.getFirestore();
@@ -269,17 +269,17 @@
 /* Sept 5, 2026 — Ticket Details mobile viewer + OCR display tools. */
 (() => {
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/pages/grain/grain-ticket-detail.html')) return;
+  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html')) return;
   if (window.__FV_TICKET_DETAIL_MOBILE_VIEWER_LOADER_V6_20260911) return;
   window.__FV_TICKET_DETAIL_MOBILE_VIEWER_LOADER_V6_20260911 = true;
 
   const script = document.createElement('script');
-  script.src = '/js/grain/tickets/detail/grain-ticket-detail-mobile-viewer-v2.js?v=20260911-6';
+  script.src = '/FarmVista-Beta/js/grain/tickets/detail/grain-ticket-detail-mobile-viewer-v2.js?v=20260911-6';
   script.dataset.fvTicketDetailMobileViewer = '1';
   document.head.appendChild(script);
 
   const firstLoadWake = document.createElement('script');
-  firstLoadWake.src = '/js/grain/tickets/detail/grain-ticket-detail-first-load-wake.js?v=20260911-3';
+  firstLoadWake.src = '/FarmVista-Beta/js/grain/tickets/detail/grain-ticket-detail-first-load-wake.js?v=20260911-3';
   firstLoadWake.dataset.fvTicketDetailFirstLoadWake = '1';
   document.head.appendChild(firstLoadWake);
 })();

@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/state.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/state.js  (FULL FILE)
 Rev: 2026-03-10a
 
 Changes (per Dane):

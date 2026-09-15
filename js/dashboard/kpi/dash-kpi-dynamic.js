@@ -1,4 +1,4 @@
-// /js/dashboard/kpi/dash-kpi-dynamic.js
+// /FarmVista-Beta/js/dashboard/kpi/dash-kpi-dynamic.js
 // FarmVista Dashboard — Dynamic Needs Attention + desktop split scrolling
 // Rev: 2026-09-11-v4
 

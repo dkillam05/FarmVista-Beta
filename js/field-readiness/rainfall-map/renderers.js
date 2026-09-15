@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/rainfall-map/renderers.js   (FULL FILE)
+/FarmVista-Beta/js/field-readiness/rainfall-map/renderers.js   (FULL FILE)
 Rev: 2026-03-15b-label-and-reset-tap-targets
 
 PURPOSE

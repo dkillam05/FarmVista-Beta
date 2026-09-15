@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/dashboard/markets/dash-markets-quotes.js  (FULL FILE)
+/FarmVista-Beta/js/dashboard/markets/dash-markets-quotes.js  (FULL FILE)
 Rev: 2026-01-28a
 Purpose:
 ✅ Quote badge + row-updater helper for FarmVista Markets UI (standalone)

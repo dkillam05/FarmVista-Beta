@@ -68,9 +68,9 @@
   function loadPageGuards(){
     try{
       const path = String(global.location?.pathname || '').toLowerCase();
-      if (path.endsWith('/pages/grain/grain-ticket.html') && !doc.querySelector('script[data-fv-grain-warning-guard]')) {
+      if (path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket.html') && !doc.querySelector('script[data-fv-grain-warning-guard]')) {
         const script = doc.createElement('script');
-        script.src = '/js/grain/tickets/alerts/grain-ticket-dashboard-warning-patch.js?v=20260911-2';
+        script.src = '/FarmVista-Beta/js/grain/tickets/alerts/grain-ticket-dashboard-warning-patch.js?v=20260911-2';
         script.defer = true;
         script.dataset.fvGrainWarningGuard = '1';
         doc.head.appendChild(script);
@@ -81,11 +81,11 @@
   function loadHaulingJobUx(){
     try{
       const path = String(global.location?.pathname || '').toLowerCase();
-      if (!path.endsWith('/pages/grain/grain-contracts.html')) return;
+      if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
       if (!doc.querySelector('script[data-fv-hauling-job-ux]')) {
         const script = doc.createElement('script');
-        script.src = '/js/grain/hauling-jobs/grain-hauling-job-ux.js?v=20260911-2';
+        script.src = '/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-job-ux.js?v=20260911-2';
         script.defer = true;
         script.dataset.fvHaulingJobUx = '1';
         doc.head.appendChild(script);
@@ -93,7 +93,7 @@
 
       if (!doc.querySelector('script[data-fv-hauling-job-dnd-guard]')) {
         const guard = doc.createElement('script');
-        guard.src = '/js/grain/hauling-jobs/grain-hauling-job-dnd-guard.js?v=20260911-1';
+        guard.src = '/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-job-dnd-guard.js?v=20260911-1';
         guard.defer = true;
         guard.dataset.fvHaulingJobDndGuard = '1';
         doc.head.appendChild(guard);
@@ -105,15 +105,15 @@
     try{
       const path = String(global.location?.pathname || '').toLowerCase();
       const isGrainIndex =
-        path.endsWith('/pages/grain/index.html') ||
-        path === '/pages/grain/' ||
-        path === '/pages/grain';
+        path.endsWith('/FarmVista-Beta/pages/grain/index.html') ||
+        path === '/FarmVista-Beta/pages/grain/' ||
+        path === '/FarmVista-Beta/pages/grain';
 
       if (!isGrainIndex || doc.querySelector('script[data-fv-grain-index-hauling-jobs]')) return;
 
       const script = doc.createElement('script');
       script.type = 'module';
-      script.src = '/js/grain/index/grain-index-hauling-jobs.js?v=20260913-1';
+      script.src = '/FarmVista-Beta/js/grain/index/grain-index-hauling-jobs.js?v=20260913-1';
       script.dataset.fvGrainIndexHaulingJobs = '1';
       doc.head.appendChild(script);
     }catch{}
@@ -122,7 +122,7 @@
   function initGrainTicketDetailBackNavigation(){
     try{
       const path = String(global.location?.pathname || '').toLowerCase();
-      if (!path.endsWith('/pages/grain/grain-ticket-detail.html')) return;
+      if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html')) return;
 
       doc.addEventListener('click', (event) => {
         const backBtn = event.target?.closest?.('#backBtn');
@@ -136,7 +136,7 @@
           return;
         }
 
-        global.location.href = '/pages/grain/grain-ticket.html';
+        global.location.href = '/FarmVista-Beta/pages/grain/grain-ticket.html';
       }, true);
     }catch{}
   }

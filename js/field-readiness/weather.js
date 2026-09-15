@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/shared/field-readiness.weather.js  (FULL FILE)
+/FarmVista-Beta/js/shared/field-readiness.weather.js  (FULL FILE)
 Rev: 2026-01-08a
 
 Fix (per Dane):
@@ -292,7 +292,7 @@ async function getFirebaseMod(){
   if (__fbModPromise) return __fbModPromise;
   __fbModPromise = (async()=>{
     try{
-      const mod = await import('/js/core/firebase/firebase-init.js');
+      const mod = await import('/FarmVista-Beta/js/core/firebase/firebase-init.js');
       if (mod && mod.ready) await mod.ready;
       return mod;
     }catch(_){

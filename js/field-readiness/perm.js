@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/perm.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/perm.js  (FULL FILE)
 Rev: 2025-12-27a
 
 Fixes:

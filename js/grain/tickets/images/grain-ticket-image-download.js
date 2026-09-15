@@ -252,7 +252,7 @@
   }
 
   async function installActiveHaulingJobs(){
-    if(!String(location.pathname||'').toLowerCase().endsWith('/pages/grain/index.html')) return;
+    if(!String(location.pathname||'').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/index.html')) return;
     if(document.getElementById('fv-active-hauling-jobs-section')) return;
 
     const harvest=document.getElementById('active-harvest-section')?.closest('.workspace-section');
@@ -400,7 +400,7 @@
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
 
     try{
-      const firebase=await import('/js/core/firebase/firebase-init.js');
+      const firebase=await import('/FarmVista-Beta/js/core/firebase/firebase-init.js');
       await firebase.ready;
       const db=firebase.getFirestore();
       const [jobSnap,ticketSnap,alertSnap]=await Promise.all([
@@ -455,7 +455,7 @@
           <div class="detail-box"><div class="detail-label">Avg FM / Damage</div><div class="detail-value">${fmtGrade(g.fm)} / ${fmtGrade(g.damage)}</div></div>`;
         modal.querySelector('#fv-ahj-ticket-list').innerHTML=jt.length?`
           <div class="table-wrap"><table class="harvest-drill-table"><thead><tr><th>Ticket #</th><th>Date</th><th>Driver</th><th>Bushels</th><th>MO</th><th>FM</th><th>Damage</th></tr></thead><tbody>
-          ${jt.map(t=>`<tr><td><a class="fv-ahj-ticket-link" href="/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(t.id)}">${esc(ticketNumber(t))}</a></td><td>${esc(dateValue(t)||'—')}</td><td>${esc(driver(t))}</td><td>${fmtBu(ticketBushels(t))}</td><td>${gradeMarkup(t,'moisture')}</td><td>${gradeMarkup(t,'foreignMaterial')}</td><td>${gradeMarkup(t,'damage')}</td></tr>`).join('')}
+          ${jt.map(t=>`<tr><td><a class="fv-ahj-ticket-link" href="/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(t.id)}">${esc(ticketNumber(t))}</a></td><td>${esc(dateValue(t)||'—')}</td><td>${esc(driver(t))}</td><td>${fmtBu(ticketBushels(t))}</td><td>${gradeMarkup(t,'moisture')}</td><td>${gradeMarkup(t,'foreignMaterial')}</td><td>${gradeMarkup(t,'damage')}</td></tr>`).join('')}
           </tbody></table></div>`:'<div class="fv-ahj-empty">No tickets are linked to this hauling job yet.</div>';
         modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
       }));
@@ -467,11 +467,11 @@
   }
 
   const path=String(location.pathname||'').toLowerCase();
-  const isDetail=path.endsWith('/pages/grain/grain-ticket-detail.html');
+  const isDetail=path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html');
 
-  if(path.endsWith('/pages/grain/index.html')) {
+  if(path.endsWith('/FarmVista-Beta/pages/grain/index.html')) {
     installActiveHaulingJobs();
-    import('/js/grain/hauling-jobs/grain-hauling-job-contract-drilldown.js?v=20260911-1').catch(error=>{
+    import('/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-job-contract-drilldown.js?v=20260911-1').catch(error=>{
       console.error('[FarmVista] Hauling job contract drill-down loader failed:',error);
     });
   }

@@ -6,15 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#3B7E46"/>
 
-  <script src="/js/core/theme/theme-boot.js"></script>
+  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
 
   <!-- Standard includes -->
-  <link rel="manifest" href="/manifest.webmanifest"/>
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
-  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png"/>
 
-  <link rel="stylesheet" href="/assets/css/theme.css"/>
-  <link rel="stylesheet" href="/assets/css/app.css"/>
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css"/>
 
   <style>
     .page{
@@ -325,7 +325,7 @@
     (function(){
       if(!customElements.get('fv-shell')){
         const s=document.createElement('script');
-        s.src='/js/core/shell/fv-shell.js';
+        s.src='/FarmVista-Beta/js/core/shell/fv-shell.js';
         s.defer=true;
         document.head.appendChild(s);
       }
@@ -333,7 +333,7 @@
   </script>
 
   <!-- Firebase config FIRST -->
-  <script src="/js/core/firebase/firebase-config.js"></script>
+  <script src="/FarmVista-Beta/js/core/firebase/firebase-config.js"></script>
 </head>
 
 <body>
@@ -638,7 +638,7 @@
 
   <script type="module">
 
-    import '/js/shared/permissions/fv-perms-hero.js';
+    import '/FarmVista-Beta/js/shared/permissions/fv-perms-hero.js';
 
     import {
       ready,
@@ -654,10 +654,10 @@
       serverTimestamp,
       getAuth,
       sendPasswordResetEmail
-    } from '/js/core/firebase/firebase-init.js';
+    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
     import NAV_MENU
-      from '/js/shared/navigation/menu.js';
+      from '/FarmVista-Beta/js/shared/navigation/menu.js';
 
 
     const $ =
@@ -2710,7 +2710,7 @@
         else {
 
           window.location.href =
-            "/pages/teams-partners/teams-employees.html";
+            "/FarmVista-Beta/pages/teams-partners/teams-employees.html";
 
         }
 
@@ -2779,7 +2779,7 @@
 
 
           window.location.href =
-            "/pages/office/teams-and-partners/employees.html";
+            "/FarmVista-Beta/pages/office/teams-and-partners/employees.html";
 
         }
         catch (
@@ -2983,7 +2983,7 @@
 
 
           window.location.href =
-            "/pages/office/teams-and-partners/employees.html";
+            "/FarmVista-Beta/pages/office/teams-and-partners/employees.html";
 
         }
         catch (

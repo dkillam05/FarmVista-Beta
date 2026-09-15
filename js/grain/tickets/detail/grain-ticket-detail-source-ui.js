@@ -5,11 +5,11 @@ import {
   getDoc,
   collection,
   getDocs
-} from '/js/core/firebase/firebase-init.js';
+} from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
 const path = String(location.pathname || '').toLowerCase();
 
-if (path.endsWith('/pages/grain/grain-ticket-detail.html')) {
+if (path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html')) {
   const params = new URLSearchParams(location.search);
   const ticketId = String(params.get('id') || '').trim();
 

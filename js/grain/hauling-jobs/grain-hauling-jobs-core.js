@@ -1,7 +1,7 @@
-// /js/grain/hauling-jobs/grain-hauling-jobs.js
+// /FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-jobs.js
 // FarmVista — Hauling Jobs + Contract Planning Link
 //
-// Separate from /js/grain/contracts/grain-contracts.js on purpose.
+// Separate from /FarmVista-Beta/js/grain/contracts/grain-contracts.js on purpose.
 // This file owns ONLY:
 //   • Hauling Job create / edit / void
 //   • Hauling Job list + live ticketed / remaining bushels
@@ -23,7 +23,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from "/js/core/firebase/firebase-init.js";
+} from "/FarmVista-Beta/js/core/firebase/firebase-init.js";
 
 await ready;
 

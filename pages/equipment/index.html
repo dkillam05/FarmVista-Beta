@@ -7,17 +7,17 @@
   <meta name="theme-color" content="#3B7E46" />
 
 <!-- Early theme boot -->
-  <script src="/js/core/theme/theme-boot.js"></script>
+  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
   
   <!-- PWA + icons -->
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png" />
 
     <!-- Global CSS -->
-  <link rel="stylesheet" href="/assets/css/theme.css" />
-  <link rel="stylesheet" href="/assets/css/app.css" />
-  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/dashboard.css" />
 
   <style>
     /* Dashboard-style KPI badge (same as Crop Production / Field Trials) */
@@ -150,7 +150,7 @@
                 Service requests needing approval
               </div>
               <a
-                href="/pages/equipment/actions/service-approve.html"
+                href="/FarmVista-Beta/pages/equipment/actions/service-approve.html"
                 class="dash-kpi-count-link"
                 aria-label="View equipment service requests needing approval"
               >
@@ -164,7 +164,7 @@
                 Open work orders (pending &amp; in progress)
               </div>
               <a
-                href="/pages/equipment/actions/service-workorders.html"
+                href="/FarmVista-Beta/pages/equipment/actions/service-workorders.html"
                 class="dash-kpi-count-link"
                 aria-label="View open equipment work orders"
               >
@@ -216,7 +216,7 @@
       getDocs,
       query,
       where
-    } from '/js/core/firebase/firebase-init.js';
+    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
     (function(){
       "use strict";
@@ -411,11 +411,11 @@
       const urlRev = new URL(location.href).searchParams.get('rev');
       const REV = urlRev || String(Date.now());
       const files = [
-        '/js/core/version/version.js',
-        '/js/core/core.js',
-        '/js/shared/ui/fv-hero-card.js',
-        '/js/core/shell/fv-shell.js',
-        '/js/shared/ui/fv-hero.js'
+        '/FarmVista-Beta/js/core/version/version.js',
+        '/FarmVista-Beta/js/core/core.js',
+        '/FarmVista-Beta/js/shared/ui/fv-hero-card.js',
+        '/FarmVista-Beta/js/core/shell/fv-shell.js',
+        '/FarmVista-Beta/js/shared/ui/fv-hero.js'
       ];
       (async function loadSeq() {
         for (const src of files) {
@@ -446,7 +446,7 @@
       getDocs,
       query,
       where
-    } from '/js/core/firebase/firebase-init.js';
+    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
     const kpiEl = document.getElementById('equip-service-kpi');
     const reqEl = document.getElementById('equip-count-requests');

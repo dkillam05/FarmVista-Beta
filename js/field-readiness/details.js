@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/details.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/details.js  (FULL FILE)
 Rev: 2025-12-26a
 Keeps details trimming separate so it never pollutes tiles/prefs/range.
 ===================================================================== */

@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/layout.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/layout.js  (FULL FILE)
 Rev: 2025-12-26a
 
 Fixes intermittent bottom clipping (last tile / Details summary hidden)

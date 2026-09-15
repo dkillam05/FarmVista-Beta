@@ -20,7 +20,7 @@
     window.__FV_AUTO_UPDATE_LOADER_20260908 = true;
 
     const updateScript = document.createElement('script');
-    updateScript.src = '/js/core/updates/fv-auto-update.js?v=20260908-1';
+    updateScript.src = '/FarmVista-Beta/js/core/updates/fv-auto-update.js?v=20260908-1';
     updateScript.dataset.fvAutoUpdate = '1';
     document.head.appendChild(updateScript);
   }
@@ -47,27 +47,27 @@
   const path = String(window.location.pathname || '').toLowerCase();
 
   const isGrainTicketDetail =
-    path.endsWith('/pages/grain/grain-ticket-detail.html');
+    path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html');
 
   const isGrainTicketPage =
-    path.endsWith('/pages/grain/grain-ticket.html');
+    path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket.html');
 
   const isGrainTicketAdd =
-    path.endsWith('/pages/grain/grain-ticket-add.html');
+    path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-add.html');
 
   const isGrainTicketScan =
-    path.endsWith('/pages/grain/grain-ticket-scan.html');
+    path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-scan.html');
 
   const isGrainContracts =
-    path.endsWith('/pages/grain/grain-contracts.html');
+    path.endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html');
 
   const isGrainSection =
-    path.includes('/pages/grain/');
+    path.includes('/FarmVista-Beta/pages/grain/');
 
   const isGrainInventory =
-    path.endsWith('/pages/grain/index.html') ||
-    path === '/pages/grain/' ||
-    path === '/pages/grain';
+    path.endsWith('/FarmVista-Beta/pages/grain/index.html') ||
+    path === '/FarmVista-Beta/pages/grain/' ||
+    path === '/FarmVista-Beta/pages/grain';
 
   /* ===================================================================
      SEPT 4, 2026 — CANONICAL GRAIN SOURCE REPAIR
@@ -90,7 +90,7 @@
 
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = '/js/grain/tickets/grain-ticket-source-normalizer.js?v=20260904-3';
+    script.src = '/FarmVista-Beta/js/grain/tickets/grain-ticket-source-normalizer.js?v=20260904-3';
     script.dataset.fvGrainSourceCanonical = '1';
     document.head.appendChild(script);
   }
@@ -111,7 +111,7 @@
 
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = '/js/grain/shared/grain-source-ui-consistency.js?v=20260904-1';
+    script.src = '/FarmVista-Beta/js/grain/shared/grain-source-ui-consistency.js?v=20260904-1';
     script.dataset.fvGrainSourceUiConsistency = '1';
     document.head.appendChild(script);
   }
@@ -131,7 +131,7 @@
 
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = '/js/grain/tickets/detail/grain-ticket-detail-source-ui.js?v=20260911-4';
+    script.src = '/FarmVista-Beta/js/grain/tickets/detail/grain-ticket-detail-source-ui.js?v=20260911-4';
     script.dataset.fvGrainTicketSourceUi = '1';
     document.head.appendChild(script);
   }
@@ -153,7 +153,7 @@
     window.__FV_GRAIN_TICKET_DETAIL_PRESERVE_LOAD_20260904 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain/tickets/detail/grain-ticket-detail-preserve-load.js?v=20260911-3';
+    script.src = '/FarmVista-Beta/js/grain/tickets/detail/grain-ticket-detail-preserve-load.js?v=20260911-3';
     script.dataset.fvGrainTicketDetailPreserveLoad = '1';
     document.head.appendChild(script);
   }
@@ -176,7 +176,7 @@
 
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = '/js/grain/load-out/grain-loadout-repeat-order-fix.js';
+    script.src = '/FarmVista-Beta/js/grain/load-out/grain-loadout-repeat-order-fix.js';
     script.dataset.fvGrainLoadoutRepeatOrderFix = '1';
     document.head.appendChild(script);
   }
@@ -189,7 +189,7 @@
     window.__FV_GRAIN_LOADOUT_DRIVER_JOB_RESET_LOADER_20260904 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain/load-out/grain-loadout-driver-job-reset.js';
+    script.src = '/FarmVista-Beta/js/grain/load-out/grain-loadout-driver-job-reset.js';
     script.dataset.fvGrainLoadoutDriverJobReset = '1';
     document.head.appendChild(script);
   }
@@ -207,7 +207,7 @@
     window.__FV_ADM_DECATUR_GRADE_FIX_LOADER_20260904 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain/tickets/ocr/grain-ticket-adm-decatur-grade-fix.js?v=20260904-1';
+    script.src = '/FarmVista-Beta/js/grain/tickets/ocr/grain-ticket-adm-decatur-grade-fix.js?v=20260904-1';
     script.dataset.fvAdmDecaturGradeFix = '1';
     document.head.appendChild(script);
   }
@@ -221,7 +221,7 @@
 
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = '/js/grain/tickets/scan/grain-ticket-scan-source-flow.js?v=20260904-2';
+    script.src = '/FarmVista-Beta/js/grain/tickets/scan/grain-ticket-scan-source-flow.js?v=20260904-2';
     script.dataset.fvGrainTicketScanSourceFlow = '1';
     document.head.appendChild(script);
   }
@@ -242,7 +242,7 @@
     window.__FV_HAULING_SOLD_UNDER_DISPLAY_20260904 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain/hauling-jobs/grain-hauling-jobs-sold-under-display.js?v=20260904-1';
+    script.src = '/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-jobs-sold-under-display.js?v=20260904-1';
     script.dataset.fvHaulingSoldUnderDisplay = '1';
     document.head.appendChild(script);
   }
@@ -262,7 +262,7 @@
     window.__FV_GRAIN_MOBILE_DND_AUTOSCROLL_LOADER_20260910 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain/shared/grain-mobile-dnd-autoscroll.js?v=20260911-2';
+    script.src = '/FarmVista-Beta/js/grain/shared/grain-mobile-dnd-autoscroll.js?v=20260911-2';
     script.dataset.fvGrainMobileDndAutoscroll = '1';
     document.head.appendChild(script);
   }
@@ -282,7 +282,7 @@
     window.__FV_GRAIN_INVENTORY_TICKET_ZOOM_LOADER_20260905 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain/inventory/tickets/grain-inventory-ticket-zoom.js?v=20260905-1';
+    script.src = '/FarmVista-Beta/js/grain/inventory/tickets/grain-inventory-ticket-zoom.js?v=20260905-1';
     script.dataset.fvGrainInventoryTicketZoom = '1';
     document.head.appendChild(script);
   }
@@ -291,7 +291,7 @@
      SEPT 4, 2026 — GRAIN SECTION DARK MODE
 
      Apply a single dark-theme compatibility layer across every page under
-     /pages/grain/. Several older grain pages still contain light-mode surface
+     /FarmVista-Beta/pages/grain/. Several older grain pages still contain light-mode surface
      and table colors in page-local CSS. These rules intentionally win only
      while dark theme is active, so light mode is untouched.
   =================================================================== */

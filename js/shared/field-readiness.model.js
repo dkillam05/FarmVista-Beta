@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/shared/field-readiness.model.js  (FULL FILE)
+/FarmVista-Beta/js/shared/field-readiness.model.js  (FULL FILE)
 Rev: 2026-03-31b-remove-artificial-baseline-wet-seed
 
 GOAL:

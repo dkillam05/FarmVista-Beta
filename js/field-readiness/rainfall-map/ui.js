@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/rainfall-map/ui.js   (FULL FILE)
+/FarmVista-Beta/js/field-readiness/rainfall-map/ui.js   (FULL FILE)
 Rev: 2026-03-17b-force-native-select-sync
 
 PURPOSE

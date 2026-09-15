@@ -85,7 +85,7 @@ The branch is **not complete** merely because destination folders exist. Before 
 1. Every JavaScript file must be classified into its final feature folder or intentionally documented as a root exception.
 2. Every HTML `<script src>` reference must point to the final path.
 3. Every ES-module static/dynamic import must point to the final path.
-4. Every JavaScript-created script URL and other hard-coded `/js/...` path must point to the final path.
+4. Every JavaScript-created script URL and other hard-coded `/FarmVista-Beta/js/...` path must point to the final path.
 5. Service-worker/precache/cache-manifest references must point to final paths.
 6. Old root copies must be removed after consumers are migrated.
 7. Searches for old paths must return no active consumers.

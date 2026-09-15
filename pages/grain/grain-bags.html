@@ -13,29 +13,29 @@
   <meta name="theme-color" content="#3B7E46"/>
 
   <!-- Early theme boot -->
-  <script src="/js/core/theme/theme-boot.js"></script>
-  <script src="/js/grain/inventory/grain-capacity.js"></script>
+  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
+  <script src="/FarmVista-Beta/js/grain/inventory/grain-capacity.js"></script>
 
   <!-- PWA + icons -->
-  <link rel="manifest" href="/manifest.webmanifest"/>
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
-  <link rel="icon" href="/assets/icons/icon-192.png"/>
+  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png"/>
 
   <!-- Global CSS -->
-  <link rel="stylesheet" href="/assets/css/theme.css"/>
-  <link rel="stylesheet" href="/assets/css/app.css"/>
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css"/>
 
   <!-- Core + shell -->
-  <script src="/js/core/version/version.js" defer></script>
-  <script src="/js/core/core.js" defer></script>
-  <script src="/js/core/shell/fv-shell.js" defer></script>
+  <script src="/FarmVista-Beta/js/core/version/version.js" defer></script>
+  <script src="/FarmVista-Beta/js/core/core.js" defer></script>
+  <script src="/FarmVista-Beta/js/core/shell/fv-shell.js" defer></script>
 
   <!-- Ensure fv-form-button -->
   <script>
     (function(){
       if(!customElements.get("fv-form-button")){
         const s = document.createElement("script");
-        s.src = "/js/shared/ui/fv-form-button.js";
+        s.src = "/FarmVista-Beta/js/shared/ui/fv-form-button.js";
         s.defer = true;
         document.head.appendChild(s);
       }
@@ -1025,14 +1025,14 @@
           <fv-form-button
             label="Put Bag Down"
             icon-svg="plus"
-            href="/pages/grain/grain-bag-put-down.html"
+            href="/FarmVista-Beta/pages/grain/grain-bag-put-down.html"
             data-perm="grain-bags:add">
           </fv-form-button>
 
           <fv-form-button
             label="Pick Up Bag"
             icon-svg="minus"
-            href="/pages/grain/grain-bag-pick-up.html"
+            href="/FarmVista-Beta/pages/grain/grain-bag-pick-up.html"
             data-perm="grain-bags:edit">
           </fv-form-button>
 
@@ -1313,7 +1313,7 @@
       updateDoc,
       addDoc,
       serverTimestamp
-    } from "/js/core/firebase/firebase-init.js";
+    } from "/FarmVista-Beta/js/core/firebase/firebase-init.js";
 
 
     /* =========================================================

@@ -1,5 +1,5 @@
 <!-- =====================================================================
-/pages/dev/field-readiness-dev.html  (FULL FILE)
+/FarmVista-Beta/pages/dev/field-readiness-dev.html  (FULL FILE)
 Rev: 2026-03-31h-dev-page-ready-based-no-cache-no-fallback
 
 GOAL:
@@ -9,7 +9,7 @@ GOAL:
 ✅ Waits for await ready before Firestore/Auth
 ✅ Focus on ONE field only
 ✅ Saved readiness comes from field_readiness_latest first
-✅ ETA uses dedicated /js/field-readiness/eta-engine.js
+✅ ETA uses dedicated /FarmVista-Beta/js/field-readiness/eta-engine.js
 ✅ NO cache reuse
 ✅ NO fallback ETA
 ✅ If ETA cannot be calculated, show debug/error clearly
@@ -23,20 +23,20 @@ GOAL:
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#2F6C3C" />
 
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
+  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png" />
 
-  <script src="/js/core/theme/theme-boot.js"></script>
-  <link rel="stylesheet" href="/assets/css/theme.css" />
-  <link rel="stylesheet" href="/assets/css/app.css" />
+  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css" />
 
   <script>
     (function(){
       try{
         if (!customElements.get('fv-shell')){
           const s = document.createElement('script');
-          s.src = '/js/core/shell/fv-shell.js';
+          s.src = '/FarmVista-Beta/js/core/shell/fv-shell.js';
           s.defer = true;
           document.head.appendChild(s);
         }
@@ -356,11 +356,11 @@ GOAL:
           <div class="kgrid">
             <div class="kcard">
               <div class="klabel">Math file</div>
-              <div class="mono">/js/shared/field-readiness.model.js</div>
+              <div class="mono">/FarmVista-Beta/js/shared/field-readiness.model.js</div>
             </div>
             <div class="kcard">
               <div class="klabel">ETA engine</div>
-              <div class="mono">/js/field-readiness/eta-engine.js</div>
+              <div class="mono">/FarmVista-Beta/js/field-readiness/eta-engine.js</div>
             </div>
             <div class="kcard">
               <div class="klabel">ETA mode</div>
@@ -459,10 +459,10 @@ GOAL:
       getAuth,
       doc,
       getDoc
-    } from '/js/core/firebase/firebase-init.js';
+    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
-    import { runField } from '/js/shared/field-readiness.model.js';
-    import * as EtaEngine from '/js/field-readiness/eta-engine.js';
+    import { runField } from '/FarmVista-Beta/js/shared/field-readiness.model.js';
+    import * as EtaEngine from '/FarmVista-Beta/js/field-readiness/eta-engine.js';
 
     const ETA_TEMP_UNAVAILABLE = 'ETA temporarily unavailable';
 

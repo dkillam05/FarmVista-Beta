@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/index.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/index.js  (FULL FILE)
 Rev: 2026-03-16a-force-page-select-ui-sync-no-trim
 
 Changes (per Dane):

@@ -7,14 +7,14 @@
   <meta name="theme-color" content="#3B7E46" />
 
   <!-- ABSOLUTE PATHS -->
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
-  <script src="/js/core/theme/theme-boot.js"></script>
-  <link rel="stylesheet" href="/assets/css/theme.css" />
-  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png" />
+  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css" />
   <!-- Swipe list styles for mobile swipe actions -->
-  <link rel="stylesheet" href="/assets/css/swipe-list.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/swipe-list.css" />
 
   <style>
     :root{
@@ -888,7 +888,7 @@
     (function(){
       if(!customElements.get('fv-shell')){
         const s=document.createElement('script');
-        s.src='/js/core/shell/fv-shell.js';
+        s.src='/FarmVista-Beta/js/core/shell/fv-shell.js';
         s.defer=true;
         document.head.appendChild(s);
       }
@@ -906,10 +906,10 @@
       doc,
       updateDoc,
       deleteDoc
-    } from '/js/core/firebase/firebase-init.js';
+    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
-    import { NAV_MENU } from '/js/shared/navigation/menu.js';
-    import { initSwipeList } from '/js/shared/ui/fv-swipe-list.js';
+    import { NAV_MENU } from '/FarmVista-Beta/js/shared/navigation/menu.js';
+    import { initSwipeList } from '/FarmVista-Beta/js/shared/ui/fv-swipe-list.js';
 
     const CONFIG = {
       COLLECTION_TRIALS: 'fieldTrials',
@@ -918,9 +918,9 @@
       STATUS_PENDING:'pending',
       STATUS_ACTIVE: 'active',
       STATUS_COMPLETED:'completed',
-      ADD_FIELD_URL: '/pages/crop-production/trials/trial-field-add.html',
-      ADD_YIELD_URL: '/pages/crop-production/trials/trial-field-yield.html',
-      ADD_YIELD_MH_URL: '/pages/crop-production/trials/trial-field-yield-mh.html'
+      ADD_FIELD_URL: '/FarmVista-Beta/pages/crop-production/trials/trial-field-add.html',
+      ADD_YIELD_URL: '/FarmVista-Beta/pages/crop-production/trials/trial-field-yield.html',
+      ADD_YIELD_MH_URL: '/FarmVista-Beta/pages/crop-production/trials/trial-field-yield-mh.html'
     };
 
     const STORAGE_KEYS = {
@@ -2676,7 +2676,7 @@
       const backBtn = document.getElementById('btnBack');
       if(backBtn){
         backBtn.addEventListener('click', () => {
-          location.href = '/pages/crop-production/trials.html';
+          location.href = '/FarmVista-Beta/pages/crop-production/trials.html';
         });
       }
 

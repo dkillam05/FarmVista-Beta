@@ -5,7 +5,7 @@ import {
   getDocs,
   query,
   where
-} from '/js/core/firebase/firebase-init.js';
+} from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
 const path = String(window.location.pathname || '').toLowerCase();
 const params = new URLSearchParams(window.location.search);
@@ -30,7 +30,7 @@ const params = new URLSearchParams(window.location.search);
   choosing "Field" means the driver must choose a field or use Back.
 */
 if (
-  !path.endsWith('/pages/grain/grain-ticket-scan.html') ||
+  !path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-scan.html') ||
   params.has('t') ||
   params.has('token')
 ) {

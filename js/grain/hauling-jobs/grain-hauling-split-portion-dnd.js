@@ -14,7 +14,7 @@
 
   if (window.__FV_HAULING_SPLIT_DYNAMIC_20260912_V6) return;
   window.__FV_HAULING_SPLIT_DYNAMIC_20260912_V6 = true;
-  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
   const RIGHT_ID = 'fv-ticket-status-job-list';
   const LEFT_ID = 'fv-unassigned-ticket-list';
@@ -77,7 +77,7 @@
 
   async function ensureFirebase(){
     if (firebase && db) return;
-    firebase = await import('/js/core/firebase/firebase-init.js');
+    firebase = await import('/FarmVista-Beta/js/core/firebase/firebase-init.js');
     await firebase.ready;
     db = firebase.getFirestore();
   }

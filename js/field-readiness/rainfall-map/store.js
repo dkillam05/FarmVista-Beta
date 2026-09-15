@@ -1,5 +1,5 @@
 /* ======================================================================
-   /js/field-readiness/rainfall-map/store.js
+   /FarmVista-Beta/js/field-readiness/rainfall-map/store.js
    FULL FILE REBUILD
    REV: 2026-03-15a-add-latest-readiness-cache-to-map-state
 
@@ -10,7 +10,7 @@
      matches the rest of the app
 ====================================================================== */
 
-import { createState } from '/js/field-readiness/state.js';
+import { createState } from '/FarmVista-Beta/js/field-readiness/state.js';
 
 function createRainMapReadinessState(){
   const state = createState();

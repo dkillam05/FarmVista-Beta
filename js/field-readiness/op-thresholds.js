@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/op-thresholds.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/op-thresholds.js  (FULL FILE)
 Rev: 2025-12-27c
 
 Fix (per Dane):

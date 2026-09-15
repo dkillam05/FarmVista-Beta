@@ -1,5 +1,5 @@
 /* =======================================================================
-/js/shared/input/fv-dictation.js
+/FarmVista-Beta/js/shared/input/fv-dictation.js
 Rev: 2025-11-25b
 
 Shared dictation (microphone) helper for FarmVista textareas.
@@ -7,7 +7,7 @@ Shared dictation (microphone) helper for FarmVista textareas.
 Usage on a page:
 
   <script type="module">
-    import { wireDictation } from '/js/shared/input/fv-dictation.js';
+    import { wireDictation } from '/FarmVista-Beta/js/shared/input/fv-dictation.js';
 
     wireDictation('mic-notes', 'notes');        // button id, textarea id
     wireDictation('mic-priority', 'priorityReason');

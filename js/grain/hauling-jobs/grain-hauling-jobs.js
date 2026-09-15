@@ -1,18 +1,18 @@
-// /js/grain/hauling-jobs/grain-hauling-jobs.js
+// /FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-jobs.js
 // FarmVista wrapper: preserve hauling-job implementation, add void-assignment guard,
 // keep the Sold Under add action scoped only to the Sold Under combo,
 // and propagate contract assignments back to linked hauling jobs.
-import "/js/grain/hauling-jobs/grain-hauling-jobs-core.js";
-import "/js/grain/contracts/grain-contracts-hauling-overview-groups.js?v=20260911-1540";
-import "/js/grain/contracts/grain-contracts-ui-followup.js?v=20260912-0624";
-import "/js/grain/tickets/alerts/grain-ticket-alert-table-sync.js?v=20260912-0624";
-import "/js/grain/hauling-jobs/grain-hauling-status-dnd.js?v=20260912-0715";
-import "/js/grain/hauling-jobs/grain-hauling-status-dnd-followup.js?v=20260912-0744";
-import "/js/grain/hauling-jobs/grain-hauling-ticket-sequence.js?v=20260912-0748";
-import "/js/grain/hauling-jobs/grain-hauling-split-portion-dnd.js?v=20260912-0922";
-import "/js/grain/hauling-jobs/grain-hauling-left-drop-zone.js?v=20260912-0915";
-import "/js/grain/hauling-jobs/grain-hauling-effective-totals.js?v=20260912-0928";
-import "/js/grain/hauling-jobs/grain-hauling-partial-checkboxes.js?v=20260912-0940";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-jobs-core.js";
+import "/FarmVista-Beta/js/grain/contracts/grain-contracts-hauling-overview-groups.js?v=20260911-1540";
+import "/FarmVista-Beta/js/grain/contracts/grain-contracts-ui-followup.js?v=20260912-0624";
+import "/FarmVista-Beta/js/grain/tickets/alerts/grain-ticket-alert-table-sync.js?v=20260912-0624";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-status-dnd.js?v=20260912-0715";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-status-dnd-followup.js?v=20260912-0744";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-ticket-sequence.js?v=20260912-0748";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-split-portion-dnd.js?v=20260912-0922";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-left-drop-zone.js?v=20260912-0915";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-effective-totals.js?v=20260912-0928";
+import "/FarmVista-Beta/js/grain/hauling-jobs/grain-hauling-partial-checkboxes.js?v=20260912-0940";
 import {
   ready,
   getFirestore,
@@ -21,7 +21,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from "/js/core/firebase/firebase-init.js";
+} from "/FarmVista-Beta/js/core/firebase/firebase-init.js";
 
 await ready;
 const db = getFirestore();

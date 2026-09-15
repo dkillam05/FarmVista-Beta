@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/dashboard/markets/dash-markets-ui.js  (FULL FILE)
+/FarmVista-Beta/js/dashboard/markets/dash-markets-ui.js  (FULL FILE)
 Rev: 2026-01-29d
 Purpose:
 ✅ Thin UI orchestrator for Markets

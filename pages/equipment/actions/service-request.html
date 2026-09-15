@@ -6,24 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#3B7E46" />
 
-  <script src="/js/core/theme/theme-boot.js"></script>
+  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
 
   <!-- ABSOLUTE PATHS -->
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
-  <link rel="icon" href="/assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="/assets/css/theme.css" />
-  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css" />
+  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css" />
 
   <!-- IMPORTANT: match hub – load Firebase CONFIG first -->
-  <script src="/js/core/firebase/firebase-config.js"></script>
+  <script src="/FarmVista-Beta/js/core/firebase/firebase-config.js"></script>
 
   <!-- Ensure fv-shell -->
   <script>
     (function () {
       if (!customElements.get('fv-shell')) {
         const s = document.createElement('script');
-        s.src = '/js/core/shell/fv-shell.js';
+        s.src = '/FarmVista-Beta/js/core/shell/fv-shell.js';
         s.defer = true;
         document.head.appendChild(s);
       }
@@ -532,7 +532,7 @@
       uploadBytes,
       getDownloadURL,
       updateDoc
-    } from '/js/core/firebase/firebase-init.js';
+    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
 
     const $ = id => document.getElementById(id);
 
@@ -1055,9 +1055,9 @@
       }
       if(equipmentId){
         location.href =
-          `/pages/equipment/actions/hub.html?id=${encodeURIComponent(equipmentId)}${from ? `&from=${encodeURIComponent(from)}` : ''}`;
+          `/FarmVista-Beta/pages/equipment/actions/hub.html?id=${encodeURIComponent(equipmentId)}${from ? `&from=${encodeURIComponent(from)}` : ''}`;
       }else{
-        location.href = '/pages/equipment/equipment-tractors.html';
+        location.href = '/FarmVista-Beta/pages/equipment/equipment-tractors.html';
       }
     }
 

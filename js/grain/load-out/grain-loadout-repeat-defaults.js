@@ -24,7 +24,7 @@ import {
   getFirestore,
   collection,
   getDocs
-} from "/js/core/firebase/firebase-init.js";
+} from "/FarmVista-Beta/js/core/firebase/firebase-init.js";
 
 await ready;
 
