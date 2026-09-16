@@ -1,0 +1,46 @@
+name: Fix Beta login farm config path
+
+on:
+  push:
+    paths:
+      - 'beta-login-fix-trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-beta-login:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix platform farm config path for Beta
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('js/app/login.js')
+          s = p.read_text()
+          old = '''  const configPath =\n    String(\n      farm?.configPath ||\n      `/FarmVista-Beta/farms/${farmKey}.json`\n    ).trim();'''
+          new = '''  // Beta must always load the selected farm configuration from this\n  // GitHub Pages repository. Platform lookup configPath values are\n  // production-root-relative and would otherwise escape /FarmVista-Beta/.\n  const configPath =\n    new URL(\n      `farms/${encodeURIComponent(farmKey)}.json`,\n      document.baseURI || location.href\n    ).pathname;'''
+          if old not in s:
+              raise SystemExit('Expected selectFarm configPath block was not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+
+      - name: Commit Beta login fix
+        shell: bash
+        run: |
+          git config user.name 'FarmVista Beta Fix'
+          git config user.email 'actions@users.noreply.github.com'
+          git add js/app/login.js
+          if git diff --cached --quiet; then
+            echo 'No login change needed.'
+            exit 0
+          fi
+          git commit -m 'Fix Beta login farm configuration path'
+          git pull --rebase origin main
+          git push origin HEAD:main
