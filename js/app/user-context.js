@@ -1,4 +1,4 @@
-/* /FarmVista-Beta/js/app/user-context.js
+/* /js/app/user-context.js
    FarmVista — UserContext (Session Locker)
 
    PHONE AUTH UPDATE — 2026-08-19
@@ -28,7 +28,7 @@
 
 
   const HOME_PATHS = [
-    '/FarmVista-Beta/index.html',
+    '/index.html',
     '/',
   ];
 
@@ -306,7 +306,7 @@
   async function importFirebase(){
 
     return await import(
-      '/FarmVista-Beta/js/firebase-init.js'
+      '/js/firebase-init.js'
     );
 
   }
@@ -316,7 +316,7 @@
 
     const module =
       await import(
-        '/FarmVista-Beta/js/menu.js'
+        '/js/menu.js'
       );
 
 

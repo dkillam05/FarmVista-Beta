@@ -1,5 +1,5 @@
 /* ======================================================================
-   /FarmVista-Beta/js/rainfallmap/data-loaders.js
+   /js/rainfallmap/data-loaders.js
    FULL FILE REBUILD
    FIX GOAL:
    - restore robust coordinate normalization

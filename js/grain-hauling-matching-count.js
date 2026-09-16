@@ -7,7 +7,7 @@
   'use strict';
   if (window.__FV_HAULING_RENDERED_COUNT_20260916_V2) return;
   window.__FV_HAULING_RENDERED_COUNT_20260916_V2 = true;
-  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
 
   const clean = value => String(value ?? '').trim();
   let queued = false;

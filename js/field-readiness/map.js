@@ -1,5 +1,5 @@
 /* =====================================================================
-/FarmVista-Beta/js/field-readiness/map.js  (FULL FILE)
+/js/field-readiness/map.js  (FULL FILE)
 Rev: 2025-12-28b
 
 Fix (per Dane):

@@ -1,5 +1,5 @@
 /* =====================================================================
-/FarmVista-Beta/js/field-readiness/prefs.js  (FULL FILE)
+/js/field-readiness/prefs.js  (FULL FILE)
 Rev: 2026-03-16a-force-valid-page-size-on-boot
 
 Fix:

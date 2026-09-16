@@ -1,5 +1,5 @@
 /* =====================================================================
-/FarmVista-Beta/js/rainfallmap/app.js   (FULL FILE)
+/js/rainfallmap/app.js   (FULL FILE)
 Rev: 2026-03-17b-rerender-on-return
 
 PURPOSE

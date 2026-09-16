@@ -1,5 +1,5 @@
 /* =======================================================================
-/FarmVista-Beta/js/fv-swipe-list.js
+/js/fv-swipe-list.js
 Rev: 2025-12-01
 
 Reusable swipeable-list helper for FarmVista.
@@ -16,7 +16,7 @@ Features
 
 Usage on a page (example):
 
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/swipe-list.css" />
+  <link rel="stylesheet" href="/assets/css/swipe-list.css" />
 
   <!-- Your list markup -->
   <div id="trial-fields-list">
@@ -27,7 +27,7 @@ Usage on a page (example):
   </div>
 
   <script type="module">
-    import { initSwipeList } from '/FarmVista-Beta/js/fv-swipe-list.js';
+    import { initSwipeList } from '/js/fv-swipe-list.js';
 
     initSwipeList('#trial-fields-list', {
       itemSelector: '.fv-swipe-item',

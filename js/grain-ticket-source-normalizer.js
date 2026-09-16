@@ -6,7 +6,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from '/FarmVista-Beta/js/firebase-init.js';
+} from '/js/firebase-init.js';
 
 /*
   FarmVista canonical grain source normalizer

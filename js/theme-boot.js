@@ -1,4 +1,4 @@
-// /FarmVista-Beta/js/theme-boot.js  — viewport + theme + firebase boot + AUTH GUARD + USER CONTEXT WARM
+// /js/theme-boot.js  — viewport + theme + firebase boot + AUTH GUARD + USER CONTEXT WARM
 // All internal paths are ABSOLUTE under / to avoid 404s on deep pages.
 
 /* =========================  Viewport & tap behavior  ========================= */
@@ -70,7 +70,7 @@ const __fvBoot = (function(){
       // 1) Ensure global config is present BEFORE loading firebase-init.js
       if (!window.FV_FIREBASE_CONFIG) {
         try {
-          await __fvBoot.loadScript('/FarmVista-Beta/js/firebase-config.js', { defer:false, async:false });
+          await __fvBoot.loadScript('/js/firebase-config.js', { defer:false, async:false });
         } catch(e) {
           console.warn('[FV] firebase-config.js failed to load (continuing):', e);
         }
@@ -80,10 +80,10 @@ const __fvBoot = (function(){
       if (!window.__FV_FIREBASE_INIT_LOADED__) {
         window.__FV_FIREBASE_INIT_LOADED__ = true;
         try {
-          await __fvBoot.loadScript('/FarmVista-Beta/js/firebase-init.js', { type:'module', defer:true });
+          await __fvBoot.loadScript('/js/firebase-init.js', { type:'module', defer:true });
           console.log('[FV] firebase-init loaded');
         } catch (e) {
-          console.warn('[FV] firebase-init failed to load — check path /FarmVista-Beta/js/firebase-init.js', e);
+          console.warn('[FV] firebase-init failed to load — check path /js/firebase-init.js', e);
         }
       }
 
@@ -91,9 +91,9 @@ const __fvBoot = (function(){
       if (!window.__FV_APP_STARTUP_LOADED__) {
         window.__FV_APP_STARTUP_LOADED__ = true;
         try {
-          await __fvBoot.loadScript('/FarmVista-Beta/js/app/startup.js', { type:'module', defer:true });
+          await __fvBoot.loadScript('/js/app/startup.js', { type:'module', defer:true });
         } catch (e) {
-          console.warn('[FV] startup module failed — check /FarmVista-Beta/js/app/startup.js', e);
+          console.warn('[FV] startup module failed — check /js/app/startup.js', e);
         }
       }
 
@@ -101,13 +101,13 @@ const __fvBoot = (function(){
       try{
         if (!window.__FV_USER_CONTEXT_LOADED__) {
           window.__FV_USER_CONTEXT_LOADED__ = true;
-          await __fvBoot.loadScript('/FarmVista-Beta/js/app/user-context.js', { type:'module', defer:true });
+          await __fvBoot.loadScript('/js/app/user-context.js', { type:'module', defer:true });
         }
 
         // Load perm-ui globally ONCE (so you don't have to add it to every page)
         if (!window.__FV_PERM_UI_SCRIPT_LOADED__) {
           window.__FV_PERM_UI_SCRIPT_LOADED__ = true;
-          try { await __fvBoot.loadScript('/FarmVista-Beta/js/perm-ui.js', { defer:true }); }
+          try { await __fvBoot.loadScript('/js/perm-ui.js', { defer:true }); }
           catch(e){ console.warn('[FV] perm-ui failed to load:', e); }
         }
 
@@ -149,7 +149,7 @@ const __fvBoot = (function(){
 
   const isLoginPath = () => {
     const cur = location.pathname.endsWith('/') ? location.pathname : (location.pathname + '/');
-    return cur.startsWith('/FarmVista-Beta/pages/login/');
+    return cur.startsWith('/pages/login/');
   };
 
   const getUserContextSnapshot = () => {
@@ -163,7 +163,7 @@ const __fvBoot = (function(){
 
   const gotoLogin = (reason) => {
     const here = location.pathname + location.search + location.hash;
-    const url = new URL('/FarmVista-Beta/pages/login/index.html', location.origin);
+    const url = new URL('/pages/login/index.html', location.origin);
     url.searchParams.set('next', here);
     if (reason) url.searchParams.set('reason', reason);
     const dest = url.pathname + url.search + url.hash;
@@ -212,7 +212,7 @@ const __fvBoot = (function(){
     try {
       if (isLoginPath()) return;
 
-      const mod = await import('/FarmVista-Beta/js/firebase-init.js');
+      const mod = await import('/js/firebase-init.js');
       const ctx = await mod.ready;
       const isStub = (mod.isStub && mod.isStub()) || false;
       const auth = (ctx && ctx.auth) || window.firebaseAuth || null;
@@ -293,7 +293,7 @@ const __fvBoot = (function(){
 
 /* =====================  Permission Engine (BRAIN ONLY — NO HIDE)  ===================== */
 /* Provides FV.can("key") and FV.can("key:action") using FVUserContext perms.
-   UI behavior (hide tiles / disable forms) is handled by /FarmVista-Beta/js/perm-ui.js.
+   UI behavior (hide tiles / disable forms) is handled by /js/perm-ui.js.
 */
 (function(){
   try{

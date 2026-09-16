@@ -83,7 +83,7 @@
   /* ----------------------------------------------------------
      RETURN TO THE PAGE THAT OPENED TICKET DETAIL
   ---------------------------------------------------------- */
-  const fallbackReturn = '/FarmVista-Beta/pages/grain/grain-ticket.html';
+  const fallbackReturn = '/pages/grain/grain-ticket.html';
   let returnUrl = fallbackReturn;
   let returning = false;
 
@@ -91,7 +91,7 @@
     const referrer = document.referrer ? new URL(document.referrer) : null;
     const sameOrigin = referrer && referrer.origin === location.origin;
     const isThisDetail = sameOrigin &&
-      referrer.pathname.toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-ticket-detail.html');
+      referrer.pathname.toLowerCase().endsWith('/pages/grain/grain-ticket-detail.html');
 
     if (sameOrigin && !isThisDetail) {
       returnUrl = `${referrer.pathname}${referrer.search}${referrer.hash}`;

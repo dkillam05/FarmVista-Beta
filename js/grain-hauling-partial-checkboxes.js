@@ -11,13 +11,13 @@
   if (window.__FV_HAULING_PARTIAL_CHECKBOXES_20260912_V2) return;
   window.__FV_HAULING_PARTIAL_CHECKBOXES_20260912_V2 = true;
 
-  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
 
   // Load the unified field-local hauling-job picker as an isolated ES module.
   if (!document.querySelector('script[data-fv-hauling-local-picker="1"]')) {
     const pickerScript = document.createElement('script');
     pickerScript.type = 'module';
-    pickerScript.src = '/FarmVista-Beta/js/grain-hauling-job-form-pickers-v10.js?v=20260913-2038';
+    pickerScript.src = '/js/grain-hauling-job-form-pickers-v10.js?v=20260913-2038';
     pickerScript.dataset.fvHaulingLocalPicker = '1';
     document.head.appendChild(pickerScript);
   }

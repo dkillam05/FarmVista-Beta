@@ -3,7 +3,7 @@
   'use strict';
 
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket.html')) return;
+  if (!path.endsWith('/pages/grain/grain-ticket.html')) return;
   if (window.__FV_GRAIN_TICKET_ROW_TAP_GUARD_20260905) return;
   window.__FV_GRAIN_TICKET_ROW_TAP_GUARD_20260905 = true;
 

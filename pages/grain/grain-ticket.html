@@ -6,22 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#3B7E46" />
 
-  <script src="/FarmVista-Beta/js/theme-boot.js"></script>
+  <script src="/js/theme-boot.js"></script>
 
   <!-- ✅ Grain capacity helper (corn-rated → crop bushels via factors) -->
-  <script src="/FarmVista-Beta/js/grain-capacity.js"></script>
+  <script src="/js/grain-capacity.js"></script>
 
-  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png" />
-  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
 
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css" />
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css" />
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/dashboard.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
 
-  <script src="/FarmVista-Beta/js/version.js" defer></script>
-  <script src="/FarmVista-Beta/js/core.js" defer></script>
-  <script src="/FarmVista-Beta/js/fv-shell.js" defer></script>
+  <script src="/js/version.js" defer></script>
+  <script src="/js/core.js" defer></script>
+  <script src="/js/fv-shell.js" defer></script>
 
   <style>
     .sum-card{
@@ -1565,7 +1565,7 @@ section[data-hide-for-now]{ display:none !important; }
   </div>
 
 <a
-  href="/FarmVista-Beta/pages/grain/grain-ticket-alert-settings.html"
+  href="/pages/grain/grain-ticket-alert-settings.html"
   class="grain-alert-settings-btn"
   title="Advanced Alert Settings"
   aria-label="Advanced Alert Settings"
@@ -2279,7 +2279,7 @@ section[data-hide-for-now]{ display:none !important; }
       getDocs,
       query,
       where
-    } from '/FarmVista-Beta/js/firebase-init.js';
+    } from '/js/firebase-init.js';
 
     (function(){
       "use strict";
@@ -2478,7 +2478,7 @@ section[data-hide-for-now]{ display:none !important; }
     setDoc,
     updateDoc,
     serverTimestamp
-  } from "/FarmVista-Beta/js/firebase-init.js";
+  } from "/js/firebase-init.js";
 
 
   await ready;
@@ -2874,7 +2874,7 @@ const filterButtons =
     () => {
 
       window.location.href =
-        "/FarmVista-Beta/pages/grain/grain-ticket-add.html";
+        "/pages/grain/grain-ticket-add.html";
 
     }
   );
@@ -4292,7 +4292,7 @@ function postingHasValidSource(
 
       const module =
         await import(
-          "/FarmVista-Beta/js/firebase-init.js"
+          "/js/firebase-init.js"
         );
 
 
@@ -6838,7 +6838,7 @@ else {
   ) {
 
     window.location.href =
-      `/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(
+      `/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(
         ticketId
       )}`;
 
@@ -7492,7 +7492,7 @@ else {
     updateDoc,
     addDoc,
     serverTimestamp
-  } from "/FarmVista-Beta/js/firebase-init.js";
+  } from "/js/firebase-init.js";
 
   await ready;
 
@@ -16828,7 +16828,7 @@ async function loBackgroundRefresh(){
 
 <script
   type="module"
-  src="/FarmVista-Beta/js/grain-transfers.js"
+  src="/js/grain-transfers.js"
 ></script>
 
 

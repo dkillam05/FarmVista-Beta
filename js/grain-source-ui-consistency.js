@@ -9,9 +9,9 @@
 
 const path = String(location.pathname || '').toLowerCase();
 const supported = [
-  '/FarmVista-Beta/pages/grain/grain-ticket.html',
-  '/FarmVista-Beta/pages/grain/grain-ticket-add.html',
-  '/FarmVista-Beta/pages/grain/grain-ticket-detail.html'
+  '/pages/grain/grain-ticket.html',
+  '/pages/grain/grain-ticket-add.html',
+  '/pages/grain/grain-ticket-detail.html'
 ].some(value => path.endsWith(value));
 
 if (supported) {

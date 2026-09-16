@@ -12,7 +12,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from '/FarmVista-Beta/js/firebase-init.js';
+} from '/js/firebase-init.js';
 
 await ready;
 
@@ -431,7 +431,7 @@ function ensureHaulingTicketModal(){
 }
 
 function ticketDetailUrl(ticket){
-  return `/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(clean(ticket?.id))}`;
+  return `/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(clean(ticket?.id))}`;
 }
 
 function openSavedTicketImage(ticket){

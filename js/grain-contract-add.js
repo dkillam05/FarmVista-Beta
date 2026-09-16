@@ -1,4 +1,4 @@
-// /FarmVista-Beta/js/grain-contract-add.js
+// /js/grain-contract-add.js
 // Rev: 2026-08-14-grain-contract-add-v3
 //
 // PURPOSE:
@@ -39,7 +39,7 @@ import {
   where,
   orderBy,
   serverTimestamp
-} from "/FarmVista-Beta/js/firebase-init.js";
+} from "/js/firebase-init.js";
 
 
 await ready;
@@ -4972,7 +4972,7 @@ function setupCancel() {
       function () {
 
         window.location.href =
-          "/FarmVista-Beta/pages/grain/grain-contracts.html";
+          "/pages/grain/grain-contracts.html";
 
       }
     );
@@ -5239,7 +5239,7 @@ async function handleSaveContract(
 
 
     window.location.href =
-      "/FarmVista-Beta/pages/grain/grain-contracts.html";
+      "/pages/grain/grain-contracts.html";
 
 
   } catch (err) {

@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#000000"/>
 
   <!-- PWA + icons -->
-  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest"/>
-  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png"/>
-  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png"/>
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
 
   <style>
     html,body{height:100%;margin:0;background:#000;overscroll-behavior:none}
@@ -45,7 +45,7 @@
       <div class="box">
         <div style="font-size:22px;font-weight:900;margin-bottom:6px">Camera access not available</div>
         <div>Allow camera access in iOS Settings → Safari → Camera, or open in a camera-capable browser.</div>
-        <div style="margin-top:10px"><a class="btn" href="/FarmVista-Beta/index.html">Return to Home</a></div>
+        <div style="margin-top:10px"><a class="btn" href="/index.html">Return to Home</a></div>
       </div>
     </div>
   </div>
@@ -74,7 +74,7 @@
 
     // Build hub URL EXACTLY like the lookup "Open Hub" button does
     function hubUrlFromId(id){
-      return `${location.origin}/FarmVista-Beta/pages/equipment/actions/hub.html?id=${encodeURIComponent(id)}`;
+      return `${location.origin}/pages/equipment/actions/hub.html?id=${encodeURIComponent(id)}`;
     }
 
     function go(url){
@@ -98,7 +98,7 @@
         const searchCode = u.searchParams.get('code') || u.searchParams.get('t');
 
         // 1) Direct hit: our current hub path with id / code
-        if (path.endsWith('/FarmVista-Beta/pages/equipment/actions/hub.html')) {
+        if (path.endsWith('/pages/equipment/actions/hub.html')) {
           if (searchId) {
             id = searchId;
           } else if (searchCode) {
@@ -107,8 +107,8 @@
           }
         }
 
-        // 2) Legacy paths like /FarmVista-Beta/pages/equipment/hub.html with ?id= or ?t=
-        if (!id && path.includes('/FarmVista-Beta/pages/equipment/')) {
+        // 2) Legacy paths like /pages/equipment/hub.html with ?id= or ?t=
+        if (!id && path.includes('/pages/equipment/')) {
           if (searchId) {
             id = searchId;
           } else if (searchCode) {
@@ -141,7 +141,7 @@
 
       // 5) Absolute last-resort: send as code param
       // (hub currently ignores ?code, but at least the path won’t 404)
-      go(`${location.origin}/FarmVista-Beta/pages/equipment/actions/hub.html?code=${encodeURIComponent(raw)}`);
+      go(`${location.origin}/pages/equipment/actions/hub.html?code=${encodeURIComponent(raw)}`);
     }
 
     function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
@@ -309,7 +309,7 @@
 
     closeBtn.addEventListener('click', ()=>{
       stopAll();
-      location.href = '/FarmVista-Beta/index.html';
+      location.href = '/index.html';
     });
     window.addEventListener('pagehide', stopAll);
     window.addEventListener('beforeunload', stopAll);

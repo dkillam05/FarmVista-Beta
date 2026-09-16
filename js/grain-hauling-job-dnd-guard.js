@@ -12,7 +12,7 @@
   window.__FV_HAULING_JOB_DND_GUARD_20260911 = true;
 
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
+  if (!path.endsWith('/pages/grain/grain-contracts.html')) return;
 
   const ACTIVE_CLASS = 'fv-hauling-ticket-dnd-active';
   let releaseTimer = 0;

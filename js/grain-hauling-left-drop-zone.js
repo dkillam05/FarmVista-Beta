@@ -1,4 +1,4 @@
-import "/FarmVista-Beta/js/grain-hauling-split-targets.js?v=20260915-1238";
+import "/js/grain-hauling-split-targets.js?v=20260915-1238";
 
 /* FarmVista — Grain Contracts hauling DND left-column drop zone
    Sept. 12, 2026
@@ -15,7 +15,7 @@ import "/FarmVista-Beta/js/grain-hauling-split-targets.js?v=20260915-1238";
   if (window.__FV_HAULING_LEFT_DROP_ZONE_20260912_V1) return;
   window.__FV_HAULING_LEFT_DROP_ZONE_20260912_V1 = true;
 
-  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
 
   const STYLE_ID = 'fv-hauling-left-drop-zone-style-v1';
 

@@ -1,4 +1,4 @@
-// /FarmVista-Beta/js/firebase-config.js
+// /js/firebase-config.js
 // FarmVista multi-farm Firebase configuration loader.
 //
 // No farm is hard-coded as the default.
@@ -26,14 +26,14 @@
     String(window.location.pathname || '').toLowerCase();
 
   if (
-    currentPath.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-scan.html') &&
+    currentPath.endsWith('/pages/grain/grain-ticket-scan.html') &&
     !window.__FV_GRAIN_TICKET_SCAN_SOURCE_FLOW_DIRECT_20260904
   ) {
     window.__FV_GRAIN_TICKET_SCAN_SOURCE_FLOW_DIRECT_20260904 = true;
 
     const helperScript = document.createElement('script');
     helperScript.type = 'module';
-    helperScript.src = '/FarmVista-Beta/js/grain-ticket-scan-source-flow.js?v=20260904-5';
+    helperScript.src = '/js/grain-ticket-scan-source-flow.js?v=20260904-5';
     helperScript.dataset.fvGrainTicketScanSourceFlowDirect = '1';
     document.head.appendChild(helperScript);
   }
@@ -243,7 +243,7 @@
 
         const response =
           await fetch(
-            `/FarmVista-Beta/farms/${encodeURIComponent(farmKey)}.json`,
+            `/farms/${encodeURIComponent(farmKey)}.json`,
             {
               cache:
                 "no-store"

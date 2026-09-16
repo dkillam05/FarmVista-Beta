@@ -1,4 +1,4 @@
-/* /FarmVista-Beta/js/menu-acl.js
+/* /js/menu-acl.js
    FarmVista — NAV ACL filter (role/override aware)
    - Keeps only links whose `id` is allowed.
    - Keeps groups with at least one allowed descendant.

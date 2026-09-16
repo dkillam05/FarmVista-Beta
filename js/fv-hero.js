@@ -1,4 +1,4 @@
-/* /FarmVista-Beta/js/fv-hero.js — FULL REPLACEMENT (no Firestore, no SW changes)
+/* /js/fv-hero.js — FULL REPLACEMENT (no Firestore, no SW changes)
    FarmVista – Dashboard hero grid + local Message Board (📢)
    Update: four section cards now use MULTILINE subtitles (each bullet on its own line).
 */
@@ -11,7 +11,7 @@
     try {
       const src = (document.currentScript && document.currentScript.src) || '';
       const u = new URL(src, location.href);
-      // strip trailing "/FarmVista-Beta/js/<file>"
+      // strip trailing "/js/<file>"
       return u.pathname.replace(/\/js\/[^\/?#]+$/, '/');
     } catch {
       // Fallback: if path contains "/", use it; else root

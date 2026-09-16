@@ -1,13 +1,13 @@
 // FarmVista — Grain ticket table quality highlighting
 // Keep hauling-job ticket tables synchronized with Settings > Grain Ticket Alerts.
 
-import "/FarmVista-Beta/js/grain-contract-remaining-colors.js?v=20260912-1";
+import "/js/grain-contract-remaining-colors.js?v=20260912-1";
 import {
   ready,
   getFirestore,
   doc,
   getDoc
-} from "/FarmVista-Beta/js/firebase-init.js";
+} from "/js/firebase-init.js";
 
 await ready;
 

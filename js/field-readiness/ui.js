@@ -1,5 +1,5 @@
 /* =====================================================================
-/FarmVista-Beta/js/field-readiness/ui.js  (FULL FILE)
+/js/field-readiness/ui.js  (FULL FILE)
 Rev: 2025-12-26a
 
 Owns:

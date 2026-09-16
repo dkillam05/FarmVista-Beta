@@ -1,5 +1,5 @@
 /* ======================================================================
-/FarmVista-Beta/js/rainfallmap/rain-data.js   (FULL FILE)
+/js/rainfallmap/rain-data.js   (FULL FILE)
 Rev: 2026-03-15b-labeled-active-range-rain-math
 
 PURPOSE

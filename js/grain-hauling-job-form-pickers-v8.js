@@ -8,7 +8,7 @@ import {
   getFirestore,
   collection,
   getDocs
-} from '/FarmVista-Beta/js/firebase-init.js';
+} from '/js/firebase-init.js';
 
 await ready;
 const db = getFirestore();

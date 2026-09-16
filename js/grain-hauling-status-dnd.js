@@ -21,7 +21,7 @@
   window.__FV_HAULING_STATUS_DND_20260912_V4 = true;
 
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
+  if (!path.endsWith('/pages/grain/grain-contracts.html')) return;
 
   const clean = value => String(value ?? '').trim();
   const norm = value => clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -153,7 +153,7 @@
   async function load(force=false) {
     if (state.loading && !force) return state.loading;
     state.loading = (async() => {
-      const firebase = state.firebase || await import('/FarmVista-Beta/js/firebase-init.js');
+      const firebase = state.firebase || await import('/js/firebase-init.js');
       await firebase.ready;
       state.firebase = firebase;
       state.db = firebase.getFirestore();

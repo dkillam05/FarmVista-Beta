@@ -1,4 +1,4 @@
-// /FarmVista-Beta/js/grain-contracts.js
+// /js/grain-contracts.js
 // FarmVista — Grain Contracts / Reconciliation
 // Split-load allocation model
 // Updated 2026-08-18
@@ -12,7 +12,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from "/FarmVista-Beta/js/firebase-init.js";
+} from "/js/firebase-init.js";
 
 await ready;
 
@@ -1499,7 +1499,7 @@ function currentVoidUser() {
 async function requireRunTransaction() {
   const module =
     await import(
-      "/FarmVista-Beta/js/firebase-init.js"
+      "/js/firebase-init.js"
     );
 
   if (
@@ -9391,7 +9391,7 @@ function setupTicketDetailModal() {
           state.activeTicket
         ) {
           location.href =
-            `/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${
+            `/pages/grain/grain-ticket-detail.html?id=${
               encodeURIComponent(
                 state.activeTicket.id
               )

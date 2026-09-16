@@ -1,4 +1,4 @@
-/* /FarmVista-Beta/js/fv-combo.js
+/* /js/fv-combo.js
    FarmVista Combo Upgrader — v1.5.0
    - Custom selects stay anchored to their source control while any page/container scrolls.
    - Clicking anywhere outside an open combo closes it immediately.
@@ -492,7 +492,7 @@
      Grain Contracts targeted UI/behavior repair — Sept. 12, 2026
   ==================================================================== */
   function installGrainContractsRepair() {
-    if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
+    if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
     if (window.__FV_GRAIN_CONTRACTS_UI_REPAIR_20260912) return;
     window.__FV_GRAIN_CONTRACTS_UI_REPAIR_20260912 = true;
 

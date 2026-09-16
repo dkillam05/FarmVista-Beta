@@ -232,7 +232,7 @@
   async function loadData(force = false) {
     if (state.dataPromise && !force) return state.dataPromise;
 
-    state.dataPromise = import('/FarmVista-Beta/js/firebase-init.js').then(async firebase => {
+    state.dataPromise = import('/js/firebase-init.js').then(async firebase => {
       await firebase.ready;
       const db = firebase.getFirestore();
       const [contractSnap, ticketSnap, customerSnap] = await Promise.all([
@@ -370,7 +370,7 @@
                 <tbody>
                   ${tickets.map(ticket => `
                     <tr>
-                      <td><a class="fv-job-contract-ticket-link" href="/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(clean(ticket.id))}">${esc(ticketNo(ticket))}</a></td>
+                      <td><a class="fv-job-contract-ticket-link" href="/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(clean(ticket.id))}">${esc(ticketNo(ticket))}</a></td>
                       <td>${esc(ticketDate(ticket))}</td>
                       <td>${esc(driverName(ticket))}</td>
                       <td>${fmtBu(allocationFor(ticket, contract.id))} bu</td>
@@ -415,7 +415,7 @@
               <tbody>
                 ${tickets.map(ticket => `
                   <tr>
-                    <td><a class="fv-job-contract-ticket-link" href="/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(clean(ticket.id))}">${esc(ticketNo(ticket))}</a></td>
+                    <td><a class="fv-job-contract-ticket-link" href="/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(clean(ticket.id))}">${esc(ticketNo(ticket))}</a></td>
                     <td>${esc(ticketDate(ticket))}</td>
                     <td>${esc(driverName(ticket))}</td>
                     <td>${fmtBu(ticketBushels(ticket))} bu</td>
