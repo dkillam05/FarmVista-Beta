@@ -1,4 +1,4 @@
-// /js/app/login.js
+// /FarmVista-Beta/js/app/login.js
 // FarmVista Login
 // Multi-farm ready
 //
@@ -786,7 +786,7 @@ async function selectFarm(
   const configPath =
     String(
       farm?.configPath ||
-      `/farms/${farmKey}.json`
+      `/FarmVista-Beta/farms/${farmKey}.json`
     ).trim();
 
 
@@ -4147,7 +4147,7 @@ async function restoreExistingSession() {
     await selectFarm({
       farmKey,
       configPath:
-        `/farms/${farmKey}.json`
+        `/FarmVista-Beta/farms/${farmKey}.json`
     });
 
 

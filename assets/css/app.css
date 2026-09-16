@@ -1,5 +1,5 @@
 /* ==========================================================
-   File: /assets/css/app.css
+   File: /FarmVista-Beta/assets/css/app.css
    Purpose: Page-level layout glue that sits on top of theme.css.
    - Prevents horizontal scroll
    - Safe-area aware side paddings
@@ -239,7 +239,7 @@ input[type="time"]:focus{
 
 /* ==========================================================
    FarmVista — Permission-based disabled UI (greyed out)
-   Used by /js/perm-ui.js
+   Used by /FarmVista-Beta/js/perm-ui.js
    ========================================================== */
 
 .fv-perm-disabled{

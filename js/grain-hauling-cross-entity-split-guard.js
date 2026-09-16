@@ -9,7 +9,7 @@
 
   if (window.__FV_CROSS_ENTITY_SPLIT_GUARD_20260914_V1) return;
   window.__FV_CROSS_ENTITY_SPLIT_GUARD_20260914_V1 = true;
-  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
   const clean = value => String(value ?? '').trim();
   const norm = value => clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -29,7 +29,7 @@
   async function ensureData(force = false) {
     if (loading && !force) return loading;
     loading = (async () => {
-      firebase = firebase || await import('/js/firebase-init.js');
+      firebase = firebase || await import('/FarmVista-Beta/js/firebase-init.js');
       await firebase.ready;
       db = db || firebase.getFirestore();
       const [ticketSnap, jobSnap] = await Promise.all([

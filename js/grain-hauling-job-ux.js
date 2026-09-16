@@ -19,7 +19,7 @@
 
   const clean = value => String(value ?? '').trim();
   const path = String(location.pathname || '').toLowerCase();
-  const isContracts = path.endsWith('/pages/grain/grain-contracts.html');
+  const isContracts = path.endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html');
   if (!isContracts) return;
 
   const n = value => {
@@ -589,7 +589,7 @@
   async function loadData(force = false) {
     if (state.dataPromise && !force) return state.dataPromise;
 
-    state.dataPromise = import('/js/firebase-init.js').then(async firebase => {
+    state.dataPromise = import('/FarmVista-Beta/js/firebase-init.js').then(async firebase => {
       await firebase.ready;
       const db = firebase.getFirestore();
       const [jobsSnap, ticketsSnap, customersSnap] = await Promise.all([
@@ -718,8 +718,8 @@
                 const id = encodeURIComponent(clean(ticket.id));
                 const ticketCrop = clean(ticket?.crop || crop);
                 return `
-                  <tr data-ticket-url="/pages/grain/grain-ticket-detail.html?id=${id}">
-                    <td><a class="fv-contract-job-ticket-link" href="/pages/grain/grain-ticket-detail.html?id=${id}">Ticket ${escapeHtml(ticketNumber(ticket))}</a></td>
+                  <tr data-ticket-url="/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${id}">
+                    <td><a class="fv-contract-job-ticket-link" href="/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${id}">Ticket ${escapeHtml(ticketNumber(ticket))}</a></td>
                     <td>${escapeHtml(ticketDate(ticket) || '—')}</td>
                     <td>${fmtBu(ticketBushels(ticket))} bu</td>
                     <td>${gradePill(ticketCrop, 'mo', gradeRaw(ticket, 'mo'))}</td>

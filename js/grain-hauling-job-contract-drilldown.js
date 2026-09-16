@@ -11,11 +11,11 @@ import {
   getDocs,
   getDoc,
   doc
-} from "/js/firebase-init.js";
+} from "/FarmVista-Beta/js/firebase-init.js";
 
 await ready;
 
-if (String(location.pathname || "").toLowerCase().endsWith("/pages/grain/index.html")) {
+if (String(location.pathname || "").toLowerCase().endsWith("/FarmVista-Beta/pages/grain/index.html")) {
   const db = getFirestore();
   const clean = value => String(value ?? "").trim();
   const norm = value => clean(value).toLowerCase();
@@ -171,7 +171,7 @@ if (String(location.pathname || "").toLowerCase().endsWith("/pages/grain/index.h
     const crop = ticket?.crop || ticket?.commodity;
     return `
       <tr>
-        <td><a class="fv-ahj-ticket-link" href="/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(ticket.id)}">${esc(ticketNumber(ticket))}</a></td>
+        <td><a class="fv-ahj-ticket-link" href="/FarmVista-Beta/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(ticket.id)}">${esc(ticketNumber(ticket))}</a></td>
         <td>${esc(ticketDate(ticket) || "—")}</td>
         <td>${esc(ticketDriver(ticket))}</td>
         <td>${fmtBu(bushels)}</td>

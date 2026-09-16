@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/rainfallmap/firebase.js   (FULL FILE)
+/FarmVista-Beta/js/rainfallmap/firebase.js   (FULL FILE)
 Rev: 2026-04-10a-auth-stable-ptr-hold
 
 PURPOSE

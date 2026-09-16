@@ -1,5 +1,5 @@
 /* =======================================================================
-/js/ai-reports.js
+/FarmVista-Beta/js/ai-reports.js
 Lightweight AI helper for reports (trial summaries, etc.)
 
 Usage from a report page:

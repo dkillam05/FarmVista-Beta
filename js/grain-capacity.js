@@ -145,7 +145,7 @@ var cropMatch = null;
 
   if (
     typeof window === 'undefined' ||
-    !window.location.pathname.endsWith('/pages/grain/grain-ticket.html')
+    !window.location.pathname.endsWith('/FarmVista-Beta/pages/grain/grain-ticket.html')
   ) {
     return;
   }
@@ -185,7 +185,7 @@ var cropMatch = null;
       if (!loadId || !customer) return;
 
       try {
-        const firebase = await import('/js/firebase-init.js');
+        const firebase = await import('/FarmVista-Beta/js/firebase-init.js');
         await firebase.ready;
 
         const db = firebase.getFirestore();
@@ -273,7 +273,7 @@ var cropMatch = null;
 
     async function loadVoidedLoadIds() {
       try {
-        const firebase = await import('/js/firebase-init.js');
+        const firebase = await import('/FarmVista-Beta/js/firebase-init.js');
         await firebase.ready;
 
         const db = firebase.getFirestore();
@@ -402,7 +402,7 @@ var cropMatch = null;
       voidBtn.textContent = 'Voiding…';
 
       try {
-        const firebase = await import('/js/firebase-init.js');
+        const firebase = await import('/FarmVista-Beta/js/firebase-init.js');
         await firebase.ready;
 
         const db = firebase.getFirestore();
@@ -458,15 +458,15 @@ var cropMatch = null;
 
   const path = String(window.location.pathname || '').toLowerCase();
   const isGrainIndex =
-    path.endsWith('/pages/grain/index.html') ||
-    path === '/pages/grain/' ||
-    path === '/pages/grain';
+    path.endsWith('/FarmVista-Beta/pages/grain/index.html') ||
+    path === '/FarmVista-Beta/pages/grain/' ||
+    path === '/FarmVista-Beta/pages/grain';
 
   if (!isGrainIndex || window.__FV_GRAIN_INDEX_TABLE_UI_LOADER_20260912) return;
   window.__FV_GRAIN_INDEX_TABLE_UI_LOADER_20260912 = true;
 
   const script = document.createElement('script');
-  script.src = '/js/grain-index-table-ui.js?v=20260912-3';
+  script.src = '/FarmVista-Beta/js/grain-index-table-ui.js?v=20260912-3';
   script.dataset.fvGrainIndexTableUi = '1';
   document.head.appendChild(script);
 })();

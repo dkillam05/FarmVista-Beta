@@ -8,7 +8,7 @@
   'use strict';
 
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/pages/grain/grain-ticket-scan.html')) return;
+  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-scan.html')) return;
   if (window.__FV_IOS_NATIVE_GRAIN_STILL_20260916_1) return;
   window.__FV_IOS_NATIVE_GRAIN_STILL_20260916_1 = true;
 

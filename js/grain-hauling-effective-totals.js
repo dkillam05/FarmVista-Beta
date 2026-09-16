@@ -14,7 +14,7 @@
 
   if (window.__FV_HAULING_EFFECTIVE_TOTALS_20260912_V1) return;
   window.__FV_HAULING_EFFECTIVE_TOTALS_20260912_V1 = true;
-  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
   const clean = value => String(value ?? '').trim();
   const num = value => {
@@ -33,7 +33,7 @@
 
   async function ensureFirebase() {
     if (firebase && db) return;
-    firebase = await import('/js/firebase-init.js');
+    firebase = await import('/FarmVista-Beta/js/firebase-init.js');
     await firebase.ready;
     db = firebase.getFirestore();
   }

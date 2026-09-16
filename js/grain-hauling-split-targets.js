@@ -9,7 +9,7 @@
   'use strict';
   if (window.__FV_HAULING_SPLIT_TARGETS_20260916_V9) return;
   window.__FV_HAULING_SPLIT_TARGETS_20260916_V9 = true;
-  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
   const clean=v=>String(v??'').trim();
   const norm=v=>clean(v).toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -204,7 +204,7 @@
 
   async function load(){
     try{
-      const F=await import('/js/firebase-init.js');await F.ready;const db=F.getFirestore();
+      const F=await import('/FarmVista-Beta/js/firebase-init.js');await F.ready;const db=F.getFirestore();
       const[js,ts]=await Promise.all([F.getDocs(F.collection(db,'grain_hauling_jobs')),F.getDocs(F.collection(db,'grain_tickets'))]);
       jobs=js.docs.map(d=>({id:d.id,...d.data()}));
       tickets=ts.docs.map(d=>({id:d.id,...d.data()}));

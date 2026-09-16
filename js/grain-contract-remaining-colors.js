@@ -15,7 +15,7 @@
   window.__FV_CONTRACT_REMAINING_COLORS_20260912 = true;
 
   const path = String(location.pathname || '').toLowerCase();
-  if (!path.endsWith('/pages/grain/grain-contracts.html')) return;
+  if (!path.endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
   const numberValue = value => {
     const parsed = Number(String(value ?? '').replace(/,/g,'').replace(/[^0-9.-]/g,''));

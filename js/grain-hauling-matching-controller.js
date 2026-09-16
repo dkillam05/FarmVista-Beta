@@ -7,7 +7,7 @@
   'use strict';
   if (window.__FV_HAULING_MATCHING_CONTROLLER_20260916_V1) return;
   window.__FV_HAULING_MATCHING_CONTROLLER_20260916_V1 = true;
-  if (!String(location.pathname || '').toLowerCase().endsWith('/pages/grain/grain-contracts.html')) return;
+  if (!String(location.pathname || '').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-contracts.html')) return;
 
   const clean=v=>String(v??'').trim();
   const norm=v=>clean(v).toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -86,7 +86,7 @@
   async function load(force=false){
     if(state.loading&&!force)return state.loading;
     state.loading=(async()=>{
-      const f=state.firebase||await import('/js/firebase-init.js');await f.ready;state.firebase=f;state.db=f.getFirestore();
+      const f=state.firebase||await import('/FarmVista-Beta/js/firebase-init.js');await f.ready;state.firebase=f;state.db=f.getFirestore();
       const [js,ts,cs]=await Promise.all([f.getDocs(f.collection(state.db,'grain_hauling_jobs')),f.getDocs(f.collection(state.db,'grain_tickets')),f.getDocs(f.collection(state.db,'grain_customers'))]);
       state.jobs=js.docs.map(d=>({id:d.id,...d.data()}));
       state.tickets=ts.docs.map(d=>({id:d.id,...d.data()}));

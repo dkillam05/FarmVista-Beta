@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/wiring.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/wiring.js  (FULL FILE)
 Rev: 2026-03-10b-range-persistence-hardened-no-trim
 
 Fixes (per Dane):

@@ -1,4 +1,4 @@
-// /js/fv-hero-card.js — FULL REPLACEMENT
+// /FarmVista-Beta/js/fv-hero-card.js — FULL REPLACEMENT
 // Titles: big, bold, centered (h), top-aligned, underline, fixed max size across cards
 // Bullets: one per line. Font: TT Moons if present.
 (() => {
@@ -9,7 +9,7 @@
     try {
       const src = (document.currentScript && document.currentScript.src) || '';
       const u = new URL(src, location.href);
-      return u.pathname.replace(/\/js\/[^\/?#]+$/, '/'); // strip "/js/<file>"
+      return u.pathname.replace(/\/js\/[^\/?#]+$/, '/'); // strip "/FarmVista-Beta/js/<file>"
     } catch {
       return location.pathname.startsWith('/') ? '/' : '/';
     }
@@ -25,7 +25,7 @@
 
       const styles = `
         <style>
-          /* Try to load TT Moons Bold if present in /assets/fonts/ttmoons/ */
+          /* Try to load TT Moons Bold if present in /FarmVista-Beta/assets/fonts/ttmoons/ */
           @font-face{
             font-family:"TT Moons";
             src: url("${TTMOONS_URL}") format("woff2");

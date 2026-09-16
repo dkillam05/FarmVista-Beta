@@ -31,9 +31,9 @@
 (async function(){
   'use strict';
 
-  if(!String(location.pathname||'').toLowerCase().endsWith('/pages/grain/grain-ticket.html')) return;
+  if(!String(location.pathname||'').toLowerCase().endsWith('/FarmVista-Beta/pages/grain/grain-ticket.html')) return;
 
-  const {ready,getFirestore,collection,getDocs}=await import('/js/firebase-init.js');
+  const {ready,getFirestore,collection,getDocs}=await import('/FarmVista-Beta/js/firebase-init.js');
   await ready;
 
   const db=getFirestore();

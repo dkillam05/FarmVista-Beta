@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness/data.js  (FULL FILE)
+/FarmVista-Beta/js/field-readiness/data.js  (FULL FILE)
 Rev: 2026-03-12b-normalize-new-field-coordinates-no-trim
 
 Changes (per Dane):

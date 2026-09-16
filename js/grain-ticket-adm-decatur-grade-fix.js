@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   const pagePath=String(window.location.pathname||'').toLowerCase();
-  if(!pagePath.endsWith('/pages/grain/grain-ticket-scan.html')) return;
+  if(!pagePath.endsWith('/FarmVista-Beta/pages/grain/grain-ticket-scan.html')) return;
   if(window.__FV_ELEVATOR_OCR_BRIDGE_20260916_14) return;
   window.__FV_ELEVATOR_OCR_BRIDGE_20260916_14=true;
 

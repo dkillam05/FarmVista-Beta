@@ -11,7 +11,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from "/js/firebase-init.js";
+} from "/FarmVista-Beta/js/firebase-init.js";
 
 await ready;
 

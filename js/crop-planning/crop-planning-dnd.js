@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/crop-planning/crop-planning-dnd.js  (FULL FILE)
+/FarmVista-Beta/js/crop-planning/crop-planning-dnd.js  (FULL FILE)
 Rev: 2025-12-31b
 
 Fixes:

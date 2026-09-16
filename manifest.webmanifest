@@ -3,7 +3,7 @@
   "name": "FarmVista",
   "short_name": "FarmVista",
   "description": "Clean farm data. Smarter reporting.",
-  "start_url": "/index.html",
+  "start_url": "/FarmVista-Beta/index.html",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "fullscreen"],
@@ -16,19 +16,19 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/assets/icons/icon-192.png",
+      "src": "/FarmVista-Beta/assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/icons/icon-512.png",
+      "src": "/FarmVista-Beta/assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/assets/icons/apple-touch-icon.png",
+      "src": "/FarmVista-Beta/assets/icons/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
@@ -36,7 +36,7 @@
   ],
   "screenshots": [
     {
-      "src": "/assets/icons/logo.png",
+      "src": "/FarmVista-Beta/assets/icons/logo.png",
       "sizes": "1024x512",
       "type": "image/png",
       "form_factor": "wide",
