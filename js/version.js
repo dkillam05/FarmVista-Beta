@@ -207,7 +207,7 @@
     window.__FV_ADM_DECATUR_GRADE_FIX_LOADER_20260904 = true;
 
     const script = document.createElement('script');
-    script.src = '/js/grain-ticket-adm-decatur-grade-fix.js?v=20260904-1';
+    script.src = '/js/grain-ticket-adm-decatur-grade-fix.js?v=20260916-10';
     script.dataset.fvAdmDecaturGradeFix = '1';
     document.head.appendChild(script);
   }
