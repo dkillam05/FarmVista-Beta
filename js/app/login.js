@@ -1,4 +1,4 @@
-// /FarmVista-Beta/js/app/login.js
+// /js/app/login.js
 // FarmVista Login
 // Multi-farm ready
 //
@@ -783,13 +783,11 @@ async function selectFarm(
   }
 
 
-  // Beta must always load the farm config from this GitHub Pages repository.
-  // Platform lookup paths are production-root-relative and are not safe here.
   const configPath =
-    new URL(
-      `farms/${encodeURIComponent(farmKey)}.json`,
-      document.baseURI || location.href
-    ).pathname;
+    String(
+      farm?.configPath ||
+      `/farms/${farmKey}.json`
+    ).trim();
 
 
   const response =
@@ -4149,7 +4147,7 @@ async function restoreExistingSession() {
     await selectFarm({
       farmKey,
       configPath:
-        `/FarmVista-Beta/farms/${farmKey}.json`
+        `/farms/${farmKey}.json`
     });
 
 

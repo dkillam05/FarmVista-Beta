@@ -1,1 +1,0 @@
-The dashboard market runtime group includes markets.js plus dash-markets-style.js, dash-markets-chart.js, dash-markets-series.js, dash-markets-quotes.js and dash-markets-ui.js. These are migrated together because index.html loads them as one dashboard market stack.

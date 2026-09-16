@@ -1,5 +1,5 @@
 /* =====================================================================
-/FarmVista-Beta/js/crop-planning/crop-planner.module.js  (FULL FILE)
+/js/crop-planning/crop-planner.module.js  (FULL FILE)
 Rev: 2026-01-01d
 
 FIX:
@@ -82,7 +82,7 @@ async function getFirestoreFns(){
   }
 
   try{
-    const m = await import('/FarmVista-Beta/js/core/firebase/firebase-init.js');
+    const m = await import('/js/firebase-init.js');
     if (m.doc && m.getDoc && m.setDoc){
       return {
         doc: m.doc,

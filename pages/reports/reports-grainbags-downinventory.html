@@ -6,18 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#3B7E46" />
 
-  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
+  <script src="/js/theme-boot.js"></script>
 
   <!-- ✅ Grain capacity helper (corn-rated → crop bushels via factors) -->
-  <script src="/FarmVista-Beta/js/grain/inventory/grain-capacity.js"></script>
+  <script src="/js/grain-capacity.js"></script>
 
   <!-- ABSOLUTE PATHS -->
-  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png" />
-  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="icon" href="/assets/icons/icon-192.png" />
 
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css" />
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/app.css" />
 
   <style>
     :root{
@@ -403,7 +403,7 @@
     (function(){
       if(!customElements.get('fv-shell')){
         const s=document.createElement('script');
-        s.src='/FarmVista-Beta/js/core/shell/fv-shell.js';
+        s.src='/js/fv-shell.js';
         s.defer=true;
         document.head.appendChild(s);
       }
@@ -416,9 +416,9 @@
       getFirestore,
       collection, getDocs,
       doc, getDoc
-    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
+    } from '/js/firebase-init.js';
 
-    import { NAV_MENU } from '/FarmVista-Beta/js/shared/navigation/menu.js';
+    import { NAV_MENU } from '/js/menu.js';
 
     const CONFIG = {
       EVENTS_COLLECTION: 'grain_bag_events',
@@ -1805,7 +1805,7 @@
       const backBtn = document.getElementById('btnBack');
       if(backBtn){
         backBtn.addEventListener('click', () => {
-          location.href = '/FarmVista-Beta/pages/reports/reports-predefined.html';
+          location.href = '/pages/reports/reports-predefined.html';
         });
       }
 

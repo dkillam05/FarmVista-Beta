@@ -17,17 +17,17 @@
 
   <link
     rel="manifest"
-    href="/FarmVista-Beta/manifest.webmanifest"
+    href="/manifest.webmanifest"
   >
 
   <link
     rel="apple-touch-icon"
-    href="/FarmVista-Beta/assets/icons/apple-touch-icon.png"
+    href="/assets/icons/apple-touch-icon.png"
   >
 
   <link
     rel="icon"
-    href="/FarmVista-Beta/assets/icons/icon-192.png"
+    href="/assets/icons/icon-192.png"
   >
 
 
@@ -1734,13 +1734,13 @@
 
 
 
-<script src="/FarmVista-Beta/js/core/firebase/firebase-config.js"></script>
-<script src="/FarmVista-Beta/js/app/user-context.js"></script>
+<script src="/js/firebase-config.js"></script>
+<script src="/js/app/user-context.js"></script>
 
 
 <script type="module">
 
-    import { normalizeGrainTicketGrades } from "/FarmVista-Beta/js/grain/tickets/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";
+    import { normalizeGrainTicketGrades } from "/js/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";
 
     import {
       ready,
@@ -1758,7 +1758,7 @@
       ref,
       uploadBytes,
       getDownloadURL
-    } from "/FarmVista-Beta/js/core/firebase/firebase-init.js";
+    } from "/js/firebase-init.js";
 
 
     await ready;
@@ -2125,7 +2125,7 @@ const GUEST_GRAIN_TICKET_URL =
 
 
 const HOME_URL =
-  "/FarmVista-Beta/index.html";
+  "/index.html";
 
 
 const urlParams =
@@ -13837,10 +13837,10 @@ if (
 
         try {
 
+          /* Preserve the original captured JPEG for OCR. Re-encoding a camera
+             frame a second time softens the small printed grade values. */
           const file =
-            await prepareImage(
-              rawFile
-            );
+            rawFile;
 
 
           if (
@@ -14173,11 +14173,16 @@ if (
   We require another picture instead.
 */
 
+const rawScannedTestWeight =
+  result.grainTicket
+    ?.testWeight;
+
 const scannedTestWeight =
-  Number(
-    result.grainTicket
-      ?.testWeight
-  );
+  (rawScannedTestWeight === null ||
+   rawScannedTestWeight === undefined ||
+   rawScannedTestWeight === "")
+    ? null
+    : Number(rawScannedTestWeight);
 
 
 const scannedCropForGradeCheck =
@@ -14217,7 +14222,9 @@ if (
 
 const documentText =
   String(
+    result.documentText ||
     result.document?.text ||
+    result.grainTicket?.rawText ||
     ""
   ).trim();
 

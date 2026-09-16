@@ -6,14 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#3B7E46"/>
 
-  <script src="/FarmVista-Beta/js/core/theme/theme-boot.js"></script>
+  <script src="/js/theme-boot.js"></script>
 
-  <link rel="manifest" href="/FarmVista-Beta/manifest.webmanifest"/>
-  <link rel="apple-touch-icon" href="/FarmVista-Beta/assets/icons/apple-touch-icon.png"/>
-  <link rel="icon" href="/FarmVista-Beta/assets/icons/icon-192.png"/>
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+  <link rel="icon" href="/assets/icons/icon-192.png"/>
   
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/theme.css"/>
-  <link rel="stylesheet" href="/FarmVista-Beta/assets/css/app.css"/>
+  <link rel="stylesheet" href="/assets/css/theme.css"/>
+  <link rel="stylesheet" href="/assets/css/app.css"/>
 
   <style>
     .page{max-width:1100px;margin:0 auto;padding:clamp(14px,3vw,22px);
@@ -96,11 +96,11 @@
 
   <script>(function(){
     if(!customElements.get('fv-shell')){
-      const s=document.createElement('script');s.src='/FarmVista-Beta/js/core/shell/fv-shell.js';s.defer=true;document.head.appendChild(s);
+      const s=document.createElement('script');s.src='/js/fv-shell.js';s.defer=true;document.head.appendChild(s);
     }
   })();</script>
 
-  <script src="/FarmVista-Beta/js/core/firebase/firebase-config.js"></script>
+  <script src="/js/firebase-config.js"></script>
 </head>
 <body>
   <fv-shell>
@@ -182,16 +182,16 @@
   <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
   <div id="inviteModalBackdrop" class="invite-modal-backdrop" aria-hidden="true"><div class="invite-modal" role="dialog" aria-modal="true"><h2>Send Invite</h2><p>This vendor has both an email address and a mobile number. Choose how to send the FarmVista invite.</p><div class="invite-options"><button id="inviteEmailOnly" class="btn btn-primary invite-option" type="button">Email Invite</button><button id="invitePhoneOnly" class="btn btn-primary invite-option" type="button">Phone Invite</button><button id="inviteBoth" class="btn btn-accent invite-option" type="button">Email &amp; Phone</button></div><button id="inviteCancel" class="btn invite-cancel" type="button">Cancel</button></div></div>
   <script type="module">
-    import '/FarmVista-Beta/js/shared/permissions/fv-perms-hero.js';
+    import '/js/fv-perms-hero.js';
     import {
       ready,
       getFirestore, getDoc, setDoc, doc,
       collection, getDocs, query, orderBy, where,
       serverTimestamp,
       getAuth, sendPasswordResetEmail
-    } from '/FarmVista-Beta/js/core/firebase/firebase-init.js';
+    } from '/js/firebase-init.js';
 
-    import NAV_MENU from '/FarmVista-Beta/js/shared/navigation/menu.js';
+    import NAV_MENU from '/js/menu.js';
 
     const $ = id => document.getElementById(id);
     const toast = $('toast');
@@ -425,11 +425,11 @@
     $('clear').addEventListener('click', ()=>{
       if(busy) return;
       if (history.length > 1) history.back();
-      else window.location.href = '/FarmVista-Beta/pages/office/teams-and-partners/vendors.html';
+      else window.location.href = '/pages/office/teams-and-partners/vendors.html';
     });
 
-    $('save').addEventListener('click',async()=>{if(busy)return;const v=collect();if(!v)return;try{setBusy(true);await ready;await upsertVendor(v);window.location.href="/FarmVista-Beta/pages/office/teams-and-partners/vendors.html";}catch(error){console.error(error);alert("Save failed.\n\n"+(error?.message||error));}finally{setBusy(false);}});
-    $('saveInvite').addEventListener('click',async()=>{if(busy)return;const now=Date.now();if(now-lastInvite<3000)return;lastInvite=now;const v=collect();if(!v)return;const method=v.email&&v.phoneE164?await chooseInviteMethod():(v.email?"email":"phone");if(!method)return;try{setBusy(true);const {mode}=await ready;await upsertVendor(v);const sendEmail=method==="email"||method==="both",sendPhone=method==="phone"||method==="both";if(sendEmail){if(mode!=="firebase")throw new Error("Email not sent: Firebase is in stub mode.");await ensureAuthUser(v.email,v.company||v.contact);await sendPasswordResetEmail(getAuth(),v.email);}if(sendPhone)await sendPhoneInvite(v);window.location.href="/FarmVista-Beta/pages/office/teams-and-partners/vendors.html";}catch(error){console.error(error);alert("Invite failed.\n\n"+(error?.message||error));}finally{setBusy(false);}});
+    $('save').addEventListener('click',async()=>{if(busy)return;const v=collect();if(!v)return;try{setBusy(true);await ready;await upsertVendor(v);window.location.href="/pages/office/teams-and-partners/vendors.html";}catch(error){console.error(error);alert("Save failed.\n\n"+(error?.message||error));}finally{setBusy(false);}});
+    $('saveInvite').addEventListener('click',async()=>{if(busy)return;const now=Date.now();if(now-lastInvite<3000)return;lastInvite=now;const v=collect();if(!v)return;const method=v.email&&v.phoneE164?await chooseInviteMethod():(v.email?"email":"phone");if(!method)return;try{setBusy(true);const {mode}=await ready;await upsertVendor(v);const sendEmail=method==="email"||method==="both",sendPhone=method==="phone"||method==="both";if(sendEmail){if(mode!=="firebase")throw new Error("Email not sent: Firebase is in stub mode.");await ensureAuthUser(v.email,v.company||v.contact);await sendPasswordResetEmail(getAuth(),v.email);}if(sendPhone)await sendPhoneInvite(v);window.location.href="/pages/office/teams-and-partners/vendors.html";}catch(error){console.error(error);alert("Invite failed.\n\n"+(error?.message||error));}finally{setBusy(false);}});
 
     await populatePermissionGroups();
   </script>
