@@ -4,8 +4,8 @@ import subprocess
 ROOT = Path('.')
 
 moves = {
-    'js/fv-yield-math.js': 'js/calculators/fv-yield-math.js',
-    'js/trials-mh-yield-helper.js': 'js/calculators/trials-mh-yield-helper.js',
+    'js/shop-equipment-wo-modal.js': 'js/equipment/shop-equipment-wo-modal.js',
+    'js/shop-equipment-modal.js': 'js/equipment/shop-equipment-modal.js',
 }
 
 for old, new in moves.items():
@@ -46,6 +46,6 @@ for path in ROOT.rglob('*'):
         if old in text:
             stale.append(f'{path}: {old}')
 if stale:
-    raise SystemExit('Stale yield helper paths remain:\n' + '\n'.join(stale[:100]))
+    raise SystemExit('Stale equipment modal paths remain:\n' + '\n'.join(stale[:100]))
 
-print('Moved yield math and multi-hybrid yield helper into calculators and updated every application reference.')
+print('Moved shop equipment modal helpers into equipment and updated every application reference.')
