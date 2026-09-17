@@ -471,7 +471,7 @@
 
   if(path.endsWith('/pages/grain/index.html')) {
     installActiveHaulingJobs();
-    import('/js/grain-hauling-job-contract-drilldown.js?v=20260911-1').catch(error=>{
+    import('/js/grain/hauling-jobs/grain-hauling-job-contract-drilldown.js?v=20260911-1').catch(error=>{
       console.error('[FarmVista] Hauling job contract drill-down loader failed:',error);
     });
   }

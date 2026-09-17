@@ -1,6 +1,6 @@
 /**
  * FarmVista — Grain Transfers
- * /js/grain-transfers.js
+ * /js/grain/shared/grain-transfers.js
  *
  * PURPOSE
  * ============================================================

@@ -1,4 +1,4 @@
-// /js/grain-contract-add.js
+// /js/grain/contracts/grain-contract-add.js
 // Rev: 2026-08-14-grain-contract-add-v3
 //
 // PURPOSE:

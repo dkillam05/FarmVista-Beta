@@ -87,7 +87,7 @@ function isBypassPath(pathname){
     p === `${SCOPE_PREFIX}js/theme-boot.js` ||
     p === `${SCOPE_PREFIX}js/app/login.js` ||
     p === `${SCOPE_PREFIX}js/startup.js` ||
-    p === `${SCOPE_PREFIX}js/grain-ticket-adm-decatur-grade-fix.js`
+    p === `${SCOPE_PREFIX}js/grain/scanning/ocr/grain-ticket-adm-decatur-grade-fix.js`
   );
 }
 

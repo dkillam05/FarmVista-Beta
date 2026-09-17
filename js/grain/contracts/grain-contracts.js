@@ -1,4 +1,4 @@
-// /js/grain-contracts.js
+// /js/grain/contracts/grain-contracts.js
 // FarmVista — Grain Contracts / Reconciliation
 // Split-load allocation model
 // Updated 2026-08-18

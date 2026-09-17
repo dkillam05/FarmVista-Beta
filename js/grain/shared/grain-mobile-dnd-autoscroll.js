@@ -22,7 +22,7 @@
     .replaceAll("'", '&#039;');
 
   const core = document.createElement('script');
-  core.src = '/js/grain-mobile-dnd-autoscroll-core.js?v=20260911-1';
+  core.src = '/js/grain/shared/grain-mobile-dnd-autoscroll-core.js?v=20260911-1';
   core.dataset.fvGrainMobileDndCore = '1';
   document.head.appendChild(core);
 

@@ -466,7 +466,7 @@ var cropMatch = null;
   window.__FV_GRAIN_INDEX_TABLE_UI_LOADER_20260912 = true;
 
   const script = document.createElement('script');
-  script.src = '/js/grain-index-table-ui.js?v=20260912-3';
+  script.src = '/js/grain/shared/grain-index-table-ui.js?v=20260912-3';
   script.dataset.fvGrainIndexTableUi = '1';
   document.head.appendChild(script);
 })();
