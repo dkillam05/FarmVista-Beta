@@ -14,7 +14,7 @@ const contractUnallocatedBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)
 const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
-const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket)));
+const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket));
 
 export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(!ticket||!job||isVoided(ticket)||isVoided(job))return{ok:false,reason:'Unavailable'};
@@ -22,6 +22,9 @@ export function canAssignTicketToHaulingJob(ticket,job,state={}){
   const sourceCapacity=haulingSourceBushels(ticket);
   if(sourceCapacity<=0)return{ok:false,reason:'No unallocated source bushels remain on this ticket'};
   if(isSpotHaulingJob(job))return{ok:true,reason:'',capacity:sourceCapacity,spotLoadOnly:true};
+  // The target's effective total includes this ticket when it is already the source job. Remove
+  // this physical ticket before computing available target capacity or a normal whole-ticket
+  // assignment can incorrectly report the target as full.
   const used=effectiveJobTotals(otherTickets(ticket,state)).get(clean(job.id))||0;
   const jobCapacity=Math.max(0,round2(jobTarget(job)-used));
   const capacity=Math.min(sourceCapacity,jobCapacity);
