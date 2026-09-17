@@ -4,8 +4,26 @@ import subprocess
 ROOT = Path('.')
 
 moves = {
-    'js/shop-equipment-wo-modal.js': 'js/equipment/shop-equipment-wo-modal.js',
-    'js/shop-equipment-modal.js': 'js/equipment/shop-equipment-modal.js',
+    # Reusable UI controls/components
+    'js/fv-combo.js': 'js/shared/components/fv-combo.js',
+    'js/fv-date-range-picker.js': 'js/shared/components/fv-date-range-picker.js',
+    'js/fv-dictation.js': 'js/shared/components/fv-dictation.js',
+    'js/fv-form-button.js': 'js/shared/components/fv-form-button.js',
+    'js/fv-hero-card.js': 'js/shared/components/fv-hero-card.js',
+    'js/fv-hero.js': 'js/shared/components/fv-hero.js',
+    'js/fv-perms-hero.js': 'js/shared/components/fv-perms-hero.js',
+    'js/fv-swipe-list.js': 'js/shared/components/fv-swipe-list.js',
+
+    # Shared app services/data helpers
+    'js/fv-auto-update.js': 'js/shared/services/fv-auto-update.js',
+    'js/fv-data.js': 'js/shared/services/fv-data.js',
+
+    # General reusable utilities
+    'js/fv-map.js': 'js/shared/utils/fv-map.js',
+    'js/fv-pdf.js': 'js/shared/utils/fv-pdf.js',
+
+    # Application shell belongs to app infrastructure, not a generic helper bucket
+    'js/fv-shell.js': 'js/app/fv-shell.js',
 }
 
 for old, new in moves.items():
@@ -46,6 +64,6 @@ for path in ROOT.rglob('*'):
         if old in text:
             stale.append(f'{path}: {old}')
 if stale:
-    raise SystemExit('Stale equipment modal paths remain:\n' + '\n'.join(stale[:100]))
+    raise SystemExit('Stale shared/app JavaScript paths remain:\n' + '\n'.join(stale[:100]))
 
-print('Moved shop equipment modal helpers into equipment and updated every application reference.')
+print('Organized reusable UI, services, utilities, and app shell JavaScript and updated every application reference.')
