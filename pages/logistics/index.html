@@ -130,14 +130,15 @@
 
     dialog.sheet{
       width:min(900px,94vw);max-height:88vh;padding:0;border:1px solid var(--border);border-radius:15px;
-      background:var(--surface);color:var(--text);box-shadow:0 20px 50px rgba(0,0,0,.42);
+      background:var(--surface);color:var(--text);box-shadow:0 20px 50px rgba(0,0,0,.42);overflow:hidden;
     }
     dialog.sheet::backdrop{background:rgba(0,0,0,.55)}
     .sheet-head,.sheet-foot{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px}
     .sheet-head{border-bottom:1px solid var(--border)}
     .sheet-foot{border-top:1px solid var(--border);justify-content:flex-end}
     .sheet-title{font-weight:950}
-    .sheet-body{padding:15px;max-height:calc(88vh - 120px);overflow:auto;display:grid;gap:13px}
+    .sheet-body{padding:15px;max-height:calc(88vh - 120px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;display:grid;gap:13px}
+    .sheet-body::-webkit-scrollbar{display:none;width:0;height:0}
     .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
     .detail-card{padding:11px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2,rgba(127,127,127,.05))}
     .detail-label{color:var(--muted,#68716c);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}
