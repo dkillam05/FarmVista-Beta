@@ -30,13 +30,12 @@
 
   function gradeBlock(text) {
     const s = String(text || '').replace(/\r/g, '\n');
-    let start = s.search(/SCOULAR GRADES REGIONAL OCR/i);
-    if (start < 0) start = s.search(/Grade\s*:?\s*U\.?S\.?/i);
+    let start = s.search(/Grade\s*:?\s*U\.?S\.?/i);
     if (start < 0) start = s.search(/Calibration\s+ID/i);
     if (start < 0) start = s.search(/Test\s*Weight|Testyveight|Moisture|Damaged\s+Kernels|Broken\s+Corn|Foreign\s+Mat/i);
     if (start < 0) return '';
     let block = s.slice(start, start + 2200);
-    const stop = block.search(/SCOULAR WEIGHTS REGIONAL OCR|\bGROSS\s+(?:L\.?BS|LBS|WEIGHT)\b|\bGross\s+Bushels\b/i);
+    const stop = block.search(/\bGROSS\s+(?:L\.?BS|LBS|WEIGHT)\b|\bGross\s+Bushels\b/i);
     if (stop > 0) block = block.slice(0, stop);
     return block;
   }
@@ -54,15 +53,9 @@
   function grades(text) {
     const block = gradeBlock(text);
     if (!block) return null;
-
-    /* No decimal guessing. We accept only values OCR actually recognized with
-       decimal punctuation. A literal 20 remains 20; it is never changed to 2.0.
-       The regional reread exists specifically to give OCR another chance to see
-       tiny decimal points clearly. */
     const tokens = [...block.matchAll(/(?<![\d.])(\d{1,3}[.,]\d{1,2})(?!\d)/g)]
       .map(m => Number(String(m[1]).replace(',', '.')))
       .filter(Number.isFinite);
-
     for (let i = 0; i <= tokens.length - 4; i++) {
       const set = plausibleGradeSet(tokens.slice(i, i + 4));
       if (set) return { ...set, confidence: 'scoular_waverly_explicit_decimals' };
@@ -117,7 +110,12 @@
 
   function ticketNumber(text, current) {
     const s = String(text || '');
-    const patterns = [/Inbound\s+Ticket\s*(?:No\.?|#|Number)?\s*[:#-]?\s*(\d{5,8})/i,/Ticket\s*(?:No\.?|#|Number)\s*[:#-]?\s*(\d{5,8})/i];
+    const patterns = [
+      /Inbound\s+Ticket\s*(?:No\.?|#|Number)?\s*[:#-]?\s*(\d{5,8})/i,
+      /Ticket\s*(?:No\.?|#|Number)\s*[:#-]?\s*(\d{5,8})/i,
+      /(?:^|\n)\s*(\d{5,8})\s*\n\s*(?:DOWSON[^\n]*\n\s*)?Inbound\s+Ticket\b/im,
+      /(?:^|\n)\s*(\d{5,8})\s*\n(?=[\s\S]{0,160}\bInbound\s+Ticket\b)/im
+    ];
     for (const pattern of patterns) { const m = s.match(pattern); if (m) return m[1]; }
     return current || null;
   }
@@ -150,7 +148,7 @@
     ticket.deliveryCity='Waverly'; ticket.deliveryState='IL'; ticket.deliveryZip='62692';
     ticket.parserProfile='scoular_waverly_github';
     const complete=!!(g&&w&&b&&ticket.ticketNumber&&ticket.ticketDate&&ticket.crop);
-    console.log('[Grain Ticket] Scoular Waverly template result:',{complete,ticketNumber:ticket.ticketNumber,ticketDate:ticket.ticketDate,crop:ticket.crop,grades:g,weights:w,bushels:b,regionalOcr:!!String(text||'').includes('REGIONAL OCR')});
+    console.log('[Grain Ticket] Scoular Waverly template result:',{complete,ticketNumber:ticket.ticketNumber,ticketDate:ticket.ticketDate,crop:ticket.crop,grades:g,weights:w,bushels:b,ocrSource:'full_ticket_document_ocr'});
     return { matched:true,changed,complete,grades:g,weights:w,bushels:b };
   }
 
