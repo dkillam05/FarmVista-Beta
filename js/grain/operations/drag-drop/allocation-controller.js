@@ -22,7 +22,7 @@ const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
 const haulingSpotBushels=ticket=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='spot')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
-const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket));
+const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket)));
 const haulingAssignableBushels=ticket=>round2(haulingSourceBushels(ticket)+haulingSpotBushels(ticket));
 const haulingAllocatedTo=(ticket,jobId)=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'&&clean(x.haulingJobId)===clean(jobId))
