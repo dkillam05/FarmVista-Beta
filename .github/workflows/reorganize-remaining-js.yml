@@ -1,0 +1,30 @@
+name: Reorganize Remaining JavaScript
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/reorganize-remaining-js.py'
+permissions:
+  contents: write
+jobs:
+  reorganize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reorganize remaining modules and references
+        run: python .github/scripts/reorganize-remaining-js.py
+      - name: Verify and commit
+        run: |
+          git status --short
+          git config user.name "FarmVista Beta Organizer"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No reorganization changes found."
+            exit 0
+          fi
+          git commit -m "Organize remaining JavaScript by feature"
+          git push origin HEAD:main
