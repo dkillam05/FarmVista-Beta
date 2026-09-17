@@ -1,0 +1,6 @@
+// FarmVista Grain Operations — hauling add/edit form model
+import { clean, number, round2 } from '../core/grain-rules.js';
+import { validateHaulingJob } from '../core/grain-validation.js';
+export function haulingDraft(job={}){return{id:clean(job.id),buyerId:clean(job.buyerId??job.deliveryLocationId),buyerName:clean(job.buyerName??job.deliveryLocationName),deliveryLocationId:clean(job.deliveryLocationId??job.buyerId),deliveryLocationName:clean(job.deliveryLocationName??job.buyerName),crop:clean(job.crop??job.commodity),customerId:clean(job.customerId??job.grainCustomerId),grainCustomerId:clean(job.grainCustomerId??job.customerId),customerName:clean(job.customerName??job.soldUnder),startingBushels:round2(job.startingBushels??job.jobBushels??job.bushels),deliveryStartDate:clean(job.deliveryStartDate),deliveryEndDate:clean(job.deliveryEndDate),status:clean(job.status)||'active',active:job.active!==false,notes:clean(job.notes)}}
+export function haulingPayload(draft){const data=haulingDraft(draft);data.startingBushels=Math.max(0,round2(number(data.startingBushels)));data.commodity=data.crop;data.jobName=`${data.deliveryLocationName||data.buyerName} — ${data.startingBushels.toLocaleString('en-US',{maximumFractionDigits:2})} bu`;return data}
+export function validateHaulingDraft(draft){return validateHaulingJob(haulingPayload(draft))}
