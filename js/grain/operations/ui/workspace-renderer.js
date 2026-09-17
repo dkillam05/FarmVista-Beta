@@ -6,7 +6,7 @@ import { openContractForm } from './form-dialogs.js';
 import { clean } from '../core/grain-rules.js';
 const esc=v=>clean(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'),bu=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
 const date=v=>{const s=clean(v);if(!/^\d{4}-\d{2}-\d{2}/.test(s))return s||'—';const[y,m,d]=s.slice(0,10).split('-');return`${m}/${d}/${y}`};
-const status=v=>`<span class="fv-go-status ${esc(clean(v).toLowerCase())}">${esc(clean(v)||'—')}</span>`;
+const status=v=>{const raw=clean(v),key=raw.toLowerCase(),label=key==='closed'?'completed':raw;return`<span class="fv-go-status ${esc(key==='closed'?'completed':key)}">${esc(label||'—')}</span>`};
 const unique=(rows,getter)=>[...new Map(rows.map(x=>{const v=clean(getter(x));return[v.toLowerCase(),v]}).filter(x=>x[0])).values()].sort((a,b)=>a.localeCompare(b));
 const opts=values=>values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
 const contractLedger=t=>(Array.isArray(t?.contractAllocations)?t.contractAllocations:[]).filter(a=>clean(a?.contractId)&&Number(a?.bushels)>0);
