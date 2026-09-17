@@ -210,7 +210,7 @@ function debounceRender(){
 /* ---------- firebase-init ---------- */
 async function importFirebaseInit(){
   try{
-    const mod = await import('/js/firebase-init.js');
+    const mod = await import('/js/firebase/firebase-init.js');
     state.fb = mod;
     if (mod && mod.ready) await mod.ready;
     return true;

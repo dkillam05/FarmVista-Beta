@@ -12,7 +12,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from "/js/firebase-init.js";
+} from "/js/firebase/firebase-init.js";
 
 await ready;
 
@@ -1499,7 +1499,7 @@ function currentVoidUser() {
 async function requireRunTransaction() {
   const module =
     await import(
-      "/js/firebase-init.js"
+      "/js/firebase/firebase-init.js"
     );
 
   if (

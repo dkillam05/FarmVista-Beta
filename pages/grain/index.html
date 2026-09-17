@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#3B7E46" />
 
-  <script src="/js/theme-boot.js"></script>
+  <script src="/js/app/theme-boot.js"></script>
   <script src="/js/grain/shared/grain-capacity.js"></script>
 
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -17,8 +17,8 @@
   <link rel="stylesheet" href="/assets/css/app.css" />
   <link rel="stylesheet" href="/assets/css/dashboard.css" />
 
-  <script src="/js/version.js" defer></script>
-  <script src="/js/core.js" defer></script>
+  <script src="/js/app/version.js" defer></script>
+  <script src="/js/app/core.js" defer></script>
   <script src="/js/app/fv-shell.js" defer></script>
 
   <style>
@@ -978,7 +978,7 @@
     query,
     where,
     serverTimestamp
-  } from "/js/firebase-init.js";
+  } from "/js/firebase/firebase-init.js";
 
   await ready;
 

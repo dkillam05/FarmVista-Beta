@@ -821,7 +821,7 @@ _hideBootOverlayWithOptionalHold(){
     /* =============================== */
 
     async _bootSequence(){
-      await this._loadScriptOnce('/js/version.js').catch(()=>{});
+      await this._loadScriptOnce('/js/app/version.js').catch(()=>{});
       this._applyVersionToUI();
 
 // ==========================================================
@@ -831,7 +831,7 @@ _hideBootOverlayWithOptionalHold(){
 // Load the farm configuration loader.
 await this
   ._loadScriptOnce(
-    '/js/firebase-config.js'
+    '/js/firebase/firebase-config.js'
   )
   .catch(() => {});
 
@@ -929,7 +929,7 @@ await this
 
 await this
   ._loadScriptOnce(
-    '/js/menu-acl.js'
+    '/js/navigation/menu-acl.js'
   )
   .catch(() => {});
 
@@ -1204,14 +1204,14 @@ _kickToLogin(reason){
       try {
         if (!window.__FV_FIREBASE_INIT_LOADED__) {
           window.__FV_FIREBASE_INIT_LOADED__ = true;
-          await this._loadScriptOnce('/js/firebase-init.js', { type:'module' });
+          await this._loadScriptOnce('/js/firebase/firebase-init.js', { type:'module' });
         }
       } catch {}
     }
 
     async _isAuthed(){
       try{
-        const mod = await import('/js/firebase-init.js');
+        const mod = await import('/js/firebase/firebase-init.js');
         const ctx = await mod.ready;
         const auth = (ctx && ctx.auth) || window.firebaseAuth || null;
         return !!(auth && auth.currentUser);
@@ -1237,7 +1237,7 @@ async _loadCompanyBrand(){
 
     const mod =
       await import(
-        '/js/firebase-init.js'
+        '/js/firebase/firebase-init.js'
       );
 
 
@@ -1590,8 +1590,8 @@ _applyCompanyBrand(
 
     async _loadMenu(){
       // ✅ stable import (no Date.now cache bust). Beta/live aware.
-      const primary = `${FV_ROOT}/js/menu.js`;
-      const fallback = `/js/menu.js`;
+      const primary = `${FV_ROOT}/js/navigation/menu.js`;
+      const fallback = `/js/navigation/menu.js`;
 
       try{
         const mod = await import(primary);
@@ -2214,7 +2214,7 @@ a.href = href;
 
       const readTargetVersion = async ()=>{
         try{
-          const resp = await fetch('/js/version.js?ts=' + Date.now(), { cache:'reload' });
+          const resp = await fetch('/js/app/version.js?ts=' + Date.now(), { cache:'reload' });
           const txt = await resp.text();
           const m =
             txt.match(/number\s*:\s*["']([\d.]+)["']/) ||

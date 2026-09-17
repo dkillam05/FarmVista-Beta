@@ -185,7 +185,7 @@ var cropMatch = null;
       if (!loadId || !customer) return;
 
       try {
-        const firebase = await import('/js/firebase-init.js');
+        const firebase = await import('/js/firebase/firebase-init.js');
         await firebase.ready;
 
         const db = firebase.getFirestore();
@@ -273,7 +273,7 @@ var cropMatch = null;
 
     async function loadVoidedLoadIds() {
       try {
-        const firebase = await import('/js/firebase-init.js');
+        const firebase = await import('/js/firebase/firebase-init.js');
         await firebase.ready;
 
         const db = firebase.getFirestore();
@@ -402,7 +402,7 @@ var cropMatch = null;
       voidBtn.textContent = 'Voiding…';
 
       try {
-        const firebase = await import('/js/firebase-init.js');
+        const firebase = await import('/js/firebase/firebase-init.js');
         await firebase.ready;
 
         const db = firebase.getFirestore();

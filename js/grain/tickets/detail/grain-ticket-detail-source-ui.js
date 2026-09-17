@@ -5,7 +5,7 @@ import {
   getDoc,
   collection,
   getDocs
-} from '/js/firebase-init.js';
+} from '/js/firebase/firebase-init.js';
 
 const path = String(location.pathname || '').toLowerCase();
 

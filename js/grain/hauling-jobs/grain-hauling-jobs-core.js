@@ -23,7 +23,7 @@ import {
   doc,
   updateDoc,
   serverTimestamp
-} from "/js/firebase-init.js";
+} from "/js/firebase/firebase-init.js";
 
 await ready;
 

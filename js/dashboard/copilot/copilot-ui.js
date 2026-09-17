@@ -19,7 +19,7 @@
 
 'use strict';
 
-import { ready, getAuth } from '/js/firebase-init.js';
+import { ready, getAuth } from '/js/firebase/firebase-init.js';
 
 export const FVCopilotUI = (() => {
   const DEFAULTS = {

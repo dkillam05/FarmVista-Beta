@@ -400,7 +400,7 @@
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
 
     try{
-      const firebase=await import('/js/firebase-init.js');
+      const firebase=await import('/js/firebase/firebase-init.js');
       await firebase.ready;
       const db=firebase.getFirestore();
       const [jobSnap,ticketSnap,alertSnap]=await Promise.all([

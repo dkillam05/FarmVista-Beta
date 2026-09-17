@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#3B7E46"/>
 
   <!-- Early theme boot -->
-  <script src="/js/theme-boot.js"></script>
+  <script src="/js/app/theme-boot.js"></script>
 
   <!-- Manifest + Icons -->
   <link rel="manifest" href="/manifest.webmanifest"/>
@@ -25,8 +25,8 @@
   <link rel="stylesheet" href="/assets/css/app.css"/>
 
   <!-- Core + Shell -->
-  <script src="/js/version.js" defer></script>
-  <script src="/js/core.js" defer></script>
+  <script src="/js/app/version.js" defer></script>
+  <script src="/js/app/core.js" defer></script>
   <script src="/js/app/fv-shell.js" defer></script>
 
   <!-- Ensure fv-form-button -->
@@ -1141,7 +1141,7 @@
       getDoc,
       setDoc,
       serverTimestamp
-    } from "/js/firebase-init.js";
+    } from "/js/firebase/firebase-init.js";
 
 
     const $ =

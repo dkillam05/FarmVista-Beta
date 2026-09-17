@@ -85,7 +85,7 @@ import {
   getDocs,
   setDoc,
   serverTimestamp
-} from "/js/firebase-init.js";
+} from "/js/firebase/firebase-init.js";
 
 
 // ============================================================
@@ -4441,7 +4441,7 @@ async function getTransactionRunner() {
 
   const module =
     await import(
-      "/js/firebase-init.js"
+      "/js/firebase/firebase-init.js"
     );
 
 

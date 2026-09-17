@@ -31,7 +31,7 @@ import {
   ref,
   uploadBytes,
   getDownloadURL
-} from "/js/firebase-init.js";
+} from "/js/firebase/firebase-init.js";
 
 (function(){
   const $id = (id)=> document.getElementById(id);

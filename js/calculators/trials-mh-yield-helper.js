@@ -25,7 +25,7 @@ import {
   collection,
   getDocs,
   serverTimestamp
-} from '/js/firebase-init.js';
+} from '/js/firebase/firebase-init.js';
 
 export function initMhYieldHelper(options = {}) {
   const PASS_WIDTH_OPTIONS = [15,20,25,30,35,40,45,50,60];

@@ -26,7 +26,7 @@ import {
   updateDoc,
   query, where, orderBy,
   serverTimestamp
-} from '/js/firebase-init.js';
+} from '/js/firebase/firebase-init.js';
 
 /* ===========================
    CONFIG (copied)

@@ -98,7 +98,7 @@
     if (state.loading && !force) return state.loading;
     if (state.loaded && !force) return;
 
-    state.loading = import('/js/firebase-init.js').then(async firebase => {
+    state.loading = import('/js/firebase/firebase-init.js').then(async firebase => {
       await firebase.ready;
       const db = firebase.getFirestore();
       const [ticketsSnap, jobsSnap, customersSnap] = await Promise.all([
@@ -195,7 +195,7 @@
 
     state.repairing = true;
     try {
-      const firebase = await import('/js/firebase-init.js');
+      const firebase = await import('/js/firebase/firebase-init.js');
       await firebase.ready;
       const db = firebase.getFirestore();
 

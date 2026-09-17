@@ -30,7 +30,7 @@ import {
   orderBy,
   limit,
   serverTimestamp
-} from "/js/firebase-init.js";
+} from "/js/firebase/firebase-init.js";
 
 (function(){
   const $ = (sel) => document.querySelector(sel);

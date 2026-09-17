@@ -7,7 +7,7 @@
 // Extracted from your dashboard inline script.
 // Respects perms hiding: if #bag-kpi is perm-hidden, it will no-op.
 
-import { ready, getFirestore, collection, getDocs } from '/js/firebase-init.js';
+import { ready, getFirestore, collection, getDocs } from '/js/firebase/firebase-init.js';
 
 (async function(){
   "use strict";

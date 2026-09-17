@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#3B7E46" />
 
    <!-- Early theme boot (prevents flash) -->
-  <script src="/js/theme-boot.js"></script>
+  <script src="/js/app/theme-boot.js"></script>
 
   <!-- PWA + icons -->
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -16,7 +16,7 @@
 
 
   <!-- Firebase config + FVData (needed for Field Maintenance KPI) -->
-  <script src="/js/firebase-config.js"></script>
+  <script src="/js/firebase/firebase-config.js"></script>
   <script src="/js/shared/services/fv-data.js"></script>
 
   <!-- Global CSS (same as Setup / Dashboard) -->
@@ -370,7 +370,7 @@
       getDocs,
       query,
       where
-    } from '/js/firebase-init.js';
+    } from '/js/firebase/firebase-init.js';
 
     (function(){
       "use strict";
@@ -612,8 +612,8 @@
       const urlRev = new URL(location.href).searchParams.get('rev');
       const REV = urlRev || String(Date.now());
       const files = [
-        '/js/version.js',
-        '/js/core.js',
+        '/js/app/version.js',
+        '/js/app/core.js',
         '/js/shared/components/fv-hero-card.js',
         '/js/app/fv-shell.js',
         '/js/shared/components/fv-hero.js'
@@ -720,7 +720,7 @@
       getDocs,
       query,
       where
-    } from '/js/firebase-init.js';
+    } from '/js/firebase/firebase-init.js';
 
     const kpiEl        = document.getElementById("trials-kpi");
     const trialsEl     = document.getElementById("trials-count-trials");

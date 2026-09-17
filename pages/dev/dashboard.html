@@ -10,7 +10,7 @@
   <base href="/">
 
   <!-- ✅ Theme + firebase boot chain + auth guard + user context warm -->
-  <script src="js/theme-boot.js"></script>
+  <script src="js/app/theme-boot.js"></script>
 
   <!-- Standard includes (relative to <base>) -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -20,14 +20,14 @@
   <link rel="stylesheet" href="assets/css/app.css?v=PV1" />
 
   <!-- Firebase config + FVData (needed to read messages from Firestore) -->
-  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase/firebase-config.js"></script>
   <script src="js/shared/services/fv-data.js"></script>
 
   <!-- Shared grain capacity helpers (corn → other crops) -->
   <script src="js/grain/shared/grain-capacity.js?v=PV1"></script>
 
   <!-- Load core first (theme + App API), then the shell -->
-  <script src="js/core.js?v=PV1"></script>
+  <script src="js/app/core.js?v=PV1"></script>
   <script src="js/app/fv-shell.js?v=PV1" defer></script>
 
   <style>

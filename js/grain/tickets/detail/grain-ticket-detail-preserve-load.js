@@ -153,7 +153,7 @@
     if (!ticketId) return null;
 
     try {
-      const firebase = await import('/js/firebase-init.js');
+      const firebase = await import('/js/firebase/firebase-init.js');
       await firebase.ready;
 
       const db = firebase.getFirestore();

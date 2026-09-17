@@ -1,4 +1,4 @@
-// /js/firebase-config.js
+// /js/firebase/firebase-config.js
 // FarmVista multi-farm Firebase configuration loader.
 //
 // No farm is hard-coded as the default.

@@ -41,7 +41,7 @@
 //      - Camera Pop-up -> when Expenditures OR Grain Tickets (OCR) has Add enabled
 //  • The toggle button is disabled (locked) because these are dependency-driven.
 
-import NAV_MENU from '/js/menu.js';
+import NAV_MENU from '/js/navigation/menu.js';
 
 /* -------------------- Extra Feature (Capability) List -------------------- */
 

@@ -5,7 +5,7 @@ import {
   getDocs,
   query,
   where
-} from '/js/firebase-init.js';
+} from '/js/firebase/firebase-init.js';
 
 const path = String(window.location.pathname || '').toLowerCase();
 const params = new URLSearchParams(window.location.search);

@@ -204,7 +204,7 @@
 
   async function load(){
     try{
-      const F=await import('/js/firebase-init.js');await F.ready;const db=F.getFirestore();
+      const F=await import('/js/firebase/firebase-init.js');await F.ready;const db=F.getFirestore();
       const[js,ts]=await Promise.all([F.getDocs(F.collection(db,'grain_hauling_jobs')),F.getDocs(F.collection(db,'grain_tickets'))]);
       jobs=js.docs.map(d=>({id:d.id,...d.data()}));
       tickets=ts.docs.map(d=>({id:d.id,...d.data()}));
