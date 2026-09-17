@@ -1,0 +1,27 @@
+name: Reorganize Grain JavaScript
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/reorganize-grain-js.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  reorganize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reorganize Grain modules and references
+        run: python .github/scripts/reorganize-grain-js.py
+      - name: Verify and commit
+        run: |
+          git diff --check
+          git status --short
+          git config user.name "FarmVista Beta Organizer"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Organize Grain JavaScript by feature" || exit 0
+          git push origin main
