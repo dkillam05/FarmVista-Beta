@@ -7,19 +7,17 @@ import { buildContractRows, deliveredToContract } from './contracts/contract-mod
 import { buildTicketRows } from './tickets/ticket-model.js';
 import { settlementStatus } from './settlements/settlement-engine.js';
 import { installLandscapeLock } from './ui/landscape-lock.js';
+import { buildWorkspaceModel } from './ui/workspace-model.js';
+import { startGrainWorkspace, getWorkspaceModel, onWorkspaceChange } from './ui/workspace-controller.js';
+import * as allocation from './drag-drop/allocation-controller.js';
 
 export const GrainOperations = Object.freeze({
-  load:loadGrainOperations,
-  refresh:refreshGrainOperations,
-  state:grainState,
-  subscribe,
-  rules,
+  load:loadGrainOperations, refresh:refreshGrainOperations, state:grainState, subscribe, rules,
   hauling:Object.freeze({rows:()=>buildHaulingRows(grainState()),ticketsForJob:id=>ticketsForHaulingJob(id,grainState())}),
   contracts:Object.freeze({rows:()=>buildContractRows(grainState()),delivered:id=>deliveredToContract(id,grainState().tickets)}),
   tickets:Object.freeze({rows:()=>buildTicketRows(grainState())}),
-  settlementStatus,
-  installLandscapeLock
+  workspace:Object.freeze({build:()=>buildWorkspaceModel(grainState()),start:startGrainWorkspace,get:getWorkspaceModel,subscribe:onWorkspaceChange}),
+  allocation:Object.freeze(allocation), settlementStatus, installLandscapeLock
 });
-
 window.FVGrainOperations=GrainOperations;
 console.info('[FarmVista Beta] Central Grain Operations domain ready.');
