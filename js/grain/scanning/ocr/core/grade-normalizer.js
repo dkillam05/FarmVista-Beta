@@ -3,7 +3,7 @@
    to GitHub templates. Legacy cleanup is retained only for older OCR responses. */
 
 import { normalizeGrainTicketGrades as normalizeLegacyGrades } from "../legacy/grain-ticket-ocr-grade-normalizer-legacy.js";
-import { applyGrainTicketTemplate } from "./template-dispatcher.js?v=20260917-4";
+import { applyGrainTicketTemplate } from "./template-dispatcher.js?v=20260917-5";
 
 function syncScannerFields(result) {
   const ticket = result?.grainTicket;
