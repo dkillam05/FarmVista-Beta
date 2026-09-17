@@ -35,5 +35,5 @@ Manual hauling and manual contract overrides are independent dimensions. Changin
 ## File policy
 This rebuild is intentionally organized by responsibility. Do not add one-off `fix`, `followup`, dated patch, or duplicate helper modules inside `operations/`. Extend the owning module instead. Temporary test harnesses belong outside the production module tree and must be removed when the live page is switched.
 
-## Migration policy
-The legacy Grain Contracts/Hauling execution path remains available until the centralized workspace is functionally ready for user testing. Do not import legacy hauling/contracts modules into this directory. Recreate required behavior through the central store, rules, models, write gateway, and UI. Once the centralized route is validated with real Beta Firestore data, switch the normal PWA page to the central entry point and then remove obsolete legacy helpers only after reference checks confirm they are unused.
+## Cutover and cleanup policy
+`/pages/grain/grain-contracts.html` now runs this centralized workspace in Beta. Do not reattach the retired legacy Grain Contracts/Hauling execution path to that route. Keep legacy helpers only while another live route still references them; remove each obsolete helper only after direct reference checks confirm it is unused. Preserve Firestore schema compatibility while cleanup proceeds.
