@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness.weather.js  (FULL FILE)
+/js/field-readiness/field-readiness.weather.js  (FULL FILE)
 Rev: 2026-01-08a
 
 Fix (per Dane):

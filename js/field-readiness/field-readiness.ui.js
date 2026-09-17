@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/field-readiness.ui.js  (FULL FILE)
+/js/field-readiness/field-readiness.ui.js  (FULL FILE)
 Rev: 2025-12-23j
 
 FIXES (per Dane):
@@ -15,7 +15,7 @@ import {
   fetchWeatherForField,
   warmWeatherForFields,
   getWeatherSeriesForFieldId
-} from '/js/field-readiness.weather.js';
+} from '/js/field-readiness/field-readiness.weather.js';
 
 import {
   runField,
@@ -23,7 +23,7 @@ import {
   readinessColor,
   markerLeftCSS,
   modelClassFromRun
-} from '/js/field-readiness.model.js';
+} from '/js/field-readiness/field-readiness.model.js';
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);

@@ -1281,7 +1281,7 @@ import {
 
     ensureEquipmentFormsLoaded._loading = new Promise((resolve)=>{
       const s = document.createElement("script");
-      s.src = "/js/equipment-forms.js";
+      s.src = "/js/equipment/equipment-forms.js";
       s.defer = true;
       s.onload = ()=> resolve();
       s.onerror = ()=> resolve();
