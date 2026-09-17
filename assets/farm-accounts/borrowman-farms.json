@@ -1,5 +1,5 @@
 {
-  "farmKey": "borrowman-farms",
+  "farmKey": "borrowman",
   "active": true,
   "firebaseConfig": {
     "apiKey": "AIzaSyBn1GwnTJGtQmhbnO7KQSjqzgFLx02m5jE",
