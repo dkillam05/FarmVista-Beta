@@ -1,6 +1,6 @@
-// FarmVista Grain Operations — one planner for a newly scanned/saved ticket.
-// Hauling and contract decisions are calculated from the same state snapshot.
-import { buildAutomaticHaulingAssignment } from '../hauling/hauling-allocation.js';
-import { planContractAllocation } from '../contracts/contract-allocation.js';
-import { ticketReviewReasons } from '../core/grain-validation.js';
-export function planTicketAllocation(ticket,state){const hauling=buildAutomaticHaulingAssignment(ticket,state);const contracts=planContractAllocation(ticket,state?.contracts||[],state?.tickets||[]);const reviewReasons=ticketReviewReasons(ticket);return{hauling,contracts,reviewReasons,needsReview:reviewReasons.length>0}}
+// FarmVista Grain Operations — ticket allocation orchestration.
+// Hauling is the required/simple operational layer. Contract allocation is optional detail.
+import { buildAutomaticHaulingAssignment } from '../hauling/hauling-allocation.js';import { planContractAllocation } from '../contracts/contract-allocation.js';import { ticketReviewReasons } from '../core/grain-validation.js';import { clean } from '../core/grain-rules.js';
+const linkedContracts=(hauling,state)=>{const jobId=clean(hauling?.haulingJobId);if(!jobId)return[];return(state?.contracts||[]).filter(c=>clean(c?.haulingJobId??c?.jobId)===jobId)};
+export function planTicketAllocation(ticket,state,{includeContracts=false}={}){const hauling=buildAutomaticHaulingAssignment(ticket,state),reviewReasons=ticketReviewReasons(ticket);let contracts={allocations:[],uncontractedBushels:Number(hauling?.totalBushels||0),optional:true};if(includeContracts){const eligible=linkedContracts(hauling,state);if(eligible.length)contracts={...planContractAllocation(ticket,eligible,state?.tickets||[]),optional:true}}return{hauling,contracts,reviewReasons,needsReview:reviewReasons.length>0}}
+export function planDetailedContractAllocation(ticket,state){return planTicketAllocation(ticket,state,{includeContracts:true})}
