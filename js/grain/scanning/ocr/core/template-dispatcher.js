@@ -3,6 +3,10 @@
 
 import "../templates/scoular.js?v=20260917-1";
 import "../templates/adm.js?v=20260917-1";
+import "../templates/cahokia-grain.js?v=20260917-1";
+import "../templates/green-plains.js?v=20260917-1";
+import "../templates/bartlett.js?v=20260917-1";
+import "../templates/cargill.js?v=20260917-1";
 
 function rawTextFromResult(result) {
   return String(
@@ -15,7 +19,11 @@ function rawTextFromResult(result) {
 
 const TEMPLATE_ORDER = [
   "scoular",
-  "adm"
+  "adm",
+  "cahokiaGrain",
+  "greenPlains",
+  "bartlett",
+  "cargill"
 ];
 
 export function applyGrainTicketTemplate(result) {
