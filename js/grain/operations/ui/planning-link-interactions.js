@@ -3,6 +3,7 @@ import { getWorkspaceModel } from './workspace-controller.js';
 import { linkContractToHaulingJob,unlinkContractFromHaulingJob } from '../data/grain-writes.js';
 import { clean } from '../core/grain-rules.js';
 
+function message(root,text,error=false){const box=root.querySelector('[data-planning-message]');if(!box)return;box.textContent=text;box.classList.toggle('error',error);box.classList.toggle('ready',!error)}
 export function installPlanningLinkInteractions(root){
   let draggedContractId='';
   root.addEventListener('dragstart',event=>{
@@ -33,14 +34,12 @@ export function installPlanningLinkInteractions(root){
     draggedContractId='';
     if(!contract)return;
     try{
-      if(target.hasAttribute('data-planning-unassign')) await unlinkContractFromHaulingJob(contract);
+      if(target.hasAttribute('data-planning-unassign')){await unlinkContractFromHaulingJob(contract);message(root,'Planning link removed. Drag an unlinked contract onto a hauling job to link it.');}
       else{
         const job=model.haulingJobs.find(x=>clean(x.id)===clean(target.dataset.planningJobId));
         if(!job)return;
-        await linkContractToHaulingJob(contract,job);
+        await linkContractToHaulingJob(contract,job);message(root,'Contract linked to hauling job.');
       }
-    }catch(error){
-      window.alert(error?.message||'That planning link could not be changed.');
-    }
+    }catch(error){message(root,error?.message||'That planning link could not be changed.',true)}
   });
 }
