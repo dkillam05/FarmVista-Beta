@@ -39,7 +39,7 @@ async function makeNamesOnce() {
         `${SCOPE_PREFIX}assets/css/theme.css?rev=${REV}`,
         `${SCOPE_PREFIX}assets/css/app.css?rev=${REV}`,
         `${SCOPE_PREFIX}js/core.js?rev=${REV}`,
-        `${SCOPE_PREFIX}js/fv-shell.js?rev=${REV}`,
+        `${SCOPE_PREFIX}js/app/fv-shell.js?rev=${REV}`,
         `${SCOPE_PREFIX}assets/icons/icon-192.png`,
         `${SCOPE_PREFIX}assets/icons/icon-512.png`,
         `${SCOPE_PREFIX}assets/icons/apple-touch-icon.png`

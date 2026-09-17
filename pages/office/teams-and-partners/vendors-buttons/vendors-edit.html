@@ -98,7 +98,7 @@
   <!-- Ensure fv-shell -->
   <script>(function(){
     if(!customElements.get('fv-shell')){
-      const s=document.createElement('script');s.src='/js/fv-shell.js';s.defer=true;document.head.appendChild(s);
+      const s=document.createElement('script');s.src='/js/app/fv-shell.js';s.defer=true;document.head.appendChild(s);
     }
   })();</script>
 
@@ -203,7 +203,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite">Saved.</div>
   <div id="inviteModalBackdrop" class="invite-modal-backdrop" aria-hidden="true"><div class="invite-modal" role="dialog" aria-modal="true"><h2>Send Invite</h2><p>This vendor has both an email address and a mobile number. Choose how to send the FarmVista invite.</p><div class="invite-options"><button id="inviteEmailOnly" class="btn btn-primary invite-option" type="button">Email Invite</button><button id="invitePhoneOnly" class="btn btn-primary invite-option" type="button">Phone Invite</button><button id="inviteBoth" class="btn btn-accent invite-option" type="button">Email &amp; Phone</button></div><button id="inviteCancel" class="btn invite-cancel" type="button">Cancel</button></div></div>
   <script type="module">
-    import '/js/fv-perms-hero.js';
+    import '/js/shared/components/fv-perms-hero.js';
     import {
       ready,
       getFirestore, doc, getDoc, setDoc, deleteDoc,

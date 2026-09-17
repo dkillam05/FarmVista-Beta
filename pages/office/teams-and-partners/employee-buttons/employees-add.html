@@ -325,7 +325,7 @@
     (function(){
       if(!customElements.get('fv-shell')){
         const s=document.createElement('script');
-        s.src='/js/fv-shell.js';
+        s.src='/js/app/fv-shell.js';
         s.defer=true;
         document.head.appendChild(s);
       }
@@ -638,7 +638,7 @@
 
   <script type="module">
 
-    import '/js/fv-perms-hero.js';
+    import '/js/shared/components/fv-perms-hero.js';
 
     import {
       ready,

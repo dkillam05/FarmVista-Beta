@@ -1,4 +1,4 @@
-/* /js/fv-shell.js */
+/* /js/app/fv-shell.js */
 /* FarmVista Shell — v5.10.23  (Mobile Quick Camera – Side Rail • Camera Popup with Close • Strong PTR Contract)
    - Mobile-only right-edge handle with “QR Scanner” and “Camera”.
    - QR Scanner => /pages/qr-scan.html (override via <html data-scan-url>).

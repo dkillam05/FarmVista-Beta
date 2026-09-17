@@ -20,7 +20,7 @@
     window.__FV_AUTO_UPDATE_LOADER_20260908 = true;
 
     const updateScript = document.createElement('script');
-    updateScript.src = '/js/fv-auto-update.js?v=20260908-1';
+    updateScript.src = '/js/shared/services/fv-auto-update.js?v=20260908-1';
     updateScript.dataset.fvAutoUpdate = '1';
     document.head.appendChild(updateScript);
   }

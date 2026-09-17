@@ -29,14 +29,14 @@ Changes (per Dane):
   <link rel="stylesheet" href="/assets/css/app.css"/>
 
   <!-- Date range picker (your file) -->
-  <script src="/js/fv-date-range-picker.js"></script>
+  <script src="/js/shared/components/fv-date-range-picker.js"></script>
 
   <!-- Ensure fv-shell (global header/footer/menu) -->
   <script>
     (function(){
       if(!customElements.get('fv-shell')){
         const s=document.createElement('script');
-        s.src='/js/fv-shell.js';
+        s.src='/js/app/fv-shell.js';
         s.defer=true;
         document.head.appendChild(s);
       }

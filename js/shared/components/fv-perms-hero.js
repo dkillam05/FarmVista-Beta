@@ -1,10 +1,10 @@
-// /js/fv-perms-hero.js
+// /js/shared/components/fv-perms-hero.js
 // Shared Permissions Panel (Hero + Nested Matrix) for:
 //  • Account Roles
 //  • Employee Overrides
 //
 // Usage (example):
-//   import '/js/fv-perms-hero.js';
+//   import '/js/shared/components/fv-perms-hero.js';
 //
 //   const panel = document.querySelector('fv-perms-hero');
 //   panel.config = {

@@ -1,4 +1,4 @@
-import "/js/fv-combo.js";
+import "/js/shared/components/fv-combo.js";
 import "/js/grain/contracts/grain-contracts-filter-combo-anchor.js?v=20260916-1";
 
 /* FarmVista — Grain Contracts UI follow-up — Sept. 12, 2026 */

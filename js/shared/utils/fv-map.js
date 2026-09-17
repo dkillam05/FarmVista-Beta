@@ -1,5 +1,5 @@
 /* ====================================================================
-/js/fv-map.js
+/js/shared/utils/fv-map.js
 Google Maps helper for FarmVista – pin drop + "Use my location"
 Designed for use inside a modal. Now:
  • Starts centered on Divernon, IL

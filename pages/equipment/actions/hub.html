@@ -37,14 +37,14 @@ Updates:
   <script src="/js/firebase-config.js"></script>
 
   <!-- Cloud PDF helper (if present) -->
-  <script src="/js/fv-pdf.js"></script>
+  <script src="/js/shared/utils/fv-pdf.js"></script>
 
   <!-- Ensure fv-shell -->
   <script>
     (function(){
       if(!customElements.get('fv-shell')){
         const s=document.createElement('script');
-        s.src='/js/fv-shell.js';
+        s.src='/js/app/fv-shell.js';
         s.defer=true; document.head.appendChild(s);
       }
     })();

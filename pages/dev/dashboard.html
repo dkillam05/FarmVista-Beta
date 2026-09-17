@@ -21,14 +21,14 @@
 
   <!-- Firebase config + FVData (needed to read messages from Firestore) -->
   <script src="js/firebase-config.js"></script>
-  <script src="js/fv-data.js"></script>
+  <script src="js/shared/services/fv-data.js"></script>
 
   <!-- Shared grain capacity helpers (corn → other crops) -->
   <script src="js/grain/shared/grain-capacity.js?v=PV1"></script>
 
   <!-- Load core first (theme + App API), then the shell -->
   <script src="js/core.js?v=PV1"></script>
-  <script src="js/fv-shell.js?v=PV1" defer></script>
+  <script src="js/app/fv-shell.js?v=PV1" defer></script>
 
   <style>
     body{
