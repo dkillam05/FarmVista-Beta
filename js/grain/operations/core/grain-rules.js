@@ -39,9 +39,9 @@ export function normalizeSplitAllocations(ticket){
   })).filter(item => item.sourceJobId && item.bushels > EPS);
 }
 
-// Effective job totals: a physical ticket starts on its source job. Portions moved to another
-// job are subtracted from the source and added to the target. Genuine Spot remains on the
-// source so operational overhaul is visible. Unassigned portions are removed from the source.
+// Every split row represents physical bushels that no longer belong to the source job's normal
+// capacity. Job rows move those bushels to another job; unassigned and genuine Spot rows remove
+// them from the source total. This keeps one physical ticket from being counted twice.
 export function effectiveJobTotals(tickets){
   const totals = new Map();
   const add = (id,bu) => { if(id && Math.abs(bu) > EPS) totals.set(id, round2((totals.get(id)||0)+bu)); };
@@ -51,8 +51,9 @@ export function effectiveJobTotals(tickets){
     const total = ticketBushels(ticket);
     if(source && total > EPS) add(source,total);
     for(const allocation of normalizeSplitAllocations(ticket)){
-      if(allocation.sourceJobId === source && allocation.allocationType === 'unassigned') add(source,-allocation.bushels);
-      if(allocation.sourceJobId === source && allocation.allocationType === 'job' && allocation.haulingJobId && allocation.haulingJobId !== source){
+      if(allocation.sourceJobId !== source) continue;
+      if(allocation.allocationType === 'unassigned' || allocation.allocationType === 'spot') add(source,-allocation.bushels);
+      if(allocation.allocationType === 'job' && allocation.haulingJobId && allocation.haulingJobId !== source){
         add(source,-allocation.bushels);
         add(allocation.haulingJobId,allocation.bushels);
       }
