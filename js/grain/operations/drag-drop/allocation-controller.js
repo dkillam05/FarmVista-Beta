@@ -17,9 +17,13 @@ const contractUnallocatedBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)
 const contractAllocatedTo=(ticket,contractId)=>{const id=clean(contractId);if(hasContractLedger(ticket))return round2(contractAllocations(ticket).filter(a=>a.contractId===id).reduce((sum,a)=>sum+a.bushels,0));return clean(ticket?.contractId)===id?ticketBushels(ticket):0};
 const soleContractId=ticket=>{const rows=contractAllocations(ticket);if(rows.length===1&&rows[0].bushels+0.005>=ticketBushels(ticket))return rows[0].contractId;if(!rows.length&&clean(ticket?.contractId))return clean(ticket.contractId);return''};
 const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
-  .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned')
+  .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned'||x.allocationType==='spot')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
-const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket)));
+const haulingSpotBushels=ticket=>round2(normalizeSplitAllocations(ticket)
+  .filter(x=>x.allocationType==='spot')
+  .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
+const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket));
+const haulingAssignableBushels=ticket=>round2(haulingSourceBushels(ticket)+haulingSpotBushels(ticket));
 const haulingAllocatedTo=(ticket,jobId)=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'&&clean(x.haulingJobId)===clean(jobId))
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
@@ -29,8 +33,8 @@ export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(!compatibleHaulingJob(job,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};
   const targetId=clean(job.id),sourceId=clean(ticket?.haulingJobId);
   if(targetId&&targetId===sourceId)return{ok:false,reason:'Ticket is already sourced to this hauling job'};
-  const sourceCapacity=haulingSourceBushels(ticket);
-  if(sourceCapacity<=0)return{ok:false,reason:'No unallocated source bushels remain on this ticket'};
+  const sourceCapacity=haulingAssignableBushels(ticket);
+  if(sourceCapacity<=0)return{ok:false,reason:'No assignable bushels remain on this ticket'};
   if(isSpotHaulingJob(job))return{ok:true,reason:'',capacity:sourceCapacity,spotLoadOnly:true};
   const otherUsed=effectiveJobTotals(otherTickets(ticket,state)).get(targetId)||0;
   const currentTarget=haulingAllocatedTo(ticket,targetId);
@@ -47,11 +51,11 @@ export function planManualHaulingMove(ticket,targetJob,{bushels,state}={}){
   const requested=Math.max(0,round2(bushels??allowed.capacity));
   const amount=Math.min(requested,allowed.capacity);
   if(amount<=0)return{ok:false,reason:'No bushels to assign',changes:null};
-  return{ok:true,reason:'',changes:{targetHaulingJobId:clean(targetJob.id),bushels:round2(amount),manualOverride:true,spotLoadOnly:allowed.spotLoadOnly===true},remainingBushels:round2(haulingSourceBushels(ticket)-amount)};
+  return{ok:true,reason:'',changes:{targetHaulingJobId:clean(targetJob.id),bushels:round2(amount),manualOverride:true,spotLoadOnly:allowed.spotLoadOnly===true},remainingBushels:round2(haulingAssignableBushels(ticket)-amount)};
 }
 
 export function planUnassignHaulingPortion(ticket,{bushels}={}){
-  const available=haulingSourceBushels(ticket),amount=Math.max(0,Math.min(available,round2(bushels??available)));
+  const available=haulingAssignableBushels(ticket),amount=Math.max(0,Math.min(available,round2(bushels??available)));
   return{ok:amount>0,reason:amount>0?'':'No bushels to unassign',changes:amount>0?{bushels:amount,allocationType:'unassigned'}:null};
 }
 
