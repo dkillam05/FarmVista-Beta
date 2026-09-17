@@ -4,26 +4,21 @@ import subprocess
 ROOT = Path('.')
 
 moves = {
-    # Reusable UI controls/components
-    'js/fv-combo.js': 'js/shared/components/fv-combo.js',
-    'js/fv-date-range-picker.js': 'js/shared/components/fv-date-range-picker.js',
-    'js/fv-dictation.js': 'js/shared/components/fv-dictation.js',
-    'js/fv-form-button.js': 'js/shared/components/fv-form-button.js',
-    'js/fv-hero-card.js': 'js/shared/components/fv-hero-card.js',
-    'js/fv-hero.js': 'js/shared/components/fv-hero.js',
-    'js/fv-perms-hero.js': 'js/shared/components/fv-perms-hero.js',
-    'js/fv-swipe-list.js': 'js/shared/components/fv-swipe-list.js',
+    # FarmVista application foundation
+    'js/core.js': 'js/app/core.js',
+    'js/theme-boot.js': 'js/app/theme-boot.js',
+    'js/version.js': 'js/app/version.js',
 
-    # Shared app services/data helpers
-    'js/fv-auto-update.js': 'js/shared/services/fv-auto-update.js',
-    'js/fv-data.js': 'js/shared/services/fv-data.js',
+    # Firebase infrastructure
+    'js/firebase-config.js': 'js/firebase/firebase-config.js',
+    'js/firebase-init.js': 'js/firebase/firebase-init.js',
 
-    # General reusable utilities
-    'js/fv-map.js': 'js/shared/utils/fv-map.js',
-    'js/fv-pdf.js': 'js/shared/utils/fv-pdf.js',
+    # Navigation and menu access control
+    'js/menu.js': 'js/navigation/menu.js',
+    'js/menu-acl.js': 'js/navigation/menu-acl.js',
 
-    # Application shell belongs to app infrastructure, not a generic helper bucket
-    'js/fv-shell.js': 'js/app/fv-shell.js',
+    # Shared permissions UI
+    'js/perm-ui.js': 'js/permissions/perm-ui.js',
 }
 
 for old, new in moves.items():
@@ -64,6 +59,6 @@ for path in ROOT.rglob('*'):
         if old in text:
             stale.append(f'{path}: {old}')
 if stale:
-    raise SystemExit('Stale shared/app JavaScript paths remain:\n' + '\n'.join(stale[:100]))
+    raise SystemExit('Stale final root JavaScript paths remain:\n' + '\n'.join(stale[:100]))
 
-print('Organized reusable UI, services, utilities, and app shell JavaScript and updated every application reference.')
+print('Organized final root JavaScript infrastructure and updated every application reference.')
