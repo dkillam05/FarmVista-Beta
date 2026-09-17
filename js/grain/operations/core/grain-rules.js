@@ -19,7 +19,7 @@ export function isVoided(record){
 export function sameCrop(a,b){ return !!key(a) && key(a) === key(b); }
 function sameKnownIdentity(aId,bId,aName,bName){const left=clean(aId),right=clean(bId);if(left&&right)return left===right;const an=key(aName),bn=key(bName);return !!an&&!!bn&&an===bn}
 export function sameBuyer(job,ticket){return sameKnownIdentity(job?.buyerId,ticket?.buyerId,job?.buyerName,ticket?.buyerName)}
-export function sameDeliveryLocation(job,ticket){const a=clean(job?.deliveryLocationId),b=clean(ticket?.deliveryLocationId);if(a&&b)return a===b;const an=key(job?.deliveryLocationName),bn=key(ticket?.deliveryLocationName);if(an&&bn)return an===bn;/* Older tickets may carry only buyer identity. Do not invent a conflicting location when one side is genuinely absent. */return !(a||b||an||bn)}
+export function sameDeliveryLocation(job,ticket){const a=clean(job?.deliveryLocationId),b=clean(ticket?.deliveryLocationId);if(a&&b)return a===b;const an=key(job?.deliveryLocationName),bn=key(ticket?.deliveryLocationName);if(an&&bn)return an===bn;return !(a||b||an||bn)}
 export function sameCustomer(job,ticket){
   const a = clean(job?.customerId ?? job?.grainCustomerId);
   const b = clean(ticket?.customerId ?? ticket?.grainCustomerId);
@@ -72,7 +72,7 @@ export function haulingStatus(job,tickets,now=new Date()){
 }
 
 export function compatibleHaulingJob(job,ticket){
-  if(!job || !ticket || isVoided(job) || (jobTarget(job) <= EPS && !isSpotHaulingJob(job))) return false;
+  if(!job || !ticket || isVoided(job) || job?.active===false || (jobTarget(job) <= EPS && !isSpotHaulingJob(job))) return false;
   if(!sameCrop(job?.crop ?? job?.commodity,ticket?.crop ?? ticket?.commodity)) return false;
   if(!sameBuyer(job,ticket) || !sameDeliveryLocation(job,ticket) || !sameCustomer(job,ticket)) return false;
   const date = clean(ticket?.date ?? ticket?.ticketDate);
@@ -84,7 +84,10 @@ export function compatibleHaulingJob(job,ticket){
 export function planHaulingAllocation(ticket,jobs,tickets){
   let remaining = ticketBushels(ticket);
   const totals = effectiveJobTotals(tickets);
-  const compatible=(jobs||[]).filter(job => compatibleHaulingJob(job,ticket) && haulingStatus(job,tickets)==='active');
+  // Do not filter by derived "completed" status here. A ticket can be the ticket that fills the
+  // oldest job and rolls its remaining bushels into the next compatible job. Capacity, not the
+  // display status, decides whether a job can accept another portion.
+  const compatible=(jobs||[]).filter(job => compatibleHaulingJob(job,ticket));
   const datedSort=(a,b)=>clean(a.deliveryStartDate).localeCompare(clean(b.deliveryStartDate))||clean(a.createdAt).localeCompare(clean(b.createdAt))||clean(a.id).localeCompare(clean(b.id));
   const capacityJobs=compatible.filter(job=>!isSpotHaulingJob(job)).sort(datedSort),spotJobs=compatible.filter(isSpotHaulingJob).sort(datedSort);
   const allocations=[];
