@@ -28,8 +28,8 @@
   // Preserve the original FarmVista version initialization behavior.
   if (!window.FV_VERSION || !window.FV_VERSION.number) {
     window.FV_VERSION = {
-      number:  "09.16.39",
-      date:    "2026-09-16",
+      number:  "09.17.01",
+      date:    "2026-09-17",
       tagline: "Farm Data - Simplified"
     };
 
