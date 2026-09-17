@@ -11,6 +11,13 @@
   <link rel="icon" href="/assets/icons/icon-192.png"/>
   <link rel="stylesheet" href="/assets/css/theme.css"/>
   <link rel="stylesheet" href="/assets/css/app.css"/>
+  <script>
+    // This route is now owned by the centralized Grain Operations workspace. version.js still
+    // carries two compatibility loaders for the retired contracts DOM; mark those loaders as
+    // already handled here so they cannot attach observers or a second drag/drop system.
+    window.__FV_HAULING_SOLD_UNDER_DISPLAY_20260904 = true;
+    window.__FV_GRAIN_MOBILE_DND_AUTOSCROLL_LOADER_20260910 = true;
+  </script>
   <script src="/js/app/version.js" defer></script>
   <script src="/js/app/core.js" defer></script>
   <script src="/js/app/fv-shell.js" defer></script>
@@ -25,7 +32,7 @@
   </fv-shell>
   <script type="module">
     import {installLandscapeLock} from '/js/grain/operations/ui/landscape-lock.js?v=20260917-2';
-    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-12';
+    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-13';
     installLandscapeLock();
     mountGrainOperations(document.getElementById('grain-operations-central')).catch(error=>{
       console.error('[FarmVista Grain Operations]',error);
