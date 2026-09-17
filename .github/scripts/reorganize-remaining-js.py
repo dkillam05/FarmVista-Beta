@@ -4,9 +4,8 @@ import subprocess
 ROOT = Path('.')
 
 moves = {
-    'js/copilot-ui.js': 'js/dashboard/copilot/copilot-ui.js',
-    'js/dashboard/message-board.js': 'js/dashboard/message-board/message-board.js',
-    'js/dashboard/message-board-admin.js': 'js/dashboard/message-board/admin.js',
+    'js/fv-yield-math.js': 'js/calculators/fv-yield-math.js',
+    'js/trials-mh-yield-helper.js': 'js/calculators/trials-mh-yield-helper.js',
 }
 
 for old, new in moves.items():
@@ -47,6 +46,6 @@ for path in ROOT.rglob('*'):
         if old in text:
             stale.append(f'{path}: {old}')
 if stale:
-    raise SystemExit('Stale dashboard paths remain:\n' + '\n'.join(stale[:100]))
+    raise SystemExit('Stale yield helper paths remain:\n' + '\n'.join(stale[:100]))
 
-print('Moved Copilot and Message Board modules into dashboard feature folders and updated application references.')
+print('Moved yield math and multi-hybrid yield helper into calculators and updated every application reference.')
