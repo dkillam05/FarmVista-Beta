@@ -1,4 +1,4 @@
-// /js/dash-kpi-boundary.js
+// /js/dashboard/kpi/boundaries.js
 // Rev: 2026-01-27-dash-kpi-boundary-v1
 //
 // KPI: Field boundary fixes needed

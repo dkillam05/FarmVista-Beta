@@ -1,4 +1,4 @@
-// /js/dash-kpi-bags.js
+// /js/dashboard/kpi/grain-bags.js
 // Rev: 2026-01-27-dash-kpi-bags-v1
 //
 // KPI: Grain bag inventory on hand

@@ -1,4 +1,4 @@
-// /js/dash-perms.js
+// /js/dashboard/permissions.js
 // Rev: 2026-08-15-dashboard-permissions-v5
 //
 // Uses FVUserContext as the single permission source.

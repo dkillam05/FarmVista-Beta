@@ -2,18 +2,18 @@ from pathlib import Path
 
 ROOT = Path('.')
 MOVES = {
-    'js/dash-weather-modal.js': 'js/dashboard/weather/modal.js',
-    'js/dash-markets-style.js': 'js/dashboard/markets/style.js',
-    'js/dash-markets-chart.js': 'js/dashboard/markets/chart.js',
-    'js/dash-markets-series.js': 'js/dashboard/markets/series.js',
-    'js/dash-markets-quotes.js': 'js/dashboard/markets/quotes.js',
-    'js/dash-markets-ui.js': 'js/dashboard/markets/ui.js',
-    'js/dash-perms.js': 'js/dashboard/permissions.js',
-    'js/dash-message-board.js': 'js/dashboard/message-board.js',
-    'js/dash-kpi-wo.js': 'js/dashboard/kpi/work-orders.js',
-    'js/dash-kpi-boundary.js': 'js/dashboard/kpi/boundaries.js',
-    'js/dash-kpi-bags.js': 'js/dashboard/kpi/grain-bags.js',
-    'js/dash-kpi-dynamic.js': 'js/dashboard/kpi/dynamic.js',
+    'js/dashboard/weather/modal.js': 'js/dashboard/weather/modal.js',
+    'js/dashboard/markets/style.js': 'js/dashboard/markets/style.js',
+    'js/dashboard/markets/chart.js': 'js/dashboard/markets/chart.js',
+    'js/dashboard/markets/series.js': 'js/dashboard/markets/series.js',
+    'js/dashboard/markets/quotes.js': 'js/dashboard/markets/quotes.js',
+    'js/dashboard/markets/ui.js': 'js/dashboard/markets/ui.js',
+    'js/dashboard/permissions.js': 'js/dashboard/permissions.js',
+    'js/dashboard/message-board.js': 'js/dashboard/message-board.js',
+    'js/dashboard/kpi/work-orders.js': 'js/dashboard/kpi/work-orders.js',
+    'js/dashboard/kpi/boundaries.js': 'js/dashboard/kpi/boundaries.js',
+    'js/dashboard/kpi/grain-bags.js': 'js/dashboard/kpi/grain-bags.js',
+    'js/dashboard/kpi/dynamic.js': 'js/dashboard/kpi/dynamic.js',
 }
 
 # Move first so there is exactly one canonical copy of each module.
