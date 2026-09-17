@@ -1,4 +1,4 @@
-/* /js/copilot-ui.js  (FULL FILE)
+/* /js/dashboard/copilot/copilot-ui.js  (FULL FILE)
    Rev: 2026-01-20-copilot-ui14-better-errors-text-answer-ok
 
    CHANGE:
