@@ -11,22 +11,28 @@ const contractAllocations=ticket=>(Array.isArray(ticket?.contractAllocations)?ti
   .filter(a=>a.contractId&&a.bushels>0);
 const contractAllocatedBushels=ticket=>round2(contractAllocations(ticket).reduce((sum,a)=>sum+a.bushels,0));
 const contractUnallocatedBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-contractAllocatedBushels(ticket)));
+const contractAllocatedTo=(ticket,contractId)=>round2(contractAllocations(ticket).filter(a=>a.contractId===clean(contractId)).reduce((sum,a)=>sum+a.bushels,0));
 const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
 const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket)));
+const haulingAllocatedTo=(ticket,jobId)=>round2(normalizeSplitAllocations(ticket)
+  .filter(x=>x.allocationType==='job'&&clean(x.haulingJobId)===clean(jobId))
+  .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
 
 export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(!ticket||!job||isVoided(ticket)||isVoided(job))return{ok:false,reason:'Unavailable'};
   if(!compatibleHaulingJob(job,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};
+  const targetId=clean(job.id),sourceId=clean(ticket?.haulingJobId);
+  if(targetId&&targetId===sourceId)return{ok:false,reason:'Ticket is already sourced to this hauling job'};
   const sourceCapacity=haulingSourceBushels(ticket);
   if(sourceCapacity<=0)return{ok:false,reason:'No unallocated source bushels remain on this ticket'};
   if(isSpotHaulingJob(job))return{ok:true,reason:'',capacity:sourceCapacity,spotLoadOnly:true};
-  // The target's effective total includes this ticket when it is already the source job. Remove
-  // this physical ticket before computing available target capacity or a normal whole-ticket
-  // assignment can incorrectly report the target as full.
-  const used=effectiveJobTotals(otherTickets(ticket,state)).get(clean(job.id))||0;
-  const jobCapacity=Math.max(0,round2(jobTarget(job)-used));
+  const otherUsed=effectiveJobTotals(otherTickets(ticket,state)).get(targetId)||0;
+  // otherTickets deliberately removes this ticket, so subtract the portion of this same ticket
+  // that is already on the target before calculating how much MORE can be added there.
+  const currentTarget=haulingAllocatedTo(ticket,targetId);
+  const jobCapacity=Math.max(0,round2(jobTarget(job)-otherUsed-currentTarget));
   const capacity=Math.min(sourceCapacity,jobCapacity);
   if(jobCapacity<=0)return{ok:false,reason:'Hauling job is full'};
   if(capacity<=0)return{ok:false,reason:'No bushels to assign'};
@@ -52,9 +58,13 @@ export function canAssignTicketToContract(ticket,contract,state={}){
   if(!compatibleContract(contract,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};
   const ticketCapacity=contractUnallocatedBushels(ticket);
   if(ticketCapacity<=0)return{ok:false,reason:'Ticket is fully allocated to contracts'};
-  const target=contractTarget(contract);
+  const target=contractTarget(contract),targetId=clean(contract.id);
   if(target<=0)return{ok:true,reason:'',capacity:ticketCapacity,spotLoadOnly:true};
-  const contractCapacity=Math.max(0,round2(target-deliveredToContract(contract.id,otherTickets(ticket,state))));
+  const otherDelivered=deliveredToContract(targetId,otherTickets(ticket,state));
+  const currentTarget=contractAllocatedTo(ticket,targetId)||(clean(ticket?.contractId)===targetId?ticketBushels(ticket):0);
+  // deliveredToContract(otherTickets) excludes this ticket. Subtract any allocation already on
+  // this same contract so repeated partial drops cannot overfill the contract target.
+  const contractCapacity=Math.max(0,round2(target-otherDelivered-currentTarget));
   if(contractCapacity<=0)return{ok:false,reason:'Contract is full'};
   return{ok:true,reason:'',capacity:Math.min(ticketCapacity,contractCapacity)};
 }
