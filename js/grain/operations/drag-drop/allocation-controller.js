@@ -14,7 +14,7 @@ const contractUnallocatedBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)
 const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
-const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket));
+const haulingSourceBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-haulingMovedBushels(ticket)));
 
 export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(!ticket||!job||isVoided(ticket)||isVoided(job))return{ok:false,reason:'Unavailable'};
