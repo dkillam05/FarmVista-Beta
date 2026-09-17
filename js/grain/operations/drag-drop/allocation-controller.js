@@ -9,9 +9,15 @@ const otherTickets=(ticket,state)=>(state?.tickets||[]).filter(x=>clean(x?.id)!=
 const contractAllocations=ticket=>(Array.isArray(ticket?.contractAllocations)?ticket.contractAllocations:[])
   .map(a=>({contractId:clean(a?.contractId),bushels:Math.max(0,round2(a?.bushels))}))
   .filter(a=>a.contractId&&a.bushels>0);
-const contractAllocatedBushels=ticket=>round2(contractAllocations(ticket).reduce((sum,a)=>sum+a.bushels,0));
+const hasContractLedger=ticket=>contractAllocations(ticket).length>0;
+// Older FarmVista tickets used contractId without contractAllocations. Treat that as a whole-ticket
+// allocation until it is deliberately unassigned/migrated; otherwise the central UI could offer
+// the same physical bushels to a second contract.
+const contractAllocatedBushels=ticket=>hasContractLedger(ticket)
+  ?round2(contractAllocations(ticket).reduce((sum,a)=>sum+a.bushels,0))
+  :(clean(ticket?.contractId)?ticketBushels(ticket):0);
 const contractUnallocatedBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-contractAllocatedBushels(ticket)));
-const contractAllocatedTo=(ticket,contractId)=>round2(contractAllocations(ticket).filter(a=>a.contractId===clean(contractId)).reduce((sum,a)=>sum+a.bushels,0));
+const contractAllocatedTo=(ticket,contractId)=>{const id=clean(contractId);if(hasContractLedger(ticket))return round2(contractAllocations(ticket).filter(a=>a.contractId===id).reduce((sum,a)=>sum+a.bushels,0));return clean(ticket?.contractId)===id?ticketBushels(ticket):0};
 const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
@@ -29,8 +35,6 @@ export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(sourceCapacity<=0)return{ok:false,reason:'No unallocated source bushels remain on this ticket'};
   if(isSpotHaulingJob(job))return{ok:true,reason:'',capacity:sourceCapacity,spotLoadOnly:true};
   const otherUsed=effectiveJobTotals(otherTickets(ticket,state)).get(targetId)||0;
-  // otherTickets deliberately removes this ticket, so subtract the portion of this same ticket
-  // that is already on the target before calculating how much MORE can be added there.
   const currentTarget=haulingAllocatedTo(ticket,targetId);
   const jobCapacity=Math.max(0,round2(jobTarget(job)-otherUsed-currentTarget));
   const capacity=Math.min(sourceCapacity,jobCapacity);
@@ -61,9 +65,7 @@ export function canAssignTicketToContract(ticket,contract,state={}){
   const target=contractTarget(contract),targetId=clean(contract.id);
   if(target<=0)return{ok:true,reason:'',capacity:ticketCapacity,spotLoadOnly:true};
   const otherDelivered=deliveredToContract(targetId,otherTickets(ticket,state));
-  const currentTarget=contractAllocatedTo(ticket,targetId)||(clean(ticket?.contractId)===targetId?ticketBushels(ticket):0);
-  // deliveredToContract(otherTickets) excludes this ticket. Subtract any allocation already on
-  // this same contract so repeated partial drops cannot overfill the contract target.
+  const currentTarget=contractAllocatedTo(ticket,targetId);
   const contractCapacity=Math.max(0,round2(target-otherDelivered-currentTarget));
   if(contractCapacity<=0)return{ok:false,reason:'Contract is full'};
   return{ok:true,reason:'',capacity:Math.min(ticketCapacity,contractCapacity)};
