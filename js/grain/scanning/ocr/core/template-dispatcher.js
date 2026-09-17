@@ -1,7 +1,7 @@
 /* FarmVista — Grain Ticket OCR Template Dispatcher
    Cloud OCR stays generic. GitHub templates interpret known elevator layouts. */
 
-import "../templates/scoular-waverly.js?v=20260917-3";
+import "../templates/scoular.js?v=20260917-1";
 import "../templates/adm.js?v=20260917-1";
 
 function rawTextFromResult(result) {
@@ -14,7 +14,7 @@ function rawTextFromResult(result) {
 }
 
 const TEMPLATE_ORDER = [
-  "scoularWaverly",
+  "scoular",
   "adm"
 ];
 
