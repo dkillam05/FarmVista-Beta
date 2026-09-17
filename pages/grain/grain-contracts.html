@@ -25,7 +25,7 @@
   </fv-shell>
   <script type="module">
     import {installLandscapeLock} from '/js/grain/operations/ui/landscape-lock.js?v=20260917-2';
-    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-8';
+    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-9';
     installLandscapeLock();
     mountGrainOperations(document.getElementById('grain-operations-central')).catch(error=>{
       console.error('[FarmVista Grain Operations]',error);
