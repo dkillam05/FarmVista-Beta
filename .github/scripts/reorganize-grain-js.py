@@ -25,15 +25,12 @@ def destination(name: str) -> str:
         return f'js/grain/scanning/capture/{name}'
     if name.startswith('grain-ticket'):
         return f'js/grain/tickets/{name}'
-    if name in {'grain-capacity.js','grain-source-ui-consistency.js','grain-manual-close.js','grain-mobile-dnd-autoscroll.js','grain-mobile-dnd-autoscroll-core.js','grain-transfers.js'}:
-        return f'js/grain/shared/{name}'
     return f'js/grain/shared/{name}'
 
 moves = {}
 for src in sorted((ROOT/'js').glob('grain-*.js')):
     moves[src.as_posix()] = destination(src.name)
 
-# Move the existing ticket-template directory intact under Grain templates.
 template_src = ROOT/'js/grain-ticket-templates'
 template_dst = ROOT/'js/grain/templates/tickets'
 if template_src.exists():
@@ -49,14 +46,15 @@ for old, new in moves.items():
         raise SystemExit(f'Destination already exists: {new}')
     subprocess.run(['git','mv',src.as_posix(),dst.as_posix()], check=True)
 
-# Rewrite all textual references to moved modules while preserving load order.
-text_suffixes = {'.html','.js','.mjs','.json','.webmanifest','.yml','.yaml','.md','.py','.css'}
+# Rewrite application references only. Never touch .github scripts/workflows;
+# those are deployment history/tooling and GitHub Apps may not push workflow edits.
+text_suffixes = {'.html','.js','.mjs','.json','.webmanifest','.md','.css'}
 replacements = list(moves.items())
 replacements.append(('js/grain-ticket-templates/', 'js/grain/templates/tickets/'))
 replacements.append(('/grain-ticket-templates/', '/grain/templates/tickets/'))
 
 for path in ROOT.rglob('*'):
-    if not path.is_file() or '.git' in path.parts or path.suffix.lower() not in text_suffixes:
+    if not path.is_file() or '.git' in path.parts or '.github' in path.parts or path.suffix.lower() not in text_suffixes:
         continue
     try:
         text = path.read_text(encoding='utf-8')
@@ -69,26 +67,22 @@ for path in ROOT.rglob('*'):
     if updated != text:
         path.write_text(updated, encoding='utf-8')
 
-# Remove placeholder files where real modules now occupy the folders.
 for keep in (ROOT/'js/grain').rglob('.gitkeep'):
     try:
         keep.unlink()
     except FileNotFoundError:
         pass
 
-# Hard verification: no loose Grain JS files and no old template directory.
 loose = sorted(p.as_posix() for p in (ROOT/'js').glob('grain-*.js'))
 if loose:
     raise SystemExit('Loose Grain modules remain:\n' + '\n'.join(loose))
 if template_src.exists():
     raise SystemExit('Old grain-ticket-templates directory still exists')
 
-# Verify old path references no longer exist outside migration tooling/history docs.
+# Verify application code has no stale references. Ignore .github historical tooling.
 stale = []
 for path in ROOT.rglob('*'):
-    if not path.is_file() or '.git' in path.parts or path.suffix.lower() not in text_suffixes:
-        continue
-    if path.as_posix().endswith('reorganize-grain-js.py'):
+    if not path.is_file() or '.git' in path.parts or '.github' in path.parts or path.suffix.lower() not in text_suffixes:
         continue
     try:
         text = path.read_text(encoding='utf-8')
@@ -100,6 +94,6 @@ for path in ROOT.rglob('*'):
     if 'js/grain-ticket-templates/' in text:
         stale.append(f'{path}: js/grain-ticket-templates/')
 if stale:
-    raise SystemExit('Stale Grain references remain:\n' + '\n'.join(stale[:100]))
+    raise SystemExit('Stale Grain application references remain:\n' + '\n'.join(stale[:100]))
 
-print(f'Reorganized {len(moves)} loose Grain modules and template directory; references verified.')
+print(f'Reorganized {len(moves)} loose Grain modules and template directory; application references verified.')
