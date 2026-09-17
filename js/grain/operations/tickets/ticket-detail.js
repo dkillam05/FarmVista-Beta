@@ -5,8 +5,10 @@ const find=(rows,id)=>(rows||[]).find(x=>clean(x.id)===clean(id));
 export function buildTicketDetail(ticket,state){
   if(!ticket)return null;
   const total=ticketBushels(ticket),sourceJob=find(state?.haulingJobs,ticket.haulingJobId),contract=find(state?.contracts,ticket.contractId),rawSplits=normalizeSplitAllocations(ticket);
-  const moved=round2(rawSplits.filter(x=>x.allocationType==='job'||x.allocationType==='unassigned').reduce((sum,x)=>sum+x.bushels,0));
-  const sourceBushels=Math.max(0,round2(total-moved));
+  // Detail is a physical-bushel ledger. Spot is operationally retained on the source job for
+  // overhaul totals, but it must be separated here so the displayed portions add to one ticket.
+  const splitBushels=round2(rawSplits.reduce((sum,x)=>sum+x.bushels,0));
+  const sourceBushels=Math.max(0,round2(total-splitBushels));
   const haulingAllocations=[];
   if(sourceJob&&sourceBushels>0)haulingAllocations.push({haulingJobId:clean(sourceJob.id),job:sourceJob,bushels:sourceBushels,allocationType:'source'});
   for(const split of rawSplits)haulingAllocations.push({...split,job:split.haulingJobId?find(state?.haulingJobs,split.haulingJobId):null});
