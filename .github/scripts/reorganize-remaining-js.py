@@ -1,13 +1,12 @@
-# Dashboard cleanup trigger 2026-09-17
 from pathlib import Path
 import subprocess
 
 ROOT = Path('.')
 
 moves = {
-    'js/fv-weather.js': 'js/dashboard/weather/fv-weather.js',
-    'js/markets.js': 'js/dashboard/markets/markets.js',
-    'js/mb-admin.js': 'js/dashboard/message-board-admin.js',
+    'js/copilot-ui.js': 'js/dashboard/copilot/copilot-ui.js',
+    'js/dashboard/message-board.js': 'js/dashboard/message-board/message-board.js',
+    'js/dashboard/message-board-admin.js': 'js/dashboard/message-board/admin.js',
 }
 
 for old, new in moves.items():
@@ -50,4 +49,4 @@ for path in ROOT.rglob('*'):
 if stale:
     raise SystemExit('Stale dashboard paths remain:\n' + '\n'.join(stale[:100]))
 
-print('Moved fv-weather.js, markets.js, and mb-admin.js into js/dashboard and updated application references.')
+print('Moved Copilot and Message Board modules into dashboard feature folders and updated application references.')
