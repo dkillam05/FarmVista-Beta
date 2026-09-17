@@ -1,13 +1,4 @@
 // FarmVista Grain Operations — ticket model shared by hauling, contracts and future settlements.
 import { clean, ticketBushels, isVoided } from '../core/grain-rules.js';
-
-export function buildTicketRows(state){
-  return (state?.tickets||[]).map(ticket=>({
-    ...ticket,
-    effectiveBushels:ticketBushels(ticket),
-    effectiveHaulingJobId:clean(ticket?.haulingJobId),
-    isVoided:isVoided(ticket),
-    splitAllocations:Array.isArray(ticket?.haulingJobSplitAllocations)?ticket.haulingJobSplitAllocations:[],
-    contractAllocations:Array.isArray(ticket?.contractAllocations)?ticket.contractAllocations:[]
-  }));
-}
+import { ticketReviewReasons } from '../core/grain-validation.js';
+export function buildTicketRows(state){return(state?.tickets||[]).map(ticket=>{const reasons=ticketReviewReasons(ticket);const haulingJobId=clean(ticket?.haulingJobId);const contractId=clean(ticket?.contractId);return{...ticket,effectiveBushels:ticketBushels(ticket),effectiveHaulingJobId:haulingJobId,effectiveContractId:contractId,isVoided:isVoided(ticket),needsReview:reasons.length>0,reviewReasons:reasons,assignmentStatus:isVoided(ticket)?'voided':haulingJobId?'linked':'unassigned',splitAllocations:Array.isArray(ticket?.haulingJobSplitAllocations)?ticket.haulingJobSplitAllocations:[],contractAllocations:Array.isArray(ticket?.contractAllocations)?ticket.contractAllocations:[]}})}
