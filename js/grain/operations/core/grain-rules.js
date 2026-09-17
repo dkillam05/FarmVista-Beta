@@ -17,12 +17,9 @@ export function isVoided(record){
 }
 
 export function sameCrop(a,b){ return !!key(a) && key(a) === key(b); }
-export function sameBuyer(job,ticket){
-  const ids = [clean(job?.buyerId), clean(job?.deliveryLocationId)].filter(Boolean);
-  const ticketIds = [clean(ticket?.buyerId), clean(ticket?.deliveryLocationId)].filter(Boolean);
-  if(ids.length && ticketIds.length && ids.some(id => ticketIds.includes(id))) return true;
-  return key(job?.buyerName ?? job?.deliveryLocationName) === key(ticket?.buyerName ?? ticket?.deliveryLocationName);
-}
+function sameKnownIdentity(aId,bId,aName,bName){const left=clean(aId),right=clean(bId);if(left&&right)return left===right;const an=key(aName),bn=key(bName);return !!an&&!!bn&&an===bn}
+export function sameBuyer(job,ticket){return sameKnownIdentity(job?.buyerId,ticket?.buyerId,job?.buyerName,ticket?.buyerName)}
+export function sameDeliveryLocation(job,ticket){const a=clean(job?.deliveryLocationId),b=clean(ticket?.deliveryLocationId);if(a&&b)return a===b;const an=key(job?.deliveryLocationName),bn=key(ticket?.deliveryLocationName);if(an&&bn)return an===bn;/* Older tickets may carry only buyer identity. Do not invent a conflicting location when one side is genuinely absent. */return !(a||b||an||bn)}
 export function sameCustomer(job,ticket){
   const a = clean(job?.customerId ?? job?.grainCustomerId);
   const b = clean(ticket?.customerId ?? ticket?.grainCustomerId);
@@ -77,7 +74,7 @@ export function haulingStatus(job,tickets,now=new Date()){
 export function compatibleHaulingJob(job,ticket){
   if(!job || !ticket || isVoided(job) || (jobTarget(job) <= EPS && !isSpotHaulingJob(job))) return false;
   if(!sameCrop(job?.crop ?? job?.commodity,ticket?.crop ?? ticket?.commodity)) return false;
-  if(!sameBuyer(job,ticket) || !sameCustomer(job,ticket)) return false;
+  if(!sameBuyer(job,ticket) || !sameDeliveryLocation(job,ticket) || !sameCustomer(job,ticket)) return false;
   const date = clean(ticket?.date ?? ticket?.ticketDate);
   if(date && job?.deliveryStartDate && date < clean(job.deliveryStartDate)) return false;
   if(date && job?.deliveryEndDate && date > clean(job.deliveryEndDate)) return false;
