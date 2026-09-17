@@ -10,6 +10,7 @@ export const round2 = value => Math.round((number(value) + Number.EPSILON) * 100
 export const ticketBushels = ticket => Math.max(0, round2(ticket?.netBushels ?? ticket?.netBu ?? ticket?.bushels));
 export const jobTarget = job => Math.max(0, round2(job?.startingBushels ?? job?.jobBushels ?? job?.bushels));
 export const contractTarget = contract => Math.max(0, round2(contract?.bushels ?? contract?.contractBushels ?? contract?.quantity));
+export const isSpotHaulingJob = job => job?.spotLoadOnly === true || (jobTarget(job) <= EPS && key(job?.jobName ?? job?.displayName).includes('spot loads'));
 
 export function isVoided(record){
   return record?.voided === true || ['void','voided','cancelled','canceled'].includes(key(record?.status));
@@ -67,14 +68,14 @@ export function haulingStatus(job,tickets,now=new Date()){
   if(isVoided(job) || job?.active === false) return 'closed';
   const target = jobTarget(job);
   const used = effectiveJobTotals(tickets).get(clean(job?.id)) || 0;
-  if(target > EPS && used + EPS >= target) return used > target + EPS ? 'overhauled' : 'completed';
+  if(!isSpotHaulingJob(job) && target > EPS && used + EPS >= target) return used > target + EPS ? 'overhauled' : 'completed';
   const start = clean(job?.deliveryStartDate);
   if(start && new Date(`${start}T00:00:00`) > now) return 'upcoming';
   return 'active';
 }
 
 export function compatibleHaulingJob(job,ticket){
-  if(!job || !ticket || isVoided(job) || jobTarget(job) <= EPS) return false;
+  if(!job || !ticket || isVoided(job) || (jobTarget(job) <= EPS && !isSpotHaulingJob(job))) return false;
   if(!sameCrop(job?.crop ?? job?.commodity,ticket?.crop ?? ticket?.commodity)) return false;
   if(!sameBuyer(job,ticket) || !sameCustomer(job,ticket)) return false;
   const date = clean(ticket?.date ?? ticket?.ticketDate);
@@ -86,10 +87,11 @@ export function compatibleHaulingJob(job,ticket){
 export function planHaulingAllocation(ticket,jobs,tickets){
   let remaining = ticketBushels(ticket);
   const totals = effectiveJobTotals(tickets);
-  const eligible = (jobs||[]).filter(job => compatibleHaulingJob(job,ticket) && haulingStatus(job,tickets)==='active')
-    .sort((a,b) => clean(a.deliveryStartDate).localeCompare(clean(b.deliveryStartDate)) || clean(a.createdAt).localeCompare(clean(b.createdAt)) || clean(a.id).localeCompare(clean(b.id)));
+  const compatible=(jobs||[]).filter(job => compatibleHaulingJob(job,ticket) && haulingStatus(job,tickets)==='active');
+  const datedSort=(a,b)=>clean(a.deliveryStartDate).localeCompare(clean(b.deliveryStartDate))||clean(a.createdAt).localeCompare(clean(b.createdAt))||clean(a.id).localeCompare(clean(b.id));
+  const capacityJobs=compatible.filter(job=>!isSpotHaulingJob(job)).sort(datedSort),spotJobs=compatible.filter(isSpotHaulingJob).sort(datedSort);
   const allocations=[];
-  for(const job of eligible){
+  for(const job of capacityJobs){
     if(remaining <= EPS) break;
     const capacity = Math.max(0,round2(jobTarget(job)-(totals.get(clean(job.id))||0)));
     if(capacity <= EPS) continue;
@@ -97,5 +99,8 @@ export function planHaulingAllocation(ticket,jobs,tickets){
     allocations.push({haulingJobId:clean(job.id),bushels:round2(bushels),allocationType:'job'});
     remaining=round2(remaining-bushels);
   }
+  // Explicit Spot-only hauling jobs are real operational jobs, but normal-capacity jobs always
+  // take priority. Only use the oldest compatible Spot job after all normal capacity is exhausted.
+  if(remaining>EPS&&spotJobs.length){allocations.push({haulingJobId:clean(spotJobs[0].id),bushels:round2(remaining),allocationType:'job',spotLoadOnly:true});remaining=0}
   return {allocations,spotBushels:Math.max(0,round2(remaining))};
 }
