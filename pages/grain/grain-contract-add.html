@@ -6,7 +6,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="theme-color" content="#3B7E46"/>
   <script>
-    location.replace('/pages/grain/grain-contracts.html?addContract=1');
+    // Retired standalone form: keep any legacy context instead of throwing it away.
+    // New links with no query open Add Contract; old links carrying an id/edit context
+    // arrive at the centralized workspace intact for compatibility handling.
+    const incoming = new URLSearchParams(location.search);
+    if (!incoming.has('addContract') && !incoming.has('id') && !incoming.has('contractId') && !incoming.has('edit')) {
+      incoming.set('addContract', '1');
+    }
+    location.replace('/pages/grain/grain-contracts.html' + (incoming.toString() ? `?${incoming}` : '?addContract=1') + location.hash);
   </script>
 </head>
 <body></body>
