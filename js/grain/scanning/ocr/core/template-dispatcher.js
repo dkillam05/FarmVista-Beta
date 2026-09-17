@@ -2,6 +2,7 @@
    Cloud OCR stays generic. GitHub templates interpret known elevator layouts. */
 
 import "../templates/scoular-waverly.js?v=20260917-3";
+import "../templates/adm.js?v=20260917-1";
 
 function rawTextFromResult(result) {
   return String(
@@ -13,7 +14,8 @@ function rawTextFromResult(result) {
 }
 
 const TEMPLATE_ORDER = [
-  "scoularWaverly"
+  "scoularWaverly",
+  "adm"
 ];
 
 export function applyGrainTicketTemplate(result) {
