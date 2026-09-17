@@ -1,5 +1,6 @@
 // FarmVista Grain Operations — centralized Firestore store
-import { ready, db, collection, getDocs } from '/js/firebase/firebase-init.js';
+// All Grain Operations screens consume this store instead of reading the same collections independently.
+import { ready, getFirestore, collection, getDocs } from '/js/firebase/firebase-init.js';
 
 export const COLLECTIONS = Object.freeze({
   haulingJobs:'grain_hauling_jobs',
@@ -17,27 +18,40 @@ const state = {
   haulingJobs:[], contracts:[], tickets:[], buyers:[], customers:[], locations:[]
 };
 const listeners = new Set();
+
 export const grainState = () => state;
 export const subscribe = fn => { listeners.add(fn); return () => listeners.delete(fn); };
 const emit = () => listeners.forEach(fn => { try{ fn(state); }catch(err){ console.error('[Grain Operations] subscriber failed',err); } });
 
-async function read(name){
+async function read(db,name){
   const snap = await getDocs(collection(db,name));
-  return snap.docs.map(doc => ({id:doc.id,...doc.data()}));
+  return snap.docs.map(snapshot => ({id:snapshot.id,...snapshot.data()}));
 }
 
 export async function loadGrainOperations({force=false}={}){
   if(state.loading) return state;
   if(state.loaded && !force) return state;
-  state.loading=true; state.error=null; emit();
+  state.loading=true;
+  state.error=null;
+  emit();
   try{
     await ready;
+    const db = getFirestore();
     const [haulingJobs,contracts,tickets,buyers,customers,locations] = await Promise.all([
-      read(COLLECTIONS.haulingJobs), read(COLLECTIONS.contracts), read(COLLECTIONS.tickets),
-      read(COLLECTIONS.buyers), read(COLLECTIONS.customers), read(COLLECTIONS.locations)
+      read(db,COLLECTIONS.haulingJobs), read(db,COLLECTIONS.contracts), read(db,COLLECTIONS.tickets),
+      read(db,COLLECTIONS.buyers), read(db,COLLECTIONS.customers), read(db,COLLECTIONS.locations)
     ]);
     Object.assign(state,{haulingJobs,contracts,tickets,buyers,customers,locations,loaded:true});
-  }catch(error){ state.error=error; console.error('[Grain Operations] central load failed',error); }
-  finally{ state.loading=false; emit(); }
+  }catch(error){
+    state.error=error;
+    console.error('[Grain Operations] central load failed',error);
+  }finally{
+    state.loading=false;
+    emit();
+  }
   return state;
+}
+
+export async function refreshGrainOperations(){
+  return loadGrainOperations({force:true});
 }
