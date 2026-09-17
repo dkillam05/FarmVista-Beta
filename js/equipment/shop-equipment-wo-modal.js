@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/shop-equipment-wo-modal.js  (NEW FILE)
+/js/equipment/shop-equipment-wo-modal.js  (NEW FILE)
 Rev: 2026-01-23c
 Purpose:
 ✅ Standalone "Add New Work Order" modal (multi-task, attachments)

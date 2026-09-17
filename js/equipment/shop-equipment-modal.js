@@ -1,5 +1,5 @@
 /* =====================================================================
-/js/shop-equipment-modal.js  (FULL FILE)
+/js/equipment/shop-equipment-modal.js  (FULL FILE)
 Rev: 2026-03-05b
 Updates (per Dane):
 ✅ FIX: Unit ID now hydrates/saves correctly (canonical extras.unitId, mirrored to root unitId for compatibility)
@@ -573,7 +573,7 @@ import {
 
     state.woModuleLoading = (async ()=>{
       try{
-        const mod = await import("/js/shop-equipment-wo-modal.js");
+        const mod = await import("/js/equipment/shop-equipment-wo-modal.js");
         state.woModule = mod || {};
         return state.woModule;
       }catch(e){
