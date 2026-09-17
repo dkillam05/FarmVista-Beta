@@ -32,11 +32,23 @@
   </fv-shell>
   <script type="module">
     import {installLandscapeLock} from '/js/grain/operations/ui/landscape-lock.js?v=20260917-2';
-    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-13';
+    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-14';
+    import {getWorkspaceModel} from '/js/grain/operations/ui/workspace-controller.js?v=20260917-2';
+    import {openContractForm} from '/js/grain/operations/ui/form-dialogs.js?v=20260917-2';
     installLandscapeLock();
-    mountGrainOperations(document.getElementById('grain-operations-central')).catch(error=>{
+    const root=document.getElementById('grain-operations-central');
+    mountGrainOperations(root).then(()=>{
+      // Compatibility for bookmarks/older links that opened the retired standalone edit form.
+      const params=new URLSearchParams(location.search);
+      const editId=params.get('contractId')||params.get('id')||params.get('edit');
+      if(!editId)return;
+      const contract=getWorkspaceModel()?.contracts?.find(item=>String(item?.id||'')===String(editId));
+      if(contract){
+        openContractForm(root,contract);
+        history.replaceState(null,'',location.pathname);
+      }
+    }).catch(error=>{
       console.error('[FarmVista Grain Operations]',error);
-      const root=document.getElementById('grain-operations-central');
       if(root)root.innerHTML='<div style="padding:24px;color:#9d241e;font-weight:800">Grain Operations could not load. Please refresh and try again.</div>';
     });
   </script>
