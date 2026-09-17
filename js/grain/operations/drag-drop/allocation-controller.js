@@ -10,14 +10,12 @@ const contractAllocations=ticket=>(Array.isArray(ticket?.contractAllocations)?ti
   .map(a=>({contractId:clean(a?.contractId),bushels:Math.max(0,round2(a?.bushels))}))
   .filter(a=>a.contractId&&a.bushels>0);
 const hasContractLedger=ticket=>contractAllocations(ticket).length>0;
-// Older FarmVista tickets used contractId without contractAllocations. Treat that as a whole-ticket
-// allocation until it is deliberately unassigned/migrated; otherwise the central UI could offer
-// the same physical bushels to a second contract.
 const contractAllocatedBushels=ticket=>hasContractLedger(ticket)
   ?round2(contractAllocations(ticket).reduce((sum,a)=>sum+a.bushels,0))
   :(clean(ticket?.contractId)?ticketBushels(ticket):0);
 const contractUnallocatedBushels=ticket=>Math.max(0,round2(ticketBushels(ticket)-contractAllocatedBushels(ticket)));
 const contractAllocatedTo=(ticket,contractId)=>{const id=clean(contractId);if(hasContractLedger(ticket))return round2(contractAllocations(ticket).filter(a=>a.contractId===id).reduce((sum,a)=>sum+a.bushels,0));return clean(ticket?.contractId)===id?ticketBushels(ticket):0};
+const soleContractId=ticket=>{const rows=contractAllocations(ticket);if(rows.length===1&&rows[0].bushels+0.005>=ticketBushels(ticket))return rows[0].contractId;if(!rows.length&&clean(ticket?.contractId))return clean(ticket.contractId);return''};
 const haulingMovedBushels=ticket=>round2(normalizeSplitAllocations(ticket)
   .filter(x=>x.allocationType==='job'||x.allocationType==='unassigned')
   .reduce((sum,x)=>sum+Math.max(0,Number(x.bushels)||0),0));
@@ -72,8 +70,18 @@ export function canAssignTicketToContract(ticket,contract,state={}){
 }
 
 export function planContractMove(ticket,contract,{bushels,state}={}){
+  const targetId=clean(contract?.id),sourceContractId=soleContractId(ticket),total=ticketBushels(ticket);
+  // Established workflow allows an already-assigned whole ticket to be dragged directly from
+  // one contract to another. This is a replacement, not an additive allocation.
+  if(sourceContractId&&sourceContractId!==targetId&&contractUnallocatedBushels(ticket)<=0.005){
+    if(!ticket||!contract||isVoided(ticket)||isVoided(contract))return{ok:false,reason:'Unavailable',changes:null};
+    if(!compatibleContract(contract,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match',changes:null};
+    const target=contractTarget(contract),available=target<=0?total:Math.max(0,round2(target-deliveredToContract(targetId,otherTickets(ticket,state))));
+    if(available+0.005<total)return{ok:false,reason:'Contract does not have enough remaining bushels for this whole ticket',changes:null};
+    return{ok:true,reason:'',replaceWhole:true,changes:{contractId:targetId,bushels:total},remainingBushels:0};
+  }
   const allowed=canAssignTicketToContract(ticket,contract,state);
   if(!allowed.ok)return{...allowed,changes:null};
   const requested=Math.max(0,round2(bushels??allowed.capacity)),amount=Math.min(requested,allowed.capacity);
-  return{ok:amount>0,reason:amount>0?'':'No bushels to assign',changes:amount>0?{contractId:clean(contract.id),bushels:round2(amount)}:null,remainingBushels:round2(contractUnallocatedBushels(ticket)-amount)};
+  return{ok:amount>0,reason:amount>0?'':'No bushels to assign',changes:amount>0?{contractId:targetId,bushels:round2(amount)}:null,remainingBushels:round2(contractUnallocatedBushels(ticket)-amount)};
 }
