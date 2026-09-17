@@ -1,5 +1,5 @@
 /* ====================================================================
-// /js/trials-mh-yield-helper.js
+// /js/calculators/trials-mh-yield-helper.js
 Reusable Multi-Hybrid Yield helper engine.
 Now:
  • Drives the modal UI (setup + blocks)
