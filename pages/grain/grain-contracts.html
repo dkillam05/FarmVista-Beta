@@ -13,9 +13,6 @@
   <link rel="stylesheet" href="/assets/css/app.css"/>
   <link rel="stylesheet" href="/js/grain/operations/ui/grain-operations.css?v=20260917-9"/>
   <script>
-    // This route is now owned by the centralized Grain Operations workspace. version.js still
-    // carries two compatibility loaders for the retired contracts DOM; mark those loaders as
-    // already handled here so they cannot attach observers or a second drag/drop system.
     window.__FV_HAULING_SOLD_UNDER_DISPLAY_20260904 = true;
     window.__FV_GRAIN_MOBILE_DND_AUTOSCROLL_LOADER_20260910 = true;
   </script>
@@ -26,28 +23,22 @@
 <body>
   <fv-shell>
     <main class="page container contracts-page">
-      <div id="grain-operations-central">
-        <div style="padding:24px;text-align:center">Loading Grain Operations…</div>
-      </div>
+      <div id="grain-operations-central"><div style="padding:24px;text-align:center">Loading Grain Operations…</div></div>
     </main>
   </fv-shell>
   <script type="module">
     import {installLandscapeLock} from '/js/grain/operations/ui/landscape-lock.js?v=20260917-2';
-    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-14';
+    import {mountGrainOperations} from '/js/grain/operations/ui/workspace-renderer.js?v=20260917-15';
     import {getWorkspaceModel} from '/js/grain/operations/ui/workspace-controller.js?v=20260917-2';
     import {openContractForm} from '/js/grain/operations/ui/form-dialogs.js?v=20260917-2';
     installLandscapeLock();
     const root=document.getElementById('grain-operations-central');
     mountGrainOperations(root).then(()=>{
-      // Compatibility for bookmarks/older links that opened the retired standalone edit form.
       const params=new URLSearchParams(location.search);
       const editId=params.get('contractId')||params.get('id')||params.get('edit');
       if(!editId)return;
       const contract=getWorkspaceModel()?.contracts?.find(item=>String(item?.id||'')===String(editId));
-      if(contract){
-        openContractForm(root,contract);
-        history.replaceState(null,'',location.pathname);
-      }
+      if(contract){openContractForm(root,contract);history.replaceState(null,'',location.pathname)}
     }).catch(error=>{
       console.error('[FarmVista Grain Operations]',error);
       if(root)root.innerHTML='<div style="padding:24px;color:#9d241e;font-weight:800">Grain Operations could not load. Please refresh and try again.</div>';
