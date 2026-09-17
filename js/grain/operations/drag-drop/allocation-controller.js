@@ -1,39 +1,9 @@
-// FarmVista Grain Operations — centralized drag/drop allocation decisions
-// DOM drag/drop code calls this controller; business rules stay out of UI files.
-import { clean, round2, ticketBushels, isVoided } from '../core/grain-rules.js';
-
-export function canAssignTicketToHaulingJob(ticket,job){
-  if(!ticket||!job||isVoided(ticket)||isVoided(job))return {ok:false,reason:'Unavailable'};
-  const ticketCrop=clean(ticket?.crop??ticket?.commodity).toLowerCase();
-  const jobCrop=clean(job?.crop??job?.commodity).toLowerCase();
-  if(ticketCrop&&jobCrop&&ticketCrop!==jobCrop)return {ok:false,reason:'Crop does not match'};
-  const ticketBuyer=clean(ticket?.buyerId??ticket?.deliveryLocationId);
-  const jobBuyer=clean(job?.buyerId??job?.deliveryLocationId);
-  if(ticketBuyer&&jobBuyer&&ticketBuyer!==jobBuyer)return {ok:false,reason:'Destination does not match'};
-  return {ok:true,reason:''};
-}
-
-export function planManualHaulingMove(ticket,targetJob,{bushels}={}){
-  const allowed=canAssignTicketToHaulingJob(ticket,targetJob);
-  if(!allowed.ok)return {...allowed,changes:null};
-  const total=ticketBushels(ticket);
-  const amount=Math.max(0,Math.min(total,round2(bushels??total)));
-  if(amount<=0)return {ok:false,reason:'No bushels to assign',changes:null};
-  return {ok:true,reason:'',changes:{targetHaulingJobId:clean(targetJob.id),bushels:amount,manualOverride:true}};
-}
-
-export function planUnassignHaulingPortion(ticket,{bushels}={}){
-  const total=ticketBushels(ticket);
-  const amount=Math.max(0,Math.min(total,round2(bushels??total)));
-  return {ok:amount>0,reason:amount>0?'':'No bushels to unassign',changes:amount>0?{bushels:amount,allocationType:'unassigned'}:null};
-}
-
-export function planContractMove(ticket,contract,{bushels}={}){
-  if(!ticket||!contract||isVoided(ticket)||isVoided(contract))return {ok:false,reason:'Unavailable',changes:null};
-  const tc=clean(ticket?.crop??ticket?.commodity).toLowerCase();
-  const cc=clean(contract?.crop??contract?.commodity).toLowerCase();
-  if(tc&&cc&&tc!==cc)return {ok:false,reason:'Crop does not match',changes:null};
-  const total=ticketBushels(ticket);
-  const amount=Math.max(0,Math.min(total,round2(bushels??total)));
-  return {ok:amount>0,reason:amount>0?'':'No bushels to assign',changes:amount>0?{contractId:clean(contract.id),bushels:amount}:null};
-}
+// FarmVista Grain Operations — centralized drag/drop allocation decisions.
+// DOM code asks this controller; compatibility and capacity stay out of UI files.
+import { clean,round2,ticketBushels,isVoided,compatibleHaulingJob,jobTarget,effectiveJobTotals } from '../core/grain-rules.js';import { compatibleContract } from '../contracts/contract-allocation.js';import { contractTarget } from '../core/grain-rules.js';import { deliveredToContract } from '../contracts/contract-model.js';
+const otherTickets=(ticket,state)=>(state?.tickets||[]).filter(x=>clean(x?.id)!==clean(ticket?.id));
+export function canAssignTicketToHaulingJob(ticket,job,state={}){if(!ticket||!job||isVoided(ticket)||isVoided(job))return{ok:false,reason:'Unavailable'};if(!compatibleHaulingJob(job,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};const used=effectiveJobTotals(otherTickets(ticket,state)).get(clean(job.id))||0,capacity=Math.max(0,round2(jobTarget(job)-used));if(jobTarget(job)>0&&capacity<=0)return{ok:false,reason:'Hauling job is full'};return{ok:true,reason:'',capacity:jobTarget(job)>0?capacity:ticketBushels(ticket)}}
+export function planManualHaulingMove(ticket,targetJob,{bushels,state}={}){const allowed=canAssignTicketToHaulingJob(ticket,targetJob,state);if(!allowed.ok)return{...allowed,changes:null};const total=ticketBushels(ticket),requested=Math.max(0,round2(bushels??total)),amount=Math.min(total,requested,allowed.capacity);if(amount<=0)return{ok:false,reason:'No bushels to assign',changes:null};return{ok:true,reason:'',changes:{targetHaulingJobId:clean(targetJob.id),bushels:round2(amount),manualOverride:true},remainingBushels:round2(total-amount)}}
+export function planUnassignHaulingPortion(ticket,{bushels}={}){const total=ticketBushels(ticket),amount=Math.max(0,Math.min(total,round2(bushels??total)));return{ok:amount>0,reason:amount>0?'':'No bushels to unassign',changes:amount>0?{bushels:amount,allocationType:'unassigned'}:null}}
+export function canAssignTicketToContract(ticket,contract,state={}){if(!ticket||!contract||isVoided(ticket)||isVoided(contract))return{ok:false,reason:'Unavailable'};if(!compatibleContract(contract,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};const target=contractTarget(contract);if(target<=0)return{ok:true,reason:'',capacity:ticketBushels(ticket),spotLoadOnly:true};const capacity=Math.max(0,round2(target-deliveredToContract(contract.id,otherTickets(ticket,state))));if(capacity<=0)return{ok:false,reason:'Contract is full'};return{ok:true,reason:'',capacity}}
+export function planContractMove(ticket,contract,{bushels,state}={}){const allowed=canAssignTicketToContract(ticket,contract,state);if(!allowed.ok)return{...allowed,changes:null};const total=ticketBushels(ticket),requested=Math.max(0,round2(bushels??total)),amount=Math.min(total,requested,allowed.capacity);return{ok:amount>0,reason:amount>0?'':'No bushels to assign',changes:amount>0?{contractId:clean(contract.id),bushels:round2(amount)}:null,remainingBushels:round2(total-amount)}}
