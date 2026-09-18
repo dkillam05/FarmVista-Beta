@@ -66,63 +66,46 @@
 /* Multi-ticket hauling selection: keep checkbox clear of ticket text and show group-drag state. */
 .fv-go-hauling-ticket{position:relative;padding-left:38px!important}.fv-go-ticket-select{position:absolute;left:10px;top:12px;margin:0;z-index:2;display:flex;align-items:center;justify-content:center;width:18px;height:18px}.fv-go-ticket-select input{margin:0}.fv-go-selection-helper{padding:7px 10px;border-bottom:1px solid var(--fv-go-border);background:var(--fv-go-muted);font-size:.75rem;font-weight:700;color:var(--fv-go-muted-text,#66706a)}.fv-go-selection-helper.active{color:var(--brand-green,#2f7d3a);font-weight:900}
 
-
-/* Mobile/phone landscape tables: preserve readable desktop-style columns and scroll the table, not the page. */
+/* Mobile tables: keep the desktop table geometry intact and make only the table viewport finger-scroll horizontally. */
 @media(max-width:900px){
-  .fv-go-table-wrap,.fv-go-detail-table-wrap{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
-  .fv-go-table{width:max-content!important;min-width:1180px!important;table-layout:auto!important}
-  .fv-go-table th,.fv-go-table td{width:auto!important;min-width:92px;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:normal!important}
-  .fv-go-table th:nth-child(2),.fv-go-table td:nth-child(2){min-width:210px}
-  .fv-go-table th:nth-child(3),.fv-go-table td:nth-child(3){min-width:130px}
-  .fv-go-table th:nth-child(4),.fv-go-table td:nth-child(4){min-width:120px}
-  .fv-go-table th:nth-child(5),.fv-go-table td:nth-child(5){min-width:150px}
-  .fv-go-table th:last-child,.fv-go-table td:last-child{min-width:180px}
-  .fv-go-sort{justify-content:flex-start!important}
-  .fv-go-assigned-table{min-width:820px!important}
-  body{overflow-x:hidden}
-}
-
-/* Phone landscape tables: preserve desktop-like column readability and pan inside the table only. */
-@media (max-width:900px){
-  .fv-go-panel,.fv-go-section,.fv-go-card{min-width:0!important;max-width:100%!important}
-  .fv-go-table-wrap{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    overflow-x:auto!important;
-    overflow-y:visible!important;
+  .fv-go-table-wrap,.fv-go-detail-table-wrap{
+    display:block;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow-x:auto;
+    overflow-y:visible;
     -webkit-overflow-scrolling:touch;
-    touch-action:pan-x!important;
     overscroll-behavior-x:contain;
+    scrollbar-width:none;
   }
+  .fv-go-table-wrap::-webkit-scrollbar,.fv-go-detail-table-wrap::-webkit-scrollbar{display:none}
   .fv-go-table-wrap>.fv-go-table{
-    display:table!important;
-    width:1780px!important;
-    min-width:1780px!important;
-    max-width:none!important;
-    table-layout:fixed!important;
+    width:1500px;
+    min-width:1500px;
+    max-width:none;
+    table-layout:fixed;
   }
-  .fv-go-table-wrap>.fv-go-table th,
-  .fv-go-table-wrap>.fv-go-table td{
-    box-sizing:border-box!important;
-    word-break:normal!important;
-    overflow-wrap:normal!important;
-    vertical-align:middle!important;
+  .fv-go-table-wrap>.fv-go-table th,.fv-go-table-wrap>.fv-go-table td{
+    box-sizing:border-box;
+    padding:9px 6px;
+    font-size:.78rem;
+    line-height:1.25;
+    vertical-align:middle;
   }
-  .fv-go-table-wrap>.fv-go-table th{
-    white-space:nowrap!important;
-    overflow:hidden!important;
-  }
-  .fv-go-table-wrap>.fv-go-table td{white-space:normal!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(1){width:125px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(2){width:245px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(3){width:150px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(4){width:145px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(5){width:175px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(6){width:95px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(7){width:135px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(8){width:145px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(9){width:135px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(10){width:115px!important}
-  .fv-go-table-wrap>.fv-go-table th:nth-child(11){width:220px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(1){width:7%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(2){width:15%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(3){width:9%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(4){width:9%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(5){width:10%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(6){width:6%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(7){width:8%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(8){width:9%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(9){width:9%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(10){width:6%}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(11){width:12%}
+  .fv-go-table-wrap>.fv-go-table td{overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:break-word}
+  .fv-go-table-wrap>.fv-go-table th:last-child,.fv-go-table-wrap>.fv-go-table td:last-child{white-space:nowrap;font-size:.68rem}
+  .fv-go-table-wrap>.fv-go-table .fv-go-sort{justify-content:center!important;padding:0!important;white-space:nowrap}
+  .fv-go-assigned-table{width:820px!important;min-width:820px!important;max-width:none!important}
 }
