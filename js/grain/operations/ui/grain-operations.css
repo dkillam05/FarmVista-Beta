@@ -57,3 +57,5 @@
 
 /* Keep all five operational filter controls on one matching row on desktop. */
 @media(min-width:901px){.fv-go-hauling-filters{display:grid!important;grid-template-columns:minmax(210px,1.4fr) repeat(4,minmax(145px,1fr))!important;gap:12px!important;align-items:end;margin-bottom:13px}.fv-go-hauling-filters>*{min-width:0}.fv-go-reconcile-filters{display:grid!important;grid-template-columns:minmax(210px,1.4fr) repeat(4,minmax(145px,1fr))!important;gap:12px!important;align-items:end;margin-bottom:13px}.fv-go-reconcile-filters>*{min-width:0}}
+
+@media(min-width:901px){.fv-go-link-filters.five{display:grid!important;grid-template-columns:minmax(210px,1.4fr) repeat(4,minmax(145px,1fr))!important;gap:12px!important;align-items:end}.fv-go-link-filters.five>*{min-width:0}}
