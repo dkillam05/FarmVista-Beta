@@ -153,3 +153,25 @@
 .fv-go-status.past.due,.fv-go-status.past-due{background:rgba(179,38,30,.10);color:#9d241e;border:2px solid #b3261e}
 .fv-go-group-row td{padding:10px 12px!important;background:var(--fv-go-muted)!important;font-size:.86rem!important;font-weight:900!important;text-align:left!important;cursor:default;border-bottom:1px solid var(--fv-go-border)!important}
 .fv-go-group-row:hover{background:transparent!important}
+
+
+/* Phone/touch main Hauling Jobs + Grain Contracts filters: search full width, then two balanced rows. Desktop remains unchanged. */
+@media (hover:none) and (pointer:coarse), (max-width:900px){
+  .fv-go-block>.fv-go-filters.five{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  .fv-go-block>.fv-go-filters.five>*{
+    min-width:0!important;
+    max-width:100%!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+  }
+  .fv-go-block>.fv-go-filters.five>input{
+    grid-column:1/-1!important;
+  }
+}
