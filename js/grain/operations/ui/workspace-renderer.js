@@ -9,7 +9,7 @@ const date=v=>{const s=clean(v);if(!/^\d{4}-\d{2}-\d{2}/.test(s))return s||'—'
 const status=v=>{const raw=clean(v),key=raw.toLowerCase(),label=key==='closed'?'completed':raw;return`<span class="fv-go-status ${esc(key==='closed'?'completed':key)}">${esc(label||'—')}</span>`};
 const unique=(rows,getter)=>[...new Map(rows.map(x=>{const v=clean(getter(x));return[v.toLowerCase(),v]}).filter(x=>x[0])).values()].sort((a,b)=>a.localeCompare(b));
 const opts=values=>values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
-const sortHead=(label,col,type='text')=>`<button type="button" class="fv-go-sort" data-sort-col="${col}" data-sort-type="${type}" aria-label="Sort by ${esc(label)}"><span class="fv-go-sort-bars" aria-hidden="true">☰</span><span>${esc(label)}</span><span class="fv-go-sort-indicator" aria-hidden="true"></span></button>`;
+const sortHead=(label,col,type='text')=>`<button type="button" class="fv-go-sort" data-sort-col="${col}" data-sort-type="${type}" aria-label="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="fv-go-sort-bars" aria-hidden="true"><i></i><i></i><i></i></span></button>`;
 const contractLedger=t=>(Array.isArray(t?.contractAllocations)?t.contractAllocations:[]).filter(a=>clean(a?.contractId)&&Number(a?.bushels)>0);
 const allocatedContractBushels=t=>{const rows=contractLedger(t);return rows.length?rows.reduce((s,a)=>s+Math.max(0,Number(a.bushels)||0),0):(clean(t?.contractId)?Number(t?.effectiveBushels||0):0)};
 const ticketContractBushels=(t,id)=>{const rows=contractLedger(t);if(rows.length)return rows.filter(a=>clean(a.contractId)===clean(id)).reduce((s,a)=>s+Math.max(0,Number(a.bushels)||0),0);return clean(t?.contractId)===clean(id)?Number(t?.effectiveBushels||0):0};
