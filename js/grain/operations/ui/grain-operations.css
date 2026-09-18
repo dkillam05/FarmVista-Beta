@@ -47,3 +47,6 @@
 /* Keep rotated sort bars in their own header space. */
 .fv-go-sort{position:relative;justify-content:flex-start;padding-right:18px;box-sizing:border-box}.fv-go-sort-bars{position:absolute;right:1px;top:50%;margin:0;transform-origin:center center}.fv-go-sort[data-sort-dir="asc"] .fv-go-sort-bars{transform:translateY(-50%) rotate(180deg)}.fv-go-sort[data-sort-dir="desc"] .fv-go-sort-bars,.fv-go-sort:not([data-sort-dir]) .fv-go-sort-bars{transform:translateY(-50%)}
 @media(min-width:901px){.fv-go-table th:nth-child(1) .fv-go-sort,.fv-go-table th:nth-child(6) .fv-go-sort,.fv-go-table th:nth-child(7) .fv-go-sort,.fv-go-table th:nth-child(8) .fv-go-sort,.fv-go-table th:nth-child(9) .fv-go-sort,.fv-go-table th:nth-child(10) .fv-go-sort,.fv-go-table th:nth-child(11) .fv-go-sort{justify-content:center;padding-left:18px;padding-right:18px}.fv-go-sort-bars{right:2px}}
+
+/* Give Delivery enough desktop width to show the complete date range. */
+@media(min-width:901px){.fv-go-table th:nth-child(2){width:15%}.fv-go-table th:nth-child(5){width:10%}.fv-go-table th:nth-child(10){width:6%}.fv-go-table th:nth-child(11){width:12%}.fv-go-table th:last-child,.fv-go-table td:last-child{padding-left:4px;padding-right:4px;font-size:.68rem;overflow:visible;text-overflow:clip;white-space:nowrap}}
