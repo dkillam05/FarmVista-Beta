@@ -65,31 +65,7 @@
   async function buildFile(image){
     const url=clean(image?.currentSrc||image?.src);
     if(!url) throw new Error('No ticket image URL available.');
-
-    // Prefer the already-loaded image. Safari/PWA can display a Firebase
-    // Storage image successfully while blocking a second JS fetch of the
-    // same download URL because of Storage CORS. Drawing the loaded image
-    // to a canvas keeps Save Image working without another network request.
-    if(image?.complete && image.naturalWidth>0 && image.naturalHeight>0){
-      try{
-        const canvas=document.createElement('canvas');
-        canvas.width=image.naturalWidth;
-        canvas.height=image.naturalHeight;
-        const context=canvas.getContext('2d');
-        if(!context) throw new Error('Canvas is unavailable.');
-        context.drawImage(image,0,0);
-        const blob=await new Promise((resolve,reject)=>{
-          try{
-            canvas.toBlob(value=>value?resolve(value):reject(new Error('Canvas image export failed.')),'image/jpeg',0.96);
-          }catch(error){reject(error);}
-        });
-        if(blob?.size) return new File([blob],`${ticketName()}.jpg`,{type:'image/jpeg'});
-      }catch(error){
-        console.warn('[FarmVista] Loaded ticket image export failed; trying direct file request:',error);
-      }
-    }
-
-    const response=await fetch(url,{mode:'cors',credentials:'omit',cache:'no-store'});
+    const response=await fetch(url,{mode:'cors',credentials:'omit',cache:'force-cache'});
     if(!response.ok) throw new Error(`Image request failed (${response.status})`);
     const blob=await response.blob();
     if(!blob.size) throw new Error('Ticket image was empty.');
