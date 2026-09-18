@@ -36,7 +36,12 @@ export function canAssignTicketToHaulingJob(ticket,job,state={}){
     const date=clean(ticket?.date??ticket?.ticketDate);
     if(date&&job?.deliveryStartDate&&date<clean(job.deliveryStartDate))return{ok:false,reason:'Ticket date is before this hauling job starts'};
     if(date&&job?.deliveryEndDate&&date>clean(job.deliveryEndDate))return{ok:false,reason:'Ticket date is after this hauling job ends'};
-  }else if(!compatibleHaulingJob(job,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};
+  }else{
+    if(!sameCrop(job?.crop??job?.commodity,ticket?.crop??ticket?.commodity))return{ok:false,reason:'Crop does not match'};
+    const date=clean(ticket?.date??ticket?.ticketDate);
+    if(date&&job?.deliveryStartDate&&date<clean(job.deliveryStartDate))return{ok:false,reason:'Ticket date is before this hauling job starts'};
+    if(date&&job?.deliveryEndDate&&date>clean(job.deliveryEndDate))return{ok:false,reason:'Ticket date is after this hauling job ends'};
+  }
   const targetId=clean(job.id),sourceId=clean(ticket?.haulingJobId);
   if(targetId&&targetId===sourceId)return{ok:false,reason:'Ticket is already sourced to this hauling job'};
   const sourceCapacity=haulingAssignableBushels(ticket);
