@@ -59,3 +59,6 @@
 @media(min-width:901px){.fv-go-hauling-filters{display:grid!important;grid-template-columns:minmax(210px,1.4fr) repeat(4,minmax(145px,1fr))!important;gap:12px!important;align-items:end;margin-bottom:13px}.fv-go-hauling-filters>*{min-width:0}.fv-go-reconcile-filters{display:grid!important;grid-template-columns:minmax(210px,1.4fr) repeat(4,minmax(145px,1fr))!important;gap:12px!important;align-items:end;margin-bottom:13px}.fv-go-reconcile-filters>*{min-width:0}}
 
 @media(min-width:901px){.fv-go-link-filters.five{display:grid!important;grid-template-columns:minmax(210px,1.4fr) repeat(4,minmax(145px,1fr))!important;gap:12px!important;align-items:end}.fv-go-link-filters.five>*{min-width:0}}
+
+/* Match contract-to-hauling planning filters to the primary hauling filter controls. */
+.fv-go-link-filters.five input,.fv-go-link-filters.five select{width:100%;height:44px;box-sizing:border-box;border:1px solid var(--line,#d7ddd8);border-radius:10px;background:var(--surface,#fff);color:var(--text,#142016);font:inherit;padding:0 12px}.fv-go-link-filters.five input::placeholder{color:var(--muted,#66706a);opacity:1}
