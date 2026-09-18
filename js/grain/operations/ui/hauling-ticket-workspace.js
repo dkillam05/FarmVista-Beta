@@ -65,7 +65,7 @@ export function installHaulingTicketWorkspace(root){
   details.addEventListener('dragleave',e=>e.target.closest('[data-hauling-job-drop],[data-hauling-unassign-zone]')?.classList.remove('drag-over'));
   details.addEventListener('drop',async e=>{
     const target=e.target.closest('[data-hauling-job-drop],[data-hauling-unassign-zone]');if(!target||!dragged)return;e.preventDefault();target.classList.remove('drag-over');
-    const model=getWorkspaceModel(),ids=draggedIds.length?draggedIds:[dragged],moving=ids.map(id=>model.tickets.find(t=>clean(t.id)===clean(id))).filter(Boolean);if(!moving.length)return;
+    const model=getWorkspaceModel(),ids=draggedIds.length?draggedIds:[dragged],moving=ids.map(id=>model.tickets.find(t=>clean(t.id)===clean(id))).filter(Boolean);if(!moving.length)return;const targetJobId=clean(target.dataset.haulingJobDrop);if(targetJobId&&moving.every(ticket=>clean(ticket.haulingJobId)===targetJobId&&!splitRows(ticket).some(x=>['unassigned','spot'].includes(x.allocationType))))return;
     try{
       if(target.hasAttribute('data-hauling-unassign-zone')){for(const ticket of moving)if(clean(ticket.haulingJobId)||splitRows(ticket).some(x=>x.allocationType==='job'))await unassignTicketFromJob(ticket);return}
       const job=model.haulingJobs.find(j=>clean(j.id)===clean(target.dataset.haulingJobDrop));if(!job)return;
