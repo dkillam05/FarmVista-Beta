@@ -125,49 +125,43 @@
     });
   }
 
-  async function sharePreparedFile(image,button){
-    let state=prepared.get(image);
-    let file=state?.file;
+  function shareUrlDirect(image){
+    const url=clean(image?.currentSrc||image?.getAttribute('src')||image?.src);
+    if(!url||!navigator.share){
+      alert('FarmVista could not open the share sheet for this ticket image.');
+      return;
+    }
+    navigator.share({title:'Grain Ticket Image',url}).catch(error=>{
+      if(error?.name==='AbortError')return;
+      console.warn('[FarmVista] Native ticket-image URL share failed:',error);
+      alert('The iPhone share sheet could not open. Please try again.');
+    });
+  }
+
+  function sharePreparedFile(image,button){
+    const state=prepared.get(image);
+    const file=state?.file;
 
     /*
-      A failed/background preparation must not turn Save Image into a
-      two-tap action. The user's tap owns the whole retry -> share flow:
-      prepare the actual image, then immediately open the native share sheet.
+      iPhone requires navigator.share() to run directly inside the user's tap.
+      Never await a fetch here. If Firebase/Storage will not expose the bytes
+      cross-origin, use the proven legacy URL-share fallback immediately.
     */
     if(!file){
-      const url=clean(image?.currentSrc||image?.src);
-      if(!url)return;
-
-      setButton(button);
-
-      try{
-        file=await buildFile(image);
-        state={url,file,promise:null,error:null};
-        prepared.set(image,state);
-      }catch(error){
-        state={url,file:null,promise:null,error};
-        prepared.set(image,state);
-        console.warn('[FarmVista] Ticket image file preparation failed:',error);
-        setButton(button,{error:true});
-        alert('FarmVista could not prepare this ticket image for sharing. Please try again.');
-        return;
-      }
-    }
-
-    setButton(button,{ready:true});
-
-    if(navigator.canShare && !navigator.canShare({files:[file]})){
-      alert('This device cannot save this ticket image as a file from the share sheet.');
+      shareUrlDirect(image);
       return;
     }
 
-    try{
-      await navigator.share({files:[file],title:'Grain Ticket Image'});
-    }catch(error){
-      if(error?.name==='AbortError')return;
-      console.warn('[FarmVista] Native ticket-image file share failed:',error);
-      alert('FarmVista could not open this grain ticket as an image file. Please try again.');
+    if(navigator.canShare && !navigator.canShare({files:[file]})){
+      shareUrlDirect(image);
+      return;
     }
+
+    navigator.share({files:[file],title:'Grain Ticket Image'}).catch(error=>{
+      if(error?.name==='AbortError')return;
+      console.warn('[FarmVista] Native ticket-image file share failed; using URL share:',error);
+      shareUrlDirect(image);
+    });
   }
 
   async function downloadDesktop(image,button){
