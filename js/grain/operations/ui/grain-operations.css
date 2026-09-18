@@ -62,3 +62,6 @@
 
 /* Match contract-to-hauling planning filters to the primary hauling filter controls. */
 .fv-go-link-filters.five input,.fv-go-link-filters.five select{width:100%;height:44px;box-sizing:border-box;border:1px solid var(--line,#d7ddd8);border-radius:10px;background:var(--surface,#fff);color:var(--text,#142016);font:inherit;padding:0 12px}.fv-go-link-filters.five input::placeholder{color:var(--muted,#66706a);opacity:1}
+
+/* Multi-ticket hauling selection: keep checkbox clear of ticket text and show group-drag state. */
+.fv-go-hauling-ticket{position:relative;padding-left:38px!important}.fv-go-ticket-select{position:absolute;left:10px;top:12px;margin:0;z-index:2;display:flex;align-items:center;justify-content:center;width:18px;height:18px}.fv-go-ticket-select input{margin:0}.fv-go-selection-helper{padding:7px 10px;border-bottom:1px solid var(--fv-go-border);background:var(--fv-go-muted);font-size:.75rem;font-weight:700;color:var(--fv-go-muted-text,#66706a)}.fv-go-selection-helper.active{color:var(--brand-green,#2f7d3a);font-weight:900}
