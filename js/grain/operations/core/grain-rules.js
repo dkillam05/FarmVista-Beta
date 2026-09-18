@@ -75,7 +75,7 @@ export function haulingStatus(job,tickets,now=new Date()){
   const today = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   const localDay = new Date(today.getFullYear(),today.getMonth(),today.getDate());
   if(start && new Date(`${start}T00:00:00`) > localDay) return 'upcoming';
-  if(end && new Date(`${end}T23:59:59`) < localDay) return 'past due';
+  if(end && new Date(`${end}T23:59:59`) < localDay) return isSpotHaulingJob(job) ? 'completed' : 'past due';
   return 'active';
 }
 
