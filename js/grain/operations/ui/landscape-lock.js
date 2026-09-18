@@ -18,8 +18,8 @@ export function installLandscapeLock(){
       #${GATE_ID} .fv-rotate-title{font-size:1.5rem;font-weight:900;line-height:1.15;margin-bottom:16px}
       #${GATE_ID} .fv-rotate-copy{font-size:.98rem;line-height:1.45;opacity:.72;max-width:380px}
       @media (max-width:700px) and (orientation:portrait){
-        html:has(body.fv-grain-operations-locked),body.fv-grain-operations-locked{height:100%;overflow:hidden!important;overscroll-behavior:none;background:#fff!important}
-        body.fv-grain-operations-locked fv-shell{height:100dvh;overflow:hidden;background:#fff!important}
+        html:has(body.fv-grain-operations-locked),body.fv-grain-operations-locked{height:100%;overflow:hidden!important;overscroll-behavior:none;background:var(--bg,#fff)!important}
+        body.fv-grain-operations-locked fv-shell{height:100dvh;overflow:hidden;background:var(--bg,#fff)!important}
         body.fv-grain-operations-locked .contracts-page{display:none!important}
         body.fv-grain-operations-locked #${GATE_ID}{
           display:flex!important;
@@ -30,8 +30,8 @@ export function installLandscapeLock(){
           z-index:900;
           align-items:center;justify-content:center;flex-direction:column;
           padding:24px;text-align:center;
-          background:#fff!important;
-          color:inherit;border:0;box-shadow:none;overflow:hidden;
+          background:var(--bg,#fff)!important;
+          color:var(--text,#142016);border:0;box-shadow:none;overflow:hidden;
         }
         body.fv-grain-operations-locked #${GATE_ID}::before{
           content:'';position:fixed;left:0;right:0;
