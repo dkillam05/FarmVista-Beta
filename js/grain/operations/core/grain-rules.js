@@ -67,8 +67,11 @@ export function haulingStatus(job,tickets,now=new Date()){
   const target = jobTarget(job);
   const used = effectiveJobTotals(tickets).get(clean(job?.id)) || 0;
   if(!isSpotHaulingJob(job) && target > EPS && used + EPS >= target) return used > target + EPS ? 'overhauled' : 'completed';
-  const start = clean(job?.deliveryStartDate);
-  if(start && new Date(`${start}T00:00:00`) > now) return 'upcoming';
+  const start = clean(job?.deliveryStartDate), end = clean(job?.deliveryEndDate);
+  const today = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const localDay = new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  if(start && new Date(`${start}T00:00:00`) > localDay) return 'upcoming';
+  if(end && new Date(`${end}T23:59:59`) < localDay) return 'completed';
   return 'active';
 }
 
