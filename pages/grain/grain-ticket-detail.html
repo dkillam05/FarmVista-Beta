@@ -8620,11 +8620,21 @@ function renderContractOptions() {
     );
 
 
+  /*
+    A hauling job may only be offered after the physical delivery
+    location has been positively resolved. Crop/date/customer alone are
+    not enough: an unknown elevator must stay under review instead of
+    falling into an unrelated single matching job.
+  */
   const jobs =
     state.haulingJobs
 
       .filter(
         job => {
+
+          if (!selectedLocationId) {
+            return false;
+          }
 
           const jobCrop =
             normalize(
