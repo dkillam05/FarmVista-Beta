@@ -1,6 +1,6 @@
 // FarmVista Grain Operations — centralized drag/drop allocation decisions.
 // DOM code asks this controller; compatibility and capacity stay out of UI files.
-import { clean,round2,ticketBushels,isVoided,compatibleHaulingJob,jobTarget,effectiveJobTotals,isSpotHaulingJob,normalizeSplitAllocations } from '../core/grain-rules.js';
+import { clean,round2,ticketBushels,isVoided,compatibleHaulingJob,jobTarget,effectiveJobTotals,isSpotHaulingJob,normalizeSplitAllocations,sameCrop } from '../core/grain-rules.js';
 import { compatibleContract } from '../contracts/contract-allocation.js';
 import { contractTarget } from '../core/grain-rules.js';
 import { deliveredToContract } from '../contracts/contract-model.js';
@@ -31,8 +31,12 @@ const haulingAllocatedTo=(ticket,jobId)=>round2(normalizeSplitAllocations(ticket
 export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(!ticket||!job||isVoided(ticket)||isVoided(job))return{ok:false,reason:'Unavailable'};
   const movingWholeSource=clean(ticket?.haulingJobId)&&clean(ticket?.haulingJobId)!==clean(job?.id);
-  const compatibilityTicket=movingWholeSource?{...ticket,customerId:job?.customerId??job?.soldUnderId??job?.grainCustomerId??ticket?.customerId,customerName:job?.customerName??job?.soldUnder??ticket?.customerName,deliveryLocationId:job?.deliveryLocationId??job?.locationId??ticket?.deliveryLocationId,deliveryLocationName:job?.deliveryLocationName??job?.locationName??ticket?.deliveryLocationName,buyerId:job?.buyerId??ticket?.buyerId,buyerName:job?.buyerName??ticket?.buyerName}:ticket;
-  if(!compatibleHaulingJob(job,compatibilityTicket))return{ok:false,reason:'Crop, destination, or delivery dates do not match'};
+  if(movingWholeSource){
+    if(!sameCrop(job?.crop??job?.commodity,ticket?.crop??ticket?.commodity))return{ok:false,reason:'Crop does not match'};
+    const date=clean(ticket?.date??ticket?.ticketDate);
+    if(date&&job?.deliveryStartDate&&date<clean(job.deliveryStartDate))return{ok:false,reason:'Ticket date is before this hauling job starts'};
+    if(date&&job?.deliveryEndDate&&date>clean(job.deliveryEndDate))return{ok:false,reason:'Ticket date is after this hauling job ends'};
+  }else if(!compatibleHaulingJob(job,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};
   const targetId=clean(job.id),sourceId=clean(ticket?.haulingJobId);
   if(targetId&&targetId===sourceId)return{ok:false,reason:'Ticket is already sourced to this hauling job'};
   const sourceCapacity=haulingAssignableBushels(ticket);
