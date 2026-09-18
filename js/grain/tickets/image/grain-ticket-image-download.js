@@ -78,8 +78,8 @@
     if(!button?.isConnected) return;
     if(error){
       button.disabled=false;
-      button.textContent=readyLabel();
-      button.title='Save the grain ticket image. FarmVista will retry preparing the file when tapped.';
+      button.textContent=isAppleMobile()?'Retry Save Image':'Retry Download';
+      button.title='FarmVista could not prepare the actual image file. Tap to try again.';
       return;
     }
     if(ready){
@@ -125,42 +125,21 @@
     });
   }
 
-  function shareUrlDirect(image){
-    const url=clean(image?.currentSrc||image?.getAttribute('src')||image?.src);
-    if(!url||!navigator.share){
-      alert('FarmVista could not open the share sheet for this ticket image.');
-      return;
-    }
-    navigator.share({title:'Grain Ticket Image',url}).catch(error=>{
-      if(error?.name==='AbortError')return;
-      console.warn('[FarmVista] Native ticket-image URL share failed:',error);
-      alert('The iPhone share sheet could not open. Please try again.');
-    });
-  }
-
   function sharePreparedFile(image,button){
     const state=prepared.get(image);
     const file=state?.file;
-
-    /*
-      iPhone requires navigator.share() to run directly inside the user's tap.
-      Never await a fetch here. If Firebase/Storage will not expose the bytes
-      cross-origin, use the proven legacy URL-share fallback immediately.
-    */
     if(!file){
-      shareUrlDirect(image);
-      return;
+      if(state?.error){prepareForShare(image,button,{force:true});return;}
+      prepareForShare(image,button);return;
     }
-
     if(navigator.canShare && !navigator.canShare({files:[file]})){
-      shareUrlDirect(image);
+      alert('This device cannot save this ticket image as a file from the share sheet.');
       return;
     }
-
     navigator.share({files:[file],title:'Grain Ticket Image'}).catch(error=>{
-      if(error?.name==='AbortError')return;
-      console.warn('[FarmVista] Native ticket-image file share failed; using URL share:',error);
-      shareUrlDirect(image);
+      if(error?.name==='AbortError') return;
+      console.warn('[FarmVista] Native ticket-image file share failed:',error);
+      alert('FarmVista could not open this grain ticket as an image file. Please try again.');
     });
   }
 
@@ -421,7 +400,7 @@
     modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
 
     try{
-      const firebase=await import('/js/firebase/firebase-init.js');
+      const firebase=await import('/js/firebase-init.js');
       await firebase.ready;
       const db=firebase.getFirestore();
       const [jobSnap,ticketSnap,alertSnap]=await Promise.all([
@@ -492,7 +471,7 @@
 
   if(path.endsWith('/pages/grain/index.html')) {
     installActiveHaulingJobs();
-    import('/js/grain/hauling-jobs/grain-hauling-job-contract-drilldown.js?v=20260911-1').catch(error=>{
+    import('/js/grain-hauling-job-contract-drilldown.js?v=20260911-1').catch(error=>{
       console.error('[FarmVista] Hauling job contract drill-down loader failed:',error);
     });
   }
