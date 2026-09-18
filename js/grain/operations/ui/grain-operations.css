@@ -19,3 +19,6 @@
 
 /* Remaining bushel urgency — restored legacy thresholds */
 .fv-go-remaining{font-weight:900}.fv-go-remaining-good{color:#2f7d3a}.fv-go-remaining-mid{color:#c56a00}.fv-go-remaining-low{color:#b3261e}
+
+/* Desktop tables: fit all operational columns without horizontal scrolling. */
+@media(min-width:901px){.fv-go{max-width:1760px;width:calc(100vw - 48px)}.fv-go-table-wrap{overflow-x:hidden}.fv-go-table{min-width:0;table-layout:auto}.fv-go-table th{padding:9px 7px;font-size:.72rem}.fv-go-table td{padding:10px 7px;font-size:.82rem}.fv-go-table th,.fv-go-table td{overflow-wrap:normal}.fv-go-table th:nth-child(1){width:8%}.fv-go-table th:nth-child(2){width:17%}.fv-go-table th:nth-child(3){width:10%}.fv-go-table th:nth-child(4){width:10%}.fv-go-table th:nth-child(5){width:11%}.fv-go-table th:nth-child(6){width:7%}.fv-go-table th:nth-child(7){width:9%}.fv-go-table th:nth-child(8){width:9%}.fv-go-table th:nth-child(9){width:9%}.fv-go-table th:nth-child(10){width:7%}.fv-go-table th:nth-child(11){width:13%}.fv-go-table th:last-child,.fv-go-table td:last-child{white-space:nowrap}.fv-go-sort{gap:4px}.fv-go-sort-bars{flex:0 0 14px}}
