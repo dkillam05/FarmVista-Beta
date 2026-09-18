@@ -235,17 +235,6 @@
      only; load-out/customer selection behavior remains unchanged.
   =================================================================== */
 
-  if (
-    isGrainContracts &&
-    !window.__FV_HAULING_SOLD_UNDER_DISPLAY_20260904
-  ) {
-    window.__FV_HAULING_SOLD_UNDER_DISPLAY_20260904 = true;
-
-    const script = document.createElement('script');
-    script.src = '/js/grain/hauling-jobs/grain-hauling-jobs-sold-under-display.js?v=20260904-1';
-    script.dataset.fvHaulingSoldUnderDisplay = '1';
-    document.head.appendChild(script);
-  }
 
   /* ===================================================================
      SEPT 11, 2026 — GRAIN DND HYBRID WORKSPACE
