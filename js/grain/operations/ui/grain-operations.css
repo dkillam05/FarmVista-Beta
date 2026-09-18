@@ -65,3 +65,19 @@
 
 /* Multi-ticket hauling selection: keep checkbox clear of ticket text and show group-drag state. */
 .fv-go-hauling-ticket{position:relative;padding-left:38px!important}.fv-go-ticket-select{position:absolute;left:10px;top:12px;margin:0;z-index:2;display:flex;align-items:center;justify-content:center;width:18px;height:18px}.fv-go-ticket-select input{margin:0}.fv-go-selection-helper{padding:7px 10px;border-bottom:1px solid var(--fv-go-border);background:var(--fv-go-muted);font-size:.75rem;font-weight:700;color:var(--fv-go-muted-text,#66706a)}.fv-go-selection-helper.active{color:var(--brand-green,#2f7d3a);font-weight:900}
+
+
+/* Mobile/phone landscape tables: preserve readable desktop-style columns and scroll the table, not the page. */
+@media(max-width:900px){
+  .fv-go-table-wrap,.fv-go-detail-table-wrap{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  .fv-go-table{width:max-content!important;min-width:1180px!important;table-layout:auto!important}
+  .fv-go-table th,.fv-go-table td{width:auto!important;min-width:92px;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:normal!important}
+  .fv-go-table th:nth-child(2),.fv-go-table td:nth-child(2){min-width:210px}
+  .fv-go-table th:nth-child(3),.fv-go-table td:nth-child(3){min-width:130px}
+  .fv-go-table th:nth-child(4),.fv-go-table td:nth-child(4){min-width:120px}
+  .fv-go-table th:nth-child(5),.fv-go-table td:nth-child(5){min-width:150px}
+  .fv-go-table th:last-child,.fv-go-table td:last-child{min-width:180px}
+  .fv-go-sort{justify-content:flex-start!important}
+  .fv-go-assigned-table{min-width:820px!important}
+  body{overflow-x:hidden}
+}
