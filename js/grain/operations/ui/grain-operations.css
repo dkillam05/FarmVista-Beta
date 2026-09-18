@@ -66,8 +66,8 @@
 /* Multi-ticket hauling selection: keep checkbox clear of ticket text and show group-drag state. */
 .fv-go-hauling-ticket{position:relative;padding-left:38px!important}.fv-go-ticket-select{position:absolute;left:10px;top:12px;margin:0;z-index:2;display:flex;align-items:center;justify-content:center;width:18px;height:18px}.fv-go-ticket-select input{margin:0}.fv-go-selection-helper{padding:7px 10px;border-bottom:1px solid var(--fv-go-border);background:var(--fv-go-muted);font-size:.75rem;font-weight:700;color:var(--fv-go-muted-text,#66706a)}.fv-go-selection-helper.active{color:var(--brand-green,#2f7d3a);font-weight:900}
 
-/* Mobile tables: keep the desktop table geometry intact and make only the table viewport finger-scroll horizontally. */
-@media(max-width:900px){
+/* Touch/mobile tables: preserve desktop styling, but give coarse-pointer devices their own horizontal swipe viewport even in landscape widths above 900px. */
+@media(max-width:900px),(hover:none) and (pointer:coarse){
   .fv-go-table-wrap,.fv-go-detail-table-wrap{
     display:block;
     width:100%;
