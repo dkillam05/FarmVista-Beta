@@ -30,7 +30,9 @@ const haulingAllocatedTo=(ticket,jobId)=>round2(normalizeSplitAllocations(ticket
 
 export function canAssignTicketToHaulingJob(ticket,job,state={}){
   if(!ticket||!job||isVoided(ticket)||isVoided(job))return{ok:false,reason:'Unavailable'};
-  if(!compatibleHaulingJob(job,ticket))return{ok:false,reason:'Crop, destination, Sold Under, or delivery dates do not match'};
+  const movingWholeSource=clean(ticket?.haulingJobId)&&clean(ticket?.haulingJobId)!==clean(job?.id);
+  const compatibilityTicket=movingWholeSource?{...ticket,customerId:job?.customerId??job?.soldUnderId??job?.grainCustomerId??ticket?.customerId,customerName:job?.customerName??job?.soldUnder??ticket?.customerName,deliveryLocationId:job?.deliveryLocationId??job?.locationId??ticket?.deliveryLocationId,deliveryLocationName:job?.deliveryLocationName??job?.locationName??ticket?.deliveryLocationName,buyerId:job?.buyerId??ticket?.buyerId,buyerName:job?.buyerName??ticket?.buyerName}:ticket;
+  if(!compatibleHaulingJob(job,compatibilityTicket))return{ok:false,reason:'Crop, destination, or delivery dates do not match'};
   const targetId=clean(job.id),sourceId=clean(ticket?.haulingJobId);
   if(targetId&&targetId===sourceId)return{ok:false,reason:'Ticket is already sourced to this hauling job'};
   const sourceCapacity=haulingAssignableBushels(ticket);
