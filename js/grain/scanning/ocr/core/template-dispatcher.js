@@ -7,6 +7,7 @@ import "../templates/cahokia-grain.js?v=20260917-1";
 import "../templates/green-plains.js?v=20260917-1";
 import "../templates/bartlett.js?v=20260917-1";
 import "../templates/cargill.js?v=20260917-1";
+import "../templates/cgb.js?v=20260918-1";
 
 function rawTextFromResult(result) {
   return String(
@@ -23,7 +24,8 @@ const TEMPLATE_ORDER = [
   "cahokiaGrain",
   "greenPlains",
   "bartlett",
-  "cargill"
+  "cargill",
+  "cgb"
 ];
 
 export function applyGrainTicketTemplate(result) {
