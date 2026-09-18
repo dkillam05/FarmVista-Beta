@@ -196,3 +196,10 @@
 .fv-go-ticket-group-level-3>summary{padding-left:48px;background:var(--fv-go-muted)}
 .fv-go-ticket-group-level-3 .fv-go-ticket-group-body{padding:6px 8px 10px 48px}
 .fv-go-ticket-group-level-3 .fv-go-ticket-card{margin:6px 0}
+
+/* Entity manager: clean, scrollable edit list */
+.fv-go-entity-list-scroll{display:flex;flex-direction:column;gap:0;max-height:min(52vh,520px);overflow-y:auto;border:1px solid var(--border,#dfe4df);border-radius:16px;background:var(--surface,#fff)}
+.fv-go-entity-list-scroll .fv-go-entity-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 20px;border:0;border-bottom:1px solid var(--border,#e3e7e3);border-radius:0;background:transparent;color:var(--text,#142016);font:inherit;text-align:left;cursor:pointer}
+.fv-go-entity-list-scroll .fv-go-entity-row:last-child{border-bottom:0}
+.fv-go-entity-list-scroll .fv-go-entity-row:hover,.fv-go-entity-list-scroll .fv-go-entity-row:focus{background:var(--surface-soft,#f4f6f4)}
+.fv-go-entity-edit-label{flex:0 0 auto;font-weight:800;color:var(--muted,#5f6b62)}
