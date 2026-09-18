@@ -203,3 +203,5 @@
 .fv-go-entity-list-scroll .fv-go-entity-row:last-child{border-bottom:0}
 .fv-go-entity-list-scroll .fv-go-entity-row:hover,.fv-go-entity-list-scroll .fv-go-entity-row:focus{background:var(--surface-soft,#f4f6f4)}
 .fv-go-entity-edit-label{flex:0 0 auto;font-weight:800;color:var(--muted,#5f6b62)}
+
+.fv-go-date-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;grid-column:1/-1}.fv-go-date-row>.fv-go-field{min-width:0}
