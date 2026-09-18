@@ -2,7 +2,7 @@
 // Contracts are intentionally not referenced here: hauling remains independently operable.
 import {getWorkspaceModel} from './workspace-controller.js';
 import {assignWholeTicketToJob,moveTicketPortion,moveWholeTicketToHaulingJob,unassignTicketFromJob} from '../data/grain-writes.js';
-import {planManualHaulingMove} from '../drag-drop/allocation-controller.js';
+import {planManualHaulingMove} from '../drag-drop/allocation-controller.js?v=20260918-1';
 import {clean,ticketBushels,normalizeSplitAllocations,round2} from '../core/grain-rules.js';
 
 const esc=v=>clean(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
