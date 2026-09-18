@@ -109,3 +109,14 @@
   .fv-go-table-wrap>.fv-go-table .fv-go-sort{justify-content:center!important;padding:0!important;white-space:nowrap}
   .fv-go-assigned-table{width:820px!important;min-width:820px!important;max-width:none!important}
 }
+
+
+/* Touch hauling workspace: balanced filters and native-feeling finger drag. Desktop rules remain unchanged. */
+.fv-go-touch-drag-ghost{position:fixed!important;z-index:30000!important;width:min(360px,70vw)!important;pointer-events:none!important;opacity:.88!important;transform:translate(-50%,-55%) scale(.96);box-shadow:0 12px 32px rgba(0,0,0,.28);background:var(--fv-go-surface,#fff)}
+@media(max-width:900px),(hover:none) and (pointer:coarse){
+  .fv-go-hauling-filters{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .fv-go-hauling-filters>[data-hauling-filter="search"]{grid-column:1/-1!important}
+  .fv-go-hauling-filters input,.fv-go-hauling-filters select{width:100%!important;min-width:0!important}
+  .fv-go-hauling-ticket{touch-action:pan-y}
+  .fv-go-hauling-ticket-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
