@@ -31,6 +31,7 @@ function render(host){
   const jobs=(model.haulingJobs||[]).filter(j=>clean(j.effectiveStatus).toLowerCase()!=='voided');
   const buyers=[...new Set(jobs.map(j=>clean(j.buyerName)).filter(Boolean))].sort();
   const customers=[...new Set(jobs.map(j=>clean(j.customerName||j.soldUnder)).filter(Boolean))].sort();
+  const statuses=[...new Set(jobs.map(j=>{const s=clean(j.effectiveStatus||j.status).toLowerCase();return s==='closed'?'completed':s}).filter(Boolean))].sort();
   const jobCards=jobs.map(j=>{
     const rawStatus=clean(j.effectiveStatus||j.status).toLowerCase(),displayStatus=rawStatus==='closed'?'completed':(rawStatus||'—');
     const assigned=tickets.map(t=>({t,amount:allocatedToJob(t,j.id)})).filter(x=>x.amount>.005);
