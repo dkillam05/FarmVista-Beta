@@ -148,3 +148,8 @@
   .fv-go-block .fv-go-link-filters.five>[data-planning-filter="search"]{grid-column:1/-1!important}
   .fv-go-block .fv-go-link-filters.five>[data-planning-filter="customer"]{grid-column:auto!important}
 }
+
+/* Operational hauling status emphasis and default grouping */
+.fv-go-status.past.due,.fv-go-status.past-due{background:rgba(179,38,30,.10);color:#9d241e;border:2px solid #b3261e}
+.fv-go-group-row td{padding:10px 12px!important;background:var(--fv-go-muted)!important;font-size:.86rem!important;font-weight:900!important;text-align:left!important;cursor:default;border-bottom:1px solid var(--fv-go-border)!important}
+.fv-go-group-row:hover{background:transparent!important}
