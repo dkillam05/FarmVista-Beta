@@ -175,3 +175,9 @@
     grid-column:1/-1!important;
   }
 }
+
+
+/* Assign Grain Tickets to Contracts: simple Buyer / Customer / Crop filters, no helper callout. */
+.fv-go-reconcile-filters{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;align-items:center!important;margin-bottom:13px!important}
+.fv-go-reconcile-filters>select{width:100%!important;min-width:0!important;box-sizing:border-box!important}
+@media(max-width:900px),(hover:none) and (pointer:coarse){.fv-go-reconcile-filters{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}}
