@@ -1,7 +1,7 @@
 // FarmVista Grain Operations — operational ticket ↔ hauling-job workspace.
 // Contracts are intentionally not referenced here: hauling remains independently operable.
 import {getWorkspaceModel} from './workspace-controller.js';
-import {assignWholeTicketToJob,moveTicketPortion,unassignTicketFromJob} from '../data/grain-writes.js';
+import {assignWholeTicketToJob,moveTicketPortion,moveWholeTicketToHaulingJob,unassignTicketFromJob} from '../data/grain-writes.js';
 import {planManualHaulingMove} from '../drag-drop/allocation-controller.js';
 import {clean,ticketBushels,normalizeSplitAllocations,round2} from '../core/grain-rules.js';
 
@@ -69,7 +69,7 @@ export function installHaulingTicketWorkspace(root){
     try{
       if(target.hasAttribute('data-hauling-unassign-zone')){for(const ticket of moving)if(clean(ticket.haulingJobId)||splitRows(ticket).some(x=>x.allocationType==='job'))await unassignTicketFromJob(ticket);return}
       const job=model.haulingJobs.find(j=>clean(j.id)===clean(target.dataset.haulingJobDrop));if(!job)return;
-      for(const ticket of moving){const fresh=getWorkspaceModel(),freshTicket=fresh.tickets.find(t=>clean(t.id)===clean(ticket.id))||ticket,freshJob=fresh.haulingJobs.find(j=>clean(j.id)===clean(job.id))||job,plan=planManualHaulingMove(freshTicket,freshJob,{state:fresh});if(!plan.ok)throw new Error(`${ticket.ticketNumber||ticket.ticketNo||ticket.id}: ${plan.reason||'cannot be moved'}`);if(!clean(freshTicket.haulingJobId))await assignWholeTicketToJob(freshTicket,freshJob);else await moveTicketPortion(freshTicket,freshJob,plan.changes.bushels)}
+      for(const ticket of moving){const fresh=getWorkspaceModel(),freshTicket=fresh.tickets.find(t=>clean(t.id)===clean(ticket.id))||ticket,freshJob=fresh.haulingJobs.find(j=>clean(j.id)===clean(job.id))||job,plan=planManualHaulingMove(freshTicket,freshJob,{state:fresh});if(!plan.ok)throw new Error(`${ticket.ticketNumber||ticket.ticketNo||ticket.id}: ${plan.reason||'cannot be moved'}`);if(!clean(freshTicket.haulingJobId))await assignWholeTicketToJob(freshTicket,freshJob);else await moveWholeTicketToHaulingJob(freshTicket,freshJob,fresh)}
     }catch(error){alert(error?.message||'The hauling ticket assignment was not changed.')}
   });
   return {render:()=>render(host)};
