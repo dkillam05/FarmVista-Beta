@@ -12167,9 +12167,9 @@ function loApplyHaulingJobToLoad(job){
         status:"active",
         active:true
       };
-      const validation = validateHaulingDraft(draft);
-      if (!validation?.valid) {
-        throw new Error((validation?.errors || ["Hauling job is invalid."]).join(" "));
+      const validationErrors = validateHaulingDraft(draft);
+      if (validationErrors.length) {
+        throw new Error(validationErrors.join(" "));
       }
 
       const payload = haulingPayload(draft);
