@@ -205,3 +205,20 @@
 .fv-go-entity-edit-label{flex:0 0 auto;font-weight:800;color:var(--muted,#5f6b62)}
 
 .fv-go-date-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;grid-column:1/-1}.fv-go-date-row>.fv-go-field{min-width:0}
+
+
+/* Contract pricing — legacy FarmVista money entry and basis sign control. */
+.fv-go-price-fields{display:grid!important;grid-template-columns:1fr!important;gap:14px!important}
+.fv-go-price-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.fv-go-price-fields>.fv-go-field{width:100%}
+.fv-go-price-fields input{font-variant-numeric:tabular-nums}
+.fv-go-price-fields input::placeholder{color:var(--muted,#66706a);opacity:.55}
+.fv-go-price-fields input:disabled{background:var(--fv-go-muted);opacity:.65}
+.fv-go-basis-control{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:stretch}
+.fv-go-basis-control>input{min-width:0}
+.fv-go-basis-sign{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--fv-go-border);border-radius:10px;overflow:hidden;background:var(--fv-go-surface)}
+.fv-go-basis-sign button{min-width:0;border:0;border-right:1px solid var(--fv-go-border);background:transparent;color:var(--muted,#66706a);font:inherit;font-size:1.15rem;font-weight:900;cursor:pointer}
+.fv-go-basis-sign button:last-child{border-right:0}
+.fv-go-basis-sign button.active{background:rgba(59,126,70,.38);color:var(--text,#142016)}
+.fv-go-price-fields[data-contract-type="Cash"] .fv-go-basis-sign,.fv-go-price-fields[data-contract-type="Futures"] .fv-go-basis-sign,.fv-go-price-fields[data-contract-type="Program"] .fv-go-basis-sign{opacity:.55;pointer-events:none}
+@media(max-width:700px){.fv-go-price-top{grid-template-columns:1fr}.fv-go-basis-control{grid-template-columns:96px minmax(0,1fr)}}
