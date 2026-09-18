@@ -134,3 +134,9 @@
 .fv-go-ticket-image-actions{display:flex;justify-content:space-between;gap:8px;margin-top:10px}.fv-go-ticket-image small{display:block;margin-top:8px;color:var(--muted,#68716c)}
 .fv-go-ticket-image-empty{min-height:240px;display:grid;place-items:center;padding:24px;border-radius:12px;background:#111;color:#fff;text-align:center}
 @media(max-width:900px){.fv-go-ticket-quick-layout{grid-template-columns:1fr}.fv-go-ticket-viewer{height:65vh;min-height:380px}.fv-go-ticket-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Contract planning mirrors ticket assignment: linked cards live inside jobs; mobile filters use balanced rows. */
+.fv-go-planning-assigned{margin-top:10px;padding-top:8px;border-top:1px solid var(--fv-go-border)}
+.fv-go-planning-assigned .fv-go-planning-card{margin:6px 0 0;background:var(--fv-go-surface)}
+.fv-go-dnd-body[data-planning-unassign]{min-height:90px}
+@media(max-width:900px){.fv-go-link-filters.five{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.fv-go-link-filters.five>[data-planning-filter="search"]{grid-column:1/-1!important;width:100%!important}.fv-go-link-filters.five>[data-planning-filter]{min-width:0!important;width:100%!important}.fv-go-link-filters.five>[data-planning-filter="customer"]{grid-column:1/-1!important}}
