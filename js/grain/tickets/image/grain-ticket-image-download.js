@@ -78,8 +78,8 @@
     if(!button?.isConnected) return;
     if(error){
       button.disabled=false;
-      button.textContent=isAppleMobile()?'Retry Save Image':'Retry Download';
-      button.title='FarmVista could not prepare the actual image file. Tap to try again.';
+      button.textContent=readyLabel();
+      button.title='Save the grain ticket image. FarmVista will retry preparing the file when tapped.';
       return;
     }
     if(ready){
