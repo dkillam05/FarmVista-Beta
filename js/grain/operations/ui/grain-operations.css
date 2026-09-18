@@ -81,3 +81,21 @@
   .fv-go-assigned-table{min-width:820px!important}
   body{overflow-x:hidden}
 }
+
+
+/* Phone landscape override: the outer table viewport must be narrower than its table so touch panning is guaranteed. */
+@media(max-width:900px){
+  .fv-go-panel,.fv-go-section,.fv-go-card,.fv-go-table-wrap{min-width:0!important}
+  .fv-go-table-wrap{display:block!important;position:relative;width:100%!important;max-width:100%!important;overflow-x:scroll!important;overflow-y:hidden!important;touch-action:pan-x pan-y!important}
+  .fv-go-table-wrap>.fv-go-table{display:table!important;width:1280px!important;min-width:1280px!important;max-width:none!important;table-layout:fixed!important}
+  .fv-go-table-wrap>.fv-go-table th,.fv-go-table-wrap>.fv-go-table td{white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(1){width:105px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(2){width:205px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(3){width:125px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(4){width:120px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(5){width:145px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(6){width:85px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(7),.fv-go-table-wrap>.fv-go-table th:nth-child(8),.fv-go-table-wrap>.fv-go-table th:nth-child(9){width:110px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(10){width:90px!important}
+  .fv-go-table-wrap>.fv-go-table th:nth-child(11){width:165px!important}
+}
