@@ -181,3 +181,18 @@
 .fv-go-reconcile-filters{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;align-items:center!important;margin-bottom:13px!important}
 .fv-go-reconcile-filters>select{width:100%!important;min-width:0!important;box-sizing:border-box!important}
 @media(max-width:900px),(hover:none) and (pointer:coarse){.fv-go-reconcile-filters{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}}
+
+
+/* Contract unassigned tickets: collapsed Buyer > Location > Crop > Sold Under hierarchy. */
+.fv-go-ticket-group{border-bottom:1px solid var(--fv-go-border);background:var(--fv-go-surface)}
+.fv-go-ticket-group>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;cursor:pointer;font-weight:850;list-style:none}
+.fv-go-ticket-group>summary::-webkit-details-marker{display:none}
+.fv-go-ticket-group>summary:before{content:'›';font-size:1.25rem;line-height:1;transform:rotate(0deg);transition:transform .12s ease}
+.fv-go-ticket-group[open]>summary:before{transform:rotate(90deg)}
+.fv-go-ticket-group>summary>span{flex:1;min-width:0}
+.fv-go-ticket-group>summary>strong{font-size:.78rem;color:var(--fv-go-muted-text,#66706a)}
+.fv-go-ticket-group-level-1>summary{padding-left:24px;background:var(--fv-go-muted)}
+.fv-go-ticket-group-level-2>summary{padding-left:36px}
+.fv-go-ticket-group-level-3>summary{padding-left:48px;background:var(--fv-go-muted)}
+.fv-go-ticket-group-level-3 .fv-go-ticket-group-body{padding:6px 8px 10px 48px}
+.fv-go-ticket-group-level-3 .fv-go-ticket-card{margin:6px 0}
