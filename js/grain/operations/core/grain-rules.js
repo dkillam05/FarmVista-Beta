@@ -63,9 +63,13 @@ export function effectiveJobTotals(tickets){
 }
 
 export function haulingStatus(job,tickets,now=new Date()){
-  if(isVoided(job) || job?.active === false) return 'closed';
+  if(isVoided(job)) return 'closed';
   const target = jobTarget(job);
   const used = effectiveJobTotals(tickets).get(clean(job?.id)) || 0;
+  // A job completed by bushels must reopen automatically if a manual ticket move
+  // drops it back below target. Only explicit non-completion deactivation stays closed.
+  const rawStatus=clean(job?.status).toLowerCase(),completedByBushels=job?.completed===true||rawStatus==='completed';
+  if(job?.active===false&&!completedByBushels)return 'closed';
   if(!isSpotHaulingJob(job) && target > EPS && used + EPS >= target) return used > target + EPS ? 'overhauled' : 'completed';
   const start = clean(job?.deliveryStartDate), end = clean(job?.deliveryEndDate);
   const today = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
