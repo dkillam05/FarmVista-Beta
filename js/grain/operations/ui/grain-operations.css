@@ -140,3 +140,11 @@
 .fv-go-planning-assigned .fv-go-planning-card{margin:6px 0 0;background:var(--fv-go-surface)}
 .fv-go-dnd-body[data-planning-unassign]{min-height:90px}
 @media(max-width:900px){.fv-go-link-filters.five{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.fv-go-link-filters.five>[data-planning-filter="search"]{grid-column:1/-1!important;width:100%!important}.fv-go-link-filters.five>[data-planning-filter]{min-width:0!important;width:100%!important}.fv-go-link-filters.five>[data-planning-filter="customer"]{grid-column:1/-1!important}}
+
+/* Mobile contract-planning filters: same 1 + 2 + 2 layout as hauling-ticket filters. Landscape phones remain mobile. */
+@media (hover:none) and (pointer:coarse), (max-width:900px){
+  .fv-go-block .fv-go-link-filters.five{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important;width:100%!important;max-width:100%!important;overflow:visible!important}
+  .fv-go-block .fv-go-link-filters.five>[data-planning-filter]{display:block!important;min-width:0!important;max-width:100%!important;width:100%!important;margin:0!important;box-sizing:border-box!important}
+  .fv-go-block .fv-go-link-filters.five>[data-planning-filter="search"]{grid-column:1/-1!important}
+  .fv-go-block .fv-go-link-filters.five>[data-planning-filter="customer"]{grid-column:auto!important}
+}
