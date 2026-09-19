@@ -169,15 +169,9 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
     if (!section) return null;
     let wrap = document.getElementById(STATIC_KPI_ID) || document.getElementById("fv-grain-index-commitment-kpis");
     if (wrap) return wrap;
-    const card = section.matches?.(".inventory-card") ? section : (section.querySelector(".inventory-card") || section);
-    const head = card.querySelector(".inventory-head");
-    if (!head) return null;
-    wrap = document.createElement("div");
-    wrap.id = "fv-grain-index-commitment-kpis";
-    wrap.className = "fv-ahj-commitment-kpis fv-ahj-commitment-kpis-top";
-    wrap.setAttribute("aria-label", "Remaining committed bushels by crop");
-    card.insertBefore(wrap, head);
-    return wrap;
+    // The KPI row now lives in its own static Grain Index section.
+    // Never inject KPI markup into the dynamic hauling-jobs card/table.
+    return null;
   }
 
   function ensureSection() {
