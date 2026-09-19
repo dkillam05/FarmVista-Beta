@@ -1741,7 +1741,7 @@
 <script type="module">
 
     import { normalizeGrainTicketGrades } from "/js/grain/scanning/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";
-    import { buildAutomaticHaulingAssignment } from "/js/grain/operations/hauling/hauling-allocation.js?v=20260919-1";
+    import { planTicketAllocation } from "/js/grain/operations/tickets/ticket-allocation.js?v=20260919-1";
 
     import {
       ready,
@@ -11754,10 +11754,13 @@ reconciliationStatus:
   // physically split at the remaining capacity and the remainder rolls into
   // the next compatible hauling job(s). Only leftover bushels after all
   // compatible capacity is exhausted become Spot.
-  const haulingPlan=buildAutomaticHaulingAssignment(
+  const allocationPlan=planTicketAllocation(
     {...payload,id:stableTicketId},
     {haulingJobs, tickets:grainTickets}
   );
+  const haulingPlan=allocationPlan.hauling;
+  payload.reviewReasons=[...new Set([...(Array.isArray(payload.reviewReasons)?payload.reviewReasons:[]),...(allocationPlan.reviewReasons||[])])];
+  if(allocationPlan.needsReview)payload.validationStatus="review";
   const haulingSource=haulingJobs.find(job=>String(job?.id||"").trim()===String(haulingPlan.haulingJobId||"").trim());
   payload.haulingJobId=haulingPlan.haulingJobId||null;
   payload.haulingJobName=haulingSource?haulingJobDisplayLabel(haulingSource).label:null;
