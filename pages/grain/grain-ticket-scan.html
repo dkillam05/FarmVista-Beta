@@ -28,6 +28,16 @@
       if (!response.ok) throw new Error(`Scanner core request failed (${response.status})`);
       let html = await response.text();
 
+      // Beta scanner must use the same Document AI OCR service as the
+      // desktop diagnostic bench. The core file still contains the legacy
+      // fv-ocr endpoint, so replace it before the scanner is written.
+      html = replaceRequired(
+        html,
+        'https://fv-ocr-300398089669.us-central1.run.app/fvOcr',
+        'https://farmvistagrainticketocr-300398089669.us-central1.run.app',
+        'current grain ticket OCR endpoint'
+      );
+
       const landscapeCss = `
 @media (orientation: landscape) and (max-height: 700px) {
   .camera-page{display:flex !important;flex-direction:column !important;width:100vw !important;height:100dvh !important;overflow:hidden !important}
