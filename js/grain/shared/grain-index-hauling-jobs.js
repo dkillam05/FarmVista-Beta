@@ -163,9 +163,27 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
     document.head.appendChild(style);
   }
 
+  function ensureCommitmentKpis(section) {
+    if (!section) return null;
+    let wrap = document.getElementById("fv-grain-index-commitment-kpis");
+    if (wrap) return wrap;
+    const body = section.querySelector(".inventory-body");
+    const tableWrap = body?.querySelector(".table-wrap");
+    if (!body || !tableWrap) return null;
+    wrap = document.createElement("div");
+    wrap.id = "fv-grain-index-commitment-kpis";
+    wrap.className = "fv-ahj-commitment-kpis";
+    wrap.setAttribute("aria-label", "Remaining committed bushels by crop");
+    body.insertBefore(wrap, tableWrap);
+    return wrap;
+  }
+
   function ensureSection() {
     let section = document.getElementById("fv-active-hauling-jobs-section");
-    if (section) return section;
+    if (section) {
+      ensureCommitmentKpis(section);
+      return section;
+    }
 
     const harvestSection = document.getElementById("active-harvest-section")?.closest("section.workspace-section");
     if (!harvestSection) return null;
@@ -207,7 +225,9 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
       </div>
     `;
     harvestSection.parentNode.insertBefore(section, harvestSection);
-    return document.getElementById("fv-active-hauling-jobs-section");
+    const built = document.getElementById("fv-active-hauling-jobs-section");
+    ensureCommitmentKpis(built);
+    return built;
   }
 
   function rowHtml(job, stateName, tickets, customersById) {
