@@ -23,6 +23,7 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
   window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1 = true;
 
   const db = getFirestore();
+  const STATIC_KPI_ID = "fv-hauling-commitment-kpis";
   const clean = value => String(value ?? "").trim();
   const norm = value => clean(value).toLowerCase();
   const num = value => {
