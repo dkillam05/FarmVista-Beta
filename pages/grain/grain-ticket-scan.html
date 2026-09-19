@@ -45,7 +45,8 @@
       html = replaceRequired(
         html,
         'import { normalizeGrainTicketGrades } from "/js/grain/scanning/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";',
-        'import { normalizeGrainTicketGrades } from "/js/grain/scanning/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";\\nimport { applyGrainTicketTemplate } from "/js/grain/scanning/ocr/core/template-dispatcher.js?v=20260919-2";',
+        `import { normalizeGrainTicketGrades } from "/js/grain/scanning/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";
+import { applyGrainTicketTemplate } from "/js/grain/scanning/ocr/core/template-dispatcher.js?v=20260919-2";`,
         'Document AI template dispatcher import'
       );
 
