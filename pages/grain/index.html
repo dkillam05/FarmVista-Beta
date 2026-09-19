@@ -646,6 +646,43 @@
       </div>
     </div>
 
+    <!-- =========================================================
+         ACTIVE HAULING JOBS
+    ========================================================== -->
+    <section class="workspace-section">
+      <div class="inventory-card" id="fv-active-hauling-jobs-section">
+        <div class="inventory-head">
+          <div>
+            <h2 class="inventory-title">Active Hauling Jobs</h2>
+            <div class="inventory-sub">
+              Open hauling jobs at a glance. Upcoming jobs are listed underneath so the next grain commitments are easy to see.
+            </div>
+          </div>
+        </div>
+        <div class="inventory-body">
+          <div id="fv-hauling-commitment-kpis" class="inventory-kpis" aria-label="Remaining bushels to deliver by crop">
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">Remaining to Deliver</div>
+              <div class="mini-kpi-value">— bu</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="inventory-table">
+              <thead>
+                <tr>
+                  <th>Hauling Job</th><th>Sold Under</th><th>Status</th><th>Crop</th>
+                  <th>Starting Bu.</th><th>Ticketed Bu.</th><th>Remaining</th><th>Loads</th>
+                </tr>
+              </thead>
+              <tbody id="fv-active-hauling-jobs-tbody">
+                <tr><td colspan="8" class="empty-row">Loading hauling jobs…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
         <!-- =========================================================
          ACTIVE FIELD HARVEST
     ========================================================== -->
@@ -2599,7 +2636,7 @@ function ticketsFromIds(ids){
   </div>
 </noscript>
   <!-- Load Grain Index hauling dashboard directly so this page is not dependent on core.js cache timing. -->
-  <script type="module" src="/js/grain/shared/grain-index-hauling-jobs.js?v=20260918-4" data-fv-grain-index-hauling-jobs="1"></script>
+  <script type="module" src="/js/grain/shared/grain-index-hauling-jobs.js?v=20260918-5" data-fv-grain-index-hauling-jobs="1"></script>
   <script src="/js/grain/tickets/image/grain-ticket-image-download.js?v=20260909-5"></script>
 </body>
 </html>
