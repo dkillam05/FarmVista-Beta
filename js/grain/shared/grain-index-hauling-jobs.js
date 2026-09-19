@@ -155,6 +155,10 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
       [data-theme="dark"] .fv-ahj-status.active{color:#b9e4bf}
       [data-theme="dark"] .fv-ahj-status.upcoming{color:#f4ca78}
       .fv-ahj-spot{font-weight:850}
+      .fv-ahj-commitment-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
+      .fv-ahj-commitment-kpi{min-width:0;padding:14px;border:1px solid var(--border,#d4d4d4);border-radius:12px;background:var(--surface,#fff);box-shadow:var(--shadow,0 1px 3px rgba(0,0,0,.05))}
+      .fv-ahj-commitment-label{font-size:.8rem;opacity:.70;margin-bottom:5px;font-weight:500}
+      .fv-ahj-commitment-value{font-size:1.28rem;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
     `;
     document.head.appendChild(style);
   }
@@ -177,6 +181,7 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
           </div>
         </div>
         <div class="inventory-body">
+          <div id="fv-grain-index-commitment-kpis" class="fv-ahj-commitment-kpis" aria-label="Remaining committed bushels by crop"></div>
           <div class="table-wrap">
             <table class="fv-ahj-table inventory-table">
               <thead>
@@ -246,6 +251,30 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
 
       const active = jobs.filter(job => status(job, tickets) === "active");
       const upcoming = jobs.filter(job => status(job, tickets) === "upcoming");
+      const pastDue = jobs.filter(job => status(job, tickets) === "past_due");
+
+      // KPI totals are commitments still owed, regardless of whether the job is
+      // active, upcoming, or past due. Completed/closed/voided jobs contribute 0.
+      const committedByCrop = new Map();
+      [...active, ...upcoming, ...pastDue].forEach(job => {
+        const remaining = remainingBushels(job, tickets);
+        const crop = jobCrop(job);
+        if (remaining <= 0.005 || crop === "—") return;
+        committedByCrop.set(crop, (committedByCrop.get(crop) || 0) + remaining);
+      });
+
+      const kpiWrap = document.getElementById("fv-grain-index-commitment-kpis");
+      if (kpiWrap) {
+        const cropTotals = [...committedByCrop.entries()]
+          .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+        kpiWrap.innerHTML = cropTotals.map(([crop, remaining]) => `
+          <div class="fv-ahj-commitment-kpi">
+            <div class="fv-ahj-commitment-label">${esc(crop)} Remaining to Deliver</div>
+            <div class="fv-ahj-commitment-value">${fmtBu(remaining)} bu</div>
+          </div>
+        `).join("");
+        kpiWrap.hidden = cropTotals.length === 0;
+      }
 
       active.sort((a, b) => jobName(a).localeCompare(jobName(b), undefined, { numeric: true, sensitivity: "base" }));
       upcoming.sort((a, b) => startDate(a).localeCompare(startDate(b)) || jobName(a).localeCompare(jobName(b), undefined, { numeric: true, sensitivity: "base" }));
