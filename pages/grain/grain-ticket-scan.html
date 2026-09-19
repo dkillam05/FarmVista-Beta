@@ -39,32 +39,15 @@
         'current grain ticket OCR endpoint'
       );
 
-      // Adapt the new raw Document AI response into the FarmVista scanner's
-      // established parsed-result contract. Elevator templates then refine it.
-      const documentAiAdapter = `
-<script type="module">
-import { applyGrainTicketTemplate } from "/js/grain/scanning/ocr/core/template-dispatcher.js?v=20260919-1";
-window.FVAdaptDocumentAiGrainTicket = function(result) {
-  if (!result || typeof result !== "object") return result;
-  const text = String(result.documentText || result.document?.text || "");
-  if (!result.document) result.document = { text };
-  else if (!result.document.text) result.document.text = text;
-  if (!result.grainTicket) result.grainTicket = { rawText:text };
-  else if (!result.grainTicket.rawText) result.grainTicket.rawText = text;
-  if (!result.fields || typeof result.fields !== "object") result.fields = {};
-  try { applyGrainTicketTemplate(result); }
-  catch (error) { console.error("[Grain Ticket] Document AI template adapter failed:", error); }
-  const t = result.grainTicket || {};
-  const required = [t.ticketNumber,t.ticketDate,t.crop,t.grossWeight,t.tareWeight,t.netWeight,t.netBushels];
-  result.scanErrors = Array.isArray(result.scanErrors) ? result.scanErrors : [];
-  if (!required.every(v => v !== null && v !== undefined && String(v).trim() !== "")) {
-    if (!result.scanErrors.includes("FarmVista could not parse all required ticket fields.")) result.scanErrors.push("FarmVista could not parse all required ticket fields.");
-  }
-  result.scanValid = result.scanErrors.length === 0;
-  return result;
-};
-<\\/script>`;
-      html = replaceRequired(html, '</head>', documentAiAdapter + '\\n</head>', 'Document AI response adapter module');
+      // Adapt raw Document AI JSON synchronously inside the scanner core.
+      // The template module is already imported by the core scanner, so do not
+      // inject a second module script during document.write (Safari can race it).
+      html = replaceRequired(
+        html,
+        'import { normalizeGrainTicketGrades } from "/js/grain/scanning/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";',
+        'import { normalizeGrainTicketGrades } from "/js/grain/scanning/ocr/grain-ticket-ocr-grade-normalizer.js?v=20260909-6";\\nimport { applyGrainTicketTemplate } from "/js/grain/scanning/ocr/core/template-dispatcher.js?v=20260919-2";',
+        'Document AI template dispatcher import'
+      );
 
       html = replaceRequired(
         html,
@@ -73,9 +56,66 @@ window.FVAdaptDocumentAiGrainTicket = function(result) {
         `          let result =
             await response.json();
 
-          if (window.FVAdaptDocumentAiGrainTicket) {
-            result = window.FVAdaptDocumentAiGrainTicket(result);
-          }`,
+          // New Document AI returns raw document text/layout. Build the
+          // FarmVista grainTicket shell, then let the elevator template parse it.
+          const documentAiText =
+            String(
+              result?.documentText ||
+              result?.document?.text ||
+              ""
+            );
+
+          if (!result.document) {
+            result.document = { text: documentAiText };
+          } else if (!result.document.text) {
+            result.document.text = documentAiText;
+          }
+
+          if (!result.grainTicket) {
+            result.grainTicket = { rawText: documentAiText };
+          } else if (!result.grainTicket.rawText) {
+            result.grainTicket.rawText = documentAiText;
+          }
+
+          if (!result.fields || typeof result.fields !== "object") {
+            result.fields = {};
+          }
+
+          applyGrainTicketTemplate(result);
+
+          result.scanErrors =
+            Array.isArray(result.scanErrors)
+              ? result.scanErrors
+              : [];
+
+          const adaptedTicket =
+            result.grainTicket || {};
+
+          const adaptedRequired = [
+            adaptedTicket.ticketNumber,
+            adaptedTicket.ticketDate,
+            adaptedTicket.crop,
+            adaptedTicket.grossWeight,
+            adaptedTicket.tareWeight,
+            adaptedTicket.netWeight,
+            adaptedTicket.netBushels
+          ];
+
+          if (
+            !adaptedRequired.every(
+              value =>
+                value !== null &&
+                value !== undefined &&
+                String(value).trim() !== ""
+            )
+          ) {
+            result.scanErrors.push(
+              "FarmVista could not parse all required ticket fields."
+            );
+          }
+
+          result.scanValid =
+            result.scanErrors.length === 0;`,
         'adapt Document AI response before FarmVista validation'
       );
 
