@@ -922,30 +922,6 @@ function prettyFarmName(
   farmKey
 ) {
 
-  const key =
-    String(
-      farmKey ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-
-  const farmNames = {
-    demo:
-      "FarmVista Demo"
-  };
-
-
-  if (
-    farmNames[key]
-  ) {
-
-    return farmNames[key];
-
-  }
-
-
   return String(
     farmKey ||
     ""
