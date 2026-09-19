@@ -157,6 +157,7 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
       [data-theme="dark"] .fv-ahj-status.upcoming{color:#f4ca78}
       .fv-ahj-spot{font-weight:850}
       .fv-ahj-commitment-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
+      .fv-ahj-commitment-kpis-top{padding:18px 20px 0;margin-bottom:0}
       .fv-ahj-commitment-kpi{min-width:0;padding:14px;border:1px solid var(--border,#d4d4d4);border-radius:12px;background:var(--surface,#fff);box-shadow:var(--shadow,0 1px 3px rgba(0,0,0,.05))}
       .fv-ahj-commitment-label{font-size:.8rem;opacity:.70;margin-bottom:5px;font-weight:500}
       .fv-ahj-commitment-value{font-size:1.28rem;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -168,14 +169,14 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
     if (!section) return null;
     let wrap = document.getElementById(STATIC_KPI_ID) || document.getElementById("fv-grain-index-commitment-kpis");
     if (wrap) return wrap;
-    const body = section.querySelector(".inventory-body");
-    const tableWrap = body?.querySelector(".table-wrap");
-    if (!body || !tableWrap) return null;
+    const card = section.querySelector(".inventory-card") || section;
+    const head = card.querySelector(".inventory-head");
+    if (!head) return null;
     wrap = document.createElement("div");
     wrap.id = "fv-grain-index-commitment-kpis";
-    wrap.className = "fv-ahj-commitment-kpis";
+    wrap.className = "fv-ahj-commitment-kpis fv-ahj-commitment-kpis-top";
     wrap.setAttribute("aria-label", "Remaining committed bushels by crop");
-    body.insertBefore(wrap, tableWrap);
+    card.insertBefore(wrap, head);
     return wrap;
   }
 
