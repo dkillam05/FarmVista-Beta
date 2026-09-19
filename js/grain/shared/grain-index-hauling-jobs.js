@@ -249,11 +249,12 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
 
   async function render() {
     installStyles();
+    const kpiWrap = document.getElementById(STATIC_KPI_ID) || document.getElementById("fv-grain-index-commitment-kpis");
     const section = ensureSection();
-    if (!section) return;
     const tbody = document.getElementById("fv-grain-index-hauling-jobs-tbody");
-    if (!tbody) return;
 
+    // KPI totals are independent from the hauling table UI. Load/calculate them
+    // even if the existing table is rendered by another Grain Index component.
     try {
       const [jobSnap, ticketSnap, customerSnap] = await Promise.all([
         getDocs(collection(db, "grain_hauling_jobs")),
@@ -279,7 +280,6 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
         committedByCrop.set(crop, (committedByCrop.get(crop) || 0) + remaining);
       });
 
-      const kpiWrap = document.getElementById(STATIC_KPI_ID) || document.getElementById("fv-grain-index-commitment-kpis");
       if (kpiWrap) {
         const cropTotals = [...committedByCrop.entries()]
           .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
@@ -296,6 +296,9 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
         `;
         kpiWrap.hidden = false;
       }
+
+      // If another renderer owns the hauling table, stop here after updating KPIs.
+      if (!section || !tbody) return;
 
       active.sort((a, b) => jobName(a).localeCompare(jobName(b), undefined, { numeric: true, sensitivity: "base" }));
       upcoming.sort((a, b) => startDate(a).localeCompare(startDate(b)) || jobName(a).localeCompare(jobName(b), undefined, { numeric: true, sensitivity: "base" }));
@@ -316,7 +319,10 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
       document.dispatchEvent(new CustomEvent("fv:grain-index-hauling-jobs-rendered"));
     } catch (error) {
       console.warn("[Grain Index] Could not load hauling jobs:", error);
-      tbody.innerHTML = `<tr><td colspan="10" class="empty-row">Hauling jobs could not be loaded.</td></tr>`;
+      if (kpiWrap) {
+        kpiWrap.innerHTML = `<div class="mini-kpi"><div class="mini-kpi-label">Remaining to Deliver</div><div class="mini-kpi-value">— bu</div></div>`;
+      }
+      if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="empty-row">Hauling jobs could not be loaded.</td></tr>`;
     }
   }
 
