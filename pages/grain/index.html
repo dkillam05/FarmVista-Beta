@@ -2598,6 +2598,8 @@ function ticketsFromIds(ids){
     <div class="card">JavaScript is required for Grain Inventory.</div>
   </div>
 </noscript>
+  <!-- Load Grain Index hauling dashboard directly so this page is not dependent on core.js cache timing. -->
+  <script type="module" src="/js/grain/shared/grain-index-hauling-jobs.js?v=20260918-3" data-fv-grain-index-hauling-jobs="1"></script>
   <script src="/js/grain/tickets/image/grain-ticket-image-download.js?v=20260909-5"></script>
 </body>
 </html>
