@@ -165,7 +165,7 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
 
   function ensureCommitmentKpis(section) {
     if (!section) return null;
-    let wrap = document.getElementById("fv-grain-index-commitment-kpis");
+    let wrap = document.getElementById(STATIC_KPI_ID) || document.getElementById("fv-grain-index-commitment-kpis");
     if (wrap) return wrap;
     const body = section.querySelector(".inventory-body");
     const tableWrap = body?.querySelector(".table-wrap");
@@ -283,17 +283,22 @@ if (!window.__FV_GRAIN_INDEX_HAULING_JOBS_20260913_V1) {
         committedByCrop.set(crop, (committedByCrop.get(crop) || 0) + remaining);
       });
 
-      const kpiWrap = document.getElementById("fv-grain-index-commitment-kpis");
+      const kpiWrap = document.getElementById(STATIC_KPI_ID) || document.getElementById("fv-grain-index-commitment-kpis");
       if (kpiWrap) {
         const cropTotals = [...committedByCrop.entries()]
           .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
-        kpiWrap.innerHTML = cropTotals.map(([crop, remaining]) => `
-          <div class="fv-ahj-commitment-kpi">
-            <div class="fv-ahj-commitment-label">${esc(crop)} Remaining to Deliver</div>
-            <div class="fv-ahj-commitment-value">${fmtBu(remaining)} bu</div>
+        kpiWrap.innerHTML = cropTotals.length ? cropTotals.map(([crop, remaining]) => `
+          <div class="mini-kpi fv-ahj-commitment-kpi">
+            <div class="mini-kpi-label fv-ahj-commitment-label">${esc(crop)} Remaining to Deliver</div>
+            <div class="mini-kpi-value fv-ahj-commitment-value">${fmtBu(remaining)} bu</div>
           </div>
-        `).join("");
-        kpiWrap.hidden = cropTotals.length === 0;
+        `).join("") : `
+          <div class="mini-kpi">
+            <div class="mini-kpi-label">Remaining to Deliver</div>
+            <div class="mini-kpi-value">0 bu</div>
+          </div>
+        `;
+        kpiWrap.hidden = false;
       }
 
       active.sort((a, b) => jobName(a).localeCompare(jobName(b), undefined, { numeric: true, sensitivity: "base" }));
