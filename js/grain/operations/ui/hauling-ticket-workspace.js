@@ -1,8 +1,8 @@
 // FarmVista Grain Operations — operational ticket ↔ hauling-job workspace.
 // Contracts are intentionally not referenced here: hauling remains independently operable.
 import {getWorkspaceModel} from './workspace-controller.js';
-import {refreshGrainOperations} from '../data/grain-store.js';
-import {assignWholeTicketToJob,moveTicketPortion,moveUnassignedPortionToJob,moveWholeTicketToHaulingJob,moveSpotPortionToJob,unassignSpotPortion,unassignTicketFromJob} from '../data/grain-writes.js';
+import {refreshGrainOperations,grainState} from '../data/grain-store.js';
+import {assignWholeTicketToJob,moveTicketPortion,moveUnassignedPortionToJob,moveWholeTicketToHaulingJob,moveSpotPortionToJob,unassignSpotPortion,unassignTicketFromJob,persistAutomaticTicketAllocation} from '../data/grain-writes.js';
 import {planManualHaulingMove} from '../drag-drop/allocation-controller.js?v=20260918-1';
 import {clean,ticketBushels,normalizeSplitAllocations,round2} from '../core/grain-rules.js';
 
@@ -56,6 +56,34 @@ export function installHaulingTicketWorkspace(root){
   }
   const host=details.querySelector('[data-panel="hauling-ticket-workspace"]');
   render(host);
+  // One-time migration/repair for scanner-era tickets that were saved wholly
+  // against a hauling job before persisted rollover splits existed.
+  let autoRepairRunning=false;
+  const repairAutomaticRollover=async()=>{
+    if(autoRepairRunning)return;
+    autoRepairRunning=true;
+    try{
+      await refreshGrainOperations();
+      const state=grainState();
+      const candidates=(state.tickets||[])
+        .filter(t=>live(t)&&clean(t?.haulingJobId)&&t?.manualHaulingOverride!==true&&Number(t?.allocationModelVersion||0)<4)
+        .sort((a,b)=>clean(a?.date||a?.ticketDate).localeCompare(clean(b?.date||b?.ticketDate))||clean(a?.createdAt).localeCompare(clean(b?.createdAt))||clean(a?.id).localeCompare(clean(b?.id)));
+      let changed=false;
+      for(const oldTicket of candidates){
+        const fresh=grainState();
+        const ticket=(fresh.tickets||[]).find(t=>clean(t.id)===clean(oldTicket.id))||oldTicket;
+        const before=JSON.stringify({job:clean(ticket.haulingJobId),splits:normalizeSplitAllocations(ticket).map(x=>[x.haulingJobId,round2(x.bushels),x.allocationType])});
+        const plan=await persistAutomaticTicketAllocation(ticket,fresh);
+        const hauling=plan?.hauling;
+        if(!hauling)continue;
+        const after=JSON.stringify({job:clean(hauling.haulingJobId),splits:(hauling.haulingJobSplitAllocations||[]).map(x=>[clean(x.haulingJobId),round2(x.bushels),clean(x.allocationType)])});
+        if(before!==after)changed=true;
+      }
+      if(changed){await refreshGrainOperations();render(host);applyFilters();}
+    }catch(error){console.error('[FarmVista] hauling rollover migration failed',error)}
+    finally{autoRepairRunning=false}
+  };
+  setTimeout(repairAutomaticRollover,250);
   let dragged='';let draggedIds=[];let draggedSpot=false;let draggedUnassigned=false;
   const applyFilters=()=>{const search=clean(details.querySelector('[data-hauling-filter="search"]')?.value).toLowerCase(),status=clean(details.querySelector('[data-hauling-filter="status"]')?.value).toLowerCase(),buyer=clean(details.querySelector('[data-hauling-filter="buyer"]')?.value).toLowerCase(),crop=clean(details.querySelector('[data-hauling-filter="crop"]')?.value).toLowerCase(),customer=clean(details.querySelector('[data-hauling-filter="customer"]')?.value).toLowerCase(),hasExplicit=!!(search||status||buyer||crop||customer),model=getWorkspaceModel(),unassignedTickets=(model?.tickets||[]).filter(t=>live(t)&&(fullyUnassigned(t)||unassignedBushels(t)>.005)),defaultPairs=new Set(unassignedTickets.map(t=>`${clean(t.buyerName).toLowerCase()}|${clean(t.crop||t.commodity).toLowerCase()}`));details.querySelectorAll('[data-hauling-job-drop]').forEach(card=>{const job=model?.haulingJobs?.find(j=>clean(j.id)===clean(card.dataset.haulingJobDrop));const text=[job?.jobName,job?.displayName,job?.deliveryLocationName,job?.buyerName,job?.customerName,job?.soldUnder].map(clean).join(' ').toLowerCase(),rawStatus=clean(job?.effectiveStatus||job?.status).toLowerCase(),displayStatus=rawStatus==='closed'?'completed':rawStatus,defaultMatch=defaultPairs.has(`${clean(job?.buyerName).toLowerCase()}|${clean(job?.crop||job?.commodity).toLowerCase()}`);card.hidden=hasExplicit?!!((search&&!text.includes(search))||(status&&displayStatus!==status)||(buyer&&clean(job?.buyerName).toLowerCase()!==buyer)||(crop&&clean(job?.crop||job?.commodity).toLowerCase()!==crop)||(customer&&clean(job?.customerName||job?.soldUnder).toLowerCase()!==customer)):!defaultMatch});const visible=[...details.querySelectorAll('[data-hauling-job-drop]')].filter(card=>!card.hidden).length,count=details.querySelector('.fv-go-dnd-col:nth-child(2) .fv-go-dnd-head span');if(count)count.textContent=String(visible)};
   applyFilters();
