@@ -68,8 +68,14 @@ window.FVAdaptDocumentAiGrainTicket = function(result) {
 
       html = replaceRequired(
         html,
-        '          const result =\\n            await response.json();',
-        '          let result =\\n            await response.json();\\n\\n          if (window.FVAdaptDocumentAiGrainTicket) {\\n            result = window.FVAdaptDocumentAiGrainTicket(result);\\n          }',
+        `          const result =
+            await response.json();`,
+        `          let result =
+            await response.json();
+
+          if (window.FVAdaptDocumentAiGrainTicket) {
+            result = window.FVAdaptDocumentAiGrainTicket(result);
+          }`,
         'adapt Document AI response before FarmVista validation'
       );
 
