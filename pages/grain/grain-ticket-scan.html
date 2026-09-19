@@ -31,12 +31,10 @@
       // Beta scanner must use the same Document AI OCR service as the
       // desktop diagnostic bench. The core file still contains the legacy
       // fv-ocr endpoint, so replace it before the scanner is written.
-      html = replaceRequired(
-        html,
-        'https://fv-ocr-300398089669.us-central1.run.app/fvOcr',
-        'https://farmvistagrainticketocr-300398089669.us-central1.run.app',
-        'current grain ticket OCR endpoint'
-      );
+      // The phone scanner still depends on the legacy fvOcr response contract
+      // (grainTicket, fields, scanValid, scanErrors). Keep that parser endpoint
+      // for the operational scanner until the new Document AI service has a
+      // proper adapter. The new service remains available on the diagnostic bench.
 
       const landscapeCss = `
 @media (orientation: landscape) and (max-height: 700px) {
