@@ -39,6 +39,40 @@
         'current grain ticket OCR endpoint'
       );
 
+      // Adapt the new raw Document AI response into the FarmVista scanner's
+      // established parsed-result contract. Elevator templates then refine it.
+      const documentAiAdapter = `
+<script type="module">
+import { applyGrainTicketTemplate } from "/js/grain/scanning/ocr/core/template-dispatcher.js?v=20260919-1";
+window.FVAdaptDocumentAiGrainTicket = function(result) {
+  if (!result || typeof result !== "object") return result;
+  const text = String(result.documentText || result.document?.text || "");
+  if (!result.document) result.document = { text };
+  else if (!result.document.text) result.document.text = text;
+  if (!result.grainTicket) result.grainTicket = { rawText:text };
+  else if (!result.grainTicket.rawText) result.grainTicket.rawText = text;
+  if (!result.fields || typeof result.fields !== "object") result.fields = {};
+  try { applyGrainTicketTemplate(result); }
+  catch (error) { console.error("[Grain Ticket] Document AI template adapter failed:", error); }
+  const t = result.grainTicket || {};
+  const required = [t.ticketNumber,t.ticketDate,t.crop,t.grossWeight,t.tareWeight,t.netWeight,t.netBushels];
+  result.scanErrors = Array.isArray(result.scanErrors) ? result.scanErrors : [];
+  if (!required.every(v => v !== null && v !== undefined && String(v).trim() !== "")) {
+    if (!result.scanErrors.includes("FarmVista could not parse all required ticket fields.")) result.scanErrors.push("FarmVista could not parse all required ticket fields.");
+  }
+  result.scanValid = result.scanErrors.length === 0;
+  return result;
+};
+<\\/script>`;
+      html = replaceRequired(html, '</head>', documentAiAdapter + '\\n</head>', 'Document AI response adapter module');
+
+      html = replaceRequired(
+        html,
+        '          const result =\\n            await response.json();',
+        '          let result =\\n            await response.json();\\n\\n          if (window.FVAdaptDocumentAiGrainTicket) {\\n            result = window.FVAdaptDocumentAiGrainTicket(result);\\n          }',
+        'adapt Document AI response before FarmVista validation'
+      );
+
       const landscapeCss = `
 @media (orientation: landscape) and (max-height: 700px) {
   .camera-page{display:flex !important;flex-direction:column !important;width:100vw !important;height:100dvh !important;overflow:hidden !important}
