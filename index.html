@@ -929,7 +929,8 @@
       }
     }
 
-    /* iPhone landscape seamless canvas: columns are layout only, never visual panels. */
+    /* iPhone landscape: single seamless canvas.
+       No painted column wrappers, gutter rails, or card shadows. */
     @media (orientation:landscape) and (max-height:650px){
       html,body,.page{
         background:#f4f7f4!important;
@@ -937,78 +938,6 @@
       .page{
         box-shadow:none!important;
         border:0!important;
-      }
-      .desktop-dashboard{
-        background:transparent!important;
-        box-shadow:none!important;
-        border:0!important;
-        outline:0!important;
-        padding:4px 0!important;
-      }
-      .desktop-left,.desktop-right{
-        background:transparent!important;
-        box-shadow:none!important;
-        border:0!important;
-        outline:0!important;
-      }
-      /* Keep individual cards floating, but eliminate the vertical rails that
-         visually reveal the left/right column containers while panning. */
-      .desktop-dashboard::before,.desktop-dashboard::after,
-      .desktop-left::before,.desktop-left::after,
-      .desktop-right::before,.desktop-right::after{
-        display:none!important;
-        content:none!important;
-      }
-    }
-
-    /* Landscape seamless gutter: cards own their rounding; the column seam has
-       no shadow/paint, so horizontal panning reads as one continuous canvas. */
-    @media (orientation:landscape) and (max-height:650px){
-      .desktop-dashboard{
-        column-gap:28px!important;
-        background:#f4f7f4!important;
-      }
-      .desktop-left,.desktop-right{
-        background:#f4f7f4!important;
-      }
-
-      /* Kill inward-facing shadow bands that were making the grid seam visible. */
-      .desktop-left > .section,
-      .desktop-left > #fv-weather > .fv-weather-card{
-        box-shadow:-5px 9px 22px rgba(24,58,31,.055),0 2px 6px rgba(24,58,31,.025)!important;
-      }
-      .desktop-right > .section{
-        box-shadow:5px 9px 22px rgba(24,58,31,.055),0 2px 6px rgba(24,58,31,.025)!important;
-      }
-
-      /* Fade the canvas through the gutter so there is no vertical column rail. */
-      .desktop-dashboard{
-        position:relative;
-      }
-      .desktop-dashboard::after{
-        content:""!important;
-        display:block!important;
-        position:absolute!important;
-        top:0!important;
-        bottom:0!important;
-        left:630px!important;
-        width:28px!important;
-        pointer-events:none!important;
-        z-index:0!important;
-        background:#f4f7f4!important;
-      }
-      .desktop-left,.desktop-right{
-        position:relative!important;
-        z-index:1!important;
-      }
-    }
-
-    /* Landscape v2: one continuous dashboard canvas.
-       The old left/right wrappers are flattened so they cannot create visible
-       column bands; individual cards are the only painted surfaces. */
-    @media (orientation:landscape) and (max-height:650px){
-      .page{
-        background:#f4f7f4!important;
         padding-left:18px!important;
         padding-right:18px!important;
       }
@@ -1019,14 +948,21 @@
         row-gap:16px!important;
         align-items:start!important;
         background:transparent!important;
-        position:relative!important;
-        isolation:isolate;
+        border:0!important;
+        outline:0!important;
+        box-shadow:none!important;
+        padding:0!important;
       }
       .desktop-left,.desktop-right{
         display:contents!important;
       }
+      .desktop-dashboard::before,.desktop-dashboard::after,
+      .desktop-left::before,.desktop-left::after,
+      .desktop-right::before,.desktop-right::after{
+        content:none!important;
+        display:none!important;
+      }
 
-      /* Explicit placement replaces the visual column wrappers. */
       #fv-weather{grid-column:1;grid-row:1;}
       #logistics-panel{grid-column:2;grid-row:1;}
       #markets-section{grid-column:1;grid-row:2;}
@@ -1035,29 +971,23 @@
       #desktop-quick-links{grid-column:2;grid-row:3;}
       #ai-section{grid-column:1;grid-row:4;}
 
-      /* Absolutely no dashboard/column paint or generated seam. */
-      .desktop-dashboard::before,.desktop-dashboard::after,
-      .desktop-left::before,.desktop-left::after,
-      .desktop-right::before,.desktop-right::after{
-        content:none!important;
-        display:none!important;
-      }
-
-      /* Uniform card depth in every direction; no side-specific shadow bands. */
+      /* The visible rails in v14 were card shadows bleeding into the canvas.
+         Landscape now uses border definition only, so nothing paints outside a card. */
       .desktop-dashboard .section,
-      .desktop-dashboard .fv-weather-card{
+      .desktop-dashboard .fv-weather-card,
+      #fv-weather .fv-weather-card,
+      #markets-section,#message-board-section,#ai-section,
+      #logistics-panel,#attention-section,#desktop-quick-links{
+        box-shadow:none!important;
+        filter:none!important;
         margin:0!important;
+        border:1px solid rgba(47,108,60,.11)!important;
         border-radius:22px!important;
-        box-shadow:0 8px 20px rgba(24,58,31,.065)!important;
+        overflow:hidden!important;
       }
 
-      /* Quick Links remains part of the same single canvas in landscape. */
-      #desktop-quick-links{
-        display:block!important;
-      }
-      #mobile-dashboard{
-        display:none!important;
-      }
+      #desktop-quick-links{display:block!important;}
+      #mobile-dashboard{display:none!important;}
     }
 
   </style>
