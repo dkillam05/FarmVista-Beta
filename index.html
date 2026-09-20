@@ -995,7 +995,15 @@
          real document height to place the entire final card above the fixed
          footer, plus the same generous blank breathing room below it. */
       .desktop-dashboard{
-        margin-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 420px)!important;
+        margin-bottom:0!important;
+      }
+
+      /* IMPORTANT: fv-shell::part(main) is the actual iOS landscape scroller.
+         Padding the dashboard/page does not extend that scrollport reliably.
+         Put the portrait-style breathing room on the real scroll container. */
+      fv-shell::part(main){
+        padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 360px)!important;
+        scroll-padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 360px)!important;
       }
     }
 
