@@ -989,28 +989,17 @@
       #desktop-quick-links{display:block!important;}
       #mobile-dashboard{display:none!important;}
 
-      /* Extra landscape runway below the last cards. The footer is fixed, so
-         this lets the final row scroll fully above it instead of stopping behind it. */
-      /* Match portrait's finished bottom position: give landscape enough
-         real document height to place the entire final card above the fixed
-         footer, plus the same generous blank breathing room below it. */
+      /* Landscape bottom clearance belongs on the shell's REAL scroll content.
+         The footer is fixed in fv-shell's shadow DOM, so reserve the space on
+         part(main), after the dashboard content, instead of faking document height. */
       .desktop-dashboard{margin-bottom:0!important;}
-
-      /* iPhone landscape uses the document viewport for vertical scrolling.
-         Do not try to extend the slotted page or shadow-main; make the actual
-         document itself taller. This runway is deliberately on BODY. */
       .page::after{content:none!important;display:none!important;}
-      fv-shell::part(main){padding-bottom:0!important;scroll-padding-bottom:0!important;}
+      body::after{content:none!important;display:none!important;}
+      html,body{min-height:100%!important;}
 
-      body::after{
-        content:""!important;
-        display:block!important;
-        width:100%!important;
-        height:900px!important;
-        pointer-events:none!important;
-      }
-      html,body{
-        min-height:calc(100% + 900px)!important;
+      fv-shell::part(main){
+        padding-bottom:260px!important;
+        scroll-padding-bottom:260px!important;
       }
     }
 
