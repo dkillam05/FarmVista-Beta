@@ -804,7 +804,7 @@
        command-center cards begin immediately below the app bar. */
     @media (orientation:landscape) and (max-height:650px){
       .dashboard-heading{display:none!important;}
-      .page{padding-top:12px!important;}
+      .page{padding-top:0!important;}
     }
 
     /* Premium iPhone-landscape polish — visual only. No dashboard/data movement. */
@@ -1000,7 +1000,9 @@
         margin-bottom:0!important;
       }
       .desktop-dashboard{
-        padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 18px)!important;
+        /* Only reserve the pixels physically covered by the fixed footer.
+           No extra landscape breathing strip above or below the dashboard. */
+        padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px))!important;
         box-sizing:border-box!important;
       }
     }
