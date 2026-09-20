@@ -991,12 +991,17 @@
       #desktop-quick-links{display:block!important;}
       #mobile-dashboard{display:none!important;}
 
-      /* Landscape footer is already outside the dashboard canvas.
-         Do not reserve portrait-style footer/breathing-room padding here:
-         it paints as the gray strip above the fixed green footer. */
+      /* iPhone landscape: preserve scroll clearance without painting a gray
+         page strip. The footer clearance lives on the dashboard itself and
+         uses the same canvas color, so the last cards can scroll fully above
+         the fixed footer with no separate gray band. */
       .page{
         padding-bottom:0!important;
         margin-bottom:0!important;
+      }
+      .desktop-dashboard{
+        padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 18px)!important;
+        box-sizing:border-box!important;
       }
     }
 
