@@ -929,6 +929,38 @@
       }
     }
 
+    /* iPhone landscape seamless canvas: columns are layout only, never visual panels. */
+    @media (orientation:landscape) and (max-height:650px){
+      html,body,.page{
+        background:#f4f7f4!important;
+      }
+      .page{
+        box-shadow:none!important;
+        border:0!important;
+      }
+      .desktop-dashboard{
+        background:transparent!important;
+        box-shadow:none!important;
+        border:0!important;
+        outline:0!important;
+        padding:4px 0!important;
+      }
+      .desktop-left,.desktop-right{
+        background:transparent!important;
+        box-shadow:none!important;
+        border:0!important;
+        outline:0!important;
+      }
+      /* Keep individual cards floating, but eliminate the vertical rails that
+         visually reveal the left/right column containers while panning. */
+      .desktop-dashboard::before,.desktop-dashboard::after,
+      .desktop-left::before,.desktop-left::after,
+      .desktop-right::before,.desktop-right::after{
+        display:none!important;
+        content:none!important;
+      }
+    }
+
   </style>
 </head>
 
