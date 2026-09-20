@@ -674,6 +674,87 @@
       }
     }
 
+    /* iPhone / small-device landscape command center.
+       Preserve the desktop layout, give cards enough real estate, and allow
+       horizontal panning instead of crushing market/KPI content. */
+    @media (min-width:900px) and (max-width:1100px) and (max-height:600px) and (orientation:landscape){
+      html,body{overflow-x:auto!important;}
+      .page{
+        width:1120px;
+        max-width:none;
+        margin:0;
+        padding:12px 18px calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 72px)!important;
+      }
+      .dashboard-heading{margin-bottom:12px;}
+      .desktop-dashboard{
+        grid-template-columns:600px 484px;
+        gap:14px;
+      }
+      .desktop-right{
+        position:static;
+      }
+
+      /* Keep both commodities visible as true side-by-side market cards. */
+      #markets-section .section-body{padding:12px;}
+      #markets-section .fv-mkt-grid{
+        grid-template-columns:repeat(2,minmax(278px,1fr));
+        gap:10px;
+      }
+      #markets-section [data-fv="mktCorn"],
+      #markets-section [data-fv="mktSoy"]{
+        min-width:0;
+      }
+
+      /* Compact, readable KPI cards: number gets its own line instead of
+         colliding with the title on the narrow right column. */
+      #attention-section .section-body{padding:12px;}
+      #attention-section .kpi-grid{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:9px;
+      }
+      #attention-section .dash-kpi{
+        padding:11px 10px;
+        min-height:132px;
+      }
+      #attention-section .dash-kpi-main{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:5px;
+      }
+      #attention-section .dash-kpi-text{
+        display:flex;
+        flex-direction:column;
+        min-width:0;
+      }
+      #attention-section .dash-kpi-label{
+        font-size:9px;
+        line-height:1.15;
+      }
+      #attention-section .dash-kpi-title{
+        margin-top:3px;
+        font-size:12px;
+        line-height:1.18;
+      }
+      #attention-section .dash-kpi-count{
+        grid-row:1;
+        width:auto;
+        min-width:0;
+        height:auto;
+        padding:0;
+        justify-self:end;
+        border:0;
+        border-radius:0;
+        background:transparent;
+        font-size:24px;
+        line-height:1;
+      }
+      #attention-section .dash-kpi-sub{
+        margin-top:7px;
+        font-size:10px;
+        line-height:1.25;
+      }
+    }
+
   </style>
 </head>
 
