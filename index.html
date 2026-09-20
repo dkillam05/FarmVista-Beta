@@ -674,67 +674,90 @@
       }
     }
 
-    /* iPhone / small-device landscape command center.
-       Preserve the desktop layout, give cards enough real estate, and allow
-       horizontal panning instead of crushing market/KPI content. */
-    @media (min-width:900px) and (max-width:1100px) and (max-height:600px) and (orientation:landscape){
-      html,body{overflow-x:auto!important;}
+
+    /* iPhone landscape: keep the full mobile quick-link set, but use the
+       command-center cards for weather/markets/attention with a smooth,
+       horizontally pannable canvas. Desktop (>=1101px) is unchanged. */
+    @media (min-width:560px) and (max-width:1100px) and (max-height:600px) and (orientation:landscape){
+      html,body{
+        overflow-x:auto!important;
+        -webkit-overflow-scrolling:touch;
+        overscroll-behavior-x:auto;
+      }
       .page{
-        width:1120px;
-        max-width:none;
-        margin:0;
+        width:1120px!important;
+        min-width:1120px!important;
+        max-width:none!important;
+        margin:0!important;
         padding:12px 18px calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 72px)!important;
       }
       .dashboard-heading{margin-bottom:12px;}
+      .dashboard-date{display:block!important;}
+
       .desktop-dashboard{
-        grid-template-columns:600px 484px;
+        display:grid!important;
+        grid-template-columns:600px 484px!important;
         gap:14px;
+        align-items:start;
       }
-      .desktop-right{
-        position:static;
+      .desktop-left,.desktop-right{display:grid;gap:14px;min-width:0;}
+      .desktop-right{position:static!important;}
+
+      /* Landscape uses the phone quick links, not the reduced desktop list. */
+      #desktop-quick-links{display:none!important;}
+      #mobile-dashboard{
+        display:block!important;
+        grid-column:1 / -1;
+        width:100%;
+        margin-top:14px;
+      }
+      #mobile-dashboard > :not(#quick-links){display:none!important;}
+      #mobile-dashboard #quick-links{
+        display:block!important;
+        border-radius:18px;
+        overflow:hidden;
+      }
+      #mobile-dashboard #quick-links .section-head{display:grid!important;}
+      #mobile-dashboard #quick-links .section-body{padding:12px;}
+      #mobile-dashboard #quick-links .ql-grid{
+        display:grid!important;
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:10px!important;
+      }
+      #mobile-dashboard #quick-links .ql-btn{
+        display:flex;
+        margin:0!important;
+        min-height:82px;
+        padding:11px 12px;
       }
 
-      /* Keep both commodities visible as true side-by-side market cards. */
+      /* Fully readable Corn + Soybeans. */
       #markets-section .section-body{padding:12px;}
       #markets-section .fv-mkt-grid{
-        grid-template-columns:repeat(2,minmax(278px,1fr));
+        grid-template-columns:repeat(2,minmax(278px,1fr))!important;
         gap:10px;
       }
-      #markets-section [data-fv="mktCorn"],
-      #markets-section [data-fv="mktSoy"]{
-        min-width:0;
-      }
 
-      /* Compact, readable KPI cards: number gets its own line instead of
-         colliding with the title on the narrow right column. */
+      /* Clean KPI cards without number/text collisions. */
+      #attention-section{border-radius:18px!important;overflow:hidden!important;}
       #attention-section .section-body{padding:12px;}
       #attention-section .kpi-grid{
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        gap:9px;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        gap:9px!important;
       }
       #attention-section .dash-kpi{
-        padding:11px 10px;
+        margin:0!important;
+        padding:11px 10px!important;
         min-height:132px;
+        border-radius:14px;
       }
       #attention-section .dash-kpi-main{
         display:grid;
         grid-template-columns:1fr;
         gap:5px;
       }
-      #attention-section .dash-kpi-text{
-        display:flex;
-        flex-direction:column;
-        min-width:0;
-      }
-      #attention-section .dash-kpi-label{
-        font-size:9px;
-        line-height:1.15;
-      }
-      #attention-section .dash-kpi-title{
-        margin-top:3px;
-        font-size:12px;
-        line-height:1.18;
-      }
+      #attention-section .dash-kpi-label{font-size:9px;line-height:1.15;}
+      #attention-section .dash-kpi-title{margin-top:3px;font-size:12px;line-height:1.18;}
       #attention-section .dash-kpi-count{
         grid-row:1;
         width:auto;
@@ -748,10 +771,16 @@
         font-size:24px;
         line-height:1;
       }
-      #attention-section .dash-kpi-sub{
-        margin-top:7px;
-        font-size:10px;
-        line-height:1.25;
+      #attention-section .dash-kpi-sub{margin-top:7px;font-size:10px;line-height:1.25;}
+
+      /* Smooth the card transitions/corners visible between the two columns. */
+      .desktop-dashboard .section,
+      .desktop-dashboard .fv-weather-card{
+        border-radius:18px!important;
+        overflow:hidden!important;
+      }
+      .desktop-dashboard .section-head{
+        border-radius:18px 18px 0 0;
       }
     }
 
@@ -1481,6 +1510,7 @@ document.addEventListener(
       "use strict";
 
       const BREAKPOINT = 900;
+      const isPhoneLandscape = () => window.innerWidth >= 560 && window.innerWidth <= 1100 && window.innerHeight <= 600 && window.matchMedia("(orientation: landscape)").matches;
       let mobileMode = null;
 
       const refs = {};
@@ -1541,7 +1571,7 @@ document.addEventListener(
       }
 
       function applyLayout(){
-        const shouldBeMobile = window.innerWidth < BREAKPOINT;
+        const shouldBeMobile = window.innerWidth < BREAKPOINT && !isPhoneLandscape();
         if(shouldBeMobile === mobileMode) return;
 
         mobileMode = shouldBeMobile;
