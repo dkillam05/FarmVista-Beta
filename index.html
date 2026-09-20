@@ -991,8 +991,11 @@
 
       /* Extra landscape runway below the last cards. The footer is fixed, so
          this lets the final row scroll fully above it instead of stopping behind it. */
+      /* Match portrait's finished bottom position: give landscape enough
+         real document height to place the entire final card above the fixed
+         footer, plus the same generous blank breathing room below it. */
       .desktop-dashboard{
-        margin-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 240px)!important;
+        margin-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 420px)!important;
       }
     }
 
