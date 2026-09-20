@@ -781,7 +781,10 @@
       #landscape-quick-links-slot{
         display:block!important;
         width:1180px!important;
+        min-height:120px!important;
         margin-top:14px!important;
+        position:relative!important;
+        z-index:2!important;
       }
       #landscape-quick-links-slot #quick-links{
         display:block!important;
@@ -1595,7 +1598,10 @@ document.addEventListener(
 
       function applyLayout(){
         const shouldBeMobile = window.innerWidth < BREAKPOINT && !isPhoneLandscape();
-        if(shouldBeMobile === mobileMode) return;
+        const landscapeNow = isPhoneLandscape();
+        const landscapeChanged = landscapeNow !== applyLayout._landscape;
+        applyLayout._landscape = landscapeNow;
+        if(shouldBeMobile === mobileMode && !landscapeChanged) return;
 
         mobileMode = shouldBeMobile;
 
@@ -1608,7 +1614,7 @@ document.addEventListener(
         /* In iPhone landscape the desktop command center is visible, but the
            full PHONE quick-links section must also remain visible. Move that
            section outside #mobile-dashboard so desktop CSS cannot hide it. */
-        if(isPhoneLandscape()){
+        if(landscapeNow){
           if(refs.quickLinks && refs.landscapeQuickLinks){
             refs.landscapeQuickLinks.appendChild(refs.quickLinks);
           }
