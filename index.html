@@ -678,13 +678,14 @@
     /* iPhone landscape: intentionally key off landscape + short viewport,
        not CSS width. iOS/PWA viewport widths vary by device and display mode. */
     @media (orientation:landscape) and (max-height:650px){
-      html{overflow-x:auto!important;}
+      html{overflow-x:auto!important;max-width:none!important;}
       body{
         overflow-x:auto!important;
-        min-width:1180px!important;
+        max-width:none!important;
+        min-width:0!important;
         -webkit-overflow-scrolling:touch;
       }
-      fv-shell{display:block!important;min-width:1180px!important;}
+      fv-shell{display:block!important;width:100vw!important;min-width:0!important;}
       .page{
         width:1180px!important;
         min-width:1180px!important;
@@ -735,6 +736,15 @@
         padding:11px 12px!important;
       }
 
+      /* The shell's shadow main is the actual viewport scroller on iOS.
+         Body/html are globally overflow-x:hidden in theme/app.css. */
+      fv-shell::part(main){
+        overflow-x:auto!important;
+        overflow-y:auto!important;
+        -webkit-overflow-scrolling:touch!important;
+        touch-action:pan-x pan-y!important;
+      }
+
       #markets-section .section-body{padding:12px;}
       #markets-section .fv-mkt-grid{
         grid-template-columns:repeat(2,minmax(294px,1fr))!important;
@@ -765,6 +775,32 @@
         overflow:hidden!important;
       }
       .desktop-dashboard .section-head{border-radius:18px 18px 0 0;}
+    }
+
+    @media (orientation:landscape) and (max-height:650px){
+      #landscape-quick-links-slot{
+        display:block!important;
+        width:1180px!important;
+        margin-top:14px!important;
+      }
+      #landscape-quick-links-slot #quick-links{
+        display:block!important;
+        width:100%!important;
+        border-radius:18px!important;
+        overflow:hidden!important;
+      }
+      #landscape-quick-links-slot #quick-links .section-head{display:grid!important;}
+      #landscape-quick-links-slot #quick-links .section-body{display:block!important;padding:12px!important;}
+      #landscape-quick-links-slot #quick-links .ql-grid{
+        display:grid!important;
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:10px!important;
+      }
+      #landscape-quick-links-slot #quick-links .ql-btn{
+        display:flex!important;
+        min-height:82px!important;
+        margin:0!important;
+      }
     }
 
   </style>
@@ -1081,6 +1117,7 @@
   <div id="mobile-kpi-slot"></div>
   <div id="mobile-copilot-slot"></div>
 </div>
+  <div id="landscape-quick-links-slot"></div>
     </main>
   </fv-shell>
 
@@ -1513,6 +1550,9 @@ document.addEventListener(
         refs.mobileBoard = document.getElementById("mobile-board-slot");
         refs.mobileKpi = document.getElementById("mobile-kpi-slot");
         refs.mobileCopilot = document.getElementById("mobile-copilot-slot");
+        refs.quickLinks = document.getElementById("quick-links");
+        refs.landscapeQuickLinks = document.getElementById("landscape-quick-links-slot");
+        refs.mobileDashboard = document.getElementById("mobile-dashboard");
       }
 
       function moveToMobile(){
@@ -1563,6 +1603,17 @@ document.addEventListener(
           moveToMobile();
         }else{
           moveToDesktop();
+        }
+
+        /* In iPhone landscape the desktop command center is visible, but the
+           full PHONE quick-links section must also remain visible. Move that
+           section outside #mobile-dashboard so desktop CSS cannot hide it. */
+        if(isPhoneLandscape()){
+          if(refs.quickLinks && refs.landscapeQuickLinks){
+            refs.landscapeQuickLinks.appendChild(refs.quickLinks);
+          }
+        }else if(refs.quickLinks && refs.mobileDashboard){
+          refs.mobileDashboard.insertBefore(refs.quickLinks, refs.mobileDashboard.firstChild);
         }
 
         window.dispatchEvent(new Event("resize"));
