@@ -961,6 +961,48 @@
       }
     }
 
+    /* Landscape seamless gutter: cards own their rounding; the column seam has
+       no shadow/paint, so horizontal panning reads as one continuous canvas. */
+    @media (orientation:landscape) and (max-height:650px){
+      .desktop-dashboard{
+        column-gap:28px!important;
+        background:#f4f7f4!important;
+      }
+      .desktop-left,.desktop-right{
+        background:#f4f7f4!important;
+      }
+
+      /* Kill inward-facing shadow bands that were making the grid seam visible. */
+      .desktop-left > .section,
+      .desktop-left > #fv-weather > .fv-weather-card{
+        box-shadow:-5px 9px 22px rgba(24,58,31,.055),0 2px 6px rgba(24,58,31,.025)!important;
+      }
+      .desktop-right > .section{
+        box-shadow:5px 9px 22px rgba(24,58,31,.055),0 2px 6px rgba(24,58,31,.025)!important;
+      }
+
+      /* Fade the canvas through the gutter so there is no vertical column rail. */
+      .desktop-dashboard{
+        position:relative;
+      }
+      .desktop-dashboard::after{
+        content:""!important;
+        display:block!important;
+        position:absolute!important;
+        top:0!important;
+        bottom:0!important;
+        left:630px!important;
+        width:28px!important;
+        pointer-events:none!important;
+        z-index:0!important;
+        background:#f4f7f4!important;
+      }
+      .desktop-left,.desktop-right{
+        position:relative!important;
+        z-index:1!important;
+      }
+    }
+
   </style>
 </head>
 
