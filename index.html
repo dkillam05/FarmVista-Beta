@@ -1003,6 +1003,63 @@
       }
     }
 
+    /* Landscape v2: one continuous dashboard canvas.
+       The old left/right wrappers are flattened so they cannot create visible
+       column bands; individual cards are the only painted surfaces. */
+    @media (orientation:landscape) and (max-height:650px){
+      .page{
+        background:#f4f7f4!important;
+        padding-left:18px!important;
+        padding-right:18px!important;
+      }
+      .desktop-dashboard{
+        display:grid!important;
+        grid-template-columns:630px 500px!important;
+        column-gap:28px!important;
+        row-gap:16px!important;
+        align-items:start!important;
+        background:transparent!important;
+        position:relative!important;
+        isolation:isolate;
+      }
+      .desktop-left,.desktop-right{
+        display:contents!important;
+      }
+
+      /* Explicit placement replaces the visual column wrappers. */
+      #fv-weather{grid-column:1;grid-row:1;}
+      #logistics-panel{grid-column:2;grid-row:1;}
+      #markets-section{grid-column:1;grid-row:2;}
+      #attention-section{grid-column:2;grid-row:2;}
+      #message-board-section{grid-column:1;grid-row:3;}
+      #desktop-quick-links{grid-column:2;grid-row:3;}
+      #ai-section{grid-column:1;grid-row:4;}
+
+      /* Absolutely no dashboard/column paint or generated seam. */
+      .desktop-dashboard::before,.desktop-dashboard::after,
+      .desktop-left::before,.desktop-left::after,
+      .desktop-right::before,.desktop-right::after{
+        content:none!important;
+        display:none!important;
+      }
+
+      /* Uniform card depth in every direction; no side-specific shadow bands. */
+      .desktop-dashboard .section,
+      .desktop-dashboard .fv-weather-card{
+        margin:0!important;
+        border-radius:22px!important;
+        box-shadow:0 8px 20px rgba(24,58,31,.065)!important;
+      }
+
+      /* Quick Links remains part of the same single canvas in landscape. */
+      #desktop-quick-links{
+        display:block!important;
+      }
+      #mobile-dashboard{
+        display:none!important;
+      }
+    }
+
   </style>
 </head>
 
