@@ -675,70 +675,72 @@
     }
 
 
-    /* iPhone landscape: keep the full mobile quick-link set, but use the
-       command-center cards for weather/markets/attention with a smooth,
-       horizontally pannable canvas. Desktop (>=1101px) is unchanged. */
-    @media (min-width:560px) and (max-width:1100px) and (max-height:600px) and (orientation:landscape){
-      html,body{
+    /* iPhone landscape: intentionally key off landscape + short viewport,
+       not CSS width. iOS/PWA viewport widths vary by device and display mode. */
+    @media (orientation:landscape) and (max-height:650px){
+      html{overflow-x:auto!important;}
+      body{
         overflow-x:auto!important;
+        min-width:1180px!important;
         -webkit-overflow-scrolling:touch;
-        overscroll-behavior-x:auto;
       }
+      fv-shell{display:block!important;min-width:1180px!important;}
       .page{
-        width:1120px!important;
-        min-width:1120px!important;
+        width:1180px!important;
+        min-width:1180px!important;
         max-width:none!important;
         margin:0!important;
         padding:12px 18px calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 72px)!important;
       }
       .dashboard-heading{margin-bottom:12px;}
       .dashboard-date{display:block!important;}
-
       .desktop-dashboard{
         display:grid!important;
-        grid-template-columns:600px 484px!important;
+        grid-template-columns:630px 500px!important;
         gap:14px;
         align-items:start;
       }
-      .desktop-left,.desktop-right{display:grid;gap:14px;min-width:0;}
+      .desktop-left,.desktop-right{display:grid!important;gap:14px;min-width:0;}
       .desktop-right{position:static!important;}
 
-      /* Landscape uses the phone quick links, not the reduced desktop list. */
       #desktop-quick-links{display:none!important;}
+
+      /* Full phone quick links are a real landscape section below the two columns. */
       #mobile-dashboard{
         display:block!important;
-        grid-column:1 / -1;
-        width:100%;
-        margin-top:14px;
+        width:1180px!important;
+        margin-top:14px!important;
       }
       #mobile-dashboard > :not(#quick-links){display:none!important;}
       #mobile-dashboard #quick-links{
         display:block!important;
-        border-radius:18px;
-        overflow:hidden;
+        width:100%!important;
+        border:1px solid var(--border)!important;
+        border-radius:18px!important;
+        background:var(--surface)!important;
+        box-shadow:var(--shadow,0 8px 20px rgba(0,0,0,.08))!important;
+        overflow:hidden!important;
       }
-      #mobile-dashboard #quick-links .section-head{display:grid!important;}
-      #mobile-dashboard #quick-links .section-body{padding:12px;}
+      #mobile-dashboard #quick-links > .section-head{display:grid!important;}
+      #mobile-dashboard #quick-links > .section-body{display:block!important;padding:12px!important;}
       #mobile-dashboard #quick-links .ql-grid{
         display:grid!important;
         grid-template-columns:repeat(4,minmax(0,1fr))!important;
         gap:10px!important;
       }
       #mobile-dashboard #quick-links .ql-btn{
-        display:flex;
+        display:flex!important;
         margin:0!important;
-        min-height:82px;
-        padding:11px 12px;
+        min-height:82px!important;
+        padding:11px 12px!important;
       }
 
-      /* Fully readable Corn + Soybeans. */
       #markets-section .section-body{padding:12px;}
       #markets-section .fv-mkt-grid{
-        grid-template-columns:repeat(2,minmax(278px,1fr))!important;
+        grid-template-columns:repeat(2,minmax(294px,1fr))!important;
         gap:10px;
       }
 
-      /* Clean KPI cards without number/text collisions. */
       #attention-section{border-radius:18px!important;overflow:hidden!important;}
       #attention-section .section-body{padding:12px;}
       #attention-section .kpi-grid{
@@ -746,42 +748,23 @@
         gap:9px!important;
       }
       #attention-section .dash-kpi{
-        margin:0!important;
-        padding:11px 10px!important;
-        min-height:132px;
-        border-radius:14px;
+        margin:0!important;padding:11px 10px!important;min-height:132px;border-radius:14px;
       }
-      #attention-section .dash-kpi-main{
-        display:grid;
-        grid-template-columns:1fr;
-        gap:5px;
-      }
+      #attention-section .dash-kpi-main{display:grid;grid-template-columns:1fr;gap:5px;}
       #attention-section .dash-kpi-label{font-size:9px;line-height:1.15;}
       #attention-section .dash-kpi-title{margin-top:3px;font-size:12px;line-height:1.18;}
       #attention-section .dash-kpi-count{
-        grid-row:1;
-        width:auto;
-        min-width:0;
-        height:auto;
-        padding:0;
-        justify-self:end;
-        border:0;
-        border-radius:0;
-        background:transparent;
-        font-size:24px;
-        line-height:1;
+        grid-row:1;width:auto;min-width:0;height:auto;padding:0;justify-self:end;
+        border:0;border-radius:0;background:transparent;font-size:24px;line-height:1;
       }
       #attention-section .dash-kpi-sub{margin-top:7px;font-size:10px;line-height:1.25;}
 
-      /* Smooth the card transitions/corners visible between the two columns. */
       .desktop-dashboard .section,
       .desktop-dashboard .fv-weather-card{
         border-radius:18px!important;
         overflow:hidden!important;
       }
-      .desktop-dashboard .section-head{
-        border-radius:18px 18px 0 0;
-      }
+      .desktop-dashboard .section-head{border-radius:18px 18px 0 0;}
     }
 
   </style>
@@ -1510,7 +1493,7 @@ document.addEventListener(
       "use strict";
 
       const BREAKPOINT = 900;
-      const isPhoneLandscape = () => window.innerWidth >= 560 && window.innerWidth <= 1100 && window.innerHeight <= 600 && window.matchMedia("(orientation: landscape)").matches;
+      const isPhoneLandscape = () => window.innerHeight <= 650 && window.matchMedia("(orientation: landscape)").matches;
       let mobileMode = null;
 
       const refs = {};
