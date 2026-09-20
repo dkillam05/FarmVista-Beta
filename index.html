@@ -807,6 +807,128 @@
       .page{padding-top:12px!important;}
     }
 
+    /* Premium iPhone-landscape polish — visual only. No dashboard/data movement. */
+    @media (orientation:landscape) and (max-height:650px){
+      body{
+        background:
+          radial-gradient(circle at 18% 8%,rgba(184,226,194,.22),transparent 34%),
+          radial-gradient(circle at 86% 28%,rgba(216,239,221,.30),transparent 30%),
+          #f4f8f4!important;
+      }
+      .page{
+        background:linear-gradient(135deg,rgba(255,255,255,.52),rgba(231,242,233,.48))!important;
+      }
+      .desktop-dashboard{
+        gap:16px!important;
+        padding:4px!important;
+        border-radius:26px;
+      }
+      .desktop-left,.desktop-right{gap:16px!important;}
+
+      .desktop-dashboard .section,
+      .desktop-dashboard .fv-weather-card{
+        border:1px solid rgba(47,108,60,.10)!important;
+        border-radius:22px!important;
+        background:rgba(255,255,255,.92)!important;
+        box-shadow:0 10px 28px rgba(24,58,31,.08),0 2px 7px rgba(24,58,31,.04)!important;
+        overflow:hidden!important;
+      }
+      .desktop-dashboard .section-head{
+        padding:14px 16px!important;
+        border-bottom:1px solid rgba(47,108,60,.09)!important;
+        border-radius:22px 22px 0 0!important;
+        background:linear-gradient(100deg,rgba(221,238,225,.72),rgba(255,255,255,.82) 70%)!important;
+      }
+      .desktop-dashboard .section-head .icon{
+        width:32px!important;height:32px!important;font-size:22px!important;
+      }
+      .desktop-dashboard .section-body{padding:14px!important;}
+
+      /* Weather gets the subtle sky treatment from the approved mockup. */
+      .desktop-left #fv-weather .fv-weather-card{
+        position:relative;
+        padding:14px 18px 16px!important;
+        background:
+          radial-gradient(circle at 84% 15%,rgba(193,224,250,.48),transparent 31%),
+          linear-gradient(135deg,rgba(255,255,255,.98),rgba(238,248,255,.88))!important;
+      }
+      .desktop-left #fv-weather .fv-weather-card::before{
+        content:"";
+        position:absolute;inset:0;
+        pointer-events:none;
+        background:linear-gradient(120deg,rgba(255,255,255,.22),transparent 55%);
+      }
+
+      /* Modern attention tiles: distinct, restrained category colors. */
+      #attention-section .dash-kpi{
+        position:relative;
+        overflow:hidden;
+        border-radius:17px!important;
+        box-shadow:0 7px 18px rgba(25,55,32,.07)!important;
+        transition:transform .18s ease,box-shadow .18s ease;
+      }
+      #attention-section .dash-kpi::before{
+        content:"";
+        position:absolute;
+        left:0;top:0;bottom:0;width:4px;
+        border-radius:17px 0 0 17px;
+      }
+      #attention-section #wo-approve-kpi{
+        border-color:rgba(222,154,28,.28)!important;
+        background:linear-gradient(135deg,rgba(255,248,229,.98),rgba(255,255,255,.96))!important;
+      }
+      #attention-section #wo-approve-kpi::before{background:#d99a22;}
+      #attention-section #wo-approve-kpi .dash-kpi-label,
+      #attention-section #wo-approve-kpi .dash-kpi-count{color:#9a6500!important;}
+
+      #attention-section #boundary-kpi{
+        border-color:rgba(126,87,194,.24)!important;
+        background:linear-gradient(135deg,rgba(247,241,255,.98),rgba(255,255,255,.96))!important;
+      }
+      #attention-section #boundary-kpi::before{background:#8a61c9;}
+      #attention-section #boundary-kpi .dash-kpi-label,
+      #attention-section #boundary-kpi .dash-kpi-count{color:#6e43ae!important;}
+
+      #attention-section #bag-kpi{
+        border-color:rgba(53,132,208,.24)!important;
+        background:linear-gradient(135deg,rgba(237,247,255,.98),rgba(255,255,255,.96))!important;
+      }
+      #attention-section #bag-kpi::before{background:#3d8bd3;}
+      #attention-section #bag-kpi .dash-kpi-label,
+      #attention-section #bag-kpi .dash-kpi-count{color:#216daF!important;}
+
+      #attention-section .dash-kpi-count{
+        background:rgba(255,255,255,.64)!important;
+        border:0!important;
+        border-radius:12px!important;
+        font-size:25px!important;
+        font-weight:1000!important;
+      }
+
+      /* Pre-trip stats match the same softer card language. */
+      #logistics-section .logistics-stat{
+        border-radius:16px!important;
+        border-color:rgba(47,108,60,.13)!important;
+        background:linear-gradient(145deg,rgba(247,252,248,.98),rgba(255,255,255,.96))!important;
+        box-shadow:0 6px 15px rgba(24,58,31,.05);
+      }
+
+      /* Markets and Quick Links use the same floating-card system. */
+      #markets-section .fv-mkt-grid > div,
+      #desktop-quick-links .ql-btn{
+        border-radius:16px!important;
+      }
+      #desktop-quick-links{
+        border-radius:22px!important;
+        box-shadow:0 10px 28px rgba(24,58,31,.08)!important;
+      }
+      #desktop-quick-links .ql-btn{
+        background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(244,249,245,.96))!important;
+        border-color:rgba(47,108,60,.12)!important;
+        box-shadow:0 5px 14px rgba(24,58,31,.05)!important;
+      }
+    }
+
   </style>
 </head>
 
