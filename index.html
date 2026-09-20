@@ -996,20 +996,21 @@
          footer, plus the same generous blank breathing room below it. */
       .desktop-dashboard{margin-bottom:0!important;}
 
-      /* Landscape bottom spacer: a real in-flow element, not margin/padding.
-         This increases the document's measured scrollHeight on iOS/PWA. */
-      .page::after{
+      /* iPhone landscape uses the document viewport for vertical scrolling.
+         Do not try to extend the slotted page or shadow-main; make the actual
+         document itself taller. This runway is deliberately on BODY. */
+      .page::after{content:none!important;display:none!important;}
+      fv-shell::part(main){padding-bottom:0!important;scroll-padding-bottom:0!important;}
+
+      body::after{
         content:""!important;
         display:block!important;
-        width:1px!important;
-        height:420px!important;
-        clear:both!important;
+        width:100%!important;
+        height:360px!important;
         pointer-events:none!important;
       }
-
-      fv-shell::part(main){
-        padding-bottom:0!important;
-        scroll-padding-bottom:0!important;
+      html,body{
+        min-height:calc(100% + 360px)!important;
       }
     }
 
