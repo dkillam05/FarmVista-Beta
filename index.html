@@ -988,6 +988,12 @@
 
       #desktop-quick-links{display:block!important;}
       #mobile-dashboard{display:none!important;}
+
+      /* Extra landscape runway below the last cards. The footer is fixed, so
+         this lets the final row scroll fully above it instead of stopping behind it. */
+      .desktop-dashboard{
+        margin-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 120px)!important;
+      }
     }
 
   </style>
