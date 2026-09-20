@@ -777,39 +777,27 @@
       .desktop-dashboard .section-head{border-radius:18px 18px 0 0;}
     }
 
-    @media (orientation:landscape) and (max-height:650px){
-      #landscape-quick-links-slot{
-        display:block!important;
-        width:1180px!important;
-        min-height:120px!important;
-        margin-top:14px!important;
-        position:relative!important;
-        z-index:2!important;
-      }
-      #landscape-quick-links-slot #landscape-quick-links-static-landscape{
-        display:block!important;
-        width:100%!important;
-        border-radius:18px!important;
-        overflow:hidden!important;
-      }
-      #landscape-quick-links-slot #landscape-quick-links-static-landscape .section-head{display:grid!important;}
-      #landscape-quick-links-slot #landscape-quick-links-static-landscape .section-body{display:block!important;padding:12px!important;}
-      #landscape-quick-links-slot #landscape-quick-links-static-landscape .ql-grid{
-        display:grid!important;
-        grid-template-columns:repeat(4,minmax(0,1fr))!important;
-        gap:10px!important;
-      }
-      #landscape-quick-links-slot #landscape-quick-links-static-landscape .ql-btn{
-        display:flex!important;
-        min-height:82px!important;
-        margin:0!important;
-      }
-    }
 
-    #landscape-quick-links-slot{display:block!important;width:1180px!important;margin-top:14px!important;}
     @media (orientation:landscape) and (max-height:650px){
       #landscape-quick-links-slot{display:block!important;}
       #landscape-quick-links-static-landscape{display:block!important;}
+    }
+
+    .fv-landscape-extra{display:none!important;}
+    @media (orientation:landscape) and (max-height:650px){
+      #desktop-quick-links{
+        display:block!important;
+        border-radius:18px!important;
+        overflow:hidden!important;
+      }
+      #desktop-quick-links .section-body{display:block!important;padding:12px!important;}
+      #desktop-quick-links .ql-grid{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:10px!important;
+      }
+      #desktop-quick-links .ql-btn{display:flex!important;margin:0!important;}
+      #desktop-quick-links .fv-landscape-extra{display:flex!important;}
     }
 
   </style>
@@ -971,6 +959,9 @@
             </header>
 <div class="section-body">
   <div class="ql-grid">
+<a href="pages/grain/grain-ticket-scan.html" class="ql-btn fv-landscape-extra" id="ql-grain-ticket-scan-landscape"><div class="ql-left"><div class="ql-label">Grain</div><div class="ql-title">Scan Grain Ticket</div><div class="ql-sub">Take a picture of a grain ticket</div></div><div class="ql-right">🧾</div></a>
+<a href="pages/qr-scan.html" class="ql-btn fv-landscape-extra" id="ql-equipment-service-landscape"><div class="ql-left"><div class="ql-label">Equipment</div><div class="ql-title">Equipment Repair Request</div><div class="ql-sub">Scan equipment QR code and add request</div></div><div class="ql-right">📷</div></a>
+<a href="pages/equipment/steering.html" class="ql-btn fv-landscape-extra" id="ql-steering-landscape"><div class="ql-left"><div class="ql-label">Equipment</div><div class="ql-title">FarmVista Steering</div><div class="ql-sub">Open tractor steering controls</div></div><div class="ql-right">↔️</div></a>
 
 <a href="pages/logistics/pre-trip.html"
    class="ql-btn"
@@ -1126,115 +1117,7 @@
   <div id="mobile-kpi-slot"></div>
   <div id="mobile-copilot-slot"></div>
 </div>
-  <div id="landscape-quick-links-slot">  <section class="section" id="landscape-quick-links-static-landscape" aria-label="Quick Links">
-    <header class="section-head">
-      <div class="icon" aria-hidden="true">⚡</div>
-      <div><strong>Quick Links</strong></div>
-    </header>
 
-    <div class="section-body">
-      <div class="ql-grid">
-
-        <a href="pages/logistics/pre-trip.html"
-           class="ql-btn"
-           id="ql-pretrip-add-mobile-landscape"
-           aria-label="Add Pre-Trip Inspection">
-          <div class="ql-left">
-            <div class="ql-label">Logistics</div>
-            <div class="ql-title">Add Pre-Trip</div>
-            <div class="ql-sub">Complete today's inspection</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">🚛</div>
-        </a>
-
-        <a href="pages/grain/grain-ticket-scan.html"
-   class="ql-btn"
-   id="ql-grain-ticket-scan-mobile-landscape"
-   aria-label="Scan Grain Ticket">
-  <div class="ql-left">
-    <div class="ql-label">Grain</div>
-    <div class="ql-title">Scan Grain Ticket</div>
-    <div class="ql-sub">Take a picture of a grain ticket</div>
-  </div>
-  <div class="ql-right" aria-hidden="true">🧾</div>
-</a>
-
-            <a href="pages/qr-scan.html"
-           class="ql-btn"
-           id="ql-equipment-service-mobile-landscape"
-           aria-label="Add Equipment Service Request">
-          <div class="ql-left">
-            <div class="ql-label">Equipment</div>
-            <div class="ql-title">Equipment Repair Request</div>
-            <div class="ql-sub">Scan equipment QR code and add request</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">📷</div>
-        </a>    
-
-        <a href="pages/crop-production/field-maintenance/maintenance-add.html"
-           class="ql-btn"
-           id="ql-maint-add-mobile-landscape"
-           aria-label="Field Repair Request">
-          <div class="ql-left">
-            <div class="ql-label">Crop Production</div>
-            <div class="ql-title">Field Repair Request</div>
-            <div class="ql-sub">Report a field repair or maintenance need</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">🧰</div>
-        </a>
-
-        <a href="pages/office/field-boundaries.html"
-           class="ql-btn"
-           id="ql-boundaries-mobile-landscape"
-           aria-label="Boundary Correction Needed">
-          <div class="ql-left">
-            <div class="ql-label">Office</div>
-            <div class="ql-title">Boundary Correction Needed</div>
-            <div class="ql-sub">Request a field boundary correction</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">🗺️</div>
-        </a>
-
-        <a href="pages/equipment/shop-equipment-bulk.html"
-           class="ql-btn"
-           id="ql-equip-overview-mobile-landscape"
-           aria-label="Equipment Overview">
-          <div class="ql-left">
-            <div class="ql-label">Equipment</div>
-            <div class="ql-title">Equipment Overview</div>
-            <div class="ql-sub">Bulk view / quick scan</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">🚜</div>
-        </a>
-
-        <a href="pages/crop-production/field-weather.html"
-           class="ql-btn"
-           id="ql-field-weather-mobile-landscape"
-           aria-label="Field Readiness">
-          <div class="ql-left">
-            <div class="ql-label">Crop Production</div>
-            <div class="ql-title">Field Readiness</div>
-            <div class="ql-sub">Forecast + rainfall by field</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">🌦️</div>
-        </a>
-
-        <a href="pages/equipment/steering.html"
-           class="ql-btn"
-           id="ql-steering-landscape"
-           aria-label="FarmVista Steering">
-          <div class="ql-left">
-            <div class="ql-label">Equipment</div>
-            <div class="ql-title">FarmVista Steering</div>
-            <div class="ql-sub">Open tractor steering controls</div>
-          </div>
-          <div class="ql-right" aria-hidden="true">↔️</div>
-        </a>
-
-      </div>
-    </div>
-  </section>
-</div>
     </main>
   </fv-shell>
 
@@ -1668,7 +1551,6 @@ document.addEventListener(
         refs.mobileKpi = document.getElementById("mobile-kpi-slot");
         refs.mobileCopilot = document.getElementById("mobile-copilot-slot");
         refs.quickLinks = document.getElementById("quick-links");
-        refs.landscapeQuickLinks = document.getElementById("landscape-quick-links-slot");
         refs.mobileDashboard = document.getElementById("mobile-dashboard");
       }
 
@@ -1723,17 +1605,6 @@ document.addEventListener(
           moveToMobile();
         }else{
           moveToDesktop();
-        }
-
-        /* In iPhone landscape the desktop command center is visible, but the
-           full PHONE quick-links section must also remain visible. Move that
-           section outside #mobile-dashboard so desktop CSS cannot hide it. */
-        if(landscapeNow){
-          if(refs.quickLinks && refs.landscapeQuickLinks){
-            refs.landscapeQuickLinks.appendChild(refs.quickLinks);
-          }
-        }else if(refs.quickLinks && refs.mobileDashboard){
-          refs.mobileDashboard.insertBefore(refs.quickLinks, refs.mobileDashboard.firstChild);
         }
 
         window.dispatchEvent(new Event("resize"));
