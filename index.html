@@ -989,17 +989,11 @@
       #desktop-quick-links{display:block!important;}
       #mobile-dashboard{display:none!important;}
 
-      /* Landscape bottom clearance belongs on the shell's REAL scroll content.
-         The footer is fixed in fv-shell's shadow DOM, so reserve the space on
-         part(main), after the dashboard content, instead of faking document height. */
-      .desktop-dashboard{margin-bottom:0!important;}
-      .page::after{content:none!important;display:none!important;}
-      body::after{content:none!important;display:none!important;}
-      html,body{min-height:100%!important;}
-
-      fv-shell::part(main){
-        padding-bottom:260px!important;
-        scroll-padding-bottom:260px!important;
+      /* Use the exact same bottom-spacing mechanism as portrait.
+         Portrait already scrolls correctly because .page owns the footer
+         allowance + breathing room. Landscape now does the same thing. */
+      .page{
+        padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
       }
     }
 
