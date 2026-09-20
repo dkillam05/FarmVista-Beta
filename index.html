@@ -971,18 +971,7 @@
       #desktop-quick-links{grid-column:2;grid-row:3;}
       #ai-section{grid-column:1;grid-row:4;}
 
-      /* Landscape needs real scrollable content after Copilot, not padding.
-         A pseudo-element becomes the final grid row so iOS has actual
-         document height to scroll past before the fixed footer. */
-      .desktop-dashboard::after{
-        content:""!important;
-        display:block!important;
-        grid-column:1 / -1!important;
-        grid-row:5!important;
-        height:0!important;
-        width:1px!important;
-        pointer-events:none!important;
-      }
+
 
       /* The visible rails in v14 were card shadows bleeding into the canvas.
          Landscape now uses border definition only, so nothing paints outside a card. */
@@ -1002,11 +991,12 @@
       #desktop-quick-links{display:block!important;}
       #mobile-dashboard{display:none!important;}
 
-      /* Use the exact same bottom-spacing mechanism as portrait.
-         Portrait already scrolls correctly because .page owns the footer
-         allowance + breathing room. Landscape now does the same thing. */
+      /* Landscape footer is already outside the dashboard canvas.
+         Do not reserve portrait-style footer/breathing-room padding here:
+         it paints as the gray strip above the fixed green footer. */
       .page{
-        padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--ftr-h,42px) + 96px)!important;
+        padding-bottom:0!important;
+        margin-bottom:0!important;
       }
     }
 
