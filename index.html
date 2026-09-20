@@ -994,16 +994,22 @@
       /* Match portrait's finished bottom position: give landscape enough
          real document height to place the entire final card above the fixed
          footer, plus the same generous blank breathing room below it. */
-      .desktop-dashboard{
-        margin-bottom:0!important;
+      .desktop-dashboard{margin-bottom:0!important;}
+
+      /* Landscape bottom spacer: a real in-flow element, not margin/padding.
+         This increases the document's measured scrollHeight on iOS/PWA. */
+      .page::after{
+        content:""!important;
+        display:block!important;
+        width:1px!important;
+        height:420px!important;
+        clear:both!important;
+        pointer-events:none!important;
       }
 
-      /* IMPORTANT: fv-shell::part(main) is the actual iOS landscape scroller.
-         Padding the dashboard/page does not extend that scrollport reliably.
-         Put the portrait-style breathing room on the real scroll container. */
       fv-shell::part(main){
-        padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 360px)!important;
-        scroll-padding-bottom:calc(var(--ftr-h,42px) + env(safe-area-inset-bottom,0px) + 360px)!important;
+        padding-bottom:0!important;
+        scroll-padding-bottom:0!important;
       }
     }
 
