@@ -90,6 +90,15 @@
       min-height:100vh; box-sizing:border-box; background: var(--bg); color: var(--text); }
     ::slotted(.container){ max-width:980px; margin:0 auto; }
 
+    /* Phone landscape uses .main itself as the iOS scroll viewport.
+       Give THAT viewport the same trailing breathing room portrait gets
+       from normal document flow, instead of trying to pad the slotted page. */
+    @media (orientation:landscape) and (max-height:650px){
+      .main{
+        padding-bottom:calc(var(--ftr-h) + env(safe-area-inset-bottom,0px) + 150px)!important;
+      }
+    }
+
     .scrim{ position:fixed; inset:0; background:rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:opacity .2s; z-index:1100; }
     :host(.drawer-open) .scrim,
     :host(.top-open) .scrim{ opacity:1; pointer-events:auto; }
