@@ -800,6 +800,13 @@
       #desktop-quick-links .fv-landscape-extra{display:flex!important;}
     }
 
+    /* iPhone landscape: remove the Dashboard/date header band entirely so
+       command-center cards begin immediately below the app bar. */
+    @media (orientation:landscape) and (max-height:650px){
+      .dashboard-heading{display:none!important;}
+      .page{padding-top:12px!important;}
+    }
+
   </style>
 </head>
 
