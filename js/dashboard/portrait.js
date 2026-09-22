@@ -46,10 +46,6 @@
   const attention = byId('attention-section');
   const attentionGrid = attention.querySelector('.kpi-grid');
   const attentionToggle = toggle(attention, attentionGrid);
-  const orderNote = document.createElement('p');
-  orderNote.className = 'kpi-order-note';
-  orderNote.textContent = 'Press and drag the ↕ Drag handle to rearrange your top four';
-  attention.querySelector('.section-body').prepend(orderNote);
   const attentionTitle = attention.querySelector('strong');
   const originalAttentionTitle = attentionTitle.textContent;
 
@@ -64,9 +60,10 @@
   function restoreAttentionOrder(){
     try {
       const order = JSON.parse(localStorage.getItem(orderKey()) || '[]');
-      if (!Array.isArray(order)) return;
-      const cards = new Map(attentionCards().map(card => [card.id,card]));
-      order.forEach(id => { const card = cards.get(id); if (card) attentionGrid.append(card); });
+      if (Array.isArray(order)) {
+        const cards = new Map(attentionCards().map(card => [card.id,card]));
+        order.forEach(id => { const card = cards.get(id); if (card) attentionGrid.append(card); });
+      }
     } catch {}
     syncAttentionCards();
   }
@@ -79,76 +76,91 @@
     visible.forEach((card,index) => card.classList.toggle('portrait-overflow',index >= 4));
     attentionToggle.hidden = false;
   }
-  function addDragHandles(){
+  function enableLongPressSorting(){
     attentionCards().forEach(card => {
-      if (card.querySelector('.kpi-drag-handle')) return;
+      if (card.dataset.longPressSort === '1') return;
+      card.dataset.longPressSort = '1';
       card.draggable = false;
       card.addEventListener('dragstart',event=>event.preventDefault());
-      const handle = document.createElement('span');
-      handle.className = 'kpi-drag-handle';
-      handle.innerHTML = '<span aria-hidden="true">↕</span><small>Drag</small>';
-      handle.setAttribute('aria-label','Drag to reorder this KPI');
-      handle.setAttribute('role','button');
-      card.prepend(handle);
-      let active = false, moved = false;
-      const reorderAt = (clientX,clientY) => {
-        const target = document.elementFromPoint(clientX,clientY)?.closest?.('#attention-section .dash-kpi');
-        if (!target || target === card || target.parentElement !== attentionGrid) return;
+
+      let timer = 0, active = false, moved = false;
+      let startX = 0, startY = 0;
+
+      const activate = () => {
+        timer = 0;
+        active = true;
+        moved = false;
+        attention.classList.add('is-sorting');
+        card.classList.add('kpi-dragging');
+        try { navigator.vibrate?.(18); } catch {}
+      };
+      const cancelTimer = () => {
+        if (timer) { clearTimeout(timer); timer = 0; }
+      };
+      const begin = (x,y) => {
+        cancelTimer();
+        startX = x; startY = y; active = false; moved = false;
+        timer = setTimeout(activate,420);
+      };
+      const reorderAt = (x,y) => {
+        const target = document.elementFromPoint(x,y)?.closest?.('#attention-section .dash-kpi');
+        if (!target || target === card || target.parentElement !== attentionGrid || !cardCanShow(target)) return;
         const rect = target.getBoundingClientRect();
-        const centerY = rect.top + rect.height / 2;
-        const centerX = rect.left + rect.width / 2;
-        const before = clientY < centerY || (Math.abs(clientY-centerY) < rect.height*.3 && clientX < centerX);
+        const before = y < rect.top + rect.height/2 ||
+          (Math.abs(y-(rect.top+rect.height/2)) < rect.height*.3 && x < rect.left+rect.width/2);
         attentionGrid.insertBefore(card,before ? target : target.nextSibling);
         moved = true;
       };
-      const begin = event => {
-        if (!attention.classList.contains('is-expanded')) return;
-        active = true; moved = false;
-        card.classList.add('kpi-dragging');
+      const move = (x,y,event) => {
+        if (!active) {
+          if (Math.hypot(x-startX,y-startY) > 9) cancelTimer();
+          return;
+        }
+        reorderAt(x,y);
         event.preventDefault();
       };
       const finish = event => {
+        cancelTimer();
         if (!active) return;
         active = false;
+        attention.classList.remove('is-sorting');
         card.classList.remove('kpi-dragging');
-        if (moved) {
-          card.dataset.suppressClick = '1';
-          setTimeout(() => delete card.dataset.suppressClick,350);
-          saveAttentionOrder();
-          syncAttentionCards();
-        }
+        card.dataset.suppressClick = '1';
+        setTimeout(() => delete card.dataset.suppressClick,400);
+        if (moved) { saveAttentionOrder(); syncAttentionCards(); }
         event?.preventDefault?.();
       };
-      handle.addEventListener('touchstart',begin,{passive:false});
-      handle.addEventListener('touchmove',event=>{
-        if(!active||!event.touches?.length)return;
-        reorderAt(event.touches[0].clientX,event.touches[0].clientY);
-        event.preventDefault();
+
+      card.addEventListener('touchstart',event=>{
+        if(event.touches?.length===1)begin(event.touches[0].clientX,event.touches[0].clientY);
+      },{passive:true});
+      card.addEventListener('touchmove',event=>{
+        if(event.touches?.length===1)move(event.touches[0].clientX,event.touches[0].clientY,event);
       },{passive:false});
-      handle.addEventListener('touchend',finish,{passive:false});
-      handle.addEventListener('touchcancel',finish,{passive:false});
-      handle.addEventListener('pointerdown',event=>{
+      card.addEventListener('touchend',finish,{passive:false});
+      card.addEventListener('touchcancel',finish,{passive:false});
+
+      card.addEventListener('pointerdown',event=>{
         if(event.pointerType==='touch')return;
-        begin(event);
-        handle.setPointerCapture?.(event.pointerId);
+        begin(event.clientX,event.clientY);
+        card.setPointerCapture?.(event.pointerId);
       });
-      handle.addEventListener('pointermove',event=>{
-        if(!active||event.pointerType==='touch')return;
-        reorderAt(event.clientX,event.clientY);
-        event.preventDefault();
+      card.addEventListener('pointermove',event=>{
+        if(event.pointerType!=='touch')move(event.clientX,event.clientY,event);
       });
-      handle.addEventListener('pointerup',event=>{if(event.pointerType!=='touch')finish(event);});
-      handle.addEventListener('pointercancel',event=>{if(event.pointerType!=='touch')finish(event);});
-      card.addEventListener('click',event => {
-        if (card.dataset.suppressClick === '1') { event.preventDefault(); event.stopPropagation(); }
+      card.addEventListener('pointerup',event=>{if(event.pointerType!=='touch')finish(event);});
+      card.addEventListener('pointercancel',event=>{if(event.pointerType!=='touch')finish(event);});
+      card.addEventListener('pointerleave',event=>{if(!active&&event.pointerType!=='touch')cancelTimer();});
+      card.addEventListener('click',event=>{
+        if(card.dataset.suppressClick==='1'){event.preventDefault();event.stopPropagation();}
       },true);
     });
   }
-  addDragHandles();
+  enableLongPressSorting();
   restoreAttentionOrder();
   new MutationObserver(() => requestAnimationFrame(syncAttentionCards)).observe(attentionGrid,{subtree:false,childList:true,attributes:true,attributeFilter:['hidden','style','aria-hidden']});
   document.addEventListener('fv:user-ready',restoreAttentionOrder);
-  document.addEventListener('fv:dash-perms-ready',()=>{addDragHandles();restoreAttentionOrder();});
+  document.addEventListener('fv:dash-perms-ready',()=>{enableLongPressSorting();restoreAttentionOrder();});
   function layoutLabels(){
     attentionTitle.textContent = mobile() ? 'At a glance' : originalAttentionTitle;
     aiTitle.textContent = mobile() ? 'FarmVista AI' : originalAITitle;
