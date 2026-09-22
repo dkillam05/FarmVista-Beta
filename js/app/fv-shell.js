@@ -173,6 +173,11 @@
     .row .left{ display:flex; align-items:center; gap:14px; }
     .row .ico{ width:28px; height:28px; display:grid; place-items:center; font-size:24px; line-height:1; text-align:center; opacity:.95; }
     .row .txt{ font-size:16px; line-height:1.25; }
+    #userDetailsLink .txt{
+      font-family:"Avenir Next",Avenir,"Segoe UI",sans-serif;
+      font-weight:600;
+      letter-spacing:-.25px;
+    }
     .row .chev{ opacity:.9; }
 
     .toast{ position:fixed; left:50%; bottom:calc(var(--ftr-h) + env(safe-area-inset-bottom,0px) + 12px);
