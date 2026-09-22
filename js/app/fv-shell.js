@@ -110,11 +110,12 @@
       -webkit-backdrop-filter: blur(8px);
     }
 
-    .drawer{ position:fixed; top:0; bottom:0; left:0; width:min(84vw, 320px);
+    .drawer{ position:fixed; top:80px; bottom:12px; left:12px; width:min(84vw, 320px);
       background: var(--surface); color: var(--text); box-shadow: var(--shadow);
-      transform:translateX(-100%); transition:transform .25s; z-index:1200; -webkit-overflow-scrolling:touch;
-      display:flex; flex-direction:column; height:100%; overflow:hidden; padding-bottom:env(safe-area-inset-bottom,0px);
-      border-right: 1px solid var(--border); }
+      transform:translateX(calc(-100% - 12px)); transition:transform .25s; z-index:1200; -webkit-overflow-scrolling:touch;
+      display:flex; flex-direction:column; height:auto; overflow:hidden;
+      padding-bottom:env(safe-area-inset-bottom,0px);
+      border:1px solid var(--border); border-radius:14px; }
     :host(.drawer-open) .drawer{ transform:translateX(0); }
     .drawer header{ padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex:0 0 auto; background: var(--surface); }
     .org{ display:flex; align-items:center; gap:12px; }
