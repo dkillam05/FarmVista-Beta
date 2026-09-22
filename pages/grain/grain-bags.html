@@ -1005,11 +1005,13 @@
     .field-edit svg { width:18px; height:18px; }
     .field-edit .edit-pencil { display:none; }
     @media (hover:hover) and (pointer:fine) {
-      .field-swipe:hover .field-edit, .field-swipe:focus-within .field-edit { visibility:visible; z-index:1; width:40px; background:var(--sheet-bg); color:var(--sheet-text); }
+      .field-swipe:not(.revealed):hover .field-edit, .field-swipe:not(.revealed):focus-visible .field-edit { visibility:visible; z-index:1; width:40px; background:var(--sheet-bg); color:var(--sheet-text); }
       .field-swipe:not(.revealed) .edit-pencil { display:inline; }
       .field-swipe:not(.revealed) .edit-label { display:none; }
     }
-    .field-swipe:focus-within .field-edit { visibility:visible; z-index:1; }
+    .field-swipe:focus-visible .field-edit, .field-edit:focus-visible { visibility:visible; z-index:1; }
+    .inventory-grid .field-edit .edit-label { color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    .inventory-grid .field-swipe.revealed .field-edit { background:var(--bag-green); color:#fff !important; -webkit-text-fill-color:#fff !important; }
     .field-edit:focus-visible { outline:2px solid currentColor; outline-offset:-4px; }
     #bagEditDialog { max-height:calc(100dvh - 24px); overflow:auto; }
     #bagEditForm label { display:grid; gap:5px; font-size:13px; font-weight:850; }
@@ -3665,6 +3667,34 @@ _priority:
        QUICK PICKUP
     ========================================================= */
 
+    function dismissBagSwipe(cell){
+      cell.classList.remove('revealed');
+      if(cell.contains(document.activeElement)) document.activeElement.blur();
+    }
+
+    // A tap on the open row dismisses Edit instead of opening pickup.
+    // Other page controls retain their normal action after dismissing it.
+    document.addEventListener('pointerdown', () => {
+      body.querySelectorAll('.field-swipe.revealed').forEach(cell => {
+        cell.closest('tr').suppressPickupUntil=0;
+      });
+    }, {capture:true, passive:true});
+    document.addEventListener('click', event => {
+      if(event.target.closest('.field-edit')) return;
+      const openCells=[...body.querySelectorAll('.field-swipe.revealed')];
+      if(!openCells.length) return;
+      const sameRow=openCells.find(cell => cell.closest('tr').contains(event.target));
+      // Ignore the synthetic click that some browsers emit after a swipe.
+      if(sameRow && Date.now() < (sameRow.closest('tr').suppressPickupUntil || 0)){
+        event.preventDefault(); event.stopPropagation(); return;
+      }
+      openCells.forEach(dismissBagSwipe);
+      if(sameRow){ event.preventDefault(); event.stopPropagation(); }
+    }, true);
+    document.addEventListener('keydown', event => {
+      if(event.key==='Escape') body.querySelectorAll('.field-swipe.revealed').forEach(dismissBagSwipe);
+    });
+
     // Swiping is confined to the field cell; the rest of the grid scrolls normally.
     function installBagEditGesture(tr){
       const cell = tr.querySelector('.field-swipe');
@@ -3684,7 +3714,7 @@ _priority:
       });
       let gesture = null;
       cell.addEventListener('touchstart', event => {
-        if(event.touches.length !== 1 || event.target.closest('button')) { gesture = null; return; }
+        if(event.touches.length !== 1) { gesture = null; return; }
         const t = event.touches[0];
         gesture = {x:t.clientX, y:t.clientY, dx:0, horizontal:false};
       }, {passive:true});
@@ -3699,16 +3729,17 @@ _priority:
           tr.suppressPickupUntil=Date.now()+800;
         }
       }, {passive:false});
-      cell.addEventListener('touchend', () => {
+      cell.addEventListener('touchend', event => {
         if(gesture?.horizontal){
+          if(event.cancelable) event.preventDefault();
           tr.suppressPickupUntil=Date.now()+800;
           if(gesture.dx < -35){
             body.querySelectorAll('.field-swipe.revealed').forEach(el => el.classList.remove('revealed'));
             cell.classList.add('revealed');
-          } else if(gesture.dx > 35) cell.classList.remove('revealed');
+          } else if(gesture.dx > 18) dismissBagSwipe(cell);
         }
         gesture=null;
-      });
+      }, {passive:false});
       cell.addEventListener('touchcancel', () => { gesture=null; tr.suppressPickupUntil=Date.now()+800; });
     }
 
