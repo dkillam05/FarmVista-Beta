@@ -110,11 +110,12 @@
       -webkit-backdrop-filter: blur(8px);
     }
 
-    .drawer{ position:fixed; top:80px; bottom:12px; left:12px; width:min(84vw, 320px);
+    .drawer{ position:fixed; top:80px; bottom:auto; left:12px; width:min(84vw, 320px);
+      max-height:calc(100vh - 92px);
       background: var(--surface); color: var(--text); box-shadow: var(--shadow);
       transform:translateX(calc(-100% - 12px)); transition:transform .25s; z-index:1200; -webkit-overflow-scrolling:touch;
       display:flex; flex-direction:column; height:auto; overflow:hidden;
-      padding-bottom:env(safe-area-inset-bottom,0px);
+      padding-bottom:0;
       border:1px solid var(--border); border-radius:14px; }
     :host(.drawer-open) .drawer{ transform:translateX(0); }
     .drawer header{ padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex:0 0 auto; background: var(--surface); }
