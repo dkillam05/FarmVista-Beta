@@ -82,7 +82,7 @@
     .ptr .txt{ font-weight:800; }
 
     .ftr{ position:fixed; inset:auto 0 0 0; height:calc(var(--ftr-h) + env(safe-area-inset-bottom,0px));
-      padding-bottom:env(safe-area-inset-bottom,0px); background:var(--green); color:#fff;
+      padding-bottom:env(safe-area-inset-bottom,0px); background:linear-gradient(to bottom,var(--green) 0,var(--green) calc(100% - env(safe-area-inset-bottom,0px)),#334155 calc(100% - env(safe-area-inset-bottom,0px)),#334155 100%); color:#fff;
       display:flex; align-items:center; justify-content:center; border-top:2px solid var(--gold); z-index:900; }
     .ftr .text{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
