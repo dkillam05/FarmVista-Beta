@@ -370,7 +370,7 @@
   <header class="hdr" part="header">
     <button class="iconbtn js-menu" aria-label="Open menu">≡</button>
     <div class="title">
-      <svg class="brand-sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14C5 14 3 10 3 5c6 0 9 3 9 9ZM12 11c0-6 3-9 9-9 0 6-3 9-9 9Z" fill="currentColor"/></svg><span>FarmVista</span>
+      <svg class="brand-sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21V11" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"/><path d="M12 21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14C5 14 3 10 3 5c6 0 9 3 9 9ZM12 11c0-6 3-9 9-9 0 6-3 9-9 9Z" fill="currentColor" stroke="var(--gold)" stroke-width=".6" stroke-linejoin="round"/></svg><span>FarmVista</span>
       <span id="betaBadge" class="beta-pill" hidden>BETA</span>
     </div>
     <button class="iconbtn js-account" aria-label="Account" title="Account">
@@ -424,7 +424,7 @@
 
   <section class="topdrawer js-top" role="dialog" aria-label="Account & settings">
     <div class="topwrap">
-      <div class="brandrow"><svg class="brandrow-sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14C5 14 3 10 3 5c6 0 9 3 9 9ZM12 11c0-6 3-9 9-9 0 6-3 9-9 9Z" fill="currentColor"/></svg><div class="brandname">FarmVista</div></div>
+      <div class="brandrow"><svg class="brandrow-sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21V11" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"/><path d="M12 21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14C5 14 3 10 3 5c6 0 9 3 9 9ZM12 11c0-6 3-9 9-9 0 6-3 9-9 9Z" fill="currentColor" stroke="var(--gold)" stroke-width=".6" stroke-linejoin="round"/></svg><div class="brandname">FarmVista</div></div>
 
       <div class="section-h">THEME</div>
       <div class="chips">
