@@ -42,7 +42,7 @@
     :host{ --green:#3B7E46; --gold:#D0C542; --hdr-h:56px; --ftr-h:14px;
       display:block; color:#141514; background:#fff; min-height:100vh; position:relative; }
     .hdr{ position:fixed; inset:0 0 auto 0; height:calc(var(--hdr-h) + env(safe-area-inset-top,0px));
-      padding-top:env(safe-area-inset-top,0px); background:linear-gradient(to bottom,var(--green) 0,var(--green) env(safe-area-inset-top,0px),#fff env(safe-area-inset-top,0px),#fff 100%); color:#141b16;
+      padding-top:env(safe-area-inset-top,0px); background:#fff; color:#141b16;
       display:grid; grid-template-columns:56px 1fr 56px; align-items:center; z-index:1000; box-shadow:0 2px 0 rgba(0,0,0,.05); }
     .hdr .title{ text-align:center; font-family:"Avenir Next",Avenir,"Segoe UI",sans-serif; letter-spacing:-.6px; font-weight:600; font-size:23px; display:flex; align-items:center; justify-content:center; gap:8px; }
     .beta-pill{
@@ -82,8 +82,23 @@
     .ptr .txt{ font-weight:800; }
 
     .ftr{ position:fixed; inset:auto 0 0 0; height:calc(var(--ftr-h) + env(safe-area-inset-bottom,0px));
-      padding-bottom:env(safe-area-inset-bottom,0px); background:linear-gradient(to bottom,var(--green) 0,var(--green) calc(100% - env(safe-area-inset-bottom,0px)),#334155 calc(100% - env(safe-area-inset-bottom,0px)),#334155 100%); color:#fff;
+      padding-bottom:env(safe-area-inset-bottom,0px); background:#fff; color:#141b16;
       display:flex; align-items:center; justify-content:center; border-top:2px solid var(--gold); z-index:900; }
+
+    /* Header, footer, and both iPhone safe areas follow the selected theme. */
+    :host-context(html.dark) .hdr,
+    :host-context(html[data-theme="dark"]) .hdr,
+    :host-context(html.dark) .ftr,
+    :host-context(html[data-theme="dark"]) .ftr{
+      background:#111a14;
+      color:#eef4ef;
+      box-shadow:0 2px 0 rgba(255,255,255,.04);
+    }
+
+    :host-context(html.dark) .hdr .iconbtn,
+    :host-context(html[data-theme="dark"]) .hdr .iconbtn{
+      color:#eef4ef;
+    }
     .ftr .text{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .main{ position:relative; padding:
