@@ -44,8 +44,92 @@
   const originalAITitle = aiTitle.textContent, originalAISub = aiSub.textContent;
   toggle(ai, ai.querySelector('.ai-body'), 'Open', 'Close');
   const attention = byId('attention-section');
+  const attentionGrid = attention.querySelector('.kpi-grid');
+  const attentionToggle = toggle(attention, attentionGrid);
+  const orderNote = document.createElement('p');
+  orderNote.className = 'kpi-order-note';
+  orderNote.textContent = 'Drag the handles to choose your top four';
+  attention.querySelector('.section-body').prepend(orderNote);
   const attentionTitle = attention.querySelector('strong');
   const originalAttentionTitle = attentionTitle.textContent;
+
+  const attentionCards = () => [...attentionGrid.querySelectorAll(':scope > .dash-kpi')];
+  const orderKey = () => {
+    const ctx = window.FVUserContext?.get?.() || {};
+    return `fv:dashboard:kpi-order:${ctx.uid || 'device'}:${window.FV_FARM_KEY || 'farm'}`;
+  };
+  function saveAttentionOrder(){
+    try { localStorage.setItem(orderKey(), JSON.stringify(attentionCards().map(card => card.id).filter(Boolean))); } catch {}
+  }
+  function restoreAttentionOrder(){
+    try {
+      const order = JSON.parse(localStorage.getItem(orderKey()) || '[]');
+      if (!Array.isArray(order)) return;
+      const cards = new Map(attentionCards().map(card => [card.id,card]));
+      order.forEach(id => { const card = cards.get(id); if (card) attentionGrid.append(card); });
+    } catch {}
+    syncAttentionCards();
+  }
+  function cardCanShow(card){
+    return !card.hidden && !card.classList.contains('perm-hidden') &&
+      card.getAttribute('aria-hidden') !== 'true' && card.style.display !== 'none';
+  }
+  function syncAttentionCards(){
+    const visible = attentionCards().filter(cardCanShow);
+    visible.forEach((card,index) => card.classList.toggle('portrait-overflow',index >= 4));
+    attentionToggle.hidden = false;
+  }
+  function addDragHandles(){
+    attentionCards().forEach(card => {
+      if (card.querySelector('.kpi-drag-handle')) return;
+      const handle = document.createElement('span');
+      handle.className = 'kpi-drag-handle';
+      handle.textContent = '⠿';
+      handle.setAttribute('aria-hidden','true');
+      card.prepend(handle);
+      let active = false, moved = false;
+      const finish = () => {
+        if (!active) return;
+        active = false;
+        card.classList.remove('kpi-dragging');
+        if (moved) {
+          card.dataset.suppressClick = '1';
+          setTimeout(() => delete card.dataset.suppressClick,250);
+          saveAttentionOrder();
+          syncAttentionCards();
+        }
+      };
+      handle.addEventListener('pointerdown',event => {
+        if (!attention.classList.contains('is-expanded')) return;
+        active = true; moved = false;
+        card.classList.add('kpi-dragging');
+        handle.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      });
+      handle.addEventListener('pointermove',event => {
+        if (!active) return;
+        const target = document.elementFromPoint(event.clientX,event.clientY)?.closest?.('#attention-section .dash-kpi');
+        if (target && target !== card && target.parentElement === attentionGrid) {
+          const rect = target.getBoundingClientRect();
+          const before = event.clientY < rect.top + rect.height / 2 ||
+            (Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height / 3 && event.clientX < rect.left + rect.width / 2);
+          attentionGrid.insertBefore(card,before ? target : target.nextSibling);
+          moved = true;
+        }
+        event.preventDefault();
+      });
+      handle.addEventListener('pointerup',finish);
+      handle.addEventListener('pointercancel',finish);
+      card.addEventListener('click',event => {
+        if (card.dataset.suppressClick === '1') { event.preventDefault(); event.stopPropagation(); }
+      },true);
+    });
+  }
+  addDragHandles();
+  restoreAttentionOrder();
+  new MutationObserver(() => requestAnimationFrame(syncAttentionCards)).observe(attentionGrid,{subtree:false,childList:true,attributes:true,attributeFilter:['hidden','style','aria-hidden']});
+  document.addEventListener('fv:user-ready',restoreAttentionOrder);
+  document.addEventListener('fv:dash-perms-ready',()=>{addDragHandles();restoreAttentionOrder();});
   function layoutLabels(){
     attentionTitle.textContent = mobile() ? 'At a glance' : originalAttentionTitle;
     aiTitle.textContent = mobile() ? 'FarmVista AI' : originalAITitle;

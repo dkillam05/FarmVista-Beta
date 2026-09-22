@@ -2,9 +2,10 @@ import {ready,getFirestore,collection,getDocs} from '/js/firebase/firebase-init.
 import {grainSummary} from './grain-summary.js';
 const $ = id => document.getElementById(id);
 const grain = $('portrait-grain'), hauling = $('portrait-hauling'), list = $('portrait-hauling-list'), toggle = $('hauling-toggle');
+const grainToggle = $('grain-overview-toggle'), bagGrid = $('portrait-grain-bags');
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => value.toLocaleString('en-US',{maximumFractionDigits:2});
-let jobs = null, tickets = null, failed = false, expanded = false, generation = 0, identity = '', loading = false;
+let jobs = null, tickets = null, bagEvents = null, failed = false, expanded = false, grainExpanded = false, generation = 0, identity = '', loading = false;
 const canView = () => Boolean(window.FV_DASH_CAN?.('cap-kpi-grain','view') && window.FV_DASH_CAN?.('grain-ctr','view'));
 function render() {
   if (!canView()) return;
@@ -16,6 +17,30 @@ function render() {
   }
   const summary = grainSummary(jobs,tickets);
   $('portrait-grain-totals').innerHTML = Object.entries(summary.totals).map(([crop,total])=>`<a class="portrait-grain-tile" href="pages/grain/grain-contracts.html?dashboardCrop=${encodeURIComponent(crop)}"><span>${crop === 'Corn' ? '🌽' : '🌱'} ${esc(crop)} remaining</span><strong>${fmt(total)} <small>bu</small></strong><small>View hauling jobs →</small></a>`).join('');
+  const seasonYear = (()=>{const now=new Date();return now.getMonth()>=7?now.getFullYear():now.getFullYear()-1;})();
+  const cropBags = new Map();
+  (bagEvents || []).forEach(row=>{
+    const type=String(row.type||'').toLowerCase().replace(/\s+/g,'');
+    const status=String(row.status||'').toLowerCase().replace(/\s+/g,'');
+    const placed=row.datePlaced?.toDate?.() || row.placedDate?.toDate?.() || row.createdAt?.toDate?.() || null;
+    const rowYear=Number(row.cropYear) || (placed ? (placed.getMonth()>=7?placed.getFullYear():placed.getFullYear()-1) : 0);
+    if(type!=='putdown' || status==='pickedup' || rowYear!==seasonYear) return;
+    const full=Math.max(0,Number(row.counts?.full)||0);
+    let partial=Math.max(0,Number(row.counts?.partial)||0);
+    const feet=row.partialFeet ?? row.counts?.partialFeet;
+    const footTotal=Array.isArray(feet)?feet.reduce((sum,n)=>sum+(Number(n)||0),0):(Number(feet)||0);
+    if(partial===0 && footTotal>0) partial=1;
+    const count=full+partial;
+    if(count<=0) return;
+    const raw=String(row.cropType||row.crop||'Unknown').trim();
+    const crop=raw ? raw.charAt(0).toUpperCase()+raw.slice(1).toLowerCase() : 'Unknown';
+    cropBags.set(crop,(cropBags.get(crop)||0)+count);
+  });
+  bagGrid.innerHTML=[...cropBags.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([crop,count])=>`<a class="portrait-bag-tile" href="/pages/grain/grain-bags.html"><span>${crop === 'Corn' ? '🌽' : '🌱'} ${esc(crop)} bags</span><strong>${fmt(count)}</strong><small>Open grain bag inventory →</small></a>`).join('') || '<p class="portrait-note">No grain bags are currently down.</p>';
+  grainToggle.hidden = false;
+  grainToggle.textContent = grainExpanded ? 'View less' : 'View more';
+  grainToggle.setAttribute('aria-expanded',String(grainExpanded));
+  grain.classList.toggle('is-expanded',grainExpanded);
   const shown = expanded ? summary.rows : summary.rows.slice(0,2);
   let group = '';
   list.innerHTML = shown.map(row=>{
@@ -29,7 +54,8 @@ function render() {
   toggle.setAttribute('aria-expanded',String(expanded));
 }
 toggle.addEventListener('click',()=>{expanded = !expanded;render();if(!expanded && hauling.getBoundingClientRect().top < 0) hauling.scrollIntoView({block:'start'});});
-function stop(){identity='';jobs=null;tickets=null;generation++;loading=false;}
+grainToggle.addEventListener('click',()=>{grainExpanded=!grainExpanded;render();if(!grainExpanded && grain.getBoundingClientRect().top<0) grain.scrollIntoView({block:'start'});});
+function stop(){identity='';jobs=null;tickets=null;bagEvents=null;generation++;loading=false;}
 async function sync(refresh = false){
   const allowed = canView();
   grain.hidden = !allowed; hauling.hidden = !allowed;
@@ -46,10 +72,11 @@ async function sync(refresh = false){
     const db=getFirestore();
     const snapshots = await Promise.all([
       getDocs(collection(db,'grain_hauling_jobs')),
-      getDocs(collection(db,'grain_tickets'))
+      getDocs(collection(db,'grain_tickets')),
+      getDocs(collection(db,'grain_bag_events'))
     ]);
     if (request !== generation || !canView()) return;
-    [jobs,tickets] = snapshots.map(snapshot=>snapshot.docs.map(doc=>({...doc.data(),id:doc.id})));
+    [jobs,tickets,bagEvents] = snapshots.map(snapshot=>snapshot.docs.map(doc=>({...doc.data(),id:doc.id})));
     render();
   } catch(error){if(request !== generation) return;console.warn('[dashboard] Grain overview unavailable',error);failed=true;render();}
   finally {if(request === generation) loading=false;}

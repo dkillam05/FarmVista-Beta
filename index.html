@@ -1008,7 +1008,7 @@
     }
 
   </style>
-  <link rel="stylesheet" href="assets/css/dashboard-portrait.css?v=20260922-1" />
+  <link rel="stylesheet" href="assets/css/dashboard-portrait.css?v=20260922-2" />
 </head>
 
 <body>
@@ -1327,10 +1327,14 @@
   <div id="mobile-kpi-slot"></div>
   <div id="mobile-markets-slot"></div>
   <section class="section" id="portrait-grain" aria-label="Grain overview" hidden>
-    <header class="section-head"><div class="icon" aria-hidden="true">🌱</div><div><strong>Grain overview</strong></div></header>
+    <header class="section-head"><div class="icon" aria-hidden="true">🌱</div><div><strong>Grain overview</strong></div><button class="portrait-toggle" id="grain-overview-toggle" type="button" aria-controls="portrait-grain-extra" aria-expanded="false">View more</button></header>
     <div class="section-body">
       <div class="portrait-grain-grid" id="portrait-grain-totals" aria-live="polite"></div>
       <p class="portrait-note">Bushels remaining · active, upcoming &amp; past-due jobs</p>
+      <div class="portrait-grain-extra" id="portrait-grain-extra">
+        <h3>Grain bags currently down</h3>
+        <div class="portrait-bag-grid" id="portrait-grain-bags" aria-live="polite"></div>
+      </div>
     </div>
   </section>
   <section class="section" id="portrait-hauling" aria-label="Hauling jobs" hidden>
@@ -2053,7 +2057,7 @@ document.addEventListener(
     init();
     document.addEventListener("fv:dash-perms-ready", init);
   </script>
-  <script src="js/dashboard/portrait.js?v=20260922-1"></script>
-  <script type="module" src="js/dashboard/portrait-data.js?v=20260922-1"></script>
+  <script src="js/dashboard/portrait.js?v=20260922-2"></script>
+  <script type="module" src="js/dashboard/portrait-data.js?v=20260922-2"></script>
 </body>
 </html>
