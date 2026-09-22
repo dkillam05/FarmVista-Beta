@@ -162,6 +162,7 @@
     .topwrap{ padding:6px 10px 14px; }
     .brandrow{ display:flex; align-items:center; justify-content:center; gap:10px; padding:10px 8px 12px 8px; }
     .brandrow img{ width:28px; height:28px; border-radius:6px; object-fit:cover; }
+    .brandrow-sprout{width:28px;height:28px;flex:none;color:#fff;}
     .brandrow .brandname{ font-weight:800; font-size:18px; letter-spacing:.2px; }
     .section-h{ padding:12px 12px 6px; font:600 12px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; letter-spacing:.12em; color:color-mix(in srgb,#fff 85%, transparent); }
 
@@ -423,7 +424,7 @@
 
   <section class="topdrawer js-top" role="dialog" aria-label="Account & settings">
     <div class="topwrap">
-      <div class="brandrow"><img src="/assets/icons/icon-192.png" alt="" /><div class="brandname">FarmVista</div></div>
+      <div class="brandrow"><svg class="brandrow-sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14C5 14 3 10 3 5c6 0 9 3 9 9ZM12 11c0-6 3-9 9-9 0 6-3 9-9 9Z" fill="currentColor"/></svg><div class="brandname">FarmVista</div></div>
 
       <div class="section-h">THEME</div>
       <div class="chips">
