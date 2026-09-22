@@ -3752,13 +3752,23 @@ _priority:
       const total=rowPartialFeet(row);
       return rowPartial(row)===1 && total>0 ? [total] : [];
     }
-    function renderEditPartials(values=[]){
+    function renderEditPartials(values=[], usages=[]){
       const count=Number($('bagEditCount').value);
       if(!Number.isInteger(count) || count<0 || count>100) return;
       $('bagEditPartials').innerHTML=Array.from({length:count}, (_,i) =>
-        `<label>Partial bag ${i+1} — feet<input class="pickup-input" type="number" min="0.1" step="any" data-partial="${i}" value="${escapeHtml(values[i] ?? '')}" placeholder="Feet not recorded"></label>`
+        `<div class="pickup-fields">
+          <label>Partial bag ${i+1} — feet<input class="pickup-input" type="number" min="0.1" step="any" data-partial="${i}" value="${escapeHtml(values[i] ?? '')}" placeholder="Feet not recorded"></label>
+          <label>Partial bag ${i+1} — usage<select class="pickup-input" data-partial-usage="${i}">
+            <option value="unknown" disabled ${!['new','carryover'].includes(usages[i]) ? 'selected' : ''}>Not recorded</option>
+            <option value="carryover" ${usages[i]==='carryover' ? 'selected' : ''}>Carry-over from previous usage</option>
+            <option value="new" ${usages[i]==='new' ? 'selected' : ''}>Start of a new bag</option>
+          </select></label>
+        </div>`
       ).join('');
       updateEditPreview();
+    }
+    function editPartialUsages(){
+      return [...$('bagEditPartials').querySelectorAll('select')].map(select => select.value);
     }
     function editInventoryValues(){
       return {
@@ -3795,7 +3805,7 @@ _priority:
       $('bagEditPriority').value=row._priority ?? row.priority ?? 0;
       $('bagEditReason').value=row.priorityReason || '';
       $('bagEditNotes').value=row.notes || '';
-      renderEditPartials(editFeetSource(row));
+      renderEditPartials(editFeetSource(row), row.counts?.partialUsage || []);
       bagEditOriginal=JSON.stringify(editInventoryValues());
       updateEditPreview(); updateEditPriority();
       body.querySelectorAll('.field-swipe.revealed').forEach(el => el.classList.remove('revealed'));
@@ -3805,7 +3815,7 @@ _priority:
     $('bagEditClose').addEventListener('click', closeBagEdit);
     $('bagEditCancel').addEventListener('click', closeBagEdit);
     editDialog.addEventListener('cancel', event => { if(bagEditBusy) event.preventDefault(); });
-    $('bagEditCount').addEventListener('input', () => renderEditPartials(editInventoryValues().feet));
+    $('bagEditCount').addEventListener('input', () => renderEditPartials(editInventoryValues().feet, editPartialUsages()));
     $('bagEditFull').addEventListener('input', updateEditPreview);
     $('bagEditPartials').addEventListener('input', updateEditPreview);
     $('bagEditPriority').addEventListener('input', updateEditPriority);
@@ -3815,6 +3825,12 @@ _priority:
       editError('');
       const row=bagEditRow, values=editInventoryValues();
       const quantityChanged=JSON.stringify(values)!==bagEditOriginal;
+      const usages=editPartialUsages();
+      const oldUsages=Array.from({length:rowPartial(row)}, (_,i) => row.counts?.partialUsage?.[i] || 'unknown');
+      const usageChanged=JSON.stringify(usages)!==JSON.stringify(oldUsages);
+      if(usages.some(value => !['new','carryover','unknown'].includes(value))){
+        editError('Choose a valid partial bag usage.'); return;
+      }
       const feet=values.feet.map(Number), full=Number(values.full), partial=Number(values.partial);
       const length=bagCapacityInfo(row).lengthFt;
       if(quantityChanged && (feet.length!==partial || feet.some(n => !Number.isFinite(n) || n<=0 || (length>0 && n>=length)))){
@@ -3833,10 +3849,18 @@ _priority:
         patch['counts.partialFeet']=feet;
         // Older entries may carry the authoritative footage at the top level.
         if(Object.prototype.hasOwnProperty.call(row,'partialFeet')) patch.partialFeet=feet;
-        patch['counts.partialUsage']=Array.from({length:partial}, (_,i) => row.counts?.partialUsage?.[i] || 'unknown');
+
       }
+      if(usageChanged || quantityChanged) patch['counts.partialUsage']=usages;
+      // Correct the empty-bag stock debit only for an explicit change between
+      // known usages. Missing historical usage does not establish a prior debit.
+      const usageStockDelta=usages.reduce((total,usage,i) => {
+        const old=oldUsages[i];
+        return total + (['new','carryover'].includes(old) && ['new','carryover'].includes(usage)
+          ? Number(usage==='new')-Number(old==='new') : 0);
+      },0);
       bagEditBusy=true;
-      const controls=[...editForm.querySelectorAll('input,textarea,button')];
+      const controls=[...editForm.querySelectorAll('input,select,textarea,button')];
       controls.forEach(el => el.disabled=true);
       $('bagEditSave').textContent='Saving…';
       try{
@@ -3850,6 +3874,19 @@ _priority:
           if(keys.some(key => JSON.stringify(fresh[key])!==JSON.stringify(row[key]))) {
             const conflict=new Error('This entry changed while you were editing. Close and reopen it to load the latest values.');
             conflict.code='bag-edit-conflict'; throw conflict;
+          }
+          if(usageStockDelta && row.bagSku?.id){
+            const stockRef=doc(state.db,'inventoryGrainBagMovements',row.bagSku.id);
+            const stockSnapshot=await transaction.get(stockRef);
+            if(stockSnapshot.exists()){
+              const stock=stockSnapshot.data();
+              const available=stock.onHand ?? stock.initialQty ?? stock.qty;
+              if(available!=null && Number.isFinite(Number(available))){
+                const next=Number(available)-usageStockDelta;
+                if(next<0) throw new Error('Not enough unused bags on hand to mark this partial as a new bag.');
+                transaction.update(stockRef,{onHand:next,updatedAt:serverTimestamp()});
+              }
+            }
           }
           transaction.update(ref,patch);
         });
