@@ -1017,6 +1017,13 @@
     #bagEditForm label { display:grid; gap:5px; font-size:13px; font-weight:850; }
     #bagEditPartials { display:grid; gap:10px; }
     @media(prefers-reduced-motion:reduce) { .field-swipe .field-name { transition:none; } }
+
+    .partial-usage-field { display:grid; gap:5px; align-content:start; min-width:0; font-size:13px; font-weight:850; }
+    .partial-usage-toggle { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid var(--border); border-radius:10px; padding:3px; gap:3px; background:var(--surface); }
+    #bagEditForm .partial-usage-toggle button { min-width:0; min-height:44px; padding:6px 3px; border:0; border-radius:7px; background:transparent; color:var(--text) !important; -webkit-text-fill-color:var(--text) !important; font:inherit; font-size:12px; line-height:1.2; cursor:pointer; }
+    #bagEditForm .partial-usage-toggle button[aria-pressed="true"] { background:var(--bag-green); color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    #bagEditForm .partial-usage-toggle button:focus-visible { outline:2px solid var(--text); outline-offset:1px; }
+    #bagEditForm .partial-usage-toggle button:disabled { opacity:.6; cursor:default; }
   </style>
 </head>
 
@@ -3758,17 +3765,20 @@ _priority:
       $('bagEditPartials').innerHTML=Array.from({length:count}, (_,i) =>
         `<div class="pickup-fields">
           <label>Partial bag ${i+1} — feet<input class="pickup-input" type="number" min="0.1" step="any" data-partial="${i}" value="${escapeHtml(values[i] ?? '')}" placeholder="Feet not recorded"></label>
-          <label>Partial bag ${i+1} — usage<select class="pickup-input" data-partial-usage="${i}">
-            <option value="unknown" disabled ${!['new','carryover'].includes(usages[i]) ? 'selected' : ''}>Not recorded</option>
-            <option value="carryover" ${usages[i]==='carryover' ? 'selected' : ''}>Carry-over from previous usage</option>
-            <option value="new" ${usages[i]==='new' ? 'selected' : ''}>Start of a new bag</option>
-          </select></label>
+          <div class="partial-usage-field">
+            <span id="partialUsageLabel${i}">Partial bag ${i+1} — usage</span>
+            <div class="partial-usage-toggle" role="group" aria-labelledby="partialUsageLabel${i}" data-partial-usage="${i}" data-value="${['new','carryover'].includes(usages[i]) ? usages[i] : 'unknown'}">
+              <button type="button" data-usage="carryover" aria-pressed="${usages[i]==='carryover'}">Carry over</button>
+              <button type="button" data-usage="new" aria-pressed="${usages[i]==='new'}">Start new</button>
+            </div>
+            ${!['new','carryover'].includes(usages[i]) ? '<span class="pickup-help usage-unrecorded">Not recorded — choose either option.</span>' : ''}
+          </div>
         </div>`
       ).join('');
       updateEditPreview();
     }
     function editPartialUsages(){
-      return [...$('bagEditPartials').querySelectorAll('select')].map(select => select.value);
+      return [...$('bagEditPartials').querySelectorAll('[data-partial-usage]')].map(toggle => toggle.dataset.value);
     }
     function editInventoryValues(){
       return {
@@ -3818,6 +3828,17 @@ _priority:
     $('bagEditCount').addEventListener('input', () => renderEditPartials(editInventoryValues().feet, editPartialUsages()));
     $('bagEditFull').addEventListener('input', updateEditPreview);
     $('bagEditPartials').addEventListener('input', updateEditPreview);
+    $('bagEditPartials').addEventListener('click', event => {
+      const button=event.target.closest('button[data-usage]');
+      if(!button || bagEditBusy) return;
+      const toggle=button.closest('[data-partial-usage]');
+      if(!toggle) return;
+      toggle.dataset.value=button.dataset.usage;
+      toggle.querySelectorAll('button[data-usage]').forEach(option => {
+        option.setAttribute('aria-pressed', String(option===button));
+      });
+      toggle.parentElement.querySelector('.usage-unrecorded')?.remove();
+    });
     $('bagEditPriority').addEventListener('input', updateEditPriority);
     editForm.addEventListener('submit', async event => {
       event.preventDefault();
