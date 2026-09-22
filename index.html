@@ -114,6 +114,51 @@
       font-size:19px;
     }
 
+    .market-emblem{
+      position:relative;
+      display:block;
+      width:24px;
+      height:24px;
+      color:var(--dash-green);
+    }
+    .market-emblem .crown{
+      position:absolute;
+      left:10px;
+      top:0;
+      width:4px;
+      height:7px;
+      border-radius:3px 3px 0 0;
+      background:#c5b933;
+    }
+    .market-emblem .roof{
+      position:absolute;
+      left:3px;
+      right:3px;
+      top:6px;
+      height:3px;
+      border-radius:2px;
+      background:currentColor;
+      transform:skewY(-22deg);
+      transform-origin:left center;
+    }
+    .market-emblem .columns{
+      position:absolute;
+      left:5px;
+      right:5px;
+      top:10px;
+      height:10px;
+      background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 5px);
+    }
+    .market-emblem .base,
+    .market-emblem .step{
+      position:absolute;
+      height:2px;
+      border-radius:2px;
+      background:currentColor;
+    }
+    .market-emblem .base{left:3px;right:3px;bottom:2px;}
+    .market-emblem .step{left:1px;right:1px;bottom:0;}
+
     .section-head strong{
       display:block;
       font-weight:950;
@@ -1029,7 +1074,7 @@
 
           <section class="section" id="markets-section" aria-label="Markets">
             <header class="section-head">
-              <div class="icon" aria-hidden="true">📈</div>
+              <div class="icon" aria-hidden="true"><span class="market-emblem"><span class="crown"></span><span class="roof"></span><span class="columns"></span><span class="base"></span><span class="step"></span></span></div>
               <div><strong>Markets</strong><div class="sub">Corn and soybean markets</div></div>
             </header>
             <div class="section-body" id="fv-markets">
