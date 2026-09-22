@@ -42,9 +42,9 @@
     :host{ --green:#3B7E46; --gold:#D0C542; --hdr-h:56px; --ftr-h:14px;
       display:block; color:#141514; background:#fff; min-height:100vh; position:relative; }
     .hdr{ position:fixed; inset:0 0 auto 0; height:calc(var(--hdr-h) + env(safe-area-inset-top,0px));
-      padding-top:env(safe-area-inset-top,0px); background:var(--green); color:#fff;
+      padding-top:env(safe-area-inset-top,0px); background:linear-gradient(to bottom,var(--green) 0,var(--green) env(safe-area-inset-top,0px),#fff env(safe-area-inset-top,0px),#fff 100%); color:#141b16;
       display:grid; grid-template-columns:56px 1fr 56px; align-items:center; z-index:1000; box-shadow:0 2px 0 rgba(0,0,0,.05); }
-    .hdr .title{ text-align:center; font-weight:800; font-size:20px; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .hdr .title{ text-align:center; font-family:"Avenir Next",Avenir,"Segoe UI",sans-serif; letter-spacing:-.6px; font-weight:600; font-size:23px; display:flex; align-items:center; justify-content:center; gap:8px; }
     .beta-pill{
       padding:2px 8px;
       border-radius:999px;
@@ -58,6 +58,8 @@
       box-shadow:0 0 0 1px rgba(0,0,0,0.06);
     }
     .iconbtn{ display:grid; place-items:center; width:48px; height:48px; border:none; background:transparent; color:#fff; font-size:28px; line-height:1; -webkit-tap-highlight-color: transparent; margin:0 auto;}
+    .hdr .iconbtn{color:#141b16;}
+    .brand-sprout{width:25px;height:25px;flex:none;color:#3B7E46;}
     .iconbtn svg{ width:26px; height:26px; display:block; }
     .gold-bar{ position:fixed; top:calc(var(--hdr-h) + env(safe-area-inset-top,0px)); left:0; right:0; height:3px; background:var(--gold); z-index:999; }
 
@@ -347,7 +349,7 @@
   <header class="hdr" part="header">
     <button class="iconbtn js-menu" aria-label="Open menu">≡</button>
     <div class="title">
-      <span>FarmVista</span>
+      <svg class="brand-sprout" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 14C5 14 3 10 3 5c6 0 9 3 9 9ZM12 11c0-6 3-9 9-9 0 6-3 9-9 9Z" fill="currentColor"/></svg><span>FarmVista</span>
       <span id="betaBadge" class="beta-pill" hidden>BETA</span>
     </div>
     <button class="iconbtn js-account" aria-label="Account" title="Account">

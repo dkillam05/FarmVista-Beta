@@ -1008,6 +1008,7 @@
     }
 
   </style>
+  <link rel="stylesheet" href="assets/css/dashboard-portrait.css?v=20260922-1" />
 </head>
 
 <body>
@@ -1123,6 +1124,10 @@
             </header>
             <div class="section-body">
               <div class="kpi-grid">
+                <a href="pages/logistics/index.html" class="dash-kpi portrait-only perm-hidden" id="portrait-pretrip" hidden>
+                  <div class="dash-kpi-main"><div class="dash-kpi-text"><div class="dash-kpi-label">Logistics</div><div class="dash-kpi-title">Pre-trips today</div></div><div class="dash-kpi-count" id="portrait-pretrip-count">–</div></div>
+                  <div class="dash-kpi-sub">Open inspection overview →</div>
+                </a>
                 <a href="pages/crop-production/field-maintenance/maintenance-approve.html" class="dash-kpi dash-kpi-empty" id="wo-approve-kpi">
                   <div class="dash-kpi-main">
                     <div class="dash-kpi-text">
@@ -1204,8 +1209,10 @@
         </aside>
       </div>
 
-      <!-- MOBILE: original dashboard order restored -->
+      <!-- Portrait dashboard: shared modules move here without recreating listeners. -->
 <div id="mobile-dashboard">
+  <div class="portrait-greeting"><h1 id="portrait-greeting">Good morning</h1><p id="portrait-date"></p></div>
+  <div id="mobile-weather-slot"></div>
 
   <section class="section" id="quick-links" aria-label="Quick Links">
     <header class="section-head">
@@ -1316,13 +1323,21 @@
     </div>
   </section>
 
-  <div id="mobile-weather-slot"></div>
-
-  <div id="mobile-markets-slot"></div>
-
-  <div id="mobile-board-slot"></div>
   <div id="mobile-kpi-slot"></div>
   <div id="mobile-copilot-slot"></div>
+  <div id="mobile-markets-slot"></div>
+  <section class="section" id="portrait-grain" aria-label="Grain overview" hidden>
+    <header class="section-head"><div class="icon" aria-hidden="true">🌱</div><div><strong>Grain overview</strong></div></header>
+    <div class="section-body">
+      <div class="portrait-grain-grid" id="portrait-grain-totals" aria-live="polite"></div>
+      <p class="portrait-note">Bushels remaining · active, upcoming &amp; past-due jobs</p>
+    </div>
+  </section>
+  <section class="section" id="portrait-hauling" aria-label="Hauling jobs" hidden>
+    <header class="section-head"><div class="icon" aria-hidden="true">🚛</div><div><strong>Hauling jobs</strong></div><button class="portrait-toggle" id="hauling-toggle" type="button" aria-controls="portrait-hauling-list" aria-expanded="false" hidden>View more</button></header>
+    <div class="section-body"><p class="portrait-note">Active jobs · least remaining first</p><div id="portrait-hauling-list" aria-live="polite"></div><a class="portrait-text-link" href="pages/grain/grain-contracts.html">Open hauling workspace →</a></div>
+  </section>
+  <div id="mobile-board-slot"></div>
 </div>
 
     </main>
@@ -1781,7 +1796,7 @@ document.addEventListener(
         }
         if(refs.board && refs.desktopLeft){
           const copilot = refs.copilot;
-          if(copilot){
+          if(copilot && copilot.parentNode === refs.desktopLeft){
             refs.desktopLeft.insertBefore(refs.board, copilot);
           }else{
             refs.desktopLeft.appendChild(refs.board);
@@ -1989,7 +2004,7 @@ document.addEventListener(
 
     async function loadLogistics(){
       const panel = $("#logistics-panel");
-      if(!panel) return;
+      if(!panel || !window.FV_DASH_CAN?.("cap-logistics-overview", "view")) return;
 
       try{
         await ready;
@@ -2007,42 +2022,9 @@ document.addEventListener(
       }
     }
 
-    function mirrorPermission(sourceId, targetId){
-      const source = document.getElementById(sourceId);
-      const target = document.getElementById(targetId);
-      if(!source || !target) return;
-
-      const sync = ()=>{
-        target.classList.toggle(
-          "perm-hidden",
-          source.classList.contains("perm-hidden") ||
-          source.hidden ||
-          getComputedStyle(source).display === "none"
-        );
-      };
-
-      sync();
-
-      new MutationObserver(sync).observe(source, {
-        attributes:true,
-        attributeFilter:["class","hidden","style"]
-      });
-    }
-
-function syncPermissions(){
-  mirrorPermission("ql-pretrip-add", "ql-pretrip-add-mobile");
-  mirrorPermission("ql-boundaries", "ql-boundaries-mobile");
-
-mirrorPermission("ql-maint-add", "ql-maint-add-mobile");
-
-  mirrorPermission("ql-equip-overview", "ql-equip-overview-mobile");
-  mirrorPermission("ql-field-weather", "ql-field-weather-mobile");
-}
-
     loadLogistics();
-    syncPermissions();
+    document.addEventListener("fv:dash-perms-ready", loadLogistics);
 
-    document.addEventListener("fv:dash-perms-ready", syncPermissions);
     document.addEventListener("visibilitychange", ()=>{
       if(!document.hidden) loadLogistics();
     });
@@ -2071,5 +2053,7 @@ mirrorPermission("ql-maint-add", "ql-maint-add-mobile");
     init();
     document.addEventListener("fv:dash-perms-ready", init);
   </script>
+  <script src="js/dashboard/portrait.js?v=20260922-1"></script>
+  <script type="module" src="js/dashboard/portrait-data.js?v=20260922-1"></script>
 </body>
 </html>
