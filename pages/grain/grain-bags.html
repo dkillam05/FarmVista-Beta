@@ -995,6 +995,26 @@
         color:#ffb2ad;
       }
     }
+
+    .inventory-grid tbody td.field-edit-cell { padding:0; }
+    .field-swipe { position:relative; overflow:hidden; touch-action:pan-y pinch-zoom; }
+    .field-swipe .field-name { position:relative; display:block; padding:12px 44px 12px 10px; background:var(--sheet-bg); transition:transform .18s ease; pointer-events:none; }
+    .field-edit { position:absolute; right:0; top:0; bottom:0; width:64px; border:0; background:var(--bag-green); color:white; font:inherit; font-weight:850; cursor:pointer; visibility:hidden; }
+    .field-swipe.revealed .field-name { transform:translateX(-64px); }
+    .field-swipe.revealed .field-edit { visibility:visible; }
+    .field-edit svg { width:18px; height:18px; }
+    .field-edit .edit-pencil { display:none; }
+    @media (hover:hover) and (pointer:fine) {
+      .field-swipe:hover .field-edit, .field-swipe:focus-within .field-edit { visibility:visible; z-index:1; width:40px; background:var(--sheet-bg); color:var(--sheet-text); }
+      .field-swipe:not(.revealed) .edit-pencil { display:inline; }
+      .field-swipe:not(.revealed) .edit-label { display:none; }
+    }
+    .field-swipe:focus-within .field-edit { visibility:visible; z-index:1; }
+    .field-edit:focus-visible { outline:2px solid currentColor; outline-offset:-4px; }
+    #bagEditDialog { max-height:calc(100dvh - 24px); overflow:auto; }
+    #bagEditForm label { display:grid; gap:5px; font-size:13px; font-weight:850; }
+    #bagEditPartials { display:grid; gap:10px; }
+    @media(prefers-reduced-motion:reduce) { .field-swipe .field-name { transition:none; } }
   </style>
 </head>
 
@@ -1305,6 +1325,29 @@
        DATA + INVENTORY LOGIC
   ========================================================== -->
 
+
+  <dialog id="bagEditDialog" class="pickup-dialog" aria-labelledby="bagEditTitle">
+    <form id="bagEditForm">
+      <div class="pickup-head"><div><h2 id="bagEditTitle" class="pickup-title">Edit Bag Entry</h2><p id="bagEditSub" class="pickup-sub"></p></div><button type="button" id="bagEditClose" class="dialog-close" aria-label="Close">×</button></div>
+      <div class="pickup-body">
+        <div id="bagEditInfo" class="pickup-help"></div>
+        <div class="pickup-fields">
+          <label>Date put down<input id="bagEditDate" class="pickup-input" type="date" required></label>
+          <label>Moisture (%)<input id="bagEditMoisture" class="pickup-input" type="number" min="0" max="100" step="0.1"></label>
+          <label>Full bags remaining<input id="bagEditFull" class="pickup-input" type="number" min="0" step="1" required></label>
+          <label>Partial bags remaining<input id="bagEditCount" class="pickup-input" type="number" min="0" max="100" step="1" required></label>
+        </div>
+        <div id="bagEditPartials"></div>
+        <div id="bagEditBushels" class="pickup-help" aria-live="polite"></div>
+        <label>Priority: <output id="bagEditPriorityValue">0</output><input id="bagEditPriority" type="range" min="0" max="10" step="1"></label>
+        <label id="bagEditReasonLabel">High-priority reason<textarea id="bagEditReason" class="pickup-input" rows="2"></textarea></label>
+        <label>Notes<textarea id="bagEditNotes" class="pickup-input" rows="3" placeholder="Optional details"></textarea></label>
+        <div id="bagEditError" class="pickup-error" role="alert"></div>
+      </div>
+      <div class="pickup-footer"><button type="button" id="bagEditCancel" class="btn">Cancel</button><button type="submit" id="bagEditSave" class="btn btn-primary">Save Changes</button></div>
+    </form>
+  </dialog>
+
   <script type="module">
 
     import {
@@ -1315,6 +1358,7 @@
       getDocs,
       doc,
       updateDoc,
+      runTransaction,
       addDoc,
       serverTimestamp
     } from "/js/firebase/firebase-init.js";
@@ -3492,12 +3536,11 @@ _priority:
                           title="Tap to remove inventory"
                         >
 
-                          <td>
-                            <span class="field-name">
-                              ${escapeHtml(
-                                row._fieldName
-                              )}
-                            </span>
+                          <td class="field-edit-cell">
+                            <div class="field-swipe">
+                              <button type="button" class="field-edit" aria-label="Edit ${escapeHtml(row._fieldName)} bag entry"><span class="edit-label">Edit</span><svg class="edit-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></svg></button>
+                              <span class="field-name">${escapeHtml(row._fieldName)}</span>
+                            </div>
                           </td>
 
 <td class="crop-cell">
@@ -3582,11 +3625,12 @@ _priority:
         .forEach(
           rowElement => {
 
+            installBagEditGesture(rowElement);
             rowElement
               .addEventListener(
                 "click",
-                () => {
-
+                event => {
+                  if (event.target.closest('.field-edit') || Date.now() < (rowElement.suppressPickupUntil || 0)) return;
                   const id =
                     rowElement.dataset.id;
 
@@ -3620,6 +3664,175 @@ _priority:
     /* =========================================================
        QUICK PICKUP
     ========================================================= */
+
+    // Swiping is confined to the field cell; the rest of the grid scrolls normally.
+    function installBagEditGesture(tr){
+      const cell = tr.querySelector('.field-swipe');
+      const button = cell.querySelector('.field-edit');
+      // Keep the discreet action keyboard reachable even while visually hidden.
+      cell.tabIndex = 0;
+      cell.setAttribute('aria-label', 'Bag entry. Press Enter to edit.');
+      const edit = () => {
+        const row = state.rows.find(item => item.id === tr.dataset.id);
+        if(row) openBagEdit(row);
+      };
+      button.addEventListener('click', event => { event.stopPropagation(); edit(); });
+      cell.addEventListener('keydown', event => {
+        if(event.target === cell && (event.key === 'Enter' || event.key === ' ')){
+          event.preventDefault(); event.stopPropagation(); edit();
+        }
+      });
+      let gesture = null;
+      cell.addEventListener('touchstart', event => {
+        if(event.touches.length !== 1 || event.target.closest('button')) { gesture = null; return; }
+        const t = event.touches[0];
+        gesture = {x:t.clientX, y:t.clientY, dx:0, horizontal:false};
+      }, {passive:true});
+      cell.addEventListener('touchmove', event => {
+        if(!gesture || event.touches.length !== 1) { gesture=null; return; }
+        const t=event.touches[0], dx=t.clientX-gesture.x, dy=t.clientY-gesture.y;
+        if(!gesture.horizontal && Math.abs(dy)>10 && Math.abs(dy)>Math.abs(dx)) { gesture=null; return; }
+        if(Math.abs(dx)>12 && Math.abs(dx)>Math.abs(dy)*1.3) gesture.horizontal=true;
+        if(gesture.horizontal){
+          if(event.cancelable) event.preventDefault();
+          gesture.dx=dx;
+          tr.suppressPickupUntil=Date.now()+800;
+        }
+      }, {passive:false});
+      cell.addEventListener('touchend', () => {
+        if(gesture?.horizontal){
+          tr.suppressPickupUntil=Date.now()+800;
+          if(gesture.dx < -35){
+            body.querySelectorAll('.field-swipe.revealed').forEach(el => el.classList.remove('revealed'));
+            cell.classList.add('revealed');
+          } else if(gesture.dx > 35) cell.classList.remove('revealed');
+        }
+        gesture=null;
+      });
+      cell.addEventListener('touchcancel', () => { gesture=null; tr.suppressPickupUntil=Date.now()+800; });
+    }
+
+    let bagEditRow=null, bagEditBusy=false, bagEditOriginal='';
+    const editDialog=$('bagEditDialog'), editForm=$('bagEditForm');
+    function editError(message){ $('bagEditError').textContent=message; $('bagEditError').classList.toggle('show', !!message); }
+    function editFeetSource(row){
+      if(Array.isArray(row.partialFeet) && row.partialFeet.length) return row.partialFeet;
+      if(Array.isArray(row.counts?.partialFeet) && row.counts.partialFeet.length) return row.counts.partialFeet;
+      const total=rowPartialFeet(row);
+      return rowPartial(row)===1 && total>0 ? [total] : [];
+    }
+    function renderEditPartials(values=[]){
+      const count=Number($('bagEditCount').value);
+      if(!Number.isInteger(count) || count<0 || count>100) return;
+      $('bagEditPartials').innerHTML=Array.from({length:count}, (_,i) =>
+        `<label>Partial bag ${i+1} — feet<input class="pickup-input" type="number" min="0.1" step="any" data-partial="${i}" value="${escapeHtml(values[i] ?? '')}" placeholder="Feet not recorded"></label>`
+      ).join('');
+      updateEditPreview();
+    }
+    function editInventoryValues(){
+      return {
+        full:$('bagEditFull').value,
+        partial:$('bagEditCount').value,
+        feet:[...$('bagEditPartials').querySelectorAll('input')].map(input => input.value)
+      };
+    }
+    function updateEditPreview(){
+      if(!bagEditRow) return;
+      const values=editInventoryValues();
+      const changed=JSON.stringify(values)!==bagEditOriginal;
+      if(changed && values.feet.some(value => value==='')){
+        $('bagEditBushels').textContent='Enter footage for each partial bag to calculate bushels.'; return;
+      }
+      const row=changed ? {...bagEditRow, partialFeet:values.feet.map(Number), counts:{...bagEditRow.counts, full:Number(values.full), partial:Number(values.partial), partialFeet:values.feet.map(Number)}} : bagEditRow;
+      $('bagEditBushels').textContent=`Estimated remaining: ${bagBushels(row).toLocaleString('en-US')} bu`;
+    }
+    function updateEditPriority(){
+      const value=Number($('bagEditPriority').value);
+      $('bagEditPriorityValue').textContent=`${value}/10`;
+      $('bagEditReasonLabel').hidden=value<7;
+      $('bagEditReason').required=value>=7;
+    }
+    function openBagEdit(row){
+      bagEditRow=row; editError('');
+      $('bagEditSub').textContent=[row._farmName,row._fieldName,row._crop].filter(Boolean).join(' • ');
+      const length=bagCapacityInfo(row).lengthFt;
+      $('bagEditInfo').textContent=[row.bagSku?.brand, length ? `${length} ft bags` : '', 'Edit remaining inventory for this entry.'].filter(Boolean).join(' • ');
+      $('bagEditDate').value=clean(row.datePlaced || row.placedDate).slice(0,10);
+      $('bagEditMoisture').value=row.cropMoisture ?? row._moisture ?? '';
+      $('bagEditFull').value=rowFull(row);
+      $('bagEditCount').value=rowPartial(row);
+      $('bagEditPriority').value=row._priority ?? row.priority ?? 0;
+      $('bagEditReason').value=row.priorityReason || '';
+      $('bagEditNotes').value=row.notes || '';
+      renderEditPartials(editFeetSource(row));
+      bagEditOriginal=JSON.stringify(editInventoryValues());
+      updateEditPreview(); updateEditPriority();
+      body.querySelectorAll('.field-swipe.revealed').forEach(el => el.classList.remove('revealed'));
+      editDialog.showModal();
+    }
+    function closeBagEdit(){ if(!bagEditBusy){ editDialog.close(); bagEditRow=null; } }
+    $('bagEditClose').addEventListener('click', closeBagEdit);
+    $('bagEditCancel').addEventListener('click', closeBagEdit);
+    editDialog.addEventListener('cancel', event => { if(bagEditBusy) event.preventDefault(); });
+    $('bagEditCount').addEventListener('input', () => renderEditPartials(editInventoryValues().feet));
+    $('bagEditFull').addEventListener('input', updateEditPreview);
+    $('bagEditPartials').addEventListener('input', updateEditPreview);
+    $('bagEditPriority').addEventListener('input', updateEditPriority);
+    editForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if(bagEditBusy || !bagEditRow || !editForm.reportValidity()) return;
+      editError('');
+      const row=bagEditRow, values=editInventoryValues();
+      const quantityChanged=JSON.stringify(values)!==bagEditOriginal;
+      const feet=values.feet.map(Number), full=Number(values.full), partial=Number(values.partial);
+      const length=bagCapacityInfo(row).lengthFt;
+      if(quantityChanged && (feet.length!==partial || feet.some(n => !Number.isFinite(n) || n<=0 || (length>0 && n>=length)))){
+        editError('Enter a positive footage below the full bag length for every partial bag.'); return;
+      }
+      const patch={
+        priority:Number($('bagEditPriority').value),
+        priorityReason:$('bagEditReason').value.trim() || null,
+        notes:$('bagEditNotes').value.trim(),
+        datePlaced:$('bagEditDate').value,
+        cropMoisture:$('bagEditMoisture').value==='' ? null : Number($('bagEditMoisture').value),
+        updatedAt:serverTimestamp(), updatedBy:currentUser()
+      };
+      if(quantityChanged){
+        patch['counts.full']=full; patch['counts.partial']=partial;
+        patch['counts.partialFeet']=feet;
+        // Older entries may carry the authoritative footage at the top level.
+        if(Object.prototype.hasOwnProperty.call(row,'partialFeet')) patch.partialFeet=feet;
+        patch['counts.partialUsage']=Array.from({length:partial}, (_,i) => row.counts?.partialUsage?.[i] || 'unknown');
+      }
+      bagEditBusy=true;
+      const controls=[...editForm.querySelectorAll('input,textarea,button')];
+      controls.forEach(el => el.disabled=true);
+      $('bagEditSave').textContent='Saving…';
+      try{
+        const ref=doc(state.db,'grain_bag_events',row.id);
+        await runTransaction(state.db, async transaction => {
+          const snapshot=await transaction.get(ref);
+          if(!snapshot.exists()) throw new Error('This entry no longer exists. Reopen the page to refresh.');
+          const fresh=snapshot.data();
+          // Never overwrite a pickup or another edit made while this form was open.
+          const keys=['counts','partialFeet','status','priority','priorityReason','notes','datePlaced','cropMoisture','updatedAt'];
+          if(keys.some(key => JSON.stringify(fresh[key])!==JSON.stringify(row[key]))) {
+            const conflict=new Error('This entry changed while you were editing. Close and reopen it to load the latest values.');
+            conflict.code='bag-edit-conflict'; throw conflict;
+          }
+          transaction.update(ref,patch);
+        });
+        bagEditBusy=false; closeBagEdit(); toast('Bag entry updated.');
+        await loadBagInventory();
+      } catch(error){
+        editError(error?.message || 'Unable to save bag entry.');
+        if(error?.code==='bag-edit-conflict') await loadBagInventory();
+      }
+      finally {
+        bagEditBusy=false; controls.forEach(el => el.disabled=false);
+        $('bagEditSave').textContent='Save Changes';
+      }
+    });
 
     function showPickupError(message){
 
@@ -4153,7 +4366,7 @@ _priority:
 
           if (
             state.db &&
-            !pickupDialog.open
+            !pickupDialog.open && !$("bagEditDialog").open
           ) {
 
             loadBagInventory();
@@ -4172,7 +4385,7 @@ _priority:
           if (
             !document.hidden &&
             state.db &&
-            !pickupDialog.open
+            !pickupDialog.open && !$("bagEditDialog").open
           ) {
 
             loadBagInventory();
