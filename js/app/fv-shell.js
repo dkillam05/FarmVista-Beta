@@ -130,8 +130,8 @@
     .drawer nav a{ display:flex; align-items:center; gap:12px; padding:16px; text-decoration:none; color: var(--text); border-bottom:1px solid var(--border); }
     .drawer nav a span:first-child{ width:22px; text-align:center; opacity:.95; }
 
-    .drawer-footer{ flex:0 0 auto; display:flex; align-items:flex-end; justify-content:space-between; gap:12px; padding:12px 16px;
-      padding-bottom:calc(12px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--border);
+    .drawer-footer{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 16px;
+      border-top:1px solid var(--border);
       background: var(--surface); color: var(--text); }
     .df-left{ display:flex; flex-direction:column; align-items:flex-start; }
     .df-left .brand{ font-weight:800; line-height:1.15; }
