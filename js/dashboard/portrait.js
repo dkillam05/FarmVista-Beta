@@ -48,7 +48,7 @@
   const attentionToggle = toggle(attention, attentionGrid);
   const orderNote = document.createElement('p');
   orderNote.className = 'kpi-order-note';
-  orderNote.textContent = 'Drag the handles to choose your top four';
+  orderNote.textContent = 'Press and drag the ↕ Drag handle to rearrange your top four';
   attention.querySelector('.section-body').prepend(orderNote);
   const attentionTitle = attention.querySelector('strong');
   const originalAttentionTitle = attentionTitle.textContent;
@@ -82,44 +82,63 @@
   function addDragHandles(){
     attentionCards().forEach(card => {
       if (card.querySelector('.kpi-drag-handle')) return;
+      card.draggable = false;
+      card.addEventListener('dragstart',event=>event.preventDefault());
       const handle = document.createElement('span');
       handle.className = 'kpi-drag-handle';
-      handle.textContent = '⠿';
-      handle.setAttribute('aria-hidden','true');
+      handle.innerHTML = '<span aria-hidden="true">↕</span><small>Drag</small>';
+      handle.setAttribute('aria-label','Drag to reorder this KPI');
+      handle.setAttribute('role','button');
       card.prepend(handle);
       let active = false, moved = false;
-      const finish = () => {
+      const reorderAt = (clientX,clientY) => {
+        const target = document.elementFromPoint(clientX,clientY)?.closest?.('#attention-section .dash-kpi');
+        if (!target || target === card || target.parentElement !== attentionGrid) return;
+        const rect = target.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        const centerX = rect.left + rect.width / 2;
+        const before = clientY < centerY || (Math.abs(clientY-centerY) < rect.height*.3 && clientX < centerX);
+        attentionGrid.insertBefore(card,before ? target : target.nextSibling);
+        moved = true;
+      };
+      const begin = event => {
+        if (!attention.classList.contains('is-expanded')) return;
+        active = true; moved = false;
+        card.classList.add('kpi-dragging');
+        event.preventDefault();
+      };
+      const finish = event => {
         if (!active) return;
         active = false;
         card.classList.remove('kpi-dragging');
         if (moved) {
           card.dataset.suppressClick = '1';
-          setTimeout(() => delete card.dataset.suppressClick,250);
+          setTimeout(() => delete card.dataset.suppressClick,350);
           saveAttentionOrder();
           syncAttentionCards();
         }
+        event?.preventDefault?.();
       };
-      handle.addEventListener('pointerdown',event => {
-        if (!attention.classList.contains('is-expanded')) return;
-        active = true; moved = false;
-        card.classList.add('kpi-dragging');
+      handle.addEventListener('touchstart',begin,{passive:false});
+      handle.addEventListener('touchmove',event=>{
+        if(!active||!event.touches?.length)return;
+        reorderAt(event.touches[0].clientX,event.touches[0].clientY);
+        event.preventDefault();
+      },{passive:false});
+      handle.addEventListener('touchend',finish,{passive:false});
+      handle.addEventListener('touchcancel',finish,{passive:false});
+      handle.addEventListener('pointerdown',event=>{
+        if(event.pointerType==='touch')return;
+        begin(event);
         handle.setPointerCapture?.(event.pointerId);
+      });
+      handle.addEventListener('pointermove',event=>{
+        if(!active||event.pointerType==='touch')return;
+        reorderAt(event.clientX,event.clientY);
         event.preventDefault();
       });
-      handle.addEventListener('pointermove',event => {
-        if (!active) return;
-        const target = document.elementFromPoint(event.clientX,event.clientY)?.closest?.('#attention-section .dash-kpi');
-        if (target && target !== card && target.parentElement === attentionGrid) {
-          const rect = target.getBoundingClientRect();
-          const before = event.clientY < rect.top + rect.height / 2 ||
-            (Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height / 3 && event.clientX < rect.left + rect.width / 2);
-          attentionGrid.insertBefore(card,before ? target : target.nextSibling);
-          moved = true;
-        }
-        event.preventDefault();
-      });
-      handle.addEventListener('pointerup',finish);
-      handle.addEventListener('pointercancel',finish);
+      handle.addEventListener('pointerup',event=>{if(event.pointerType!=='touch')finish(event);});
+      handle.addEventListener('pointercancel',event=>{if(event.pointerType!=='touch')finish(event);});
       card.addEventListener('click',event => {
         if (card.dataset.suppressClick === '1') { event.preventDefault(); event.stopPropagation(); }
       },true);

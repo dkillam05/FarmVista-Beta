@@ -7,6 +7,44 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 const fmt = value => value.toLocaleString('en-US',{maximumFractionDigits:2});
 let jobs = null, tickets = null, bagEvents = null, failed = false, expanded = false, grainExpanded = false, generation = 0, identity = '', loading = false;
 const canView = () => Boolean(window.FV_DASH_CAN?.('cap-kpi-grain','view') && window.FV_DASH_CAN?.('grain-ctr','view'));
+const snapshotKey = key => `fv:dashboard:grain-snapshot:${key || 'device'}`;
+const valueDateMs = value => {
+  try { if (value?.toDate) return value.toDate().getTime(); } catch {}
+  if (typeof value?.seconds === 'number') return value.seconds*1000;
+  const ms = new Date(value || 0).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+};
+function loadSnapshot(key){
+  try {
+    const saved=JSON.parse(localStorage.getItem(snapshotKey(key))||'null');
+    if(!saved||saved.version!==1||!Array.isArray(saved.jobs)||!Array.isArray(saved.tickets)||!Array.isArray(saved.bagEvents))return false;
+    jobs=saved.jobs;tickets=saved.tickets;bagEvents=saved.bagEvents;return true;
+  } catch { return false; }
+}
+function saveSnapshot(key){
+  try {
+    const savedJobs=(jobs||[]).map(row=>({
+      id:row.id,startingBushels:row.startingBushels,jobBushels:row.jobBushels,bushels:row.bushels,
+      deliveryStartDate:row.deliveryStartDate,startDate:row.startDate,deliveryEndDate:row.deliveryEndDate,endDate:row.endDate,
+      status:row.status,manualClosed:row.manualClosed,active:row.active,crop:row.crop,commodity:row.commodity,cropName:row.cropName,cropType:row.cropType,
+      buyerName:row.buyerName,buyer:row.buyer,deliveryLocationName:row.deliveryLocationName,locationName:row.locationName,
+      destinationName:row.destinationName,destination:row.destination,displayName:row.displayName,jobName:row.jobName,haulingJobName:row.haulingJobName
+    }));
+    const savedTickets=(tickets||[]).map(row=>({
+      id:row.id,voided:row.voided,status:row.status,haulingJobId:row.haulingJobId,
+      netBushels:row.netBushels,netBu:row.netBu,bushels:row.bushels,
+      haulingJobSplitAllocations:Array.isArray(row.haulingJobSplitAllocations)?row.haulingJobSplitAllocations.map(item=>({
+        sourceJobId:item.sourceJobId,haulingJobId:item.haulingJobId,jobId:item.jobId,allocationType:item.allocationType,type:item.type,bushels:item.bushels
+      })):[]
+    }));
+    const savedBags=(bagEvents||[]).map(row=>({
+      id:row.id,type:row.type,status:row.status,cropYear:row.cropYear,cropType:row.cropType,crop:row.crop,
+      counts:row.counts?{full:row.counts.full,partial:row.counts.partial,partialFeet:row.counts.partialFeet}:null,
+      partialFeet:row.partialFeet,_placedMs:valueDateMs(row.datePlaced||row.placedDate||row.createdAt)||row._placedMs||0
+    }));
+    localStorage.setItem(snapshotKey(key),JSON.stringify({version:1,savedAt:Date.now(),jobs:savedJobs,tickets:savedTickets,bagEvents:savedBags}));
+  } catch(error){console.warn('[dashboard] Grain snapshot could not be saved',error);}
+}
 function render() {
   if (!canView()) return;
   if (failed || !jobs || !tickets) {
@@ -22,7 +60,7 @@ function render() {
   (bagEvents || []).forEach(row=>{
     const type=String(row.type||'').toLowerCase().replace(/\s+/g,'');
     const status=String(row.status||'').toLowerCase().replace(/\s+/g,'');
-    const placed=row.datePlaced?.toDate?.() || row.placedDate?.toDate?.() || row.createdAt?.toDate?.() || null;
+    const placed=row.datePlaced?.toDate?.() || row.placedDate?.toDate?.() || row.createdAt?.toDate?.() || (row._placedMs ? new Date(row._placedMs) : null);
     const rowYear=Number(row.cropYear) || (placed ? (placed.getMonth()>=7?placed.getFullYear():placed.getFullYear()-1) : 0);
     if(type!=='putdown' || status==='pickedup' || rowYear!==seasonYear) return;
     const full=Math.max(0,Number(row.counts?.full)||0);
@@ -63,7 +101,10 @@ async function sync(refresh = false){
   const context = window.FVUserContext?.get?.();
   const key = `${context?.uid || ''}:${window.FV_FARM_KEY || ''}`;
   if (identity === key && (loading || refresh !== true)) return;
-  if (identity !== key) {stop();identity=key;}
+  if (identity !== key) {
+    stop();identity=key;
+    if(loadSnapshot(key)){failed=false;render();}
+  }
   failed=false;loading=true;render();
   const request=generation;
   try {
@@ -77,8 +118,9 @@ async function sync(refresh = false){
     ]);
     if (request !== generation || !canView()) return;
     [jobs,tickets,bagEvents] = snapshots.map(snapshot=>snapshot.docs.map(doc=>({...doc.data(),id:doc.id})));
+    saveSnapshot(key);
     render();
-  } catch(error){if(request !== generation) return;console.warn('[dashboard] Grain overview unavailable',error);failed=true;render();}
+  } catch(error){if(request !== generation) return;console.warn('[dashboard] Grain overview refresh unavailable',error);failed=!(jobs&&tickets&&bagEvents);render();}
   finally {if(request === generation) loading=false;}
 }
 document.addEventListener('fv:dash-perms-ready',sync);

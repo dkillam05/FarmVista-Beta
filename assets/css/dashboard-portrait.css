@@ -39,8 +39,10 @@
   #mobile-dashboard #attention-section:not(.is-expanded) .dash-kpi.portrait-overflow{display:none!important}
   #mobile-dashboard #attention-section.is-expanded .kpi-grid{padding-top:22px}
   #mobile-dashboard #attention-section .dash-kpi{position:relative}
-  #mobile-dashboard #attention-section .kpi-drag-handle{display:none;position:absolute;right:8px;top:6px;width:30px;height:28px;align-items:center;justify-content:center;color:var(--muted);font-size:18px;line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+  #mobile-dashboard #attention-section .kpi-drag-handle{display:none;position:absolute;right:7px;top:6px;height:30px;padding:0 8px;align-items:center;justify-content:center;gap:3px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--muted);font-size:17px;line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2;box-shadow:0 2px 5px rgba(0,0,0,.08)}
   #mobile-dashboard #attention-section.is-expanded .kpi-drag-handle{display:flex}
+  #mobile-dashboard #attention-section .kpi-drag-handle small{font-size:9px;font-weight:750;line-height:1}
+  #mobile-dashboard #attention-section .kpi-drag-handle:active{cursor:grabbing;background:color-mix(in srgb,var(--green,#3B7E46) 10%,var(--surface))}
   #mobile-dashboard #attention-section .dash-kpi.kpi-dragging{opacity:.55;outline:2px dashed var(--green,#3B7E46);outline-offset:2px}
   #mobile-dashboard #attention-section .kpi-order-note{display:none;margin:0 0 9px;font-size:10px;color:var(--muted);text-align:right}
   #mobile-dashboard #attention-section.is-expanded .kpi-order-note{display:block}
