@@ -1024,6 +1024,13 @@
     #bagEditForm .partial-usage-toggle button[aria-pressed="true"] { background:var(--bag-green); color:#fff !important; -webkit-text-fill-color:#fff !important; }
     #bagEditForm .partial-usage-toggle button:focus-visible { outline:2px solid var(--text); outline-offset:1px; }
     #bagEditForm .partial-usage-toggle button:disabled { opacity:.6; cursor:default; }
+    .inventory-grid tbody .bag-total-row td {
+      background:var(--crop-row-bg); font-weight:950;
+      border-top:1px solid var(--gridline-strong);
+    }
+    .inventory-grid tbody .bag-overall-total td {
+      background:var(--farm-row-bg); border-bottom:2px solid var(--gridline-strong);
+    }
   </style>
 </head>
 
@@ -3368,6 +3375,27 @@ _priority:
        RENDER
     ========================================================= */
 
+    function totalBagRows(rows){
+      return rows.reduce((totals,row) => {
+        totals.bushels += Number(row._bushels) || 0;
+        totals.full += Number(row._full) || 0;
+        totals.partial += Number(row._partial) || 0;
+        return totals;
+      }, {bushels:0,full:0,partial:0});
+    }
+
+    function bagTotalRow(label,crop,totals,overall=false){
+      return `<tr class="bag-total-row ${overall ? 'bag-overall-total' : ''}">
+        <td>${escapeHtml(label)}</td>
+        <td class="crop-cell">${escapeHtml(crop)}</td>
+        <td class="number-cell"><span class="bag-count">${totals.bushels.toLocaleString('en-US')}</span></td>
+        <td></td><td></td>
+        <td class="number-cell">${totals.full.toLocaleString('en-US')}</td>
+        <td class="number-cell">${totals.partial.toLocaleString('en-US')}</td>
+        <td></td>
+      </tr>`;
+    }
+
     function renderInventory(){
 
       if (
@@ -3614,12 +3642,24 @@ _priority:
                   }
                 );
 
+              html.push(bagTotalRow(`${crop.name} subtotal`,crop.name,totalBagRows(crop.rows)));
             }
           );
 
         }
       );
 
+      // Only total the entries currently displayed; keep every crop separate.
+      const cropTotals=new Map();
+      state.rows.forEach(row => {
+        const crop=row._crop;
+        if(!cropTotals.has(crop)) cropTotals.set(crop,[]);
+        cropTotals.get(crop).push(row);
+      });
+      html.push('<tr class="farm-group-row"><td colspan="8">Totals by crop — All farms</td></tr>');
+      [...cropTotals.keys()].sort((a,b) => COLLATOR.compare(a,b)).forEach(crop => {
+        html.push(bagTotalRow('All farms total',crop,totalBagRows(cropTotals.get(crop)),true));
+      });
 
       body.innerHTML =
         html.join(
