@@ -100,3 +100,6 @@
   #mobile-dashboard #fv-weather .fv-weather-card{border-radius:16px!important;padding:13px!important;box-shadow:0 4px 16px rgba(20,40,25,.04)!important}
   #mobile-dashboard #fv-weather [data-fv=temp]{font-size:30px!important}
 }
+
+/* Keep the storage illustrations centered in compact shortcut tiles. */
+#mobile-dashboard #quick-links .ql-right:has(img){height:36px;display:flex;align-items:center;justify-content:center}
