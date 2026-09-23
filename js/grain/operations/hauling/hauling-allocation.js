@@ -23,8 +23,9 @@ export function buildHaulingReconciliation(state,anchor){
     const result=buildAutomaticHaulingAssignment(ticket,working);
     // No eligible destination: retain the existing record for office review.
     if(!result.haulingJobId){
-      // Preserve genuine overflow against an existing eligible source, only in the reviewed repair.
-      const source=(state.haulingJobs||[]).find(j=>clean(j.id)===clean(ticket.haulingJobId)&&compatibleHaulingJob(j,ticket));
+      // In a reviewed historical repair, whole overflow also needs a visible Spot owner.
+      const eligible=(state.haulingJobs||[]).filter(j=>compatibleHaulingJob(j,ticket)).sort((a,b)=>clean(a.deliveryStartDate).localeCompare(clean(b.deliveryStartDate))||timestampValue(a.createdAt)-timestampValue(b.createdAt)||clean(a.id).localeCompare(clean(b.id)));
+      const source=eligible.find(j=>clean(j.id)===clean(ticket.haulingJobId))||eligible.at(-1);
       if(!source){working.tickets.push(ticket);continue}
       result.sourceJobId=result.haulingJobId=clean(source.id);
       result.haulingJobSplitAllocations=[{sourceJobId:clean(source.id),haulingJobId:'',bushels:ticketBushels(ticket),allocationType:'spot'}];

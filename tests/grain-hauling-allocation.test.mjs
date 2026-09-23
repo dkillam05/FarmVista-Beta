@@ -35,3 +35,11 @@ assert.equal(grainRecordSignature({id:'ticket',nested:{a:1,b:2},rows:[{a:1,b:2}]
 assert.notEqual(grainRecordSignature({netBushels:100}),grainRecordSignature({netBushels:101}));
 assert.notEqual(grainRecordSignature({splits:[1,2]}),grainRecordSignature({splits:[2,1]}));
 console.log('PASS: Firestore record comparison ignores map order but detects value changes');
+
+const extra=t('extra',960.36,'2026-09-23');
+const overflowRepair=buildHaulingReconciliation({...preview.state,tickets:[...preview.state.tickets,extra]},old);
+const repairedExtra=overflowRepair.state.tickets.find(t=>t.id==='extra');
+assert.equal(ticketSpotBushels(repairedExtra,'next'),960.36);
+assert.equal(effectiveJobTotals(overflowRepair.state.tickets).get('next'),2500);
+assert.equal(buildHaulingReconciliation(overflowRepair.state,old).changes.length,0);
+console.log('PASS: wholly unassigned historical overflow becomes Spot without exceeding capacity');
