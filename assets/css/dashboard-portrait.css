@@ -1,6 +1,10 @@
 /* Portrait-only layout. Shared nodes and their listeners survive rotation. */
 .portrait-toggle,.portrait-only{display:none}
 @media (max-width:899px) and (orientation:portrait), (max-width:899px) and (min-height:651px){
+  /* Let the document own vertical scrolling. The global height:100% plus
+     overflow-x:hidden otherwise makes body a second, viewport-sized scroller
+     on iOS, requiring another swipe to reach the shell's bottom clearance. */
+  body{height:auto}
   .dashboard-heading{display:none!important}
   .page.container{padding:4px 2px 32px!important}
   #mobile-dashboard{gap:14px}
