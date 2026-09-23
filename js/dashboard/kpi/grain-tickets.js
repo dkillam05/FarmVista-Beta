@@ -34,7 +34,7 @@ function renderDialog(){
     const cls=Number.isFinite(n)&&metric?gradeAlertClass({...t,[keys[0]]:n},alertSettings,metric):'';
     return `<span class="grain-grade ${cls}" title="${cls==='severe'?'Severe':cls==='warn'?'Elevated':''}">${Number.isFinite(n)?n.toFixed(1).padStart(4,'0'):'—'}</span>`;
   };
-  list.innerHTML=(alertSettingsFailed?'<p>Grade highlighting unavailable — alert settings could not be loaded.</p>':'')+(visible.length?`<p class="grain-kpi-hint">Tap a ticket to open its details. Grade indicators: <span class="grain-grade warn">Elevated</span> <span class="grain-grade severe">Severe</span></p><div class="grain-kpi-table-wrap"><table class="grain-kpi-table"><thead><tr><th>Ticket / Date</th><th>Crop</th><th>Destination</th><th>Sold Under / Driver</th><th>Net bu</th><th>TW</th><th>MO</th><th>FM</th><th>DM</th><th>Status</th></tr></thead><tbody>${visible.map(t=>{
+  list.innerHTML=(alertSettingsFailed?'<p>Grade highlighting unavailable — alert settings could not be loaded.</p>':'')+(visible.length?`<p class="grain-kpi-hint">Tap a ticket to open its details.</p><div class="grain-kpi-table-wrap"><table class="grain-kpi-table"><thead><tr><th>Ticket / Date</th><th>Crop</th><th>Destination</th><th>Sold Under / Driver</th><th>Net bu</th><th>TW</th><th>MO</th><th>FM</th><th>DM</th><th>Status</th></tr></thead><tbody>${visible.map(t=>{
     const raw=t.netBushels??t.netBu;
     const bu=raw===null||raw===undefined||String(raw).trim()===''?NaN:Number(String(raw).replace(/,/g,''));
     const href=`/pages/grain/grain-ticket-detail.html?id=${encodeURIComponent(t.id)}`;
