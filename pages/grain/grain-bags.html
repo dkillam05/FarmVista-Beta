@@ -170,6 +170,16 @@
       min-width:0;
     }
 
+    #bagShare{position:absolute;top:8px;right:10px;z-index:25;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:6px;border:0;background:transparent;color:var(--sheet-text);cursor:pointer}
+    .inventory-section{position:relative}
+    .inventory-title{padding-right:44px}
+    #bagShareDialog{max-width:340px;width:calc(100% - 32px);padding:20px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text)}
+    #bagShareDialog::backdrop{background:rgba(0,0,0,.5)}
+    #bagShareDialog button{font:inherit;min-height:44px;cursor:pointer}
+    #bagShareClose{float:right;background:transparent;color:inherit;border:0;font-size:24px!important}
+    .bag-share-actions{display:flex;gap:12px;margin:16px 0}
+    .bag-share-actions button{flex:1;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:inherit}
+    #bagShareStatus{font-size:13px}
     .inventory-title{
       margin:0;
       font-size:18px;
@@ -896,6 +906,7 @@
         box-shadow:none;
       }
 
+      #bagShare{position:fixed;top:8px;right:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
       .inventory-head{
         display:none;
       }
@@ -1100,12 +1111,14 @@
         data-perm="grain-bags:view"
       >
 
+        <button type="button" id="bagShare" aria-label="Share or print table" title="Share or print table"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2"/></svg></button>
         <header class="inventory-head">
 
           <div class="inventory-head-left">
 
             <h2 class="inventory-title">
               Current Bag Inventory
+
             </h2>
 
             <p class="inventory-helper">
@@ -1172,6 +1185,10 @@
     </div>
 
   </fv-shell>
+  <dialog id="bagShareDialog" aria-labelledby="bagShareTitle"><button id="bagShareClose" aria-label="Close">×</button><h3 id="bagShareTitle">Share table</h3><p>Current view · Letter (8.5 × 11)</p><div class="bag-share-actions"><button id="bagSharePdf">Share PDF</button><button id="bagSharePrint">Print</button></div><p id="bagShareStatus" role="status"></p></dialog>
+  <script src="/js/vendor/jspdf.umd.min.js" defer></script>
+  <script src="/js/vendor/jspdf.plugin.autotable.min.js" defer></script>
+  <script src="/js/grain/bag-table-export.js?v=20260923-7" defer></script>
 
 
   <!-- =========================================================
