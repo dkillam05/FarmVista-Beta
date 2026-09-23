@@ -1,7 +1,15 @@
 // FarmVista Grain Operations — automatic hauling rollover/split planner
-import { clean,planHaulingAllocation,ticketBushels,isVoided,round2,normalizeSplitAllocations,sameBuyer,sameDeliveryLocation,sameCustomer,sameCrop,timestampValue,compatibleHaulingJob } from '../core/grain-rules.js';
+import { clean,planHaulingAllocation,ticketBushels,isVoided,round2,normalizeSplitAllocations,sameBuyer,sameDeliveryLocation,sameCustomer,sameCrop,timestampValue } from '../core/grain-rules.js';
 const otherTickets=(ticket,state)=>(state?.tickets||[]).filter(x=>clean(x?.id)!==clean(ticket?.id));
-export function buildAutomaticHaulingAssignment(ticket,state){const plan=planHaulingAllocation(ticket,state?.haulingJobs||[],otherTickets(ticket,state)),total=ticketBushels(ticket);if(!plan.allocations.length)return{sourceJobId:'',haulingJobId:'',sourceBushels:0,haulingJobSplitAllocations:[],spotBushels:total,totalBushels:total};const source=plan.allocations[0],splits=[];for(const part of plan.allocations.slice(1))splits.push({sourceJobId:source.haulingJobId,haulingJobId:part.haulingJobId,bushels:part.bushels,allocationType:'job'});if(plan.spotBushels>0)splits.push({sourceJobId:source.haulingJobId,haulingJobId:'',bushels:plan.spotBushels,allocationType:'spot'});return{sourceJobId:source.haulingJobId,haulingJobId:source.haulingJobId,sourceBushels:source.bushels,haulingJobSplitAllocations:splits,spotBushels:plan.spotBushels,totalBushels:total}}
+export function buildAutomaticHaulingAssignment(ticket,state){
+  const plan=planHaulingAllocation(ticket,state?.haulingJobs||[],otherTickets(ticket,state));
+  const total=ticketBushels(ticket);
+  const source=plan.allocations[0]||{haulingJobId:plan.spotHaulingJobId,bushels:0};
+  const sourceJobId=clean(source.haulingJobId),splits=[];
+  for(const part of plan.allocations.slice(1))splits.push({sourceJobId,haulingJobId:part.haulingJobId,bushels:part.bushels,allocationType:'job'});
+  if(sourceJobId&&plan.spotBushels>0)splits.push({sourceJobId,haulingJobId:'',bushels:plan.spotBushels,allocationType:'spot'});
+  return{sourceJobId,haulingJobId:sourceJobId,sourceBushels:source.bushels,haulingJobSplitAllocations:splits,spotBushels:plan.spotBushels,totalBushels:total};
+}
 export function describeAutomaticAssignment(result,state){const name=id=>{const job=(state?.haulingJobs||[]).find(x=>clean(x.id)===clean(id));return clean(job?.jobName??job?.deliveryLocationName??job?.buyerName)||id},parts=[];if(result?.sourceJobId)parts.push(`${name(result.sourceJobId)}: ${result.sourceBushels} bu`);for(const split of result?.haulingJobSplitAllocations||[])parts.push(split.allocationType==='unassigned'?`Unassigned: ${split.bushels} bu`:split.allocationType==='spot'?`Spot: ${split.bushels} bu`:`${name(split.haulingJobId)}: ${split.bushels} bu`);return parts}
 
 // Rebuild a matching group in ticket chronology, reserving deliberate manual assignments.
@@ -22,14 +30,7 @@ export function buildHaulingReconciliation(state,anchor){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>day){working.tickets.push(ticket);continue}
     const result=buildAutomaticHaulingAssignment(ticket,working);
     // No eligible destination: retain the existing record for office review.
-    if(!result.haulingJobId){
-      // In a reviewed historical repair, whole overflow also needs a visible Spot owner.
-      const eligible=(state.haulingJobs||[]).filter(j=>compatibleHaulingJob(j,ticket)).sort((a,b)=>clean(a.deliveryStartDate).localeCompare(clean(b.deliveryStartDate))||timestampValue(a.createdAt)-timestampValue(b.createdAt)||clean(a.id).localeCompare(clean(b.id)));
-      const source=eligible.find(j=>clean(j.id)===clean(ticket.haulingJobId))||eligible.at(-1);
-      if(!source){working.tickets.push(ticket);continue}
-      result.sourceJobId=result.haulingJobId=clean(source.id);
-      result.haulingJobSplitAllocations=[{sourceJobId:clean(source.id),haulingJobId:'',bushels:ticketBushels(ticket),allocationType:'spot'}];
-    }
+    if(!result.haulingJobId){working.tickets.push(ticket);continue}
     const next={...ticket,haulingJobId:result.haulingJobId,haulingJobSplitAllocations:result.haulingJobSplitAllocations};
     working.tickets.push(next);
     if(allocationSignature(ticket)!==allocationSignature(next))changes.push({ticket,result});

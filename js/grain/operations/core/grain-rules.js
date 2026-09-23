@@ -121,5 +121,11 @@ export function planHaulingAllocation(ticket,jobs,tickets){
   // Explicit Spot-only hauling jobs are real operational jobs, but normal-capacity jobs always
   // take priority. Only use the oldest compatible Spot job after all normal capacity is exhausted.
   if(remaining>EPS&&spotJobs.length){allocations.push({haulingJobId:clean(spotJobs[0].id),bushels:round2(remaining),allocationType:'job',spotLoadOnly:true});remaining=0}
-  return {allocations,spotBushels:Math.max(0,round2(remaining))};
+  // Once all eligible capacity is exhausted, keep a whole overflow load attached
+  // to an eligible source (or the last job in the normal fill order). Completion
+  // by bushels does not close that job's delivery window.
+  const spotSource=remaining>EPS&&!allocations.length
+    ?capacityJobs.find(job=>clean(job.id)===clean(ticket?.haulingJobId))||capacityJobs.at(-1)
+    :null;
+  return {allocations,spotBushels:Math.max(0,round2(remaining)),spotHaulingJobId:clean(spotSource?.id)};
 }
