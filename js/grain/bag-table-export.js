@@ -69,9 +69,10 @@
     try{
       if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'Grain Bag Inventory'});
       else{const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);document.getElementById('bagShareStatus').textContent='PDF downloaded. Attach it to your text or email.';}
+      dialog.close();
     }catch(error){if(error.name!=='AbortError')document.getElementById('bagShareStatus').textContent='Could not share the PDF. Try again.';}
   });
   document.getElementById('bagSharePrint').addEventListener('click',()=>{
-    try{if(data)print(data);}catch(error){document.getElementById('bagShareStatus').textContent=error.message;}
+    try{if(data){print(data);dialog.close();}}catch(error){document.getElementById('bagShareStatus').textContent=error.message;}
   });
 })();
