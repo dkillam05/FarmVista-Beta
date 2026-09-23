@@ -71,7 +71,7 @@
   .grain-overview-block{position:relative;margin-bottom:10px;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
   .grain-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .grain-action{display:flex;align-items:center;gap:10px;min-height:72px;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text);text-decoration:none}
-  .grain-action .ql-label{display:none}.grain-action .ql-title{font-size:13px;font-weight:700}.grain-action .ql-right{font-size:27px;flex-shrink:0}
+  .grain-action .ql-label{display:none}.grain-action .ql-title{font-size:13px;font-weight:700;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}.grain-action .ql-right{font-size:27px;flex-shrink:0}
   #portrait-grain.is-sorting .grain-overview-block:not(.kpi-dragging){animation:fv-kpi-wiggle .16s ease-in-out infinite alternate}
   #portrait-grain .grain-overview-block.kpi-dragging{z-index:3;outline:2px solid var(--gold,#D0C542);border-radius:10px;transform:scale(1.015);opacity:.85}
   .portrait-grain-extra{padding-top:9px;border-top:1px solid var(--border)}
