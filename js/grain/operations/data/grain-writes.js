@@ -1,3 +1,4 @@
+import {grainRecordSignature} from '../core/grain-integrity.js';
 // FarmVista Grain Operations — single Firestore write gateway. UI modules never write directly.
 import { ready,getFirestore,getAuth,collection,addDoc,doc,updateDoc,serverTimestamp } from '/js/firebase/firebase-init.js';import { COLLECTIONS,refreshGrainOperations,grainState } from './grain-store.js';import { clean,round2,ticketBushels,normalizeSplitAllocations,isVoided,key,sameBuyer,sameDeliveryLocation,sameCrop,effectiveJobTotals,jobTarget,isSpotHaulingJob } from '../core/grain-rules.js';import { buildAutomaticHaulingAssignment } from '../hauling/hauling-allocation.js';import { planTicketAllocation,planDetailedContractAllocation } from '../tickets/ticket-allocation.js';import { contractCreatePayload,contractEditPayload } from '../contracts/contract-form.js';
 async function db(){await ready;return getFirestore()}const who=()=>{const u=getAuth()?.currentUser;return{uid:u?.uid||null,name:u?.displayName||u?.email||'FarmVista User',email:u?.email||null}};async function patch(c,id,data){const store=await db();await updateDoc(doc(store,c,clean(id)),{...data,updatedAt:serverTimestamp()});await refreshGrainOperations()}async function create(c,data){const store=await db(),user=who();const saved=await addDoc(collection(store,c),{...data,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),createdByUid:user.uid,createdByName:user.name,createdByEmail:user.email,updatedByUid:user.uid,updatedByName:user.name,updatedByEmail:user.email});await refreshGrainOperations();return saved.id}
@@ -33,7 +34,7 @@ export async function applyHaulingReconciliation(preview,reviewedState){
   if(!preview?.changes?.length)return;
   if(preview.changes.length>400)throw new Error('Too many changed tickets for one repair. Narrow the matching group.');
   const store=await db();
-  const signature=value=>JSON.stringify(value,(_,v)=>v&&typeof v.toMillis==='function'?v.toMillis():v);
+  const signature=grainRecordSignature;
   const rows=[...(reviewedState.tickets||[]).map(t=>({collection:COLLECTIONS.tickets,record:t})),...(reviewedState.haulingJobs||[]).map(j=>({collection:COLLECTIONS.haulingJobs,record:j}))];
   // Clone before refresh: grainState is a mutable shared object.
   const expected=rows.map(({collection,record})=>({ref:doc(store,collection,clean(record.id)),id:clean(record.id),value:signature(record)}));
@@ -42,7 +43,7 @@ export async function applyHaulingReconciliation(preview,reviewedState){
   if((grainState().tickets||[]).map(t=>clean(t.id)).sort().join('|')!==expectedIds)throw new Error('Tickets changed. Close this preview and review allocations again.');
   await runTransaction(store,async transaction=>{
     const snapshots=await Promise.all(expected.map(x=>transaction.get(x.ref)));
-    snapshots.forEach((snap,i)=>{if(!snap.exists()||signature({id:expected[i].id,...snap.data()})!==expected[i].value)throw new Error('Grain records changed. Close this preview and review allocations again.');});
+    snapshots.forEach((snap,i)=>{if(!snap.exists()||signature({id:expected[i].id,...snap.data()})!==expected[i].value)throw new Error(`Grain record ${expected[i].id} changed. Close this preview and review allocations again.`);});
     for(const {ticket,result} of preview.changes){
       const source=(reviewedState.haulingJobs||[]).find(j=>clean(j.id)===clean(result.haulingJobId));
       transaction.update(doc(store,COLLECTIONS.tickets,clean(ticket.id)),{

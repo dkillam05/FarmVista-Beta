@@ -29,3 +29,9 @@ const preserved=buildHaulingReconciliation({...broken,tickets:[...broken.tickets
 assert.equal(preserved.manualCount,1);assert.equal(preserved.state.tickets.find(x=>x.id==='manual'),manual);
 for(const scenario of runGrainScenarios())assert.equal(scenario.pass,true,scenario.name);
 console.log('PASS: rollover, completion flags, compatibility, Spot portions, voids, chronological repair, conservation, idempotency, manual protection, existing scenarios');
+
+const {grainRecordSignature}=await import('../js/grain/operations/core/grain-integrity.js');
+assert.equal(grainRecordSignature({id:'ticket',nested:{a:1,b:2},rows:[{a:1,b:2}]}),grainRecordSignature({rows:[{b:2,a:1}],nested:{b:2,a:1},id:'ticket'}));
+assert.notEqual(grainRecordSignature({netBushels:100}),grainRecordSignature({netBushels:101}));
+assert.notEqual(grainRecordSignature({splits:[1,2]}),grainRecordSignature({splits:[2,1]}));
+console.log('PASS: Firestore record comparison ignores map order but detects value changes');
