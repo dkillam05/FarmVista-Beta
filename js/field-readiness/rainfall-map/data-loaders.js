@@ -166,6 +166,7 @@ export async function loadMrmsDocs(force=false){
     return out;
   }catch(e){
     if (isPermissionError(e)){
+      if (force) throw e;
       console.warn('[WeatherMap] MRMS permission denied; continuing without MRMS collection.');
       appState.mrmsCache = { loadedAt: Date.now(), data: [] };
       return [];

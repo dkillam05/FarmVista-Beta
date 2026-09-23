@@ -45,6 +45,14 @@ export function startWeatherMap(){
   return startupPromise;
 }
 
+// Refresh the current controls, never re-run saved/default startup settings.
+export async function refreshWeatherMap(){
+  if (startupPromise) await startupPromise;
+  if (!appState.startFinished) return startWeatherMap();
+  await initFirebase();
+  await renderActiveMode(true, { quiet:true, preserveViewport:true });
+}
+
 async function runWeatherMap(){
   // If startup already completed, this is a return-to-page / re-entry case.
   // Re-sync UI + state and force a redraw instead of exiting.
