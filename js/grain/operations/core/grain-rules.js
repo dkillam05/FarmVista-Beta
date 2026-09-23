@@ -62,7 +62,7 @@ export function effectiveJobTotals(tickets){
   return totals;
 }
 
-// Normal job portions exclude Spot. Every view must use this same ledger.
+// Normal capacity excludes Spot; delivered totals include its attached Spot portions.
 export function ticketJobBushels(ticket,jobId){
   if(isVoided(ticket))return 0;
   return effectiveJobTotals([ticket]).get(clean(jobId))||0;
@@ -71,6 +71,7 @@ export function ticketSpotBushels(ticket,jobId){
   if(isVoided(ticket)||clean(ticket?.haulingJobId)!==clean(jobId))return 0;
   return round2(normalizeSplitAllocations(ticket).filter(a=>a.sourceJobId===clean(jobId)&&a.allocationType==='spot').reduce((n,a)=>n+a.bushels,0));
 }
+export const ticketDeliveredBushels=(ticket,jobId)=>round2(ticketJobBushels(ticket,jobId)+ticketSpotBushels(ticket,jobId));
 export const timestampValue=value=>typeof value?.toMillis==='function'?value.toMillis():Number(value?.seconds??value?._seconds)*1000||Date.parse(clean(value))||0;
 
 export function haulingStatus(job,tickets,now=new Date()){
@@ -125,7 +126,7 @@ export function planHaulingAllocation(ticket,jobs,tickets){
   // to an eligible source (or the last job in the normal fill order). Completion
   // by bushels does not close that job's delivery window.
   const spotSource=remaining>EPS&&!allocations.length
-    ?capacityJobs.find(job=>clean(job.id)===clean(ticket?.haulingJobId))||capacityJobs.at(-1)
+    ?capacityJobs.at(-1)
     :null;
   return {allocations,spotBushels:Math.max(0,round2(remaining)),spotHaulingJobId:clean(spotSource?.id)};
 }

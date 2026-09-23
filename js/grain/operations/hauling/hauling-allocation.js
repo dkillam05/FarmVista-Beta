@@ -4,9 +4,9 @@ const otherTickets=(ticket,state)=>(state?.tickets||[]).filter(x=>clean(x?.id)!=
 export function buildAutomaticHaulingAssignment(ticket,state){
   const plan=planHaulingAllocation(ticket,state?.haulingJobs||[],otherTickets(ticket,state));
   const total=ticketBushels(ticket);
-  const source=plan.allocations[0]||{haulingJobId:plan.spotHaulingJobId,bushels:0};
+  const source=(plan.spotBushels>0?plan.allocations.at(-1):plan.allocations[0])||{haulingJobId:plan.spotHaulingJobId,bushels:0};
   const sourceJobId=clean(source.haulingJobId),splits=[];
-  for(const part of plan.allocations.slice(1))splits.push({sourceJobId,haulingJobId:part.haulingJobId,bushels:part.bushels,allocationType:'job'});
+  for(const part of plan.allocations.filter(part=>part!==source))splits.push({sourceJobId,haulingJobId:part.haulingJobId,bushels:part.bushels,allocationType:'job'});
   if(sourceJobId&&plan.spotBushels>0)splits.push({sourceJobId,haulingJobId:'',bushels:plan.spotBushels,allocationType:'spot'});
   return{sourceJobId,haulingJobId:sourceJobId,sourceBushels:source.bushels,haulingJobSplitAllocations:splits,spotBushels:plan.spotBushels,totalBushels:total};
 }
