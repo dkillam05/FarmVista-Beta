@@ -97,6 +97,9 @@ input,select,button{font-size:16px;}
 .actions{padding:16px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:10px;}
 .actions .btn{width:100%;}
 #cyModal{z-index:100000;}
+.saved-strips-heading{display:grid;gap:10px;margin-bottom:10px;}
+.saved-strip-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.saved-strip-actions .btn{flex:1;}
 .detail-strip-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
 .history{border-top:1px solid var(--border);padding:16px;}
 .history-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
@@ -193,7 +196,7 @@ async function loadHistory(){const list=$("historyList"),empty=$("historyEmpty")
 function renderHistory(){const list=$("historyList"),empty=$("historyEmpty");list.innerHTML="";if(!HISTORY.length){empty.hidden=false;empty.textContent="No saved tests yet.";return;}empty.hidden=true;HISTORY.forEach(record=>{const summary=record.summary||record,row=document.createElement("div");row.className="history-row";const differenceText=Number.isFinite(summary.differenceBuAc)?(summary.differenceBuAc>=0?"+":"")+fmt(summary.differenceBuAc,1):"-";row.innerHTML=`<div class="history-main"><div class="history-info"><div class="history-title">${esc(record.testName||record.trialName||"Unnamed Test")}</div><div class="history-sub">${esc(record.fieldName||"Unknown Field")} | ${esc(formatDate(record.createdAt||record.createdAtISO))}</div><div class="history-sub">Trial: <strong>${fmt(summary.trialAverage,1)}</strong> bu/ac | Check: <strong>${fmt(summary.checkAverage,1)}</strong> bu/ac | Difference: <strong>${differenceText}</strong> bu/ac</div></div><button class="btn" type="button">View</button></div>`;row.querySelector("button").addEventListener("click",()=>openHistory(record));list.appendChild(row);});}
 function buildShareText(record){const summary=record.summary||record,strips=Array.isArray(record.strips)?record.strips:[],signed=value=>Number.isFinite(value)?(value>=0?"+":"")+fmt(value,2):"-";const lines=["FarmVista Trial Yield Results",record.testName||record.trialName||"Unnamed Test",`Field: ${record.fieldName||"Unknown Field"}`,`Date: ${formatDate(record.createdAt||record.createdAtISO)}`,"",`Trial Average: ${fmt(summary.trialAverage,2)} bu/ac`,`Check Average: ${fmt(summary.checkAverage,2)} bu/ac`,`Difference: ${signed(summary.differenceBuAc)} bu/ac`,`Difference: ${signed(summary.differencePct)}%`];if(strips.length){lines.push("","Individual Strips:");strips.forEach((strip,index)=>{const calc=strip.calculation||{},parts=[`Strip ${index+1} - ${strip.type||"-"}: ${fmt(strip.yieldBuAc,2)} bu/ac`];if(calc.cropName)parts.push(calc.cropName);if(Number.isFinite(calc.cutWidthFt))parts.push(`${fmt(calc.cutWidthFt,0)} ft`);if(Number.isFinite(calc.startMoisture))parts.push(`${fmt(calc.startMoisture,2)}% moisture`);if(strip.notes)parts.push(`Notes: ${strip.notes}`);if(index>0)lines.push("");lines.push(parts.join(" | "));});}return lines.join("\n");}
 async function shareHistoryRecord(){const record=historyShareRecord;if(!record)return;const text=buildShareText(record),title=record.testName||record.trialName||"FarmVista Trial Yield Results";if(navigator.share){try{await navigator.share({title,text});return;}catch(error){if(error&&error.name==="AbortError")return;console.warn("[FV] Native share failed, trying SMS fallback",error);}}const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent),separator=isIOS?"&":"?";window.location.href=`sms:${separator}body=${encodeURIComponent(text)}`;}
-function openHistory(record){historyShareRecord=record;const summary=record.summary||record,strips=Array.isArray(record.strips)?record.strips:[],value=number=>Number.isFinite(number)?fmt(number,2):"-";let html=`<h3 style="margin-top:0;">${esc(record.testName||record.trialName||"Unnamed Test")}</h3><div class="history-sub">${esc(record.fieldName||"Unknown Field")} | ${esc(formatDate(record.createdAt||record.createdAtISO))}</div><p><strong>Trial Average:</strong> ${value(summary.trialAverage)} bu/ac<br><strong>Check Average:</strong> ${value(summary.checkAverage)} bu/ac<br><strong>Difference:</strong> ${value(summary.differenceBuAc)} bu/ac<br><strong>Difference %:</strong> ${value(summary.differencePct)}%</p><strong>Individual Strips</strong>`;strips.forEach((strip,index)=>{const calc=strip.calculation||{};html+=`<div class="detail-strip"><div class="detail-strip-head"><strong>Strip ${index+1} - ${esc(strip.type||"-")}</strong><button class="btn" type="button" data-edit-strip="${index}" aria-label="Edit strip ${index+1}">Edit</button></div><div>Yield: ${value(strip.yieldBuAc)} bu/ac</div><div>Notes: ${esc(strip.notes||"-")}</div><div>Crop: ${esc(calc.cropName||"-")}</div><div>Width: ${value(calc.cutWidthFt)} ft</div><div>Length: ${value(calc.cutLengthFt)} ft</div><div>Area: ${value(calc.acres)} ac</div><div>Wet Weight: ${value(calc.wetWeightLb)} lb</div><div>Moisture: ${value(calc.startMoisture)}%</div></div>`;});$("historyBody").innerHTML=html;$("historyBody").querySelectorAll("[data-edit-strip]").forEach(button=>button.addEventListener("click",()=>editHistoryStrip(record,Number(button.dataset.editStrip))));openModal($("historyModal"));}
+function openHistory(record){historyShareRecord=record;const summary=record.summary||record,strips=Array.isArray(record.strips)?record.strips:[],value=number=>Number.isFinite(number)?fmt(number,2):"-";let html=`<h3 style="margin-top:0;">${esc(record.testName||record.trialName||"Unnamed Test")}</h3><div class="history-sub">${esc(record.fieldName||"Unknown Field")} | ${esc(formatDate(record.createdAt||record.createdAtISO))}</div><p><strong>Trial Average:</strong> ${value(summary.trialAverage)} bu/ac<br><strong>Check Average:</strong> ${value(summary.checkAverage)} bu/ac<br><strong>Difference:</strong> ${value(summary.differenceBuAc)} bu/ac<br><strong>Difference %:</strong> ${value(summary.differencePct)}%</p><div class="saved-strips-heading"><strong>Individual Strips</strong><div class="saved-strip-actions"><button class="btn primary" type="button" data-add-strip="Trial">+ Trial Strip</button><button class="btn" type="button" data-add-strip="Check">+ Check Strip</button></div></div>`;strips.forEach((strip,index)=>{const calc=strip.calculation||{};html+=`<div class="detail-strip"><div class="detail-strip-head"><strong>Strip ${index+1} - ${esc(strip.type||"-")}</strong><button class="btn" type="button" data-edit-strip="${index}" aria-label="Edit strip ${index+1}">Edit</button></div><div>Yield: ${value(strip.yieldBuAc)} bu/ac</div><div>Notes: ${esc(strip.notes||"-")}</div><div>Crop: ${esc(calc.cropName||"-")}</div><div>Width: ${value(calc.cutWidthFt)} ft</div><div>Length: ${value(calc.cutLengthFt)} ft</div><div>Area: ${value(calc.acres)} ac</div><div>Wet Weight: ${value(calc.wetWeightLb)} lb</div><div>Moisture: ${value(calc.startMoisture)}%</div></div>`;});$("historyBody").innerHTML=html;$("historyBody").querySelectorAll("[data-edit-strip]").forEach(button=>button.addEventListener("click",()=>editHistoryStrip(record,Number(button.dataset.editStrip))));$("historyBody").querySelectorAll("[data-add-strip]").forEach(button=>button.addEventListener("click",()=>addHistoryStrip(record,button.dataset.addStrip)));openModal($("historyModal"));}
 
 function summarizeSavedStrips(strips){
   const trial=strips.filter(s=>s.type==="Trial"),check=strips.filter(s=>s.type==="Check");
@@ -213,6 +216,22 @@ function editHistoryStrip(record,index){
   $("cyUse").textContent="Save Strip";
   cyModal.querySelector("h3").textContent=`Edit Strip ${index+1}`;
 }
+function addHistoryStrip(record,type){
+  openCalculator({_calc:null});
+  targetRow=null;
+  savedStripEdit={recordId:record.id,isNew:true};
+  const previous=(record.strips||[]).find(strip=>strip.type===type&&strip.calculation)
+    ||(record.strips||[]).find(strip=>strip.calculation);
+  if(previous){
+    cyCrop.value=previous.calculation.crop||"corn";
+    cyWid.value=String(previous.calculation.cutWidthFt||30);
+  }
+  $("savedStripFields").hidden=false;
+  $("savedStripType").value=type;
+  $("savedStripNotes").value="";
+  $("cyUse").textContent="Save Strip";
+  cyModal.querySelector("h3").textContent="Add Strip";
+}
 async function saveHistoryStrip(calc){
   const edit=savedStripEdit,type=$("savedStripType").value,notes=$("savedStripNotes").value.trim();
   savingStrip=true;
@@ -226,8 +245,14 @@ async function saveHistoryStrip(calc){
       const snap=await transaction.get(ref);
       if(!snap.exists())throw new Error("This test no longer exists. Refresh Previous Tests.");
       const current=snap.data(),strips=Array.isArray(current.strips)?current.strips.slice():[];
-      if(!strips[edit.index]||JSON.stringify(strips[edit.index])!==edit.original)throw new Error("This strip changed since you opened it. Go back and refresh Previous Tests before editing again.");
-      strips[edit.index]={...strips[edit.index],type,notes,yieldBuAc:calc.yieldBuAc,calculation:{...strips[edit.index].calculation,...calc}};
+      if(edit.isNew){
+        // Append to the latest saved test so other users' additions are retained.
+        const order=strips.reduce((max,strip)=>Math.max(max,Number(strip.order)||0),strips.length)+1;
+        strips.push({order,type,notes,yieldBuAc:calc.yieldBuAc,calculation:{...calc}});
+      }else{
+        if(!strips[edit.index]||JSON.stringify(strips[edit.index])!==edit.original)throw new Error("This strip changed since you opened it. Go back and refresh Previous Tests before editing again.");
+        strips[edit.index]={...strips[edit.index],type,notes,yieldBuAc:calc.yieldBuAc,calculation:{...strips[edit.index].calculation,...calc}};
+      }
       if(!strips.some(s=>s.type==="Trial")||!strips.some(s=>s.type==="Check"))throw new Error("Keep at least one Trial strip and one Check strip.");
       const summary=summarizeSavedStrips(strips);
       const patch={strips,summary,trialStripCount:summary.trialStripCount,checkStripCount:summary.checkStripCount,trialAverage:summary.trialAverage,checkAverage:summary.checkAverage,differenceBuAc:summary.differenceBuAc,differencePct:summary.differencePct,updatedAt:fb.serverTimestamp()};
