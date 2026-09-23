@@ -326,6 +326,16 @@
       gap:14px;
     }
 
+    .bag-group-toggle{
+      border:0; background:transparent; color:inherit; font:inherit;
+      text-align:left; cursor:pointer; padding:6px 0; min-height:32px;
+      display:inline-flex; align-items:center; gap:9px;
+    }
+    .bag-group-toggle:focus-visible{ outline:2px solid #c6b52e; outline-offset:3px; }
+    .bag-group-toggle .chevron{ display:inline-block; width:12px; }
+    .grid-viewport{ touch-action:pan-x pan-y; }
+    .grid-viewport .field-swipe{ touch-action:pan-y; }
+
     .farm-name{
       font-weight:1000;
     }
@@ -1099,7 +1109,7 @@
             </h2>
 
             <p class="inventory-helper">
-              Grouped by farm and crop. Tap a field row to remove inventory.
+              Tap a farm or crop to expand. Pinch the table to zoom. Tap a field row to remove inventory.
               Turn your phone sideways for full-screen spreadsheet view.
             </p>
 
@@ -3396,7 +3406,74 @@ _priority:
       </tr>`;
     }
 
+    let bagView = {open:{}, zoom:1};
+    let bagViewKey = '';
+    let bagPinch = null, suppressBagClickUntil = 0;
+    const bagViewport = $('gridViewport');
+    const bagTable = bagViewport.querySelector('table');
+    function saveBagView(){
+      try { localStorage.setItem(bagViewKey, JSON.stringify(bagView)); } catch {}
+    }
+    function loadBagView(){
+      const key = 'fv:grain-bags:view:v1:' + (state.auth?.currentUser?.uid || 'guest');
+      if(key === bagViewKey) return;
+      bagViewKey = key;
+      bagView = {open:{}, zoom:1};
+      try {
+        const saved = JSON.parse(localStorage.getItem(key));
+        if(saved && saved.open && typeof saved.open === 'object' && !Array.isArray(saved.open)) bagView.open = saved.open;
+        if(Number.isFinite(saved?.zoom)) bagView.zoom = Math.max(.4, Math.min(2, saved.zoom));
+      } catch {}
+      bagTable.style.zoom = bagView.zoom;
+    }
+    bagViewport.addEventListener('click', event => {
+      if(bagPinch || Date.now() < suppressBagClickUntil){
+        event.preventDefault(); event.stopImmediatePropagation(); return;
+      }
+      const button = event.target.closest('[data-bag-group]');
+      if(!button) return;
+      const key = button.dataset.bagGroup;
+      bagView.open[key] = bagView.open[key] !== true;
+      saveBagView();
+      renderInventory();
+      [...body.querySelectorAll('[data-bag-group]')].find(el => el.dataset.bagGroup === key)?.focus({preventScroll:true});
+    }, true);
+    function bagTouchDistance(touches){
+      return Math.hypot(touches[0].clientX-touches[1].clientX, touches[0].clientY-touches[1].clientY);
+    }
+    bagViewport.addEventListener('touchstart', event => {
+      if(event.touches.length !== 2) return;
+      if(event.cancelable) event.preventDefault();
+      const rect = bagViewport.getBoundingClientRect();
+      const x = (event.touches[0].clientX+event.touches[1].clientX)/2-rect.left;
+      const y = (event.touches[0].clientY+event.touches[1].clientY)/2-rect.top;
+      bagPinch = {distance:Math.max(1,bagTouchDistance(event.touches)), zoom:bagView.zoom,
+        x:(bagViewport.scrollLeft+x)/bagView.zoom, y:(bagViewport.scrollTop+y)/bagView.zoom};
+      suppressBagClickUntil = Date.now()+800;
+      body.querySelectorAll('.field-swipe.revealed').forEach(dismissBagSwipe);
+    }, {passive:false});
+    bagViewport.addEventListener('touchmove', event => {
+      if(!bagPinch) return;
+      if(event.cancelable) event.preventDefault();
+      if(event.touches.length !== 2) return;
+      const rect = bagViewport.getBoundingClientRect();
+      bagView.zoom = Math.max(.4, Math.min(2, bagPinch.zoom*bagTouchDistance(event.touches)/bagPinch.distance));
+      bagTable.style.zoom = bagView.zoom;
+      bagViewport.scrollLeft = bagPinch.x*bagView.zoom-((event.touches[0].clientX+event.touches[1].clientX)/2-rect.left);
+      bagViewport.scrollTop = bagPinch.y*bagView.zoom-((event.touches[0].clientY+event.touches[1].clientY)/2-rect.top);
+    }, {passive:false});
+    function endBagPinch(event){
+      if(!bagPinch) return;
+      suppressBagClickUntil = Date.now()+800;
+      if(event.touches.length === 0){ bagPinch=null; saveBagView(); }
+    }
+    bagViewport.addEventListener('touchend', endBagPinch, {passive:true});
+    bagViewport.addEventListener('touchcancel', () => {
+      if(bagPinch){ bagPinch=null; suppressBagClickUntil=Date.now()+800; saveBagView(); }
+    }, {passive:true});
+
     function renderInventory(){
+      loadBagView();
 
       if (
         !state.rows.length
@@ -3429,34 +3506,15 @@ _priority:
       farms.forEach(
         farm => {
 
-          html.push(
-            `
-              <tr class="farm-group-row">
-
-                <td colspan="8">
-
-                  <div class="farm-group-inner">
-
-                    <span class="farm-name">
-                      ${escapeHtml(
-                        farm.name
-                      )}
-                    </span>
-
-                    <span class="farm-summary">
-                      ${farm.full} full
-                      •
-                      ${farm.partial} partial
-                    </span>
-
-                  </div>
-
-                </td>
-
-              </tr>
-            `
-          );
-
+          const farmKey = JSON.stringify(['farm', farm.id]);
+          const farmOpen = bagView.open[farmKey] === true;
+          html.push(`<tr class="farm-group-row"><td colspan="8"><div class="farm-group-inner">
+            <button type="button" class="bag-group-toggle farm-name" data-bag-group="${escapeHtml(farmKey)}" aria-expanded="${farmOpen}">
+              <span class="chevron" aria-hidden="true">${farmOpen ? '▾' : '▸'}</span>${escapeHtml(farm.name)}
+            </button>
+            <span class="farm-summary">${farm.full} full • ${farm.partial} partial</span>
+          </div></td></tr>`);
+          if(!farmOpen) return;
 
           const crops =
             Array
@@ -3478,34 +3536,15 @@ _priority:
           crops.forEach(
             crop => {
 
-              html.push(
-                `
-                  <tr class="crop-group-row">
-
-                    <td colspan="8">
-
-                      <div class="crop-group-inner">
-
-                        <span>
-                          ${escapeHtml(
-                            crop.name
-                          )}
-                        </span>
-
-                        <span class="crop-summary">
-                          ${crop.full} full
-                          •
-                          ${crop.partial} partial
-                        </span>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-                `
-              );
-
+              const cropKey = JSON.stringify(['crop', farm.id, crop.name]);
+              const cropOpen = bagView.open[cropKey] === true;
+              html.push(`<tr class="crop-group-row"><td colspan="8"><div class="crop-group-inner">
+                <button type="button" class="bag-group-toggle" data-bag-group="${escapeHtml(cropKey)}" aria-expanded="${cropOpen}">
+                  <span class="chevron" aria-hidden="true">${cropOpen ? '▾' : '▸'}</span>${escapeHtml(crop.name)}
+                </button>
+                <span class="crop-summary">${totalBagRows(crop.rows).bushels.toLocaleString('en-US')} bu • ${crop.full} full • ${crop.partial} partial</span>
+              </div></td></tr>`);
+              if(!cropOpen) return;
 
               crop.rows
                 .sort(
