@@ -96,6 +96,9 @@ PRETRIP: "logistics-pre-trip",
         "ql-equipment-service-mobile"
       ),
 
+      qlMoveStarFire: byId("ql-move-starfire-desktop"),
+      qlMoveStarFireMobile: byId("ql-move-starfire-mobile"),
+
       qlEquipOverview: byId("ql-equip-overview"),
       qlEquipOverviewMobile: byId("ql-equip-overview-mobile"),
 
@@ -293,6 +296,7 @@ PRETRIP: "logistics-pre-trip",
       isVisible(els.qlPreTripAdd) ||
       isVisible(els.qlBoundaries) ||
       isVisible(els.qlMaintAdd) ||
+      isVisible(els.qlMoveStarFire) ||
       isVisible(els.qlEquipOverview) ||
       isVisible(els.qlFieldWeather);
 
@@ -304,6 +308,7 @@ PRETRIP: "logistics-pre-trip",
       isVisible(els.qlBoundariesMobile) ||
       isVisible(els.qlMaintAddMobile) ||
       isVisible(els.qlEquipmentServiceMobile) ||
+      isVisible(els.qlMoveStarFireMobile) ||
       isVisible(els.qlEquipOverviewMobile) ||
       isVisible(els.qlFieldWeatherMobile) ||
       isVisible(els.qlSteering);
@@ -413,6 +418,8 @@ PRETRIP: "logistics-pre-trip",
 
       els.qlEquipmentServiceMobile,
 
+      els.qlMoveStarFire,
+      els.qlMoveStarFireMobile,
       els.qlEquipOverview,
       els.qlEquipOverviewMobile,
 
@@ -669,6 +676,10 @@ setVisible(
      * EQUIPMENT LINKS
      * =========================================================
      */
+
+    const moveStarFireAllowed = can("eq-starfire", "view");
+    setVisible(els.qlMoveStarFire, moveStarFireAllowed);
+    setVisible(els.qlMoveStarFireMobile, moveStarFireAllowed);
 
     setVisible(
       els.qlEquipOverview,
