@@ -1772,15 +1772,31 @@
         wireRadarMenuUi();
         await waitForGoogleMaps();
 
-        if (!appState.map){
-          await startWeatherMap();
-        }
-
+        await startWeatherMap();
         await bootDevRadar();
       }catch(err){
         console.warn('[WeatherReadinessRadar] page boot failed:', err);
       }
     }
+
+    // The shell calls this contract for pull-to-refresh. Keep the current
+    // session/page alive and reload both field data and radar in place.
+    let refreshPromise = null;
+    window.FVRefresh = () => {
+      if (refreshPromise) return refreshPromise;
+      refreshPromise = (async () => {
+        await startWeatherMap();
+        await bootDevRadar();
+        await loadRadarManifest(true);
+      })().catch(err => {
+        console.warn('[WeatherReadinessRadar] refresh failed:', err);
+      }).finally(() => { refreshPromise = null; });
+      return refreshPromise;
+    };
+
+    window.addEventListener('pageshow', event => {
+      if (event.persisted) bootPage();
+    });
 
     window.addEventListener('load', () => {
       setTimeout(() => {
@@ -1794,9 +1810,7 @@
           try{
             await waitForGoogleMaps();
 
-            if (!appState.map){
-              await startWeatherMap();
-            }
+            await startWeatherMap();
 
             ensureRadarOverlay();
             renderRadarFrame();

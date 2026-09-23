@@ -11,7 +11,7 @@
 import {
   collection,
   getDocs
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+} from '/js/firebase/firebase-init.js';
 
 import {
   MRMS_COLLECTION,
