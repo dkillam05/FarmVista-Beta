@@ -118,8 +118,25 @@ input,select,button{font-size:16px;}
 .dialog-body{padding:14px;overflow:auto;flex:1 1 auto;min-height:0;-webkit-overflow-scrolling:touch;}
 .closex{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;color:var(--text) !important;}
 html.no-scroll,body.no-scroll{overflow:hidden;}
-.cg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:760px){.cg{grid-template-columns:1fr;}}
+.cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.cg > div{min-width:0;}
+@media(max-width:760px){.cg{grid-template-columns:minmax(0,1fr);}}
+/* Keep the strip calculator inside its viewport, including native iOS selects. */
+#cyModal{overflow:hidden;overscroll-behavior-x:none;}
+#cyModal .dialog{min-width:0;max-width:94vw;box-sizing:border-box;}
+#cyModal .dialog-head{flex-shrink:0;min-width:0;}
+#cyModal .dialog-head h3{min-width:0;overflow-wrap:anywhere;}
+#cyModal .dialog-body{
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+  overflow-x:hidden;overflow-y:auto;
+  overscroll-behavior-x:none;overscroll-behavior-y:contain;
+  touch-action:pan-y pinch-zoom;
+}
+#cyModal .cg,#cyModal .ctrl,#cyModal .select-box,#cyModal .result{
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+#cyModal .ctrl input{flex:1 1 0;min-width:0;max-width:100%;}
+#cyModal .result{overflow-wrap:anywhere;}
 .unit{font-size:12px;color:var(--muted);white-space:nowrap;}
 .result{margin-top:12px;border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--surface);}
 .detail-strip{border:1px solid var(--border);border-radius:12px;padding:10px;margin-top:8px;}
