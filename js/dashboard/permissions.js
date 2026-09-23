@@ -66,6 +66,8 @@ PRETRIP: "logistics-pre-trip",
       desktopQuickLinks: byId("desktop-quick-links"),
       mobileQuickLinks: byId("quick-links"),
 
+      qlRainfallMap: byId('ql-rainfall-map-desktop'),
+      qlRainfallMapMobile: byId('ql-rainfall-map-mobile'),
       qlBagAdd: byId('grain-add-bags-desktop'),
       qlBinAdd: byId('grain-add-bins-desktop'),
       qlBagAddMobile: byId('grain-add-bags-mobile'),
@@ -286,6 +288,7 @@ PRETRIP: "logistics-pre-trip",
     els
   ) {
     const desktopHasLinks =
+      isVisible(els.qlRainfallMap) ||
       isVisible(els.qlBagAdd) || isVisible(els.qlBinAdd) ||
       isVisible(els.qlPreTripAdd) ||
       isVisible(els.qlBoundaries) ||
@@ -294,6 +297,7 @@ PRETRIP: "logistics-pre-trip",
       isVisible(els.qlFieldWeather);
 
     const mobileHasLinks =
+      isVisible(els.qlRainfallMapMobile) ||
       isVisible(els.qlBagAddMobile) || isVisible(els.qlBinAddMobile) ||
       isVisible(els.qlGrainScanMobile) ||
       isVisible(els.qlPreTripAddMobile) ||
@@ -395,6 +399,7 @@ PRETRIP: "logistics-pre-trip",
       els.desktopQuickLinks,
       els.mobileQuickLinks,
 
+      els.qlRainfallMap,els.qlRainfallMapMobile,
       els.qlBagAdd,els.qlBinAdd,els.qlBagAddMobile,els.qlBinAddMobile,els.grainBagAdd,els.grainBinAdd,
       els.qlPreTripAdd,
       els.qlPreTripAddMobile,
@@ -593,6 +598,9 @@ const equipmentServiceRequestAllowed =
         ],
         "view"
       );
+
+    setVisible(els.qlRainfallMap,fieldWeatherAllowed);
+    setVisible(els.qlRainfallMapMobile,fieldWeatherAllowed);
 
     /*
      * =========================================================

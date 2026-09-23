@@ -19,6 +19,7 @@
   .portrait-toggle[aria-expanded=true]::after{content:'⌃'}
   #mobile-dashboard a:focus-visible,#mobile-dashboard button:focus-visible,#fv-weather:focus-visible{outline:3px solid var(--gold,#D0C542);outline-offset:2px}
   #mobile-dashboard #quick-links .ql-grid{display:grid;grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;overflow:visible;padding:4px 1px 9px}
+  #mobile-dashboard #quick-links:not(.is-expanded) .ql-grid{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:calc((100% - 24px)/3.2);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
   #mobile-dashboard #quick-links:not(.is-expanded) .ql-btn.portrait-overflow{display:none!important}
   #mobile-dashboard #quick-links .ql-btn{position:relative;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
   #mobile-dashboard #quick-links.is-sorting .ql-btn:not(.kpi-dragging){animation:fv-kpi-wiggle .14s ease-in-out infinite alternate}

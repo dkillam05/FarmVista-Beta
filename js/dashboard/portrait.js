@@ -48,10 +48,10 @@
   function syncQuick(){
     const visible = quickCards().filter(cardCanShow);
     quickCards().forEach(card=>{
-      const overflow = visible.indexOf(card) >= 3;
+      const overflow = visible.indexOf(card) >= 5;
       if(card.classList.contains('portrait-overflow') !== overflow) card.classList.toggle('portrait-overflow',overflow);
     });
-    quickToggle.hidden = visible.length <= 3;
+    quickToggle.hidden = visible.length <= 5;
   }
   const markets = byId('markets-section');
   toggle(markets, byId('fv-markets'));
