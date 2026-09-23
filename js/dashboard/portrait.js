@@ -123,7 +123,7 @@
         timer = setTimeout(activate,420);
       };
       const reorderAt = (x,y) => {
-        const target = document.elementFromPoint(x,y)?.closest?.('.dash-kpi, .ql-btn');
+        const target = document.elementFromPoint(x,y)?.closest?.('.dash-kpi, .ql-btn, .grain-overview-block');
         if (!target || target === card || target.parentElement !== grid || !cardCanShow(target)) return;
         const rect = target.getBoundingClientRect();
         const before = y < rect.top + rect.height/2 ||
@@ -183,6 +183,31 @@
       },true);
     });
   }
+  const grainSection = byId('portrait-grain'), grainSections = byId('grain-overview-sections');
+  const grainBlocks = () => [...grainSections.querySelectorAll(':scope > .grain-overview-block')];
+  const defaultGrainOrder = grainBlocks().map(block=>block.id);
+  const grainOrderKey = () => orderKey().replace('kpi-order','grain-section-order');
+  function syncGrainBlocks(){
+    const actions=byId('grain-overview-actions');
+    actions.hidden=![...actions.querySelectorAll('a')].some(cardCanShow);
+    const visible=grainBlocks().filter(cardCanShow);
+    grainBlocks().forEach(block=>block.classList.toggle('grain-section-overflow',visible.indexOf(block)>=2));
+  }
+  function saveGrainOrder(){
+    try{localStorage.setItem(grainOrderKey(),JSON.stringify(grainBlocks().map(block=>block.id)));}catch{}
+  }
+  function restoreGrainOrder(){
+    let order=defaultGrainOrder;
+    try{const saved=JSON.parse(localStorage.getItem(grainOrderKey()));if(Array.isArray(saved))order=saved;}catch{}
+    const blocks=new Map(grainBlocks().map(block=>[block.id,block]));
+    order.forEach(id=>{const block=blocks.get(id);if(block){grainSections.append(block);blocks.delete(id);}});
+    blocks.forEach(block=>grainSections.append(block));
+    syncGrainBlocks();
+  }
+  enableLongPressSorting(grainSection,grainSections,grainBlocks,saveGrainOrder,syncGrainBlocks,true);
+  restoreGrainOrder();
+  document.addEventListener('fv:user-ready',restoreGrainOrder);
+  document.addEventListener('fv:dash-perms-ready',restoreGrainOrder);
   const enableQuickSorting = () => enableLongPressSorting(quick,quickGrid,quickCards,saveQuickOrder,syncQuick,true);
   enableQuickSorting();
   restoreQuickOrder();

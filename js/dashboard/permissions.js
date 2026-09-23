@@ -66,6 +66,12 @@ PRETRIP: "logistics-pre-trip",
       desktopQuickLinks: byId("desktop-quick-links"),
       mobileQuickLinks: byId("quick-links"),
 
+      qlBagAdd: byId('grain-add-bags-desktop'),
+      qlBinAdd: byId('grain-add-bins-desktop'),
+      qlBagAddMobile: byId('grain-add-bags-mobile'),
+      qlBinAddMobile: byId('grain-add-bins-mobile'),
+      grainBagAdd: byId('grain-add-bags-overview'),
+      grainBinAdd: byId('grain-add-bins-overview'),
       qlPreTripAdd: byId("ql-pretrip-add"),
       qlPreTripAddMobile: byId("ql-pretrip-add-mobile"),
       qlGrainScanMobile: byId("ql-grain-ticket-scan-mobile"),
@@ -280,6 +286,7 @@ PRETRIP: "logistics-pre-trip",
     els
   ) {
     const desktopHasLinks =
+      isVisible(els.qlBagAdd) || isVisible(els.qlBinAdd) ||
       isVisible(els.qlPreTripAdd) ||
       isVisible(els.qlBoundaries) ||
       isVisible(els.qlMaintAdd) ||
@@ -287,6 +294,7 @@ PRETRIP: "logistics-pre-trip",
       isVisible(els.qlFieldWeather);
 
     const mobileHasLinks =
+      isVisible(els.qlBagAddMobile) || isVisible(els.qlBinAddMobile) ||
       isVisible(els.qlGrainScanMobile) ||
       isVisible(els.qlPreTripAddMobile) ||
       isVisible(els.qlBoundariesMobile) ||
@@ -387,6 +395,7 @@ PRETRIP: "logistics-pre-trip",
       els.desktopQuickLinks,
       els.mobileQuickLinks,
 
+      els.qlBagAdd,els.qlBinAdd,els.qlBagAddMobile,els.qlBinAddMobile,els.grainBagAdd,els.grainBinAdd,
       els.qlPreTripAdd,
       els.qlPreTripAddMobile,
       els.qlGrainScanMobile,
@@ -519,6 +528,8 @@ PRETRIP: "logistics-pre-trip",
         "add"
       );
 
+    [els.qlBagAdd,els.qlBagAddMobile,els.grainBagAdd].forEach(el=>setVisible(el,can('grain-bags','add')));
+    [els.qlBinAdd,els.qlBinAddMobile,els.grainBinAdd].forEach(el=>setVisible(el,can('grain-bins','add')));
     setVisible(els.qlGrainScanMobile, can("grain-tix", "add"));
 
     const boundariesAllowed =
