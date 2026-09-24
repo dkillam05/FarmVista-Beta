@@ -34,3 +34,12 @@ test('incomplete report payloads are rejected before rendering',()=>{
   assert.throws(()=>validateReport({...report,recordCount:2}),/complete report/);
   assert.throws(()=>validateReport({...report,rows:[['Missing column']]}),/table is incomplete/);
 });
+test('agronomic reports retain exact hybrid labels, units and coverage warnings in landscape tables',()=>{
+  const columns=['Field','Crop','Activity dates','Recorded variety / product','Kind','Worked ac','Applied ac','Actual total','Recorded rate / yield'].map(label=>({label}));
+  const rows=Array.from({length:80},(_,i)=>['0707-Tri D North','corn','2026-04-14 to 2026-04-14',i%2?'Dekalb 114-42SSP (BLUEPRINT)':'Dekalb 114-42SSP','variety',i%2?'95.7':'101.5','Unknown','Unknown','34,804 seeds1ac-1']);
+  const pdf=buildReportPdf({report:{...report,title:'Deere Seed Varieties',columns,rows,recordCount:rows.length,source:{label:'John Deere agronomic operations'},notes:['Areas are recorded operation acres, not unique land.','Incomplete coverage: one operation has unknown dates.']},branding:{name:'Dowson Farms'},jsPDF:context.jspdf.jsPDF});
+  assert.ok(pdf.internal.pageSize.getWidth()>pdf.internal.pageSize.getHeight());
+  const content=pdf.internal.pages.slice(1).map(page=>page.join('\n')).join('\n');
+  for(const value of ['BLUEPRINT','101.5','95.7','Unknown','Incomplete coverage:','John Deere agronomic operations'])assert.ok(content.includes(value),value);
+  assert.ok(pdf.internal.getNumberOfPages()>1);
+});

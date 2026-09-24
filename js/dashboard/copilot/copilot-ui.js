@@ -269,13 +269,21 @@ export const FVCopilotUI = (() => {
       setStatus(`tid:${tid.slice(0,8)} • cont:${cont ? "yes" : "no"}`);
     }
 
+    let thinkingTimer = null;
     function setThinking(on){
       const t = !!on;
+      if (thinkingTimer) clearTimeout(thinkingTimer);
+      thinkingTimer = null;
       sendEl.disabled = t;
       inputEl.disabled = t;
       reportCreate.disabled = t;
       if (!desktop) micEl.disabled = t;
-      if (t) setStatus('Thinking…');
+      if (t) {
+        setStatus('Checking your records…');
+        thinkingTimer = setTimeout(()=>{
+          if (sameSession() && sendEl.disabled) setStatus('Still checking records. A complete farm-wide search can take a few minutes.');
+        },20000);
+      }
       else setDebugStatus();
     }
 
@@ -436,7 +444,7 @@ export const FVCopilotUI = (() => {
       const res = await fetch(opts.copilotEndpoint, {
         method: 'POST',
         headers,
-        signal: AbortSignal.timeout(90000),
+        signal: AbortSignal.timeout(240000),
         body: JSON.stringify(payload)
       });
 
