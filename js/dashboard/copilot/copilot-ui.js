@@ -1,33 +1,15 @@
-/* /js/dashboard/copilot/copilot-ui.js  (FULL FILE)
-   Rev: 2026-01-20-copilot-ui14-better-errors-text-answer-ok
-
-   CHANGE:
-   ✅ Keep sending payload.text (NOT payload.question)
-   ✅ Prefer reading response.text; fallback to response.answer
-   ✅ If backend returns ok:false/error, show the error message to user
-   ✅ If HTTP non-2xx, include status in error message
-   ✅ Keep debugAI:true, threadId TTL, mic UX, AI proof footer, PDF flow
-
-   Notes:
-   - Backend may return:
-     { ok:true, text:"...", meta:{...} }
-     OR legacy-ish:
-     { answer:"..." }
-     OR error:
-     { ok:false, error:"..." }
-*/
-
 'use strict';
 
 import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.js';
 import { scopeKeys, requestHistory, safeSources } from './copilot-context.js';
 import { messageHtml, mountChatActions } from './copilot-presentation.js';
 import { wireChatViewport } from './copilot-viewport.js';
+import { createReportManager } from './copilot-reports.js';
 
 export const FVCopilotUI = (() => {
   const DEFAULTS = {
     copilotEndpoint: (window.FV_COPILOT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/chat/beta').toString(),
-    reportEndpoint:  (window.FV_COPILOT_REPORT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/report').toString(),
+    reportEndpoint:  (window.FV_COPILOT_REPORT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/report/beta').toString(),
 
     sectionSel: '#ai-section',
     logSel: '#ai-chat-log',
@@ -46,8 +28,6 @@ export const FVCopilotUI = (() => {
     maxKeep: 80,
 
     desktopMinWidth: 900,
-    pdfTitle: 'Report PDF',
-    pdfButtonLabel: 'View PDF',
 
     showDebugStatus: false,
 
@@ -61,15 +41,6 @@ export const FVCopilotUI = (() => {
   let MEM_TID = '';
   let MEM_CONT = null;
 
-  function safeHtml(s){
-    return String(s ?? '')
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
-  }
-
   function nowMs(){ return Date.now(); }
 
   function isDesktop(minWidth){
@@ -78,13 +49,6 @@ export const FVCopilotUI = (() => {
   }
 
   function getEl(sel){ return document.querySelector(sel); }
-
-  function buildReportUrl(reportEndpoint, threadId, mode){
-    const qs = new URLSearchParams();
-    if (threadId) qs.set('threadId', threadId);
-    qs.set('mode', (mode || 'recent').toString().trim() || 'recent');
-    return `${reportEndpoint}?${qs.toString()}`;
-  }
 
   function lsGet(key){
     try { return (localStorage.getItem(key) || '').toString(); } catch { return ''; }
@@ -151,122 +115,14 @@ export const FVCopilotUI = (() => {
     lsSet(opts.lastKey, String(nowMs()));
   }
 
-  function makePdfModal(opts){
-    const modal = document.createElement('div');
-    modal.className = 'fv-pdf-modal';
-    modal.innerHTML = `
-      <div class="fv-pdf-backdrop"></div>
-      <div class="fv-pdf-sheet" role="dialog" aria-modal="true" aria-label="${safeHtml(opts.pdfTitle)}">
-        <div class="fv-pdf-top">
-          <div class="fv-pdf-title">${safeHtml(opts.pdfTitle)}</div>
-          <button type="button" class="fv-pdf-close">Close</button>
-        </div>
-        <iframe class="fv-pdf-frame" title="${safeHtml(opts.pdfTitle)}"></iframe>
-      </div>
-    `;
-
+  function installChatStyles(){
     const style = document.createElement('style');
     style.textContent = `
-      .fv-pdf-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100000; padding:16px; }
-      .fv-pdf-modal.show{ display:flex; }
-      .fv-pdf-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); }
-      .fv-pdf-sheet{
-        position:relative;
-        width:min(1100px, 96vw);
-        height:min(86vh, 860px);
-        background:var(--surface, #fff);
-        border:1px solid var(--border, #D1D5DB);
-        border-radius:14px;
-        box-shadow:0 20px 40px rgba(0,0,0,.35);
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        z-index:1;
-      }
-      .fv-pdf-top{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        padding:10px 12px;
-        border-bottom:1px solid var(--border, #D1D5DB);
-        background:linear-gradient(90deg, rgba(47,108,60,.12), transparent);
-      }
-      .fv-pdf-title{ font-weight:900; letter-spacing:.06em; text-transform:uppercase; font-size:12px; color:var(--text, #111827); }
-      .fv-pdf-close{
-        border:none;
-        border-radius:999px;
-        padding:6px 12px;
-        font-size:0.85rem;
-        cursor:pointer;
-        background:color-mix(in srgb, var(--surface, #fff) 70%, var(--border, #D1D5DB) 30%);
-        color:var(--text, #111827);
-        font-weight:800;
-      }
-      .fv-pdf-frame{ flex:1; width:100%; height:100%; border:0; background:#fff; }
-      .ai-pdf-btn{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        padding:10px 12px;
-        border-radius:12px;
-        border:1px solid var(--border,#D1D5DB);
-        font-weight:900;
-        letter-spacing:.02em;
-        cursor:pointer;
-        background:var(--card-surface, var(--surface, #fff));
-        color:var(--text,#111827);
-        gap:8px;
-        user-select:none;
-      }
-      .ai-pdf-btn:active{ transform:scale(.995); }
-
-      /* Mic active (Bugs-style) — GREEN + CIRCULAR */
-      #ai-mic.mic-active{
-        background:#2F6C3C !important;
-        color:#fff !important;
-        border-color:#2F6C3C !important;
-        border-radius:999px !important;
-      }
-
-      /* AI proof footer (under assistant messages) */
-      .ai-proof{
-        margin-top:8px;
-        padding-top:6px;
-        border-top:1px solid color-mix(in srgb, var(--border,#D1D5DB) 70%, transparent);
-        font-size:11px;
-        line-height:1.25;
-        letter-spacing:.02em;
-        color:color-mix(in srgb, var(--text,#111827) 65%, transparent);
-        text-transform:uppercase;
-        font-weight:900;
-        user-select:none;
-      }
-      .ai-proof .dot{ padding:0 6px; opacity:.7; }
+      #ai-mic.mic-active{background:#2F6C3C!important;color:#fff!important;border-color:#2F6C3C!important;border-radius:999px!important}
+      .ai-proof{margin-top:8px;padding-top:6px;border-top:1px solid color-mix(in srgb,var(--border,#D1D5DB) 70%,transparent);font-size:11px;line-height:1.25;letter-spacing:.02em;color:color-mix(in srgb,var(--text,#111827) 65%,transparent);text-transform:uppercase;font-weight:900;user-select:none}
+      .ai-proof .dot{padding:0 6px;opacity:.7}
     `;
     document.head.appendChild(style);
-    document.body.appendChild(modal);
-
-    const backdrop = modal.querySelector('.fv-pdf-backdrop');
-    const closeBtn = modal.querySelector('.fv-pdf-close');
-    const frame = modal.querySelector('.fv-pdf-frame');
-
-    function open(url){
-      if (!url) return;
-      frame.src = url;
-      modal.classList.add('show');
-    }
-    function close(){
-      modal.classList.remove('show');
-    }
-
-    backdrop.addEventListener('click', close);
-    closeBtn.addEventListener('click', close);
-    document.addEventListener('keydown', (e)=>{
-      if (e.key === 'Escape' && modal.classList.contains('show')) close();
-    });
-
-    return { open, close };
   }
 
   function buildAiProof(meta){
@@ -417,6 +273,7 @@ export const FVCopilotUI = (() => {
       const t = !!on;
       sendEl.disabled = t;
       inputEl.disabled = t;
+      reportCreate.disabled = t;
       if (!desktop) micEl.disabled = t;
       if (t) setStatus('Thinking…');
       else setDebugStatus();
@@ -439,6 +296,22 @@ export const FVCopilotUI = (() => {
       isCurrent: sameSession
     });
     const chatViewport = wireChatViewport({section:sectionEl, input:inputEl, form:formEl, log:logEl});
+    const reports = createReportManager({endpoint:opts.reportEndpoint,getToken:getAuthToken,projectId,isCurrent:sameSession});
+    const reportCreate = document.createElement('button');
+    reportCreate.type = 'button';
+    reportCreate.className = 'fv-report-create';
+    reportCreate.title = 'Create a report';
+    reportCreate.setAttribute('aria-label','Create a report');
+    reportCreate.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg>';
+    (formEl.querySelector('.ai-actions') || formEl).appendChild(reportCreate);
+    reportCreate.addEventListener('click',()=>{
+      if (!sameSession() || sendEl.disabled) return;
+      if (!inputEl.value.trim()) inputEl.value = 'Make a report on ';
+      inputEl.dispatchEvent(new Event('input'));
+      inputEl.focus();
+      inputEl.setSelectionRange(inputEl.value.length,inputEl.value.length);
+      setStatus('Name one topic, such as corn in grain bags, HEL ground or RTK towers.');
+    });
 
     function saveHistory(){
       const trimmed = history.slice(-Math.max(10, Number(opts.maxKeep) || 80));
@@ -447,9 +320,9 @@ export const FVCopilotUI = (() => {
       chatActions.refresh();
     }
 
-    const pdfModal = makePdfModal({ pdfTitle: opts.pdfTitle });
+    installChatStyles();
 
-    function renderMessage(role, text, proof, sources = []){
+    function renderMessage(role, text, proof, sources = [], details = {}){
       clearEmptyState();
 
       const who = role === 'user' ? 'You' : 'Copilot';
@@ -465,19 +338,18 @@ export const FVCopilotUI = (() => {
       meta.textContent = who;
 
       if (role === 'assistant' && typeof text === 'string' && text.startsWith(PDF_MARKER)) {
-        const url = text.slice(PDF_MARKER.length).trim();
-        bubble.innerHTML = '';
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'ai-pdf-btn';
-        btn.textContent = opts.pdfButtonLabel || 'View PDF';
-        btn.addEventListener('click', () => pdfModal.open(url));
-        bubble.appendChild(btn);
+        bubble.textContent = 'Please request a new report to read the current records.';
       } else {
         const content = document.createElement('div');
         content.className = 'fv-chat-content';
         content.innerHTML = messageHtml(text);
         bubble.appendChild(content);
+      }
+      if (role === 'assistant' && details.reportRef?.id && details.reportRef?.query) {
+        const button = document.createElement('button');
+        button.type = 'button';button.className = 'fv-report-link';button.textContent = 'View report PDF';
+        button.addEventListener('click',()=>{if(sameSession()){inputEl.blur();reports.open(details.reportRef);}});
+        bubble.appendChild(button);
       }
 
       if (role === 'assistant' && proof && String(proof).trim()){
@@ -504,13 +376,18 @@ export const FVCopilotUI = (() => {
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    function append(role, text, proof, sources = [], failed = false){
-      renderMessage(role, text, proof, sources);
+    function append(role, text, proof, sources = [], failed = false, details = {}){
+      renderMessage(role, text, proof, sources, details);
 
       const entry = { role, text: String(text || ''), ts: nowMs() };
       if (role === 'assistant' && proof && String(proof).trim()) entry.proof = String(proof).trim();
       if (role === 'assistant') entry.sources = safeSources(sources);
       if (failed) entry.failed = true;
+      if (role === 'assistant') {
+        if (details.reportRef) entry.reportRef = details.reportRef;
+        if (details.reportTopicRequired) entry.reportTopicRequired = true;
+        if (details.reportDataset) entry.reportDataset = details.reportDataset;
+      }
 
       history.push(entry);
       saveHistory();
@@ -518,7 +395,7 @@ export const FVCopilotUI = (() => {
 
     for (const m of history){
       if (!m || (m.role !== 'user' && m.role !== 'assistant')) continue;
-      renderMessage(m.role, m.text, m.proof || null, m.sources || []);
+      renderMessage(m.role, m.text, m.proof || null, m.sources || [], m);
     }
 
     getThreadId();
@@ -541,6 +418,11 @@ export const FVCopilotUI = (() => {
         history: requestHistory(history, prompt),
         debugAI: !!opts.debugAI
       };
+      const previousAnswer = [...history].reverse().find(item=>item.role === 'assistant');
+      if (previousAnswer?.reportTopicRequired) {
+        payload.reportRequested = true;
+        if (previousAnswer.reportDataset) payload.reportDataset = previousAnswer.reportDataset;
+      }
 
       // keep continuation (backend may ignore safely)
       const cont = getContinuation();
@@ -572,6 +454,7 @@ export const FVCopilotUI = (() => {
         const msg = (data.error || data.message) ? String(data.error || data.message) : 'Unknown error';
         throw new Error(msg);
       }
+      if (!sameSession()) throw new Error('Your sign-in changed. Reload FarmVista.');
 
       // optional continuation support if backend returns it
       if (Object.prototype.hasOwnProperty.call(data?.meta || {}, 'continuation')) {
@@ -582,15 +465,9 @@ export const FVCopilotUI = (() => {
 
       const proof = buildAiProof(data?.meta || null);
 
-      // Report pathway
-      if (data && data.action === 'report') {
-        const mode = data?.meta?.reportMode ? String(data.meta.reportMode) : 'recent';
-        const url = buildReportUrl(opts.reportEndpoint, getThreadId(), mode);
-        pdfModal.open(url);
-        return { text: (PDF_MARKER + url), proof };
-      }
-
-      return { text: extractAnswer(data), proof, sources:safeSources(data?.meta?.sources) };
+      return { text: extractAnswer(data), proof, sources:safeSources(data?.meta?.sources),
+        reportRef:data?.report ? reports.remember(data.report) : null,
+        reportTopicRequired:data?.reportTopicRequired === true,reportDataset:data?.reportDataset };
     }
 
     formEl.addEventListener('submit', async (evt)=>{
@@ -616,7 +493,7 @@ export const FVCopilotUI = (() => {
       try{
         const out = await callAssistant(text);
         if (!sameSession()) return;
-        append('assistant', (out && out.text) ? out.text : '(No response)', out ? out.proof : null, out?.sources || []);
+        append('assistant', (out && out.text) ? out.text : '(No response)', out ? out.proof : null, out?.sources || [], false, out || {});
       }catch(e){
         if (!sameSession()) return;
         const msg = (e && e.message) ? String(e.message) : "Sorry, I couldn't process that request right now.";
@@ -745,6 +622,8 @@ export const FVCopilotUI = (() => {
       if (user?.uid === signedInUser.uid) return;
       sessionChanged = true;
       chatViewport.destroy();
+      reports.destroy();
+      reportCreate.disabled = true;
       history = [];
       chatActions.refresh();
       logEl.replaceChildren();
