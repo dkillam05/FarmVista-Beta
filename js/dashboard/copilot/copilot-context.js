@@ -37,8 +37,14 @@ export function readProof(meta) {
   const count=value=>Number.isInteger(value)&&value>=0?value:null;
   const detail=deere.filter(s=>s.coverage).map(s=>{
     const c=s.coverage,fields=count(c.fieldsChecked),ops=count(c.operationsChecked);
+    const breakdowns=count(c.breakdownsChecked),q=s.query||{};
+    const filters=[q.field?'Field: '+clean(q.field):null,q.cropSeason?'Season: '+clean(q.cropSeason):null,
+      q.crop?'Crop: '+clean(q.crop):null,q.variety?'Variety: '+clean(q.variety):null,q.product?'Product: '+clean(q.product):null,
+      q.startDate||q.endDate?'Dates: '+clean(q.startDate||'unbounded')+' to '+clean(q.endDate||'unbounded'):null].filter(Boolean);
     return [clean(s.organization?.name),clean(s.dataset),fields!==null?fields+' fields':null,ops!==null?ops+' operations':null,
-      c.completeMatchList===true?'scope fully checked':'incomplete search'].filter(Boolean).join(' · ');
+      c.completeMatchList===true?'scope fully checked':'incomplete search',
+      breakdowns!==null?breakdowns+' breakdowns checked':null,count(c.filteredByCrop)>0?c.filteredByCrop+' excluded by crop':null,
+      count(c.filteredByDates)>0?c.filteredByDates+' outside dates':null].filter(Boolean).join(' · ')+(filters.length?'\n'+filters.join(' · '):'');
   });
   return source+' checked'+time+(detail.length?'\n'+[...new Set(detail)].join('\n'):'');
 }

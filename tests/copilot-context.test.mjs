@@ -30,3 +30,11 @@ test('source evidence distinguishes Deere, FarmVista and incomplete searches',()
   assert.equal(readProof({...base,successfulReads:0,sources:[deere]}),null);
   assert.equal(readProof({unverified:true}),null);
 });
+test('proof shows actual crop, variety, field and date scope with breakdown coverage',()=>{
+  const proof=readProof({dataMode:'live',successfulReads:1,asOf:'2026-09-24T20:00:00Z',sources:[{
+    system:'john_deere',dataset:'seeding',query:{field:'West',crop:'corn',variety:'Pioneer 1742',cropSeason:2026,startDate:'2026-04-01',endDate:'2026-05-01'},
+    coverage:{fieldsChecked:1,operationsChecked:4,breakdownsChecked:2,filteredByCrop:1,filteredByDates:1,completeMatchList:true}
+  }]});
+  for(const text of ['Crop: corn','Variety: Pioneer 1742','Field: West','Season: 2026','Dates: 2026-04-01 to 2026-05-01','2 breakdowns checked','1 excluded by crop','1 outside dates'])assert.ok(proof.includes(text),text);
+  assert.ok(!proof.includes('undefined'));
+});
