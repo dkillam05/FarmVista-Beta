@@ -19,11 +19,12 @@
 
 'use strict';
 
-import { ready, getAuth } from '/js/firebase/firebase-init.js';
+import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.js';
+import { scopeKeys, requestHistory, safeSources } from './copilot-context.js';
 
 export const FVCopilotUI = (() => {
   const DEFAULTS = {
-    copilotEndpoint: (window.FV_COPILOT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/chat').toString(),
+    copilotEndpoint: (window.FV_COPILOT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/chat/beta').toString(),
     reportEndpoint:  (window.FV_COPILOT_REPORT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/report').toString(),
 
     sectionSel: '#ai-section',
@@ -46,10 +47,10 @@ export const FVCopilotUI = (() => {
     pdfTitle: 'Report PDF',
     pdfButtonLabel: 'View PDF',
 
-    showDebugStatus: true,
+    showDebugStatus: false,
 
     // ✅ request-controlled AI debug proof (backend may append meta)
-    debugAI: true
+    debugAI: false
   };
 
   const PDF_MARKER = '[[FV_PDF]]:';
@@ -268,6 +269,12 @@ export const FVCopilotUI = (() => {
 
   function buildAiProof(meta){
     try{
+      if (meta?.dataMode === 'live' && meta?.successfulReads > 0 && meta?.asOf) {
+        const when = new Date(meta.asOf);
+        return Number.isFinite(when.getTime())
+          ? 'Farm records checked ' + when.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })
+          : 'Current farm records';
+      }
       const m = (meta && typeof meta === 'object') ? meta : null;
       if (!m) return null;
 
@@ -315,8 +322,24 @@ export const FVCopilotUI = (() => {
     }
   }
 
-  function init(userOpts = {}){
+  async function initialize(userOpts = {}){
     const opts = { ...DEFAULTS, ...(userOpts || {}) };
+
+    await ready;
+    const auth = getAuth();
+    const signedInUser = await new Promise(resolve => {
+      let stop;
+      stop = onAuthStateChanged(auth, user => { queueMicrotask(() => stop?.()); resolve(user); });
+    });
+    if (!signedInUser) {
+      const status = getEl(opts.statusSel);
+      if (status) status.textContent = 'Sign in to ask about your farm records.';
+      return { ok:false, reason:'sign_in_required' };
+    }
+    const projectId = String(auth.app?.options?.projectId || window.FV_FIREBASE_CONFIG?.projectId || '');
+    Object.assign(opts, scopeKeys(opts, projectId, signedInUser.uid));
+    MEM_TID = '';
+    MEM_CONT = null;
 
     const sectionEl = getEl(opts.sectionSel);
     const logEl     = getEl(opts.logSel);
@@ -382,7 +405,7 @@ export const FVCopilotUI = (() => {
     }
 
     function setDebugStatus(){
-      if (!opts.showDebugStatus) return;
+      if (!opts.showDebugStatus) { setStatus(''); return; }
       const tid = getThreadId();
       const cont = getContinuation();
       setStatus(`tid:${tid.slice(0,8)} • cont:${cont ? "yes" : "no"}`);
@@ -404,6 +427,10 @@ export const FVCopilotUI = (() => {
 
     let history = loadJson(opts.storageKey, []);
     if (!Array.isArray(history)) history = [];
+    let sessionChanged = false;
+    function sameSession(){
+      return !sessionChanged && getAuth()?.currentUser?.uid === signedInUser.uid && window.FV_FIREBASE_CONFIG?.projectId === projectId;
+    }
 
     function saveHistory(){
       const trimmed = history.slice(-Math.max(10, Number(opts.maxKeep) || 80));
@@ -413,7 +440,7 @@ export const FVCopilotUI = (() => {
 
     const pdfModal = makePdfModal({ pdfTitle: opts.pdfTitle });
 
-    function renderMessage(role, text, proof){
+    function renderMessage(role, text, proof, sources = []){
       clearEmptyState();
 
       const who = role === 'user' ? 'You' : 'Copilot';
@@ -448,6 +475,16 @@ export const FVCopilotUI = (() => {
         bubble.appendChild(foot);
       }
 
+      if (role === 'assistant') {
+        for (const source of safeSources(sources)) {
+          const link = document.createElement('a');
+          link.href = source.path;
+          link.textContent = 'Open ' + source.label;
+          link.style.cssText = 'display:block;margin-top:8px;text-decoration:underline;color:inherit;';
+          bubble.appendChild(link);
+        }
+      }
+
       wrap.appendChild(bubble);
       wrap.appendChild(meta);
 
@@ -455,11 +492,13 @@ export const FVCopilotUI = (() => {
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    function append(role, text, proof){
-      renderMessage(role, text, proof);
+    function append(role, text, proof, sources = [], failed = false){
+      renderMessage(role, text, proof, sources);
 
       const entry = { role, text: String(text || ''), ts: nowMs() };
       if (role === 'assistant' && proof && String(proof).trim()) entry.proof = String(proof).trim();
+      if (role === 'assistant') entry.sources = safeSources(sources);
+      if (failed) entry.failed = true;
 
       history.push(entry);
       saveHistory();
@@ -467,7 +506,7 @@ export const FVCopilotUI = (() => {
 
     for (const m of history){
       if (!m || (m.role !== 'user' && m.role !== 'assistant')) continue;
-      renderMessage(m.role, m.text, m.proof || null);
+      renderMessage(m.role, m.text, m.proof || null, m.sources || []);
     }
 
     getThreadId();
@@ -480,9 +519,14 @@ export const FVCopilotUI = (() => {
     }
 
     async function callAssistant(prompt){
+      if (!sameSession()) {
+        throw new Error('Your farm or sign-in changed. Reload FarmVista before continuing.');
+      }
       const payload = {
         text: String(prompt || ''),
         threadId: getThreadId(),
+        projectId,
+        history: requestHistory(history, prompt),
         debugAI: !!opts.debugAI
       };
 
@@ -491,12 +535,14 @@ export const FVCopilotUI = (() => {
       if (cont) payload.continuation = cont;
 
       const idToken = await getAuthToken();
+      if (!idToken) throw new Error('Please sign in again to read your farm records.');
       const headers = { 'Content-Type': 'application/json' };
       if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
 
       const res = await fetch(opts.copilotEndpoint, {
         method: 'POST',
         headers,
+        signal: AbortSignal.timeout(90000),
         body: JSON.stringify(payload)
       });
 
@@ -532,7 +578,7 @@ export const FVCopilotUI = (() => {
         return { text: (PDF_MARKER + url), proof };
       }
 
-      return { text: extractAnswer(data), proof };
+      return { text: extractAnswer(data), proof, sources:safeSources(data?.meta?.sources) };
     }
 
     formEl.addEventListener('submit', async (evt)=>{
@@ -557,12 +603,14 @@ export const FVCopilotUI = (() => {
       setThinking(true);
       try{
         const out = await callAssistant(text);
-        append('assistant', (out && out.text) ? out.text : '(No response)', out ? out.proof : null);
+        if (!sameSession()) return;
+        append('assistant', (out && out.text) ? out.text : '(No response)', out ? out.proof : null, out?.sources || []);
       }catch(e){
+        if (!sameSession()) return;
         const msg = (e && e.message) ? String(e.message) : "Sorry, I couldn't process that request right now.";
-        append('assistant', msg);
+        append('assistant', msg, null, [], true);
       }finally{
-        setThinking(false);
+        if (sameSession()) setThinking(false);
       }
     }, true);
 
@@ -681,8 +729,27 @@ export const FVCopilotUI = (() => {
     }
 
     window.__FV_COPILOT_WIRED = true;
+    onAuthStateChanged(auth, user => {
+      if (user?.uid === signedInUser.uid) return;
+      sessionChanged = true;
+      history = [];
+      logEl.replaceChildren();
+      inputEl.disabled = sendEl.disabled = micEl.disabled = true;
+      setStatus('Your sign-in changed. Reload FarmVista to continue.');
+    });
     return { ok:true };
   }
 
+  let initializing;
+  function init(userOpts = {}) {
+    if (!initializing) initializing = initialize(userOpts).catch(error => {
+      initializing = null;
+      const status = getEl(userOpts.statusSel || DEFAULTS.statusSel);
+      if (status) status.textContent = 'Copilot could not connect. Reload FarmVista to try again.';
+      console.warn('[copilot] initialization failed', error?.name || 'Error');
+      return { ok:false, reason:'initialization_failed' };
+    });
+    return initializing;
+  }
   return { init };
 })();
