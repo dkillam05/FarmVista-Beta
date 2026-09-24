@@ -121,11 +121,11 @@ export const FVCopilotUI = (() => {
     style.textContent = `
       #ai-mic.mic-active{background:#2F6C3C!important;color:#fff!important;border-color:#2F6C3C!important;border-radius:999px!important}
       #ai-section .ai-msg-wrap{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;width:100%;min-width:0}
-      #ai-section .ai-row-user{align-items:flex-start}
-      #ai-section .ai-row-assistant{align-items:flex-end}
+      #ai-section .ai-row-user{align-items:flex-end}
+      #ai-section .ai-row-assistant{align-items:flex-start}
       #ai-section .ai-msg{max-width:88%;min-width:0;padding:12px 15px;border:1px solid var(--border,#dce4de);border-radius:18px;box-shadow:0 2px 5px rgba(20,40,25,.035);overflow-wrap:anywhere}
-      #ai-section .ai-msg-user{background:#2f6c3c;color:#fff;border-color:#2f6c3c;border-top-left-radius:5px}
-      #ai-section .ai-msg-assistant{background:var(--surface,#fff);color:var(--text,#18251c);border-top-right-radius:5px}
+      #ai-section .ai-msg-user{background:#2f6c3c;color:#fff;border-color:#2f6c3c;border-top-right-radius:5px}
+      #ai-section .ai-msg-assistant{background:var(--surface,#fff);color:var(--text,#18251c);border-top-left-radius:5px}
       #ai-section .ai-msg-meta{padding:0 4px;font:600 12px/1.3 system-ui;color:var(--muted,#67706b)}
       #ai-section .ai-proof{margin-top:12px;padding-top:9px;border-top:1px solid var(--border,#dce4de);font-size:11px;line-height:1.45;letter-spacing:0;color:var(--muted,#67706b);text-transform:none;font-weight:500;user-select:text}
       #ai-section .ai-proof .dot{padding:0 6px;opacity:.7}
