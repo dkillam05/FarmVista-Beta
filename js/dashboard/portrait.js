@@ -18,8 +18,7 @@
       button.textContent = open ? less : label;
       if (section.id === 'ai-section') {
         section.dispatchEvent(new CustomEvent('fv:copilot-toggle', {detail:{open}}));
-        if (open) byId('ai-input')?.focus({preventScroll:true});
-        else byId('ai-input')?.blur();
+        if (!open) byId('ai-input')?.blur();
       }
       if (!open && section.getBoundingClientRect().top < 0) section.scrollIntoView({block:'start'});
     });

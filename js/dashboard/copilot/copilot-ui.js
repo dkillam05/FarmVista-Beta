@@ -4,6 +4,7 @@ import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.j
 import { scopeKeys, requestHistory, safeSources, readProof } from './copilot-context.js';
 import { messageHtml, mountChatActions } from './copilot-presentation.js';
 import { wireChatViewport } from './copilot-viewport.js';
+import { wireChatDictation } from './copilot-dictation.js';
 import { createReportManager } from './copilot-reports.js';
 
 export const FVCopilotUI = (() => {
@@ -119,8 +120,17 @@ export const FVCopilotUI = (() => {
     const style = document.createElement('style');
     style.textContent = `
       #ai-mic.mic-active{background:#2F6C3C!important;color:#fff!important;border-color:#2F6C3C!important;border-radius:999px!important}
-      .ai-proof{margin-top:8px;padding-top:6px;border-top:1px solid color-mix(in srgb,var(--border,#D1D5DB) 70%,transparent);font-size:11px;line-height:1.25;letter-spacing:.02em;color:color-mix(in srgb,var(--text,#111827) 65%,transparent);text-transform:uppercase;font-weight:900;user-select:none}
-      .ai-proof .dot{padding:0 6px;opacity:.7}
+      #ai-section .ai-msg-wrap{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;width:100%;min-width:0}
+      #ai-section .ai-row-user{align-items:flex-start}
+      #ai-section .ai-row-assistant{align-items:flex-end}
+      #ai-section .ai-msg{max-width:88%;min-width:0;padding:12px 15px;border:1px solid var(--border,#dce4de);border-radius:18px;box-shadow:0 2px 5px rgba(20,40,25,.035);overflow-wrap:anywhere}
+      #ai-section .ai-msg-user{background:#2f6c3c;color:#fff;border-color:#2f6c3c;border-top-left-radius:5px}
+      #ai-section .ai-msg-assistant{background:var(--surface,#fff);color:var(--text,#18251c);border-top-right-radius:5px}
+      #ai-section .ai-msg-meta{padding:0 4px;font:600 12px/1.3 system-ui;color:var(--muted,#67706b)}
+      #ai-section .ai-proof{margin-top:12px;padding-top:9px;border-top:1px solid var(--border,#dce4de);font-size:11px;line-height:1.45;letter-spacing:0;color:var(--muted,#67706b);text-transform:none;font-weight:500;user-select:text}
+      #ai-section .ai-proof .dot{padding:0 6px;opacity:.7}
+      #ai-section .ai-msg-assistant>a{font-size:12px;line-height:1.4}
+      @media(min-width:900px){#ai-section .ai-msg{max-width:82%}}
     `;
     document.head.appendChild(style);
   }
@@ -217,7 +227,7 @@ export const FVCopilotUI = (() => {
     }
 
     let stopDictation = null;
-    let ignoreDictationUntil = 0;
+    let dictation = null;
 
     enforceTtl(opts);
 
@@ -273,7 +283,7 @@ export const FVCopilotUI = (() => {
       sendEl.disabled = t;
       inputEl.disabled = t;
       reportCreate.disabled = t;
-      if (!desktop) micEl.disabled = t;
+      if (!desktop) micEl.disabled = t || dictation?.supported === false;
       if (t) {
         setStatus('Checking your records…');
         thinkingTimer = setTimeout(()=>{
@@ -329,10 +339,10 @@ export const FVCopilotUI = (() => {
     function renderMessage(role, text, proof, sources = [], details = {}){
       clearEmptyState();
 
-      const who = role === 'user' ? 'You' : 'Copilot';
+      const who = role === 'user' ? 'You' : 'FarmVista AI';
 
       const wrap = document.createElement('div');
-      wrap.className = 'ai-msg-wrap';
+      wrap.className = 'ai-msg-wrap ' + (role === 'user' ? 'ai-row-user' : 'ai-row-assistant');
 
       const bubble = document.createElement('div');
       bubble.className = 'ai-msg ' + (role === 'user' ? 'ai-msg-user' : 'ai-msg-assistant');
@@ -373,8 +383,8 @@ export const FVCopilotUI = (() => {
         }
       }
 
-      wrap.appendChild(bubble);
       wrap.appendChild(meta);
+      wrap.appendChild(bubble);
 
       logEl.appendChild(wrap);
       logEl.scrollTop = logEl.scrollHeight;
@@ -488,8 +498,6 @@ export const FVCopilotUI = (() => {
 
       append('user', text);
 
-      ignoreDictationUntil = Date.now() + 500;
-
       inputEl.value = '';
       inputEl.style.height = 'auto';
 
@@ -522,109 +530,18 @@ export const FVCopilotUI = (() => {
       }
     });
 
-    /* ==========================
-       MIC — Dictation (no overlay)
-    ========================== */
     if (!desktop){
-      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      if (!Rec){
-        micEl.disabled = true;
-      } else {
-        let active = false;
-        let rec = null;
-
-        function setMic(on){
-          active = !!on;
-          micEl.classList.toggle('mic-active', active);
-          micEl.setAttribute('aria-label', active ? 'Stop dictation' : 'Start dictation');
-        }
-
-        function cleanup(){
-          try{
-            if (rec){
-              rec.onresult = null;
-              rec.onend = null;
-              rec.onerror = null;
-            }
-          }catch{}
-          rec = null;
-        }
-
-        function stop(){
-          try{ if (rec) rec.stop(); }catch{}
-          try{ if (rec) rec.abort(); }catch{}
-          cleanup();
-          setMic(false);
-          if (!sendEl.disabled) setDebugStatus();
-        }
-
-        stopDictation = stop;
-
-        function start(){
-          rec = new Rec();
-          rec.lang = 'en-US';
-          rec.interimResults = true;
-          rec.continuous = false;
-          rec.maxAlternatives = 1;
-
-          const base = inputEl.value ? (inputEl.value.trim() + ' ') : '';
-          let finalSoFar = '';
-
-          rec.onresult = (ev)=>{
-            if (Date.now() < ignoreDictationUntil) return;
-
-            let interim = '';
-            for (let i = ev.resultIndex; i < ev.results.length; i++){
-              const r = ev.results[i];
-              const t = r && r[0] ? (r[0].transcript || '') : '';
-              if (!t) continue;
-              if (r.isFinal) finalSoFar += (finalSoFar ? ' ' : '') + t.trim();
-              else interim += (interim ? ' ' : '') + t.trim();
-            }
-
-            const parts = [];
-            if (base) parts.push(base.trim());
-            if (finalSoFar) parts.push(finalSoFar.trim());
-            if (interim) parts.push(interim.trim());
-
-            inputEl.value = parts.join(' ').trim();
-            inputEl.dispatchEvent(new Event('input'));
-            inputEl.focus();
-          };
-
-          rec.onend = ()=> stop();
-          rec.onerror = ()=> stop();
-
-          try{
-            rec.start();
-            setMic(true);
-          }catch{
-            stop();
-          }
-        }
-
-        micEl.addEventListener('click', ()=>{
-          if (sendEl.disabled) return;
-          if (!active) {
-            stop();
-            start();
-          } else {
-            stop();
-          }
-        }, { passive:true });
-
-        document.addEventListener('visibilitychange', ()=>{
-          if (document.visibilityState !== 'visible') return;
-          if (active) stop();
-        });
-      }
+      dictation = wireChatDictation({button:micEl,input:inputEl,section:sectionEl,
+        isAllowed:()=>sameSession()&&!sendEl.disabled&&!sectionEl.classList.contains('perm-hidden'),
+        onStatus:setStatus,onIdle:()=>{if(!sendEl.disabled)setDebugStatus();}});
+      stopDictation = ()=>dictation.stop();
     }
 
     window.__FV_COPILOT_WIRED = true;
     onAuthStateChanged(auth, user => {
       if (user?.uid === signedInUser.uid) return;
       sessionChanged = true;
+      dictation?.destroy();
       chatViewport.destroy();
       reports.destroy();
       reportCreate.disabled = true;
