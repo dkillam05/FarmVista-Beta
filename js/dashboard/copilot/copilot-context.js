@@ -25,3 +25,20 @@ export function safeSources(sources) {
     seen.add(source.path); return true;
   }).slice(0,9).map(source => ({ path:source.path, label:String(source.label || 'farm records').slice(0,80) }));
 }
+
+export function readProof(meta) {
+  if(meta?.dataMode!=='live' || !(meta.successfulReads>0))return null;
+  const sources=Array.isArray(meta.sources)?meta.sources:[];
+  const deere=sources.filter(s=>s?.system==='john_deere'||/^John Deere\b/.test(s?.label||''));
+  const farm=sources.some(s=>s?.system==='farmvista'||allowedPaths.has(s?.path)&&!deere.includes(s));
+  const when=new Date(meta.asOf),time=Number.isFinite(when.getTime())?' '+when.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'';
+  const source=deere.length?(farm?'John Deere + FarmVista':'John Deere'):farm?'FarmVista':'Farm records';
+  const clean=value=>String(value||'').replace(/[\u0000-\u001f]/g,' ').slice(0,80);
+  const count=value=>Number.isInteger(value)&&value>=0?value:null;
+  const detail=deere.filter(s=>s.coverage).map(s=>{
+    const c=s.coverage,fields=count(c.fieldsChecked),ops=count(c.operationsChecked);
+    return [clean(s.organization?.name),clean(s.dataset),fields!==null?fields+' fields':null,ops!==null?ops+' operations':null,
+      c.completeMatchList===true?'scope fully checked':'incomplete search'].filter(Boolean).join(' · ');
+  });
+  return source+' checked'+time+(detail.length?'\n'+[...new Set(detail)].join('\n'):'');
+}

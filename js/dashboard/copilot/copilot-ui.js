@@ -1,7 +1,7 @@
 'use strict';
 
 import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.js';
-import { scopeKeys, requestHistory, safeSources } from './copilot-context.js';
+import { scopeKeys, requestHistory, safeSources, readProof } from './copilot-context.js';
 import { messageHtml, mountChatActions } from './copilot-presentation.js';
 import { wireChatViewport } from './copilot-viewport.js';
 import { createReportManager } from './copilot-reports.js';
@@ -127,12 +127,8 @@ export const FVCopilotUI = (() => {
 
   function buildAiProof(meta){
     try{
-      if (meta?.dataMode === 'live' && meta?.successfulReads > 0 && meta?.asOf) {
-        const when = new Date(meta.asOf);
-        return Number.isFinite(when.getTime())
-          ? 'Farm records checked ' + when.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })
-          : 'Current farm records';
-      }
+      const evidence=readProof(meta);
+      if(evidence)return evidence;
       const m = (meta && typeof meta === 'object') ? meta : null;
       if (!m) return null;
 
