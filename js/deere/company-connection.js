@@ -3,6 +3,7 @@ import { ready, getAuth } from '/js/firebase/firebase-init.js';
 const api = 'https://farmvista-copilot-300398089669.us-central1.run.app/deere/beta';
 const status = document.getElementById('deereStatus');
 const result = document.getElementById('deereResult');
+result.style.whiteSpace = 'pre-line';
 const connect = document.getElementById('deereConnect');
 const test = document.getElementById('deereTest');
 const chooser = document.createElement('div');
@@ -92,7 +93,7 @@ save.addEventListener('click', async () => {
   result.textContent = 'Verifying and saving the selected organization…';
   try {
     const data = await call('select', 'POST', { selectionId, organizationId: select.value });
-    result.textContent = `Connected to ${data.organization}. Use the connection test to check fields.`;
+    result.textContent = `Connected to ${data.organization}. Use Test connection to check Fields, Field Operations and Equipment.`;
     await refresh();
   } catch (e) {
     result.textContent = e.message;
@@ -112,11 +113,11 @@ connect.addEventListener('click', async () => {
 });
 test.addEventListener('click', async () => {
   test.disabled = true;
-  result.textContent = 'Reading a small sample of fields from John Deere…';
+  result.textContent = 'Checking Deere Fields, Field Operations and Equipment…';
   try {
     const data = await call('test');
     const names = data.fields.map(f => f.name).filter(Boolean);
-    result.textContent = `${data.message} ${names.length ? `Example fields: ${names.join(', ')}.` : 'No field names returned.'}`;
+    result.textContent = `${data.message}\n\n${names.length ? `Example fields: ${names.join(', ')}.` : 'No field names returned.'}`;
   } catch (e) { result.textContent = e.message; }
   finally { test.disabled = false; }
 });

@@ -13,6 +13,7 @@ export function requestHistory(history, currentPrompt) {
   return messages.slice(-12);
 }
 const allowedPaths = new Set([
+  '/pages/setup/company-details.html',
   '/pages/grain/grain-contracts.html', '/pages/grain/grain-bags.html',
   '/pages/setup/grain-bin-sites.html', '/pages/setup/fields.html',
   '/pages/setup/farms.html', '/pages/equipment/index.html', '/pages/setup/rtk-tower-information.html'
