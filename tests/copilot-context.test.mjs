@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 const source=await readFile(new URL('../js/dashboard/copilot/copilot-context.js',import.meta.url),'utf8');
-const {scopeKeys,requestHistory,safeSources}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const {scopeKeys,requestHistory,safeSources,readProof}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 test('chat history storage is isolated by farm and user',()=>{
   const options={storageKey:'chat',threadKey:'thread',contKey:'cont',lastKey:'last'};
   assert.notEqual(scopeKeys(options,'a','u').storageKey,scopeKeys(options,'b','u').storageKey);
@@ -16,4 +16,17 @@ test('send prior turns once, exclude errors and PDF placeholders',()=>{
 test('source links only allow known FarmVista pages, never external or script URLs',()=>{
   const sources=[{path:'javascript:alert(1)'},{path:'https://example.com'},{path:'//example.com'},{path:'/pages/setup/fields.html',label:'Fields'},{path:'/pages/setup/fields.html',label:'Duplicate'}];
   assert.deepEqual(safeSources(sources),[{path:'/pages/setup/fields.html',label:'Fields'}]);
+});
+
+test('source evidence distinguishes Deere, FarmVista and incomplete searches',()=>{
+  const base={dataMode:'live',successfulReads:1,asOf:'2026-09-24T20:00:00Z'};
+  const farm={system:'farmvista',path:'/pages/grain/grain-bags.html',label:'Grain bags'};
+  const deere={system:'john_deere',path:'/pages/setup/company-details.html',label:'John Deere agronomic operations',dataset:'seeding',organization:{name:'Dowson Farms'},coverage:{fieldsChecked:125,operationsChecked:340,completeMatchList:true}};
+  assert.match(readProof({...base,sources:[farm]}),/^FarmVista checked/);
+  const proof=readProof({...base,sources:[deere]});
+  assert.match(proof,/^John Deere checked/);assert.match(proof,/Dowson Farms/);assert.match(proof,/125 fields · 340 operations · scope fully checked/);
+  assert.match(readProof({...base,sources:[farm,deere]}),/^John Deere \+ FarmVista checked/);
+  assert.match(readProof({...base,sources:[{...deere,coverage:{...deere.coverage,completeMatchList:false}}]}),/incomplete search/);
+  assert.equal(readProof({...base,successfulReads:0,sources:[deere]}),null);
+  assert.equal(readProof({unverified:true}),null);
 });
