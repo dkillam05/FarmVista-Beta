@@ -21,6 +21,7 @@
 
 import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.js';
 import { scopeKeys, requestHistory, safeSources } from './copilot-context.js';
+import { messageHtml, mountChatActions } from './copilot-presentation.js';
 
 export const FVCopilotUI = (() => {
   const DEFAULTS = {
@@ -431,11 +432,17 @@ export const FVCopilotUI = (() => {
     function sameSession(){
       return !sessionChanged && getAuth()?.currentUser?.uid === signedInUser.uid && window.FV_FIREBASE_CONFIG?.projectId === projectId;
     }
+    const chatActions = mountChatActions({
+      host: sectionEl.querySelector('.section-head') || sectionEl,
+      getHistory: () => history,
+      isCurrent: sameSession
+    });
 
     function saveHistory(){
       const trimmed = history.slice(-Math.max(10, Number(opts.maxKeep) || 80));
       saveJson(opts.storageKey, trimmed);
       touch(opts);
+      chatActions.refresh();
     }
 
     const pdfModal = makePdfModal({ pdfTitle: opts.pdfTitle });
@@ -465,7 +472,10 @@ export const FVCopilotUI = (() => {
         btn.addEventListener('click', () => pdfModal.open(url));
         bubble.appendChild(btn);
       } else {
-        bubble.innerHTML = safeHtml(String(text || ''));
+        const content = document.createElement('div');
+        content.className = 'fv-chat-content';
+        content.innerHTML = messageHtml(text);
+        bubble.appendChild(content);
       }
 
       if (role === 'assistant' && proof && String(proof).trim()){
@@ -733,6 +743,7 @@ export const FVCopilotUI = (() => {
       if (user?.uid === signedInUser.uid) return;
       sessionChanged = true;
       history = [];
+      chatActions.refresh();
       logEl.replaceChildren();
       inputEl.disabled = sendEl.disabled = micEl.disabled = true;
       setStatus('Your sign-in changed. Reload FarmVista to continue.');
