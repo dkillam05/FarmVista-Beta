@@ -74,8 +74,9 @@ export function mountChatActions({host, getHistory, isCurrent, doc=document, nav
   </div><span class="fv-chat-transfer-status" role="status" aria-live="polite"></span>`;
   const style=doc.createElement('style');
   style.textContent=`
-    #ai-section .section-head>div:not(.icon):not(.fv-chat-transfer){min-width:0}
     .fv-chat-transfer{margin-left:auto;flex:0 0 auto;max-width:120px;align-self:center}
+    #ai-section .ai-actions{flex-wrap:wrap}
+    #ai-section .ai-status{flex:1 1 60px;min-width:0;overflow-wrap:anywhere}
     .fv-chat-transfer-buttons{display:flex;gap:2px;justify-content:flex-end}
     #ai-section .fv-chat-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--text,#18251c);cursor:pointer}
     #ai-section .fv-chat-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}

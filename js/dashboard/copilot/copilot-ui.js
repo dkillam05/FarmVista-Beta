@@ -22,6 +22,7 @@
 import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.js';
 import { scopeKeys, requestHistory, safeSources } from './copilot-context.js';
 import { messageHtml, mountChatActions } from './copilot-presentation.js';
+import { wireChatViewport } from './copilot-viewport.js';
 
 export const FVCopilotUI = (() => {
   const DEFAULTS = {
@@ -433,10 +434,11 @@ export const FVCopilotUI = (() => {
       return !sessionChanged && getAuth()?.currentUser?.uid === signedInUser.uid && window.FV_FIREBASE_CONFIG?.projectId === projectId;
     }
     const chatActions = mountChatActions({
-      host: sectionEl.querySelector('.section-head') || sectionEl,
+      host: formEl.querySelector('.ai-actions') || formEl,
       getHistory: () => history,
       isCurrent: sameSession
     });
+    const chatViewport = wireChatViewport({section:sectionEl, input:inputEl, form:formEl, log:logEl});
 
     function saveHistory(){
       const trimmed = history.slice(-Math.max(10, Number(opts.maxKeep) || 80));
@@ -742,6 +744,7 @@ export const FVCopilotUI = (() => {
     onAuthStateChanged(auth, user => {
       if (user?.uid === signedInUser.uid) return;
       sessionChanged = true;
+      chatViewport.destroy();
       history = [];
       chatActions.refresh();
       logEl.replaceChildren();
