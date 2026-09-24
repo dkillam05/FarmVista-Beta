@@ -93,7 +93,7 @@ export function createReportManager({endpoint,getToken,projectId,isCurrent}){
       assertCurrent();let report=cache.get(ref.id),refreshed=false;
       if(!report){
         const token=await getToken();assertCurrent();if(!token)throw new Error('Please sign in again.');
-        const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({projectId,query:ref.query}),signal:AbortSignal.timeout(70000)});
+        const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({projectId,query:ref.query}),signal:AbortSignal.timeout(240000)});
         const result=await res.json();assertCurrent();
         if(!res.ok || !result.ok)throw new Error(result.error || 'The report could not be loaded.');
         report=result.report;validateReport(report);cache.set(ref.id,report);refreshed=true;
