@@ -24,7 +24,7 @@ import { scopeKeys, requestHistory, safeSources } from './copilot-context.js';
 
 export const FVCopilotUI = (() => {
   const DEFAULTS = {
-    copilotEndpoint: (window.FV_COPILOT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/chat').toString(),
+    copilotEndpoint: (window.FV_COPILOT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/chat/beta').toString(),
     reportEndpoint:  (window.FV_COPILOT_REPORT_ENDPOINT || 'https://farmvista-copilot-300398089669.us-central1.run.app/report').toString(),
 
     sectionSel: '#ai-section',
