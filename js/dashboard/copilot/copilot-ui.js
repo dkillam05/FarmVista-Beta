@@ -1,3 +1,4 @@
+import {createIssueManager} from './copilot-issues.js';
 'use strict';
 
 import { ready, getAuth, onAuthStateChanged } from '/js/firebase/firebase-init.js';
@@ -305,7 +306,9 @@ export const FVCopilotUI = (() => {
     function sameSession(){
       return !sessionChanged && getAuth()?.currentUser?.uid === signedInUser.uid && window.FV_FIREBASE_CONFIG?.projectId === projectId;
     }
+    const issues = createIssueManager({getHistory:()=>history,getToken:getAuthToken,isCurrent:sameSession,projectId});
     const chatActions = mountChatActions({
+      onReport:()=>issues.open(),
       host: formEl.querySelector('.ai-actions') || formEl,
       getHistory: () => history,
       isCurrent: sameSession,
@@ -558,6 +561,7 @@ export const FVCopilotUI = (() => {
       dictation?.destroy();
       chatViewport.destroy();
       reports.destroy();
+      issues.destroy();
       reportCreate.disabled = true;
       history = [];
       chatActions.refresh();

@@ -1,0 +1,53 @@
+// Beta-only private repair reports. No farm credentials or continuation tokens are submitted.
+export function issuePayload(history,index,note,requestId,clientVersion=''){
+  if(!Number.isInteger(index)||history[index]?.role!=='assistant')throw new Error('Select an answer to report.');
+  const messages=history.slice(Math.max(0,index-19),index+1).filter(m=>['user','assistant'].includes(m.role)&&typeof m.text==='string'&&m.text.trim()).map(m=>({role:m.role,text:m.text.slice(0,6000)}));
+  return {requestId,messages,note:String(note||'').slice(0,1500),clientVersion};
+}
+export function createIssueManager({getHistory,getToken,isCurrent,projectId,endpoint='https://farmvista-copilot-300398089669.us-central1.run.app/issues/beta',doc=document,request=fetch}){
+  let dialog=null,controller=null;
+  async function api(path='',options={}){
+    if(!isCurrent())throw new Error('Reload FarmVista to continue.');
+    const token=await getToken();if(!isCurrent())throw new Error('Your sign-in changed.');
+    const res=await request(endpoint+path,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},signal:controller?.signal});
+    if(!isCurrent())throw new Error('Your sign-in changed.');
+    if(!res.ok){let data;try{data=await res.json();}catch{}throw new Error(typeof data?.error==='string'?data.error:'The issue service could not be reached. Try again.');}
+    return res;
+  }
+  function destroy(){controller?.abort();controller=null;dialog?.close();dialog?.remove();dialog=null;}
+  function open(){
+    if(!isCurrent())return;destroy();controller=new AbortController();
+    const modal=doc.createElement('dialog');dialog=modal;modal.className='fv-chat-copy-dialog fv-issue-dialog';modal.setAttribute('aria-label','Report an issue');
+    modal.innerHTML=`<h2 style="margin:0 0 10px;font-size:18px">Report an issue <small style="font-size:11px;opacity:.6">BETA</small></h2>
+      <p style="font-size:14px;line-height:1.5">Send an answer and nearby conversation privately to the repair agent. It can investigate and prepare a tested code fix for owner review. Publishing and a corrected live answer are not automatic.</p>
+      <label style="display:block;font-size:14px">Answer to report<select data-answer style="display:block;box-sizing:border-box;width:100%;min-height:44px;margin:6px 0 12px;font:inherit;color:inherit;background:var(--surface,#fff)"></select></label>
+      <label style="display:block;font-size:14px">What went wrong? (optional)<textarea data-note maxlength="1500" style="height:90px;margin-top:6px;border-radius:8px;padding:8px" placeholder="For example: These acres seem too low."></textarea></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-submit>Send report</button><button type="button" data-list>My reports</button><button type="button" data-close>Close</button></div>
+      <p data-status role="status" aria-live="polite" style="font-size:14px;line-height:1.5"></p><div data-results></div>`;
+    const select=modal.querySelector('[data-answer]'),note=modal.querySelector('[data-note]'),submit=modal.querySelector('[data-submit]'),status=modal.querySelector('[data-status]'),results=modal.querySelector('[data-results]');
+    const snapshot=getHistory().map(m=>({...m}));
+    snapshot.forEach((m,index)=>{if(m.role!=='assistant')return;const option=doc.createElement('option');option.value=String(index);option.textContent=m.text.slice(0,110);select.appendChild(option);select.value=String(index);});
+    submit.disabled=!select.options.length;
+    if(!select.options.length)status.textContent='No answers in this chat. Your previous reports are still available.';
+    let requestId=crypto.randomUUID(),submitted=false;
+    const current=()=>dialog===modal&&isCurrent();
+    function showIssue(issue){
+      const card=doc.createElement('div');card.style.cssText='padding:12px 0;border-top:1px solid var(--border,#ccc);font-size:14px;overflow-wrap:anywhere';
+      const heading=doc.createElement('strong');heading.textContent=({starting:'Starting',investigating:'Investigating',ready_for_review:'Fix ready for owner review',needs_attention:'Needs attention'})[issue.status]||'Report saved';card.appendChild(heading);
+      const date=doc.createElement('div');date.style.cssText='font-size:12px;opacity:.65;margin-top:4px';date.textContent=new Date(issue.createdAt).toLocaleString();card.appendChild(date);
+      const summary=doc.createElement('p');summary.textContent=issue.summary;card.appendChild(summary);
+      const refresh=doc.createElement('button');refresh.type='button';refresh.textContent='Check progress';refresh.addEventListener('click',async()=>{refresh.disabled=true;try{const data=await(await api('/'+issue.id)).json();if(current()){card.remove();showIssue(data.issue);}}catch(e){if(current())status.textContent=e.message;}finally{refresh.disabled=false;}});card.appendChild(refresh);
+      for(const artifact of issue.artifacts||[]){const button=doc.createElement('button');button.type='button';button.textContent='Download '+artifact.name;button.style.marginLeft='8px';button.addEventListener('click',async()=>{button.disabled=true;try{const res=await api('/'+issue.id+'/artifacts/'+encodeURIComponent(artifact.id));const blob=await res.blob();if(!current())return;const url=URL.createObjectURL(blob),a=doc.createElement('a');a.href=url;a.download=artifact.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){if(current())status.textContent=e.message;}finally{button.disabled=false;}});card.appendChild(button);}
+      results.appendChild(card);
+    }
+    submit.addEventListener('click',async()=>{
+      if(submitted||!current())return;submit.disabled=true;select.disabled=true;note.disabled=true;status.textContent='Saving report and starting the repair agent…';
+      try{const body={...issuePayload(snapshot,Number(select.value),note.value,requestId,window.FV_VERSION?.number||''),projectId};const data=await(await api('',{method:'POST',body:JSON.stringify(body)})).json();if(!current())return;submitted=true;status.textContent='Report saved. You can close this window and check My reports later.';results.replaceChildren();showIssue(data.issue);}
+      catch(e){if(current()){status.textContent=e.message+' You can retry safely.';submit.disabled=false;/* Keep the same report body and ID after an uncertain response. */}}
+    });
+    modal.querySelector('[data-list]').addEventListener('click',async()=>{status.textContent='Loading your reports…';try{const data=await(await api()).json();if(!current())return;results.replaceChildren();data.issues.forEach(showIssue);status.textContent=data.issues.length?'Reports stay saved when you clear chat history.':'No reports submitted yet.';}catch(e){if(current())status.textContent=e.message;}});
+    modal.querySelector('[data-close]').addEventListener('click',()=>modal.close());
+    modal.addEventListener('close',()=>{if(dialog===modal)destroy();});doc.body.appendChild(modal);modal.showModal();
+  }
+  return {open,destroy};
+}

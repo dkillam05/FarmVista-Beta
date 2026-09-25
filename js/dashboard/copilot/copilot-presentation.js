@@ -65,17 +65,18 @@ export async function transferChat(text, action, nav) {
   return 'manual';
 }
 
-export function mountChatActions({host, getHistory, isCurrent, onClear, canClear=()=>true, doc=document, nav=navigator}) {
+export function mountChatActions({host, getHistory, isCurrent, onClear, onReport, canClear=()=>true, doc=document, nav=navigator}) {
   const root=doc.createElement('div');
   root.className='fv-chat-transfer';
   root.innerHTML=`<div class="fv-chat-transfer-buttons">
     <button type="button" class="fv-chat-icon" data-action="copy" title="Copy chat" aria-label="Copy chat"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg></button>
     <button type="button" class="fv-chat-icon" data-action="share" title="Share chat" aria-label="Share chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M7 10H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg></button>
     ${onClear?'<button type="button" class="fv-chat-icon" data-action="clear" title="Clear history" aria-label="Clear history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button>':''}
+    ${onReport?'<button type="button" class="fv-chat-icon" data-action="issue" title="Report an issue" aria-label="Report an issue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0"/></svg></button>':''}
   </div><span class="fv-chat-transfer-status" role="status" aria-live="polite"></span>`;
   const style=doc.createElement('style');
   style.textContent=`
-    .fv-chat-transfer{margin-left:auto;flex:0 0 auto;max-width:140px;align-self:center}
+    .fv-chat-transfer{margin-left:auto;flex:0 0 auto;max-width:186px;align-self:center}
     #ai-section .ai-actions{flex-wrap:wrap}
     #ai-section .ai-status{flex:1 1 60px;min-width:0;overflow-wrap:anywhere}
     .fv-chat-transfer-buttons{display:flex;gap:2px;justify-content:flex-end}
@@ -107,7 +108,7 @@ export function mountChatActions({host, getHistory, isCurrent, onClear, canClear
   let busy=false, dialog=null;
   function refresh() {
     const current=isCurrent();
-    buttons.forEach(button => { button.disabled=busy || !current || !chatTranscript(getHistory()) || (button.dataset.action==='clear'&&!canClear()); });
+    buttons.forEach(button => { button.disabled=busy || !current || (button.dataset.action!=='issue'&&!chatTranscript(getHistory())) || (button.dataset.action==='clear'&&!canClear()); });
     if (!current) { feedback.textContent=''; dialog?.close(); dialog?.remove(); dialog=null; }
   }
   function manualCopy(text) {
@@ -143,6 +144,7 @@ export function mountChatActions({host, getHistory, isCurrent, onClear, canClear
   buttons.forEach(button => button.addEventListener('click',async()=>{
     if (busy || !isCurrent()) return;
     if(button.dataset.action==='clear'){confirmClear();return;}
+    if(button.dataset.action==='issue'){onReport?.();return;}
     const text=chatTranscript(getHistory());
     busy=true; feedback.textContent=''; refresh();
     try {
