@@ -22,11 +22,22 @@ export function createIssueManager({getHistory,getToken,isCurrent,projectId,endp
   function open(){
     if(!isCurrent())return;destroy();controller=new AbortController();
     const modal=doc.createElement('dialog');dialog=modal;modal.className='fv-chat-copy-dialog fv-issue-dialog';modal.setAttribute('aria-label','Report an issue');
-    modal.innerHTML=`<h2 style="margin:0 0 10px;font-size:18px">Report an issue <small style="font-size:11px;opacity:.6">BETA</small></h2>
+    modal.innerHTML=`<style>
+      dialog.fv-issue-dialog select{border:1px solid var(--border,#b9c4bc)!important;border-radius:9px;padding:10px 12px;box-shadow:0 1px 2px rgba(0,0,0,.04);font-size:16px!important;appearance:auto;-webkit-appearance:menulist;}
+      dialog.fv-issue-dialog button:not([data-mic]){background:#2f6c3c!important;color:#fff!important;-webkit-text-fill-color:#fff!important;}
+      dialog.fv-issue-dialog .fv-issue-note-wrap{position:relative;margin-top:6px;}
+      dialog.fv-issue-dialog .fv-issue-note-wrap textarea{display:block;margin:0;padding:10px 48px 12px 10px;min-height:110px;resize:vertical;}
+      dialog.fv-issue-dialog button[data-mic]{position:absolute;right:4px;bottom:4px;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;min-height:40px;margin:0;padding:0;border:0;border-radius:8px;background:transparent!important;color:var(--text,#18251c)!important;-webkit-text-fill-color:currentColor!important;cursor:pointer;}
+      dialog.fv-issue-dialog button[data-mic] svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+      dialog.fv-issue-dialog button[data-mic].mic-active{background:#2f6c3c!important;color:#fff!important;-webkit-text-fill-color:#fff!important;}
+      dialog.fv-issue-dialog button[data-mic]:disabled{opacity:.4;cursor:default;}
+      dialog.fv-issue-dialog :is(select,textarea,button):focus-visible{outline:2px solid #3b7e46;outline-offset:2px;}
+      </style><h2 style="margin:0 0 10px;font-size:18px">Report an issue <small style="font-size:11px;opacity:.6">BETA</small></h2>
       <p style="font-size:14px;line-height:1.5">Send an answer and nearby conversation privately to the repair agent. It can investigate and prepare a tested code fix for owner review. Publishing and a corrected live answer are not automatic.</p>
       <label style="display:block;font-size:14px">Answer to report<select data-answer style="display:block;box-sizing:border-box;width:100%;min-height:44px;margin:6px 0 12px;font:inherit;color:inherit;background:var(--surface,#fff)"></select></label>
       <label style="display:block;font-size:14px">What went wrong? (required)<select data-category required style="display:block;box-sizing:border-box;width:100%;min-height:44px;margin:6px 0 12px;font:inherit;color:inherit;background:var(--surface,#fff)"><option value="">Choose a reason</option>${Object.entries(ISSUE_CATEGORIES).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label>
-      <label style="display:block;font-size:14px"><span data-note-label>What seems wrong or what did you expect? (required)</span><textarea data-note maxlength="1500" style="height:90px;margin-top:6px;border-radius:8px;padding:8px" placeholder="For example: These acres seem too low."></textarea></label><button type="button" data-mic aria-label="Start dictation" title="Start dictation" style="background:transparent;color:inherit;border:1px solid var(--border,#ccc)">🎙 Dictate explanation</button><p data-mic-status role="status" style="font-size:12px;margin:6px 0"></p>
+      <label for="fv-issue-note" style="display:block;font-size:14px"><span data-note-label>What seems wrong or what did you expect? (required)</span></label>
+      <div class="fv-issue-note-wrap"><textarea id="fv-issue-note" data-note maxlength="1500" style="height:110px;border-radius:8px" placeholder="For example: These acres seem too low."></textarea><button type="button" data-mic aria-label="Start dictation" title="Start dictation"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button></div><p data-mic-status role="status" style="font-size:12px;margin:6px 0"></p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-submit>Send report</button><button type="button" data-list>My reports</button><button type="button" data-close>Close</button></div>
       <p data-status role="status" aria-live="polite" style="font-size:14px;line-height:1.5"></p><div data-results></div>`;
     const select=modal.querySelector('[data-answer]'),note=modal.querySelector('[data-note]'),submit=modal.querySelector('[data-submit]'),status=modal.querySelector('[data-status]'),results=modal.querySelector('[data-results]');
