@@ -277,7 +277,7 @@ export const FVCopilotUI = (() => {
     }
 
     let activeTurn=null;
-    const stopButton=document.createElement('button');stopButton.type='button';stopButton.textContent='■ Stop';stopButton.setAttribute('aria-label','Stop response');stopButton.hidden=true;
+    const stopButton=document.createElement('button');stopButton.type='button';stopButton.className='ai-send';stopButton.textContent='■ Stop';stopButton.setAttribute('aria-label','Stop response');stopButton.hidden=true;
     stopButton.style.cssText='display:none;min-height:44px;padding:8px 12px;border:1px solid var(--border,#ccc);border-radius:9px;background:transparent;color:inherit;font:inherit;';
     sendEl.insertAdjacentElement('afterend',stopButton);
     stopButton.addEventListener('click',async()=>{
@@ -297,7 +297,7 @@ export const FVCopilotUI = (() => {
       const t = !!on;
       if (thinkingTimer) clearTimeout(thinkingTimer);
       thinkingTimer = null;
-      sendEl.disabled = t;
+      sendEl.disabled = t;sendEl.style.display=t?'none':'';
       stopButton.hidden=!t;stopButton.style.display=t?'inline-flex':'none';stopButton.disabled=false;stopButton.textContent='■ Stop';
       chatActions.refresh();
       inputEl.disabled = t;
