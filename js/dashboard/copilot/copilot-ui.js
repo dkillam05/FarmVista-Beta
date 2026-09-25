@@ -281,6 +281,7 @@ export const FVCopilotUI = (() => {
       if (thinkingTimer) clearTimeout(thinkingTimer);
       thinkingTimer = null;
       sendEl.disabled = t;
+      chatActions.refresh();
       inputEl.disabled = t;
       reportCreate.disabled = t;
       if (!desktop) micEl.disabled = t || dictation?.supported === false;
@@ -307,7 +308,20 @@ export const FVCopilotUI = (() => {
     const chatActions = mountChatActions({
       host: formEl.querySelector('.ai-actions') || formEl,
       getHistory: () => history,
-      isCurrent: sameSession
+      isCurrent: sameSession,
+      canClear: () => !sendEl.disabled,
+      onClear: () => {
+        if(!sameSession()||sendEl.disabled)return;
+        stopDictation?.();
+        history=[];
+        for(const key of [opts.storageKey,opts.threadKey,opts.contKey,opts.lastKey])lsRemove(key);
+        MEM_TID='';MEM_CONT=null;
+        logEl.replaceChildren();
+        const empty=document.createElement('div');
+        empty.className='ai-empty';empty.textContent='Start a new conversation.';logEl.appendChild(empty);
+        inputEl.value='';inputEl.dispatchEvent(new Event('input'));
+        setStatus('');
+      }
     });
     const chatViewport = wireChatViewport({section:sectionEl, input:inputEl, form:formEl, log:logEl});
     const reports = createReportManager({endpoint:opts.reportEndpoint,getToken:getAuthToken,projectId,isCurrent:sameSession});
