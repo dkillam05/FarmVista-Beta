@@ -1,11 +1,15 @@
+import {wireChatDictation} from './copilot-dictation.js';
+export const ISSUE_CATEGORIES={error:'Error or failed to load',wrong_resource:'Wrong farm, field, or equipment',wrong_numbers:'Numbers or calculations seem wrong',incomplete:'Missing information or incomplete answer',other:'Other'};
 // Beta-only private repair reports. No farm credentials or continuation tokens are submitted.
-export function issuePayload(history,index,note,requestId,clientVersion=''){
+export function issuePayload(history,index,note,requestId,clientVersion='',category=''){
   if(!Number.isInteger(index)||history[index]?.role!=='assistant')throw new Error('Select an answer to report.');
+  if(!Object.hasOwn(ISSUE_CATEGORIES,category))throw new Error('Choose what went wrong.');
+  if(category!=='error'&&!String(note||'').trim())throw new Error('Please explain what seems wrong or what you expected.');
   const messages=history.slice(Math.max(0,index-19),index+1).filter(m=>['user','assistant'].includes(m.role)&&typeof m.text==='string'&&m.text.trim()).map(m=>({role:m.role,text:m.text.slice(0,6000)}));
-  return {requestId,messages,note:String(note||'').slice(0,1500),clientVersion};
+  return {requestId,messages,category,note:String(note||'').trim().slice(0,1500),clientVersion};
 }
 export function createIssueManager({getHistory,getToken,isCurrent,projectId,endpoint='https://farmvista-copilot-300398089669.us-central1.run.app/issues/beta',doc=document,request=fetch}){
-  let dialog=null,controller=null;
+  let dialog=null,controller=null,dictation=null;
   async function api(path='',options={}){
     if(!isCurrent())throw new Error('Reload FarmVista to continue.');
     const token=await getToken();if(!isCurrent())throw new Error('Your sign-in changed.');
@@ -14,17 +18,21 @@ export function createIssueManager({getHistory,getToken,isCurrent,projectId,endp
     if(!res.ok){let data;try{data=await res.json();}catch{}throw new Error(typeof data?.error==='string'?data.error:'The issue service could not be reached. Try again.');}
     return res;
   }
-  function destroy(){controller?.abort();controller=null;dialog?.close();dialog?.remove();dialog=null;}
+  function destroy(){dictation?.destroy();dictation=null;controller?.abort();controller=null;const old=dialog;dialog=null;old?.close();old?.remove();}
   function open(){
     if(!isCurrent())return;destroy();controller=new AbortController();
     const modal=doc.createElement('dialog');dialog=modal;modal.className='fv-chat-copy-dialog fv-issue-dialog';modal.setAttribute('aria-label','Report an issue');
     modal.innerHTML=`<h2 style="margin:0 0 10px;font-size:18px">Report an issue <small style="font-size:11px;opacity:.6">BETA</small></h2>
       <p style="font-size:14px;line-height:1.5">Send an answer and nearby conversation privately to the repair agent. It can investigate and prepare a tested code fix for owner review. Publishing and a corrected live answer are not automatic.</p>
       <label style="display:block;font-size:14px">Answer to report<select data-answer style="display:block;box-sizing:border-box;width:100%;min-height:44px;margin:6px 0 12px;font:inherit;color:inherit;background:var(--surface,#fff)"></select></label>
-      <label style="display:block;font-size:14px">What went wrong? (optional)<textarea data-note maxlength="1500" style="height:90px;margin-top:6px;border-radius:8px;padding:8px" placeholder="For example: These acres seem too low."></textarea></label>
+      <label style="display:block;font-size:14px">What went wrong? (required)<select data-category required style="display:block;box-sizing:border-box;width:100%;min-height:44px;margin:6px 0 12px;font:inherit;color:inherit;background:var(--surface,#fff)"><option value="">Choose a reason</option>${Object.entries(ISSUE_CATEGORIES).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label>
+      <label style="display:block;font-size:14px"><span data-note-label>What seems wrong or what did you expect? (required)</span><textarea data-note maxlength="1500" style="height:90px;margin-top:6px;border-radius:8px;padding:8px" placeholder="For example: These acres seem too low."></textarea></label><button type="button" data-mic aria-label="Start dictation" title="Start dictation" style="background:transparent;color:inherit;border:1px solid var(--border,#ccc)">🎙 Dictate explanation</button><p data-mic-status role="status" style="font-size:12px;margin:6px 0"></p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-submit>Send report</button><button type="button" data-list>My reports</button><button type="button" data-close>Close</button></div>
       <p data-status role="status" aria-live="polite" style="font-size:14px;line-height:1.5"></p><div data-results></div>`;
     const select=modal.querySelector('[data-answer]'),note=modal.querySelector('[data-note]'),submit=modal.querySelector('[data-submit]'),status=modal.querySelector('[data-status]'),results=modal.querySelector('[data-results]');
+    const category=modal.querySelector('[data-category]'),mic=modal.querySelector('[data-mic]'),micStatus=modal.querySelector('[data-mic-status]');
+    category.addEventListener('change',()=>{note.required=category.value!=='error';modal.querySelector('[data-note-label]').textContent=note.required?'What seems wrong or what did you expect? (required)':'Anything else? (optional)';});
+    note.required=true;
     const snapshot=getHistory().map(m=>({...m}));
     snapshot.forEach((m,index)=>{if(m.role!=='assistant')return;const option=doc.createElement('option');option.value=String(index);option.textContent=m.text.slice(0,110);select.appendChild(option);select.value=String(index);});
     submit.disabled=!select.options.length;
@@ -41,10 +49,14 @@ export function createIssueManager({getHistory,getToken,isCurrent,projectId,endp
       results.appendChild(card);
     }
     submit.addEventListener('click',async()=>{
-      if(submitted||!current())return;submit.disabled=true;select.disabled=true;note.disabled=true;status.textContent='Saving report and starting the repair agent…';
-      try{const body={...issuePayload(snapshot,Number(select.value),note.value,requestId,window.FV_VERSION?.number||''),projectId};const data=await(await api('',{method:'POST',body:JSON.stringify(body)})).json();if(!current())return;submitted=true;status.textContent='Report saved. You can close this window and check My reports later.';results.replaceChildren();showIssue(data.issue);}
+      if(submitted||!current())return;
+      dictation?.stop();let payload;try{payload=issuePayload(snapshot,Number(select.value),note.value,requestId,window.FV_VERSION?.number||'',category.value);}catch(e){status.textContent=e.message;if(!category.value)category.focus();else note.focus();return;}
+      submit.disabled=true;select.disabled=true;note.disabled=true;category.disabled=true;mic.disabled=true;status.textContent='Saving report and starting the repair agent…';
+      try{const body={...payload,projectId};const data=await(await api('',{method:'POST',body:JSON.stringify(body)})).json();if(!current())return;submitted=true;status.textContent='Report saved. You can close this window and check My reports later.';results.replaceChildren();showIssue(data.issue);}
       catch(e){if(current()){status.textContent=e.message+' You can retry safely.';submit.disabled=false;/* Keep the same report body and ID after an uncertain response. */}}
     });
+    dictation=wireChatDictation({button:mic,input:note,section:modal,doc,isAllowed:()=>current()&&!note.disabled,onStatus:text=>{micStatus.textContent=text;},onIdle:()=>{micStatus.textContent='';}});
+    note.addEventListener('input',()=>{if(note.value.length>1500)note.value=note.value.slice(0,1500);});
     modal.querySelector('[data-list]').addEventListener('click',async()=>{status.textContent='Loading your reports…';try{const data=await(await api()).json();if(!current())return;results.replaceChildren();data.issues.forEach(showIssue);status.textContent=data.issues.length?'Reports stay saved when you clear chat history.':'No reports submitted yet.';}catch(e){if(current())status.textContent=e.message;}});
     modal.querySelector('[data-close]').addEventListener('click',()=>modal.close());
     modal.addEventListener('close',()=>{if(dialog===modal)destroy();});doc.body.appendChild(modal);modal.showModal();
