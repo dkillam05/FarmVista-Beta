@@ -1147,13 +1147,13 @@
     // Soften IEM N0Q's baked-in reflectivity palette to match the visual
     // intensity users expect from mainstream consumer radar apps.
     // This changes presentation only; radar geometry/timing/data are untouched.
-    const RADAR_VISUAL_FILTER = 'none';
-    // Use IEM's classic 4-bit N0R presentation for the consumer-facing map.
-    // It is derived from the same NEXRAD reflectivity mosaic but uses the
-    // familiar stepped dBZ palette (yellow begins at 30 dBZ, orange at 40,
-    // red at 45) instead of N0Q's dense 8-bit gradient.
-    const RADAR_DISPLAY_WMS_URL = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi';
-    const RADAR_DISPLAY_WMS_LAYER = 'nexrad-n0r-wmst';
+    // Consumer-style presentation of the high-resolution N0Q mosaic.
+    // Keep N0Q's finer spatial detail, then visually interpolate/soften the
+    // raster and bias marginal yellow echoes toward green. Strong cores remain
+    // distinguishable while ordinary rain reads more like a consumer radar.
+    const RADAR_VISUAL_FILTER = 'blur(0.65px) hue-rotate(22deg) saturate(0.62) contrast(0.86) brightness(1.04)';
+    const RADAR_DISPLAY_WMS_URL = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q-t.cgi';
+    const RADAR_DISPLAY_WMS_LAYER = 'nexrad-n0q-wmst';
     const RADAR_SPEED_STORAGE_KEY = 'fv-radar-speed-ms';
 
     const radarState = {
@@ -1469,6 +1469,8 @@
           img.style.userSelect = 'none';
           img.style.pointerEvents = 'none';
           img.style.filter = RADAR_VISUAL_FILTER;
+          img.style.transform = 'scale(1.003)';
+          img.style.transformOrigin = 'center center';
           img.style.opacity = '0';
           img.style.transition = `opacity ${FRAME_FADE_MS}ms linear`;
           img.src = url;
